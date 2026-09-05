@@ -30,7 +30,7 @@ Prérequis : Node 22 ou plus, pnpm 11, Docker.
 ```bash
 pnpm install
 cp .env.example .env
-pnpm services:up      # PostgreSQL, Redis, Mailpit
+pnpm services:up      # PostgreSQL, Redis, Mailpit, OpenLDAP
 pnpm db:migrate       # schéma, déclencheurs, politiques RLS
 pnpm db:seed          # jeu de démonstration
 pnpm dev              # API sur :3000, interface sur :5173

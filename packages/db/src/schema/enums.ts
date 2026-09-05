@@ -17,3 +17,9 @@ export const profileInterfaceEnum = pgEnum('profile_interface', ['standard', 'se
  *  all       - tous, dans le perimetre d'habilitation
  */
 export const rightScopeEnum = pgEnum('right_scope', ['own', 'group', 'entity', 'recursive', 'all']);
+
+/**
+ * Strategie de decouverte des groupes d'un utilisateur dans un annuaire.
+ * Voir `ldapDirectories.groupSearchMode`.
+ */
+export const ldapGroupSearchModeEnum = pgEnum('ldap_group_search_mode', ['attribute', 'search']);

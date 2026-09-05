@@ -9,6 +9,7 @@ import {
   timestamp,
   uniqueIndex,
 } from 'drizzle-orm/pg-core';
+import { ldapGroupSearchModeEnum } from './enums.js';
 import { entities } from './entities.js';
 import { profiles } from './profiles.js';
 
@@ -38,7 +39,29 @@ export const ldapDirectories = pgTable(
     emailAttribute: text('email_attribute').notNull().default('mail'),
     firstNameAttribute: text('first_name_attribute').notNull().default('givenName'),
     lastNameAttribute: text('last_name_attribute').notNull().default('sn'),
-    groupMemberAttribute: text('group_member_attribute').notNull().default('memberOf'),
+
+    /**
+     * Comment retrouver les groupes d'un utilisateur.
+     *
+     * Les deux annuaires du marche ne repondent pas de la meme facon :
+     *
+     *  - `attribute` : l'entree utilisateur porte ses groupes. C'est le cas
+     *    d'Active Directory, qui expose `memberOf` nativement ;
+     *  - `search` : il faut chercher les groupes dont l'utilisateur est membre.
+     *    C'est le cas d'OpenLDAP, ou `memberOf` demande une surcouche souvent
+     *    absente.
+     *
+     * Ne supporter que le premier mode reviendrait a ne fonctionner qu'avec
+     * Active Directory.
+     */
+    groupSearchMode: ldapGroupSearchModeEnum('group_search_mode').notNull().default('attribute'),
+    /** Attribut des groupes porte par l'entree utilisateur, en mode `attribute`. */
+    memberOfAttribute: text('member_of_attribute').notNull().default('memberOf'),
+    /** Attribut des membres porte par l'entree groupe, en mode `search`. */
+    groupMemberAttribute: text('group_member_attribute').notNull().default('member'),
+    /** Racine de recherche des groupes. Nulle : on repart de `baseDn`. */
+    groupBaseDn: text('group_base_dn'),
+    groupFilter: text('group_filter').notNull().default('(objectClass=groupOfNames)'),
 
     isActive: boolean('is_active').notNull().default(true),
     /** Annuaire interroge en premier lorsqu'un identifiant est inconnu localement. */

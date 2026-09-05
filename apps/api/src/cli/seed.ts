@@ -7,6 +7,8 @@ import {
   entitySettings,
   groupMembers,
   groups,
+  ldapDirectories,
+  ldapGroupMappings,
   profileRights,
   profiles,
   sql,
@@ -16,6 +18,7 @@ import {
 import { AppModule } from '../app.module.js';
 import { loadEnvFiles } from '../config/env.js';
 import { PasswordService } from '../auth/password.service.js';
+import { SecretsService } from '../common/secrets.service.js';
 import { DatabaseService } from '../database/database.service.js';
 
 type RightScope = 'own' | 'group' | 'entity' | 'recursive' | 'all';
@@ -93,13 +96,15 @@ async function main(): Promise<void> {
   const app = await NestFactory.createApplicationContext(AppModule, { logger: ['warn', 'error'] });
   const db = app.get(DatabaseService);
   const passwords = app.get(PasswordService);
+  const secrets = app.get(SecretsService);
 
   const secret = await passwords.hash('tick');
 
   await db.asOwner(async (tx) => {
     await tx.execute(sql`
       TRUNCATE sessions, authorizations, group_members, groups, profile_rights,
-               profiles, entity_settings, users, entities RESTART IDENTITY CASCADE
+               profiles, entity_settings, users, ldap_group_mappings,
+               ldap_directories, entities RESTART IDENTITY CASCADE
     `);
 
     const racine = await createEntity(tx, 'Racine', null);
@@ -269,9 +274,53 @@ async function main(): Promise<void> {
         { userId: reference('lea'), groupId: supportN1.id, isManager: true },
       ]);
     }
+
+    // Annuaire de developpement, servi par le conteneur openldap du Compose.
+    //
+    // Mode `search` obligatoire : OpenLDAP n'expose pas `memberOf` sans
+    // surcouche. Un Active Directory reel utiliserait le mode `attribute`.
+    const [annuaire] = await tx
+      .insert(ldapDirectories)
+      .values({
+        name: 'Annuaire de developpement',
+        host: process.env.LDAP_HOST ?? 'localhost',
+        port: Number(process.env.LDAP_PORT ?? '1389'),
+        baseDn: 'dc=exemple,dc=fr',
+        bindDn: 'cn=admin,dc=exemple,dc=fr',
+        bindPasswordEncrypted: secrets.encrypt('admin'),
+        userFilter: '(objectClass=inetOrgPerson)',
+        groupSearchMode: 'search',
+        groupBaseDn: 'ou=groups,dc=exemple,dc=fr',
+        groupFilter: '(objectClass=groupOfNames)',
+        groupMemberAttribute: 'member',
+        isDefault: true,
+      })
+      .returning({ id: ldapDirectories.id });
+
+    if (annuaire) {
+      // Appartenir a un groupe d'annuaire accorde une habilitation, retiree
+      // automatiquement des que l'utilisateur en sort.
+      await tx.insert(ldapGroupMappings).values([
+        {
+          directoryId: annuaire.id,
+          groupDn: 'cn=Techniciens,ou=groups,dc=exemple,dc=fr',
+          profileId: reference('Technicien'),
+          entityId: siteA,
+          isRecursive: false,
+        },
+        {
+          directoryId: annuaire.id,
+          groupDn: 'cn=Superviseurs,ou=groups,dc=exemple,dc=fr',
+          profileId: reference('Superviseur'),
+          entityId: nord,
+          isRecursive: true,
+        },
+      ]);
+    }
   });
 
   logger.log('Jeu de demonstration cree. Mot de passe commun a tous les comptes : tick');
+  logger.log("Comptes d'annuaire : thomas.ldap et sophie.ldap, mot de passe : annuaire");
   await app.close();
 }
 

@@ -29,6 +29,13 @@
       "when": 1788615962542,
       "tag": "0003_droits_ldap",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1788616912636,
+      "tag": "0004_eager_the_twelve",
+      "breakpoints": true
     }
   ]
 }

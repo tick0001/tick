@@ -1,0 +1,53 @@
+# Jeu de donnees d'annuaire pour le developpement et les tests d'integration.
+#
+# Deux unites d'organisation, deux comptes et deux groupes : le minimum pour
+# eprouver le parcours complet, y compris la revocation d'une habilitation
+# quand un compte quitte un groupe.
+#
+# Les mots de passe sont en clair : cet annuaire n'existe qu'en local et en
+# integration continue, et n'est jamais expose.
+
+dn: ou=users,dc=exemple,dc=fr
+objectClass: organizationalUnit
+ou: users
+
+dn: ou=groups,dc=exemple,dc=fr
+objectClass: organizationalUnit
+ou: groups
+
+dn: uid=thomas.ldap,ou=users,dc=exemple,dc=fr
+objectClass: inetOrgPerson
+uid: thomas.ldap
+cn: Thomas Petit
+sn: Petit
+givenName: Thomas
+mail: thomas.ldap@exemple.fr
+userPassword: annuaire
+
+dn: uid=sophie.ldap,ou=users,dc=exemple,dc=fr
+objectClass: inetOrgPerson
+uid: sophie.ldap
+cn: Sophie Bernard
+sn: Bernard
+givenName: Sophie
+mail: sophie.ldap@exemple.fr
+userPassword: annuaire
+
+dn: uid=sans.groupe,ou=users,dc=exemple,dc=fr
+objectClass: inetOrgPerson
+uid: sans.groupe
+cn: Paul Sansgroupe
+sn: Sansgroupe
+givenName: Paul
+mail: sans.groupe@exemple.fr
+userPassword: annuaire
+
+dn: cn=Techniciens,ou=groups,dc=exemple,dc=fr
+objectClass: groupOfNames
+cn: Techniciens
+member: uid=thomas.ldap,ou=users,dc=exemple,dc=fr
+
+dn: cn=Superviseurs,ou=groups,dc=exemple,dc=fr
+objectClass: groupOfNames
+cn: Superviseurs
+member: uid=sophie.ldap,ou=users,dc=exemple,dc=fr

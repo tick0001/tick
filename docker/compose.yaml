@@ -45,6 +45,45 @@ services:
       - '1025:1025'
       - '8025:8025'
 
+  # Annuaire de developpement et d'integration.
+  #
+  # osixia/openldap n'est plus maintenu, ce qui est acceptable pour une
+  # dependance de test : elle n'est jamais deployee. Elle reste la reference de
+  # fait pour amorcer un annuaire par fichier LDIF, ce dont depend la
+  # reproductibilite des tests.
+  #
+  # Le mode `search` de decouverte des groupes est ici obligatoire : OpenLDAP
+  # n'expose pas `memberOf` sans surcouche, contrairement a Active Directory.
+  openldap:
+    image: osixia/openldap:1.5.0
+    container_name: tick-openldap
+    restart: unless-stopped
+    command: ['--copy-service', '--loglevel', 'warning']
+    environment:
+      LDAP_ORGANISATION: Tick
+      LDAP_DOMAIN: exemple.fr
+      LDAP_ADMIN_PASSWORD: admin
+      LDAP_CONFIG_PASSWORD: config
+      LDAP_REMOVE_CONFIG_AFTER_SETUP: 'true'
+    ports:
+      # 1389 plutot que 389 : port non privilegie, et aucun conflit avec un
+      # annuaire deja installe sur la machine.
+      - '1389:389'
+    volumes:
+      - ./openldap/bootstrap:/container/service/slapd/assets/config/bootstrap/ldif/custom:ro
+      - openldap-data:/var/lib/ldap
+      - openldap-config:/etc/ldap/slapd.d
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - ldapsearch -x -H ldap://localhost -b dc=exemple,dc=fr -D "cn=admin,dc=exemple,dc=fr" -w admin > /dev/null
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 20s
+
 volumes:
   postgres-data:
   redis-data:
+  openldap-data:
+  openldap-config:

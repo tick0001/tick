@@ -44,6 +44,9 @@ jobs:
       DATABASE_APP_URL: postgres://tick_app:tick_app@localhost:5432/tick
       REDIS_URL: redis://localhost:6379
       SESSION_SECRET: secret-de-test-integration
+      ENCRYPTION_KEY: '0000000000000000000000000000000000000000000000000000000000000000'
+      LDAP_HOST: localhost
+      LDAP_PORT: '1389'
 
     steps:
       - uses: actions/checkout@v4
@@ -54,6 +57,13 @@ jobs:
         with:
           node-version: 22
           cache: pnpm
+
+      - name: Annuaire de test
+        # Demarre depuis le meme fichier Compose que le poste de developpement,
+        # plutot que redeclare en service GitHub : la definition reste unique, et
+        # le conteneur peut lire le LDIF d'amorcage, indisponible avant la
+        # recuperation du depot.
+        run: docker compose -f docker/compose.yaml up -d --wait openldap
 
       - run: pnpm install --frozen-lockfile
 

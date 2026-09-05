@@ -1,6 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { and, eq, ldapDirectories } from '@tick/db';
-import { Client } from 'ldapts';
+import { Client, type Entry } from 'ldapts';
 import { SecretsService } from '../common/secrets.service.js';
 import { DatabaseService } from '../database/database.service.js';
 
@@ -89,6 +89,41 @@ export class LdapService {
     });
   }
 
+  private async bindServiceAccount(client: Client, directory: LdapDirectory): Promise<void> {
+    if (!directory.bindDn || !directory.bindPasswordEncrypted) return;
+
+    await client.bind(directory.bindDn, this.secrets.decrypt(directory.bindPasswordEncrypted));
+  }
+
+  /**
+   * Retrouve les groupes d'un utilisateur, selon la strategie de l'annuaire.
+   *
+   * En mode `attribute`, ils sont deja sur l'entree utilisateur : c'est le
+   * comportement d'Active Directory. En mode `search`, il faut interroger les
+   * groupes eux-memes, seule voie fiable avec OpenLDAP, ou l'attribut `memberOf`
+   * depend d'une surcouche rarement activee.
+   */
+  private async resolveGroups(
+    client: Client,
+    directory: LdapDirectory,
+    entry: Entry,
+  ): Promise<string[]> {
+    if (directory.groupSearchMode === 'attribute') {
+      return allValues(entry[directory.memberOfAttribute]);
+    }
+
+    const critere = `(${directory.groupMemberAttribute}=${escapeFilterValue(entry.dn)})`;
+    const { searchEntries } = await client.search(directory.groupBaseDn ?? directory.baseDn, {
+      scope: 'sub',
+      filter: `(&${directory.groupFilter}${critere})`,
+      // Seul le nom distinctif nous interesse : les correspondances vers les
+      // habilitations sont declarees par DN.
+      attributes: ['dn'],
+    });
+
+    return searchEntries.map((groupe) => groupe.dn);
+  }
+
   /**
    * Authentifie un utilisateur contre un annuaire.
    *
@@ -112,9 +147,7 @@ export class LdapService {
     const client = this.createClient(directory);
 
     try {
-      if (directory.bindDn && directory.bindPasswordEncrypted) {
-        await client.bind(directory.bindDn, this.secrets.decrypt(directory.bindPasswordEncrypted));
-      }
+      await this.bindServiceAccount(client, directory);
 
       const critere = `(${directory.loginAttribute}=${escapeFilterValue(username)})`;
       const { searchEntries } = await client.search(directory.baseDn, {
@@ -125,7 +158,7 @@ export class LdapService {
           directory.emailAttribute,
           directory.firstNameAttribute,
           directory.lastNameAttribute,
-          directory.groupMemberAttribute,
+          directory.memberOfAttribute,
         ],
       });
 
@@ -134,7 +167,7 @@ export class LdapService {
       const entry = searchEntries[0];
       if (!entry || searchEntries.length > 1) return null;
 
-      await client.unbind();
+      const groupDns = await this.resolveGroups(client, directory, entry);
 
       // Nouvelle connexion pour la liaison utilisateur : reutiliser la
       // precedente laisserait la session liee au compte de service si la
@@ -153,7 +186,7 @@ export class LdapService {
         email: firstValue(entry[directory.emailAttribute]),
         firstName: firstValue(entry[directory.firstNameAttribute]),
         lastName: firstValue(entry[directory.lastNameAttribute]),
-        groupDns: allValues(entry[directory.groupMemberAttribute]),
+        groupDns,
       };
     } catch (error) {
       this.logger.debug(`Echec d'authentification sur ${directory.name} : ${String(error)}`);
