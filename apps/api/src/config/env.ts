@@ -72,6 +72,11 @@ const envSchema = z.object({
    * pointera vers un dossier de donnees.
    */
   PLUGINS_PATH: z.string().default('./plugins'),
+  /**
+   * Verbosite du journal. Chaque niveau inclut les precedents.
+   * `debug` trace notamment la distribution des evenements aux plugins.
+   */
+  LOG_LEVEL: z.enum(['error', 'warn', 'log', 'debug', 'verbose']).default('log'),
 });
 
 export type Env = z.infer<typeof envSchema>;

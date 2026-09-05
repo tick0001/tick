@@ -41,7 +41,7 @@ describe("Substrat d'extension", () => {
           id: PLUGIN_ID,
           name: 'Essai du substrat',
           version,
-          sdk: '^0.1.0',
+          sdk: '^0.2.0',
           permissions: ['schema:own', 'hooks', 'events'],
           server: './server.js',
           migrations: './migrations',

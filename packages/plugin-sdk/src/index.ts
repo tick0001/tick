@@ -54,7 +54,51 @@ export interface HookPayloads {
     id: number;
     changes: { name?: string; comment?: string | null; parentId?: number };
   };
+
+  /**
+   * Avant création d'un ticket. Le hook peut normaliser le titre, imposer une
+   * catégorie, forcer une urgence — ou refuser en levant une exception.
+   *
+   * La priorité n'y figure pas : elle est dérivée de l'urgence et de l'impact
+   * après passage des hooks, précisément pour qu'elle ne puisse pas contredire
+   * ses propres termes.
+   */
+  'ticket.beforeCreate': {
+    entityId: number;
+    name: string;
+    content: string;
+    type: 'incident' | 'request';
+    urgency: number;
+    impact: number;
+    categoryId: number | null;
+  };
+
+  'ticket.beforeUpdate': {
+    id: number;
+    changes: Record<string, unknown>;
+  };
+
+  /**
+   * Avant changement de statut. C'est le point d'accroche des règles de
+   * workflow : refuser une résolution sans solution, exiger une validation
+   * avant clôture.
+   */
+  'ticket.beforeStatusChange': {
+    id: number;
+    from: ItilStatus;
+    to: ItilStatus;
+  };
+
+  /** Avant ajout d'un suivi. Permet de filtrer ou d'enrichir le contenu. */
+  'followup.beforeAdd': {
+    ticketId: number;
+    content: string;
+    isPrivate: boolean;
+  };
 }
+
+/** Statuts d'un objet ITIL, repris tels quels du cœur. */
+export type ItilStatus = 'new' | 'assigned' | 'planned' | 'waiting' | 'solved' | 'closed';
 
 /**
  * Événements : asynchrones, publiés **après** le commit.
@@ -69,6 +113,26 @@ export interface EventPayloads {
   'entity.updated': { id: number; name: string };
   'entity.deleted': { id: number };
   'plugin.activated': { pluginId: string };
+
+  'ticket.created': {
+    id: number;
+    entityId: number;
+    name: string;
+    type: 'incident' | 'request';
+    priority: number;
+  };
+  'ticket.updated': { id: number; entityId: number; changedFields: string[] };
+  'ticket.statusChanged': { id: number; entityId: number; from: ItilStatus; to: ItilStatus };
+  'ticket.solved': { id: number; entityId: number };
+  'ticket.closed': { id: number; entityId: number };
+  'ticket.deleted': { id: number; entityId: number };
+
+  'followup.added': { ticketId: number; followupId: number; isPrivate: boolean };
+  'task.added': { ticketId: number; taskId: number };
+  'solution.proposed': { ticketId: number; solutionId: number };
+  'solution.answered': { ticketId: number; solutionId: number; accepted: boolean };
+  'validation.requested': { ticketId: number; validationId: number };
+  'validation.answered': { ticketId: number; validationId: number; granted: boolean };
 }
 
 export type HookName = keyof HookPayloads;

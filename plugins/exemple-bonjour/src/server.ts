@@ -54,6 +54,47 @@ export default definePlugin({
     });
 
     /**
+     * Même mécanique sur le ticket, apparue avec le SDK 0.2.
+     *
+     * Le hook s'exécute **avant** le calcul de la priorité : relever l'urgence
+     * ici fait suivre la priorité, ce qui ne serait pas le cas si la priorité
+     * était figée en amont.
+     */
+    api.hooks.on('ticket.beforeCreate', (payload, context) => {
+      const titre = payload.name.trim().replaceAll(/\s+/g, ' ');
+
+      if (titre.length < 5) {
+        throw new Error('un titre de ticket doit faire au moins cinq caractères');
+      }
+
+      // Démonstration de l'ordre : un mot-clé dans le titre relève l'urgence,
+      // et la priorité recalculée en tient compte.
+      const urgent = /\burgent\b/i.test(titre);
+
+      if (urgent && payload.urgency < 5) {
+        context.logger.debug(`Urgence relevée pour « ${titre} »`);
+
+        return { ...payload, name: titre, urgency: 5 };
+      }
+
+      return { ...payload, name: titre };
+    });
+
+    api.events.on('ticket.created', async (payload, context) => {
+      await context.db.query('INSERT INTO journal (evenement, detail) VALUES ($1, $2)', [
+        'ticket.created',
+        `#${String(payload.id)} ${payload.name} (priorité ${String(payload.priority)})`,
+      ]);
+    });
+
+    api.events.on('ticket.statusChanged', async (payload, context) => {
+      await context.db.query('INSERT INTO journal (evenement, detail) VALUES ($1, $2)', [
+        'ticket.statusChanged',
+        `#${String(payload.id)} ${payload.from} vers ${payload.to}`,
+      ]);
+    });
+
+    /**
      * Événement asynchrone, après le commit.
      *
      * Il écrit dans la table du plugin, dans son propre schéma. Si la création
@@ -73,6 +114,6 @@ export default definePlugin({
       ]);
     });
 
-    api.context.logger.log('Enregistré : 1 hook, 2 abonnements.');
+    api.context.logger.log('Enregistré : 2 hooks, 4 abonnements.');
   },
 });

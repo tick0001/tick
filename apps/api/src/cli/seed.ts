@@ -17,11 +17,19 @@ import {
   entitySettings,
   groupMembers,
   groups,
+  itilActors,
+  itilCategories,
+  itilFollowups,
   ldapDirectories,
   ldapGroupMappings,
+  locations,
   profileRights,
   profiles,
+  requestSources,
+  solutionTypes,
   sql,
+  taskCategories,
+  tickets,
   users,
   type Transaction,
 } from '@tick/db';
@@ -116,7 +124,11 @@ async function main(): Promise<void> {
 
   await db.asOwner(async (tx) => {
     await tx.execute(sql`
-      TRUNCATE sessions, authorizations, group_members, groups, profile_rights,
+      TRUNCATE logs, itil_links, itil_costs, itil_validations, itil_solutions,
+               itil_tasks, itil_followups, itil_actors, tickets,
+               ticket_template_fields, ticket_templates, suppliers, locations,
+               solution_types, task_categories, request_sources, itil_categories,
+               sessions, authorizations, group_members, groups, profile_rights,
                profiles, entity_settings, users, ldap_group_mappings,
                ldap_directories, entities RESTART IDENTITY CASCADE
     `);
@@ -310,6 +322,239 @@ async function main(): Promise<void> {
         isDefault: true,
       })
       .returning({ id: ldapDirectories.id });
+
+    // ------------------------------------------------------------------
+    // Referentiels ITIL
+    //
+    // Definis a la racine avec le drapeau recursif : utilisables partout, sans
+    // avoir a les redeclarer entite par entite. C'est exactement l'usage pour
+    // lequel `is_recursive` existe.
+    // ------------------------------------------------------------------
+    const referentielRacine = { entityId: racine, entityPath: 'temporaire', isRecursive: true };
+
+    const creerCategorie = async (nom: string, parent: number | null): Promise<number> => {
+      const [ligne] = await tx
+        .insert(itilCategories)
+        .values({ ...referentielRacine, parentId: parent, path: 'x', name: nom, completeName: nom })
+        .returning({ id: itilCategories.id });
+
+      if (!ligne) throw new Error(`Creation de la categorie ${nom} impossible.`);
+
+      return ligne.id;
+    };
+
+    const materiel = await creerCategorie('Materiel', null);
+    const impression = await creerCategorie('Impression', materiel);
+    await creerCategorie('Poste de travail', materiel);
+    const logiciel = await creerCategorie('Logiciel', null);
+    const messagerie = await creerCategorie('Messagerie', logiciel);
+    await creerCategorie('Acces et comptes', null);
+
+    const [sourceTelephone] = await tx
+      .insert(requestSources)
+      .values([
+        { ...referentielRacine, name: 'Telephone', isDefault: true },
+        { ...referentielRacine, name: 'Courriel' },
+        { ...referentielRacine, name: 'Guichet' },
+        { ...referentielRacine, name: 'Supervision' },
+      ])
+      .returning({ id: requestSources.id });
+
+    await tx.insert(taskCategories).values([
+      { ...referentielRacine, parentId: null, path: 'x', name: 'Diagnostic', completeName: 'x' },
+      { ...referentielRacine, parentId: null, path: 'x', name: 'Intervention', completeName: 'x' },
+      { ...referentielRacine, parentId: null, path: 'x', name: 'Suivi', completeName: 'x' },
+    ]);
+
+    await tx.insert(solutionTypes).values([
+      { ...referentielRacine, name: 'Correctif' },
+      { ...referentielRacine, name: 'Contournement' },
+      { ...referentielRacine, name: 'Sans suite' },
+    ]);
+
+    const [siteNord] = await tx
+      .insert(locations)
+      .values({
+        ...referentielRacine,
+        parentId: null,
+        path: 'x',
+        name: 'Batiment Nord',
+        completeName: 'x',
+      })
+      .returning({ id: locations.id });
+
+    // ------------------------------------------------------------------
+    // Tickets de demonstration, repartis dans l'arborescence
+    //
+    // Leur repartition n'est pas decorative : elle permet de verifier qu'un
+    // technicien de Site A ne voit pas les tickets de Site B, et qu'une portee
+    // `own` ne montre que les siens.
+    // ------------------------------------------------------------------
+    const creerTicket = async (options: {
+      entite: number;
+      titre: string;
+      contenu: string;
+      type: 'incident' | 'request';
+      statut: 'new' | 'assigned' | 'planned' | 'waiting' | 'solved' | 'closed';
+      urgence: number;
+      impact: number;
+      priorite: number;
+      categorie: number | null;
+      demandeur: number;
+      assigne?: number;
+    }): Promise<number> => {
+      const [ligne] = await tx
+        .insert(tickets)
+        .values({
+          entityId: options.entite,
+          entityPath: 'temporaire',
+          name: options.titre,
+          content: options.contenu,
+          type: options.type,
+          status: options.statut,
+          urgency: options.urgence,
+          impact: options.impact,
+          priority: options.priorite,
+          categoryId: options.categorie,
+          requestSourceId: sourceTelephone?.id ?? null,
+          locationId: siteNord?.id ?? null,
+          createdById: options.demandeur,
+          updatedById: options.demandeur,
+          dateTakenIntoAccount: options.statut === 'new' ? null : new Date(),
+        })
+        .returning({ id: tickets.id });
+
+      if (!ligne) throw new Error(`Creation du ticket ${options.titre} impossible.`);
+
+      await tx.insert(itilActors).values([
+        {
+          itilType: 'ticket' as const,
+          itilId: ligne.id,
+          role: 'requester' as const,
+          actorType: 'user' as const,
+          actorId: options.demandeur,
+        },
+        ...(options.assigne
+          ? [
+              {
+                itilType: 'ticket' as const,
+                itilId: ligne.id,
+                role: 'assigned' as const,
+                actorType: 'user' as const,
+                actorId: options.assigne,
+              },
+            ]
+          : []),
+      ]);
+
+      return ligne.id;
+    };
+
+    const premier = await creerTicket({
+      entite: siteA,
+      titre: 'Imprimante du 2e etage hors service',
+      contenu: 'Voyant rouge clignotant, aucun document ne sort depuis ce matin.',
+      type: 'incident',
+      statut: 'assigned',
+      urgence: 4,
+      impact: 3,
+      priorite: 4,
+      categorie: impression,
+      demandeur: reference('demandeur'),
+      assigne: reference('thomas'),
+    });
+
+    await creerTicket({
+      entite: siteA,
+      titre: 'Demande de licence bureautique',
+      contenu: 'Nouvelle arrivee au service comptabilite, poste a equiper.',
+      type: 'request',
+      statut: 'new',
+      urgence: 2,
+      impact: 2,
+      priorite: 2,
+      categorie: logiciel,
+      demandeur: reference('demandeur'),
+    });
+
+    await creerTicket({
+      entite: siteB,
+      titre: 'Messagerie inaccessible depuis l exterieur',
+      contenu: 'Le webmail repond une erreur 502 depuis les acces distants.',
+      type: 'incident',
+      statut: 'waiting',
+      urgence: 5,
+      impact: 4,
+      priorite: 5,
+      categorie: messagerie,
+      demandeur: reference('lea'),
+      assigne: reference('lea'),
+    });
+
+    await creerTicket({
+      entite: dsi,
+      titre: 'Renouvellement du certificat du portail',
+      contenu: 'Expiration dans trois semaines, prevoir le renouvellement.',
+      type: 'request',
+      statut: 'planned',
+      urgence: 3,
+      impact: 4,
+      priorite: 4,
+      categorie: null,
+      demandeur: reference('admin'),
+      assigne: reference('sophie'),
+    });
+
+    await creerTicket({
+      entite: nord,
+      titre: 'Poste de travail lent au demarrage',
+      contenu: 'Plus de cinq minutes avant d obtenir la session.',
+      type: 'incident',
+      statut: 'solved',
+      urgence: 2,
+      impact: 1,
+      priorite: 1,
+      categorie: materiel,
+      demandeur: reference('demandeur'),
+      assigne: reference('sophie'),
+    });
+
+    // Ticket dans l'entite du demandeur : sans lui, la portee `own` ne serait
+    // demontrable par aucun compte du jeu de demonstration.
+    await creerTicket({
+      entite: dsi,
+      titre: 'Acces au partage comptabilite refuse',
+      contenu: 'Message de droits insuffisants a l ouverture du dossier partage.',
+      type: 'incident',
+      statut: 'new',
+      urgence: 3,
+      impact: 2,
+      priorite: 3,
+      categorie: null,
+      demandeur: reference('demandeur'),
+    });
+
+    await tx.insert(itilFollowups).values([
+      {
+        itilType: 'ticket' as const,
+        itilId: premier,
+        entityId: siteA,
+        entityPath: 'temporaire',
+        content: 'Deplacement prevu cet apres-midi pour diagnostic sur site.',
+        authorId: reference('thomas'),
+        source: 'interface' as const,
+      },
+      {
+        itilType: 'ticket' as const,
+        itilId: premier,
+        entityId: siteA,
+        entityPath: 'temporaire',
+        content: 'Piece a commander : le tambour est hors garantie.',
+        isPrivate: true,
+        authorId: reference('thomas'),
+        source: 'interface' as const,
+      },
+    ]);
 
     if (annuaire) {
       // Appartenir a un groupe d'annuaire accorde une habilitation, retiree

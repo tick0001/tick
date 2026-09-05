@@ -1,13 +1,17 @@
 {
   "id": "exemple-bonjour",
   "name": "Exemple — Bonjour",
-  "version": "1.0.0",
-  "sdk": "^0.1.0",
+  "version": "1.1.0",
+  "sdk": "^0.2.0",
   "description": "Plugin de reference : exerce chaque point d'extension du substrat.",
   "license": "GPL-3.0-or-later",
   "permissions": ["schema:own", "hooks", "events"],
   "rights": [
-    { "key": "journal_bonjour", "label": "Journal du plugin Bonjour", "actions": ["read"] }
+    {
+      "key": "journal_bonjour",
+      "label": "Journal du plugin Bonjour",
+      "actions": ["read"]
+    }
   ],
   "server": "./dist/server.js",
   "client": "./dist/client.js",

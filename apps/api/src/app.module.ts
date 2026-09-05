@@ -7,6 +7,7 @@ import { DatabaseModule } from './database/database.module.js';
 import { EntitiesModule } from './entities/entities.module.js';
 import { HealthModule } from './health/health.module.js';
 import { PluginsModule } from './plugins/plugins.module.js';
+import { TicketsModule } from './tickets/tickets.module.js';
 
 @Module({
   imports: [
@@ -21,6 +22,7 @@ import { PluginsModule } from './plugins/plugins.module.js';
     AuthModule,
     PluginsModule,
     EntitiesModule,
+    TicketsModule,
     HealthModule,
   ],
 })

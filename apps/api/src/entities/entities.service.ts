@@ -13,6 +13,7 @@ const INHERITABLE_SETTINGS = [
   'mailFrom',
   'mailReplyTo',
   'defaultLocale',
+  'priorityMatrix',
 ] as const;
 
 export type InheritableSetting = (typeof INHERITABLE_SETTINGS)[number];
@@ -175,7 +176,8 @@ export class EntitiesService {
           s.auto_purge_delay_days AS "autoPurgeDelayDays",
           s.mail_from             AS "mailFrom",
           s.mail_reply_to         AS "mailReplyTo",
-          s.default_locale        AS "defaultLocale"
+          s.default_locale        AS "defaultLocale",
+          s.priority_matrix       AS "priorityMatrix"
         FROM entities cible
         JOIN entities ancetre ON ancetre.path @> cible.path
         LEFT JOIN entity_settings s ON s.entity_id = ancetre.id
@@ -201,6 +203,17 @@ export class EntitiesService {
     }
 
     return { values, origins };
+  }
+
+  /**
+   * Valeur effective d'un seul parametre.
+   *
+   * Passe par la resolution complete : l'arbre est court et le resultat mis en
+   * cache par PostgreSQL, alors qu'une requete par parametre multiplierait les
+   * allers-retours sur une page qui en lit plusieurs.
+   */
+  async resolveSetting(entityId: number, key: InheritableSetting): Promise<unknown> {
+    return (await this.resolveSettings(entityId)).values[key];
   }
 
   /** Ecrit la configuration propre a une entite. Un champ nul retablit l'heritage. */

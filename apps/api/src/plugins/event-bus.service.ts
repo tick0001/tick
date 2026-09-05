@@ -52,6 +52,12 @@ export class EventBus implements OnModuleInit, OnModuleDestroy {
       this.logger.warn(`Evenement ${job?.data.name ?? '?'} en echec : ${error.message}`);
     });
 
+    // Sans ecouteur, une erreur de connexion emise par le worker remonte en
+    // exception non gouvernee et fait tomber le processus.
+    this.worker.on('error', (error) => {
+      this.logger.error(`File d'evenements : ${error.message}`);
+    });
+
     setEventPublisher((events) => this.publish(events));
   }
 
@@ -102,6 +108,11 @@ export class EventBus implements OnModuleInit, OnModuleDestroy {
    */
   private async dispatch(event: PendingEvent): Promise<void> {
     const liste = this.registrations.get(event.name);
+
+    this.logger.debug(
+      `${event.name} -> ${String(liste?.length ?? 0)} abonne(s) : ` +
+        `${(liste ?? []).map((r) => r.pluginId).join(', ') || 'aucun'}`,
+    );
 
     if (!liste || liste.length === 0) return;
 
