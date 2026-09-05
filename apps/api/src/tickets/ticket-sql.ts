@@ -94,6 +94,22 @@ export function decodeCursor(brut: string | undefined): Cursor | null {
 }
 
 /**
+ * Texte d'une valeur venant de SQL brut.
+ *
+ * Un objet ne doit jamais devenir « [object Object] » : il est serialise en
+ * JSON, ce qui reste lisible et diagnosticable. Les autres types passent par
+ * leur representation naturelle.
+ */
+export function toText(valeur: unknown): string {
+  if (valeur === null || valeur === undefined) return '';
+  if (typeof valeur === 'string') return valeur;
+  if (typeof valeur === 'number' || typeof valeur === 'boolean') return String(valeur);
+  if (valeur instanceof Date) return valeur.toISOString();
+
+  return JSON.stringify(valeur) ?? '';
+}
+
+/**
  * Convertit en date ISO une valeur venant de SQL brut.
  *
  * `tx.execute` ne passe pas par le typage de Drizzle : selon la requete, une
@@ -104,7 +120,7 @@ export function toIso(valeur: unknown): string | null {
   if (valeur === null || valeur === undefined) return null;
   if (valeur instanceof Date) return valeur.toISOString();
 
-  const date = new Date(String(valeur));
+  const date = new Date(toText(valeur));
 
   return Number.isNaN(date.getTime()) ? null : date.toISOString();
 }

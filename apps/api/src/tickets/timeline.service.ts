@@ -16,7 +16,7 @@ import { emitEvent } from '../plugins/event-buffer.js';
 import { HookBus } from '../plugins/hook-bus.service.js';
 import { HistoryService } from './history.service.js';
 import { TicketScopeService } from './ticket-scope.service.js';
-import { toIso, toIsoRequired } from './ticket-sql.js';
+import { toIso, toIsoRequired, toText } from './ticket-sql.js';
 
 interface TicketRef {
   id: number;
@@ -191,7 +191,7 @@ export class TimelineService {
           return {
             ...base,
             kind: 'task' as const,
-            content: String(row['content'] ?? ''),
+            content: toText(row['content']),
             state: row['state'] as 'information' | 'todo' | 'done',
             isPrivate: Boolean(row['isPrivate']),
             actionTime: Number(row['actionTime'] ?? 0),
@@ -206,7 +206,7 @@ export class TimelineService {
           return {
             ...base,
             kind: 'solution' as const,
-            content: String(row['content'] ?? ''),
+            content: toText(row['content']),
             status: row['status'] as 'proposed' | 'accepted' | 'refused',
             solutionType: null,
             approvalComment: (row['approvalComment'] as string | null) ?? null,
@@ -226,7 +226,7 @@ export class TimelineService {
           return {
             ...base,
             kind: 'log' as const,
-            field: String(row['field'] ?? ''),
+            field: toText(row['field']),
             oldValue: (row['oldValue'] as string | null) ?? null,
             newValue: (row['newValue'] as string | null) ?? null,
           };
@@ -235,7 +235,7 @@ export class TimelineService {
           return {
             ...base,
             kind: 'followup' as const,
-            content: String(row['content'] ?? ''),
+            content: toText(row['content']),
             isPrivate: Boolean(row['isPrivate']),
             source: row['source'] as 'interface' | 'email' | 'phone' | 'other',
           };

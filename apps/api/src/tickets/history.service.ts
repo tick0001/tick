@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { logs, type Transaction } from '@tick/db';
 import { currentContext } from '../common/request-context.js';
+import { toText } from './ticket-sql.js';
 
 export interface FieldChange {
   field: string;
@@ -13,10 +14,8 @@ const IGNORED = new Set(['updatedAt', 'updatedById', 'entityPath', 'priority']);
 
 function render(valeur: unknown): string | null {
   if (valeur === null || valeur === undefined) return null;
-  if (valeur instanceof Date) return valeur.toISOString();
-  if (typeof valeur === 'object') return JSON.stringify(valeur);
 
-  return String(valeur);
+  return toText(valeur);
 }
 
 /**

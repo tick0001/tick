@@ -27,6 +27,7 @@ import {
   taskCount,
   toIso,
   toIsoRequired,
+  toText,
 } from './ticket-sql.js';
 
 /**
@@ -215,12 +216,12 @@ export class TicketsService {
 
     return {
       ...toSummary(row),
-      content: String(detail['content'] ?? ''),
+      content: toText(detail['content']),
       requestSource: detail['requestSourceId']
-        ? { id: Number(detail['requestSourceId']), name: String(detail['requestSourceName']) }
+        ? { id: Number(detail['requestSourceId']), name: toText(detail['requestSourceName']) }
         : null,
       location: detail['locationId']
-        ? { id: Number(detail['locationId']), name: String(detail['locationName']) }
+        ? { id: Number(detail['locationId']), name: toText(detail['locationName']) }
         : null,
       dateTakenIntoAccount: toIso(detail['dateTakenIntoAccount']),
       dateSolved: toIso(detail['dateSolved']),
@@ -230,7 +231,7 @@ export class TicketsService {
       validationStatus: (detail['validationStatus'] as TicketDetail['validationStatus']) ?? null,
       actors: await this.actorsOf(id),
       createdBy: detail['createdById']
-        ? { id: Number(detail['createdById']), name: String(detail['createdByName']) }
+        ? { id: Number(detail['createdById']), name: toText(detail['createdByName']) }
         : null,
       createdAt: toIsoRequired(detail['createdAt']),
       updatedAt: toIsoRequired(detail['updatedAt']),
@@ -344,14 +345,13 @@ export class TicketsService {
 
   private cursorValue(valeur: unknown): string | null {
     if (valeur === null || valeur === undefined) return null;
-    if (valeur instanceof Date) return valeur.toISOString();
 
-    return String(valeur);
+    return toText(valeur);
   }
 
   /** Les dates issues de SQL brut sont normalisees avant tout calcul. */
   private static asDate(valeur: unknown): Date {
-    return valeur instanceof Date ? valeur : new Date(String(valeur));
+    return valeur instanceof Date ? valeur : new Date(toText(valeur));
   }
 
   /**
@@ -385,7 +385,7 @@ export class TicketsService {
 
     const propose = await this.hooks.run('ticket.beforeUpdate', {
       id,
-      changes: { ...input } as Record<string, unknown>,
+      changes: { ...input },
     });
     const changes = propose.changes as UpdateTicket;
 
@@ -412,7 +412,7 @@ export class TicketsService {
       return this.history.recordChanges(
         tx,
         { type: 'ticket', id, entityId: avant.entityId },
-        avant as unknown as Record<string, unknown>,
+        avant,
         patch,
       );
     });
