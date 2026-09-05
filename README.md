@@ -61,6 +61,17 @@ illustre un cas que le modèle doit savoir traiter.
 | `pnpm db:reset`       | Repart d'une base vierge, migrée et amorcée |
 | `pnpm services:reset` | Réinitialise les services et leurs volumes  |
 
+### Ce que l'application sait faire aujourd'hui
+
+Jalons J0 à J3 livrés : entités hiérarchiques et Row-Level Security, authentification locale et
+LDAP, substrat de plugins, et le **ticket de bout en bout** — cycle de vie complet, acteurs,
+chronologie unifiée, gabarits, recherche multi-critères avec recherches sauvegardées, notifications
+par courriel et pièces jointes.
+
+Après `pnpm dev`, ouvrir <http://localhost:5173> et se connecter avec `sophie` / `tick` : c'est le
+compte qui voit le plus de choses sans être administrateur. Les courriels partent vers Mailpit,
+consultable sur <http://localhost:8025>.
+
 ### Plugins
 
 Le plugin de référence `plugins/exemple-bonjour` exerce chaque point d'extension et sert de test
