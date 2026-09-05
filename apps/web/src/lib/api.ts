@@ -1,25 +1,41 @@
 import type {
   AddFollowup,
+  Agreement,
+  Calendar,
   CreateTicket,
   EntitySummary,
   ItilStatus,
   Login,
+  Rule,
+  RuleCollection,
+  RuleField,
   SavedSearch,
   SaveSearch,
   SearchField,
   SearchRequest,
   SessionContext,
+  SimulationResult,
   SwitchContext,
+  TicketAgreement,
   TicketDetail,
   TicketPage,
   TicketTemplate,
   TimelineEntry,
+  UpsertAgreement,
+  UpsertCalendar,
+  UpsertRule,
 } from '@tick/contracts';
 import {
+  agreementSchema,
+  calendarSchema,
   entitySummarySchema,
+  ruleFieldSchema,
+  ruleSchema,
   savedSearchSchema,
   searchFieldSchema,
   sessionContextSchema,
+  simulationResultSchema,
+  ticketAgreementSchema,
   ticketDetailSchema,
   ticketPageSchema,
   ticketTemplateSchema,
@@ -179,6 +195,71 @@ export const api = {
     request(`/tickets/${String(id)}`, ticketDetailSchema, {
       method: 'PATCH',
       body: JSON.stringify({ status }),
+    }),
+
+  // --- Niveaux de service ----------------------------------------------------
+
+  ticketAgreements: (id: number): Promise<TicketAgreement[]> =>
+    request(`/tickets/${String(id)}/agreements`, ticketAgreementSchema.array()),
+
+  calendars: (): Promise<Calendar[]> => request('/calendars', calendarSchema.array()),
+
+  saveCalendar: (body: UpsertCalendar, id?: number): Promise<Calendar> =>
+    request(id ? `/calendars/${String(id)}` : '/calendars', calendarSchema, {
+      method: id ? 'PUT' : 'POST',
+      body: JSON.stringify(body),
+    }),
+
+  deleteCalendar: async (id: number): Promise<void> => {
+    await fetch(`/api/calendars/${String(id)}`, { method: 'DELETE', credentials: 'include' });
+  },
+
+  agreements: (): Promise<Agreement[]> => request('/agreements', agreementSchema.array()),
+
+  saveAgreement: (body: UpsertAgreement, id?: number): Promise<Agreement> =>
+    request(id ? `/agreements/${String(id)}` : '/agreements', agreementSchema, {
+      method: id ? 'PUT' : 'POST',
+      body: JSON.stringify(body),
+    }),
+
+  deleteAgreement: async (id: number): Promise<void> => {
+    await fetch(`/api/agreements/${String(id)}`, { method: 'DELETE', credentials: 'include' });
+  },
+
+  // --- Regles ----------------------------------------------------------------
+
+  rules: (collection: RuleCollection): Promise<Rule[]> =>
+    request(`/rules?collection=${encodeURIComponent(collection)}`, ruleSchema.array()),
+
+  ruleFields: (collection: RuleCollection): Promise<RuleField[]> =>
+    request(`/rules/fields?collection=${encodeURIComponent(collection)}`, ruleFieldSchema.array()),
+
+  saveRule: (body: UpsertRule, id?: number): Promise<Rule> =>
+    request(id ? `/rules/${String(id)}` : '/rules', ruleSchema, {
+      method: id ? 'PUT' : 'POST',
+      body: JSON.stringify(body),
+    }),
+
+  deleteRule: async (id: number): Promise<void> => {
+    await fetch(`/api/rules/${String(id)}`, { method: 'DELETE', credentials: 'include' });
+  },
+
+  reorderRules: async (ids: number[]): Promise<void> => {
+    await fetch('/api/rules/reorder', {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ids }),
+    });
+  },
+
+  simulateRules: (
+    collection: RuleCollection,
+    input: Record<string, unknown>,
+  ): Promise<SimulationResult> =>
+    request('/rules/simulate', simulationResultSchema, {
+      method: 'POST',
+      body: JSON.stringify({ collection, input }),
     }),
 };
 

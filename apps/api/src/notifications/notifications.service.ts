@@ -1,5 +1,5 @@
 import { Injectable, Logger, type OnApplicationBootstrap } from '@nestjs/common';
-import { notificationQueue, sql } from '@tick/db';
+import { notificationQueue, sql, type SQL } from '@tick/db';
 import { loadEnv } from '../config/env.js';
 import { DatabaseService } from '../database/database.service.js';
 import { EventBus } from '../plugins/event-bus.service.js';
@@ -48,6 +48,7 @@ export class NotificationsService implements OnApplicationBootstrap {
       'ticket.created',
       'ticket.statusChanged',
       'ticket.solved',
+      'ticket.escalated',
       'followup.added',
     ] as const) {
       this.events.registerCore(evenement, async (payload) => {
@@ -151,22 +152,49 @@ export class NotificationsService implements OnApplicationBootstrap {
     const roleActeurs = roles.filter((role) =>
       ['requester', 'observer', 'assigned'].includes(role),
     );
+    const sources: SQL[] = [];
 
-    if (roleActeurs.length === 0) return [];
-
-    return this.db.asOwner(async (tx) => {
-      const resultat = await tx.execute<Destinataire & Record<string, unknown>>(sql`
-        SELECT DISTINCT u.id AS "userId", u.email::text AS email,
-               coalesce(u.locale, 'fr') AS locale
+    if (roleActeurs.length > 0) {
+      sources.push(sql`
+        SELECT a.actor_id AS id
           FROM itil_actors a
-          JOIN users u ON u.id = a.actor_id
          WHERE a.itil_type = 'ticket' AND a.itil_id = ${ticketId}
            AND a.actor_type = 'user'
            AND a.role::text IN (${sql.join(
              roleActeurs.map((role) => sql`${role}`),
              sql`, `,
            )})
-           AND u.email IS NOT NULL
+      `);
+    }
+
+    // Un groupe attribue designe des personnes, pas une adresse : c'est le
+    // destinataire naturel d'une escalade, et l'omettre ferait qu'un modele
+    // visant le groupe n'atteindrait silencieusement personne.
+    if (roles.includes('assigned_group')) {
+      sources.push(sql`
+        SELECT m.user_id AS id
+          FROM itil_actors a
+          JOIN group_members m ON m.group_id = a.actor_id
+         WHERE a.itil_type = 'ticket' AND a.itil_id = ${ticketId}
+           AND a.actor_type = 'group' AND a.role = 'assigned'
+      `);
+    }
+
+    // L'auteur n'est pas toujours le demandeur : un technicien qui saisit un
+    // ticket pour quelqu'un d'autre veut suivre ce qu'il a ouvert.
+    if (roles.includes('author')) {
+      sources.push(sql`SELECT t.created_by_id AS id FROM tickets t WHERE t.id = ${ticketId}`);
+    }
+
+    if (sources.length === 0) return [];
+
+    return this.db.asOwner(async (tx) => {
+      const resultat = await tx.execute<Destinataire & Record<string, unknown>>(sql`
+        SELECT DISTINCT u.id AS "userId", u.email::text AS email,
+               coalesce(u.locale, 'fr') AS locale
+          FROM (${sql.join(sources, sql` UNION `)}) AS cibles
+          JOIN users u ON u.id = cibles.id
+         WHERE u.email IS NOT NULL
            AND u.is_active
            AND u.deleted_at IS NULL
            AND NOT EXISTS (
@@ -186,14 +214,28 @@ export class NotificationsService implements OnApplicationBootstrap {
     destinataire: Destinataire,
     payload: Record<string, unknown>,
   ): Promise<void> {
+    // La charge utile de l'evenement est exposee telle quelle, en plus des
+    // variables du ticket. Enumerer chaque champ a la main obligerait a revenir
+    // ici a chaque nouvel evenement, et un modele ne pourrait jamais citer ce
+    // que l'evenement est seul a savoir — le niveau d'escalade franchi, par
+    // exemple. Seules les valeurs simples passent : un objet imbrique n'a pas
+    // de representation textuelle utile dans un courriel.
     const variables: Record<string, string> = {
+      ...Object.fromEntries(
+        Object.entries(payload)
+          .filter(
+            ([, valeur]) =>
+              typeof valeur === 'string' ||
+              typeof valeur === 'number' ||
+              typeof valeur === 'boolean',
+          )
+          .map(([cle, valeur]) => [cle, toText(valeur)]),
+      ),
       'ticket.id': String(ticket.id),
       'ticket.name': ticket.name,
       'ticket.status': ticket.status,
       'ticket.url': `${loadEnv().WEB_URL}/tickets/${String(ticket.id)}`,
       evenement: evenement,
-      from: toText(payload['from']),
-      to: toText(payload['to']),
     };
 
     const [ligne] = await this.db.asOwner((tx) =>

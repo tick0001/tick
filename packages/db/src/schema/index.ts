@@ -11,3 +11,4 @@ export * from './itil-tickets.js';
 export * from './logs.js';
 export * from './search.js';
 export * from './notifications.js';
+export * from './slm.js';

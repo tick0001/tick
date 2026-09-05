@@ -12,7 +12,13 @@ import 'reflect-metadata';
 import { Logger } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import {
+  agreementLevelActions,
+  agreementLevels,
+  agreements,
   authorizations,
+  calendarSegments,
+  calendars,
+  holidays,
   notificationTemplateTargets,
   notificationTemplateTranslations,
   notificationTemplates,
@@ -26,11 +32,13 @@ import {
   itilCategories,
   itilFollowups,
   ldapDirectories,
-  ldapGroupMappings,
   locations,
   profileRights,
   profiles,
   requestSources,
+  ruleActions,
+  ruleCriteria,
+  rules,
   solutionTypes,
   sql,
   taskCategories,
@@ -38,6 +46,7 @@ import {
   users,
   type Transaction,
 } from '@tick/db';
+import type { RuleActionType, RuleCollection, RuleOperator } from '@tick/contracts';
 import { AppModule } from '../app.module.js';
 import { loadEnvFiles } from '../config/env.js';
 import { PasswordService } from '../auth/password.service.js';
@@ -70,6 +79,8 @@ const PROFILE_RIGHTS: Record<string, RightTriple[]> = {
   ],
   Superviseur: [
     ['plugin', 'read', 'recursive'],
+    ['slm', 'read', 'recursive'],
+    ['rule', 'read', 'recursive'],
     ['ticket', 'read', 'recursive'],
     ['ticket', 'create', 'recursive'],
     ['ticket', 'update', 'recursive'],
@@ -99,6 +110,10 @@ const PROFILE_RIGHTS: Record<string, RightTriple[]> = {
     ['plugin', 'read', 'all'],
     ['plugin', 'update', 'all'],
     ['plugin', 'delete', 'all'],
+    ['slm', 'read', 'all'],
+    ['slm', 'update', 'all'],
+    ['rule', 'read', 'all'],
+    ['rule', 'update', 'all'],
   ],
 };
 
@@ -137,11 +152,14 @@ async function main(): Promise<void> {
                notification_template_targets, notification_template_translations,
                notification_templates, notification_preferences, saved_searches,
                logs, itil_links, itil_costs, itil_validations, itil_solutions,
-               itil_tasks, itil_followups, itil_actors, tickets,
+               itil_tasks, itil_followups, itil_actors, ticket_escalations, tickets,
                ticket_template_fields, ticket_templates, suppliers, locations,
                solution_types, task_categories, request_sources, itil_categories,
+               rule_actions, rule_criteria, rules,
+               agreement_level_actions, agreement_levels, agreements,
+               holidays, calendar_segments, calendars,
                sessions, authorizations, group_members, groups, profile_rights,
-               profiles, entity_settings, users, ldap_group_mappings,
+               profiles, entity_settings, users,
                ldap_directories, entities RESTART IDENTITY CASCADE
     `);
 
@@ -350,7 +368,7 @@ async function main(): Promise<void> {
     const modeles: {
       event: string;
       name: string;
-      cibles: ('requester' | 'observer' | 'assigned')[];
+      cibles: ('requester' | 'observer' | 'assigned' | 'assigned_group' | 'author')[];
       fr: { subject: string; body: string };
       en: { subject: string; body: string };
     }[] = [
@@ -391,6 +409,22 @@ async function main(): Promise<void> {
         en: {
           subject: '[Tick&] Ticket #{{ ticket.id }} solved',
           body: 'Ticket #{{ ticket.id }} ({{ ticket.name }}) has been marked as solved.\n\n{{ ticket.url }}',
+        },
+      },
+      // Sans ce modele, l'action « notifier » d'un niveau d'escalade n'aurait
+      // rien a envoyer : c'est le modele qui decide du contenu et des
+      // destinataires, l'escalade ne fait que publier l'evenement.
+      {
+        event: 'ticket.escalated',
+        name: 'Escalade',
+        cibles: ['assigned', 'assigned_group'],
+        fr: {
+          subject: '[Tick&] Escalade sur le ticket #{{ ticket.id }}',
+          body: "Le ticket #{{ ticket.id }} ({{ ticket.name }}) a franchi le niveau « {{ levelName }} » de l'engagement {{ agreementName }}.\n\n{{ ticket.url }}",
+        },
+        en: {
+          subject: '[Tick&] Escalation on ticket #{{ ticket.id }}',
+          body: 'Ticket #{{ ticket.id }} ({{ ticket.name }}) crossed level "{{ levelName }}" of agreement {{ agreementName }}.\n\n{{ ticket.url }}',
         },
       },
     ];
@@ -684,25 +718,214 @@ async function main(): Promise<void> {
       },
     ]);
 
-    if (annuaire) {
-      // Appartenir a un groupe d'annuaire accorde une habilitation, retiree
-      // automatiquement des que l'utilisateur en sort.
-      await tx.insert(ldapGroupMappings).values([
-        {
-          directoryId: annuaire.id,
-          groupDn: 'cn=Techniciens,ou=groups,dc=exemple,dc=fr',
-          profileId: reference('Technicien'),
-          entityId: siteA,
-          isRecursive: false,
-        },
-        {
-          directoryId: annuaire.id,
-          groupDn: 'cn=Superviseurs,ou=groups,dc=exemple,dc=fr',
-          profileId: reference('Superviseur'),
-          entityId: nord,
-          isRecursive: true,
-        },
+    // ---- Calendrier ouvre, defini une fois a la racine et partage ----------
+    const [ouvre] = await tx
+      .insert(calendars)
+      .values({
+        entityId: racine,
+        entityPath: 'temporaire',
+        isRecursive: true,
+        name: 'Heures ouvrees',
+        comment: 'Lundi au vendredi, 8h-12h et 13h-18h, heure de Paris.',
+        timezone: 'Europe/Paris',
+      })
+      .returning({ id: calendars.id });
+
+    if (ouvre) {
+      await tx.insert(calendarSegments).values(
+        [1, 2, 3, 4, 5].flatMap((weekday) => [
+          { calendarId: ouvre.id, weekday, beginAt: '08:00:00', endAt: '12:00:00' },
+          { calendarId: ouvre.id, weekday, beginAt: '13:00:00', endAt: '18:00:00' },
+        ]),
+      );
+
+      // Les feries fixes sont perpetuels : les ressaisir chaque annee serait une
+      // corvee, et les oublier fausserait toutes les echeances de mai.
+      await tx.insert(holidays).values([
+        { calendarId: ouvre.id, name: "Jour de l'an", day: '2026-01-01', isPerpetual: true },
+        { calendarId: ouvre.id, name: 'Fete du Travail', day: '2026-05-01', isPerpetual: true },
+        { calendarId: ouvre.id, name: 'Fete nationale', day: '2026-07-14', isPerpetual: true },
+        { calendarId: ouvre.id, name: 'Noel', day: '2026-12-25', isPerpetual: true },
       ]);
+    }
+
+    // ---- Engagements -------------------------------------------------------
+    const engagement = async (
+      kind: 'sla' | 'ola',
+      axis: 'tto' | 'ttr',
+      name: string,
+      duration: number,
+    ): Promise<number> => {
+      const [ligne] = await tx
+        .insert(agreements)
+        .values({
+          entityId: racine,
+          entityPath: 'temporaire',
+          isRecursive: true,
+          kind,
+          axis,
+          name,
+          duration,
+          calendarId: ouvre?.id ?? null,
+        })
+        .returning({ id: agreements.id });
+
+      if (!ligne) throw new Error(`Engagement ${name} non cree.`);
+
+      return ligne.id;
+    };
+
+    const priseEnCompte = await engagement('sla', 'tto', 'Prise en compte sous 2 h', 2 * 3600);
+    const resolutionStandard = await engagement('sla', 'ttr', 'Resolution sous 8 h', 8 * 3600);
+    const resolutionCritique = await engagement('sla', 'ttr', 'Resolution sous 4 h', 4 * 3600);
+    await engagement('ola', 'ttr', 'Resolution interne sous 6 h', 6 * 3600);
+
+    // Un rappel une heure avant l'echeance, une escalade une heure apres :
+    // l'un previent, l'autre constate.
+    const [rappel] = await tx
+      .insert(agreementLevels)
+      .values({
+        agreementId: resolutionCritique,
+        name: 'Rappel avant echeance',
+        offsetSeconds: -3600,
+      })
+      .returning({ id: agreementLevels.id });
+
+    const [escalade] = await tx
+      .insert(agreementLevels)
+      .values({
+        agreementId: resolutionCritique,
+        name: 'Escalade au superviseur',
+        offsetSeconds: 3600,
+      })
+      .returning({ id: agreementLevels.id });
+
+    if (rappel) {
+      await tx
+        .insert(agreementLevelActions)
+        .values({ levelId: rappel.id, action: 'notify', value: null });
+    }
+
+    if (escalade) {
+      await tx.insert(agreementLevelActions).values([
+        { levelId: escalade.id, action: 'set_urgency', value: '5' },
+        { levelId: escalade.id, action: 'notify', value: null },
+      ]);
+    }
+
+    // ---- Regles ------------------------------------------------------------
+    const regle = async (
+      collection: RuleCollection,
+      name: string,
+      ranking: number,
+      criteres: { field: string; operator: RuleOperator; value: string | null }[],
+      effets: { field: string; action: RuleActionType; value: string | null }[],
+    ): Promise<void> => {
+      const [ligne] = await tx
+        .insert(rules)
+        .values({
+          entityId: racine,
+          entityPath: 'temporaire',
+          isRecursive: true,
+          collection,
+          name,
+          ranking,
+        })
+        .returning({ id: rules.id });
+
+      if (!ligne) throw new Error(`Regle ${name} non creee.`);
+
+      if (criteres.length > 0) {
+        await tx
+          .insert(ruleCriteria)
+          .values(criteres.map((critere) => ({ ruleId: ligne.id, ...critere })));
+      }
+
+      await tx.insert(ruleActions).values(effets.map((effet) => ({ ruleId: ligne.id, ...effet })));
+    };
+
+    // Le dictionnaire normalise avant tout le reste : les regles suivantes
+    // travaillent sur un titre deja debarrasse de son prefixe de messagerie.
+    await regle(
+      'dictionary.ticket',
+      'Retirer le prefixe Re: des titres',
+      10,
+      [{ field: 'name', operator: 'regex', value: '^(?:re|tr|fwd)\\s*:\\s*(.+)$' }],
+      [{ field: 'name', action: 'regex_result', value: '#1' }],
+    );
+
+    await regle(
+      'ticket.create',
+      'Tout ticket recoit les engagements standard',
+      10,
+      [],
+      [
+        { field: 'slaTtoId', action: 'assign', value: String(priseEnCompte) },
+        { field: 'slaTtrId', action: 'assign', value: String(resolutionStandard) },
+      ],
+    );
+
+    await regle(
+      'ticket.create',
+      'Une panne signalee urgente passe en resolution 4 h',
+      20,
+      [
+        { field: 'name', operator: 'regex', value: '\\b(urgent|bloquant|panne totale)\\b' },
+        { field: 'type', operator: 'is', value: 'incident' },
+      ],
+      [
+        { field: 'urgency', action: 'assign', value: '5' },
+        { field: 'slaTtrId', action: 'assign', value: String(resolutionCritique) },
+        ...(supportN1
+          ? [
+              {
+                field: 'assignedGroupId',
+                action: 'assign' as RuleActionType,
+                value: String(supportN1.id),
+              },
+            ]
+          : []),
+      ],
+    );
+
+    if (annuaire) {
+      // Ce que faisait la table de correspondance, en plus expressif : le
+      // critere porte sur l'appartenance a un groupe, mais rien n'empeche
+      // desormais de decider sur le domaine du courriel ou sur le nom distingue.
+      await regle(
+        'authorization.assign',
+        'Groupe Techniciens : technicien sur Site A',
+        10,
+        [
+          {
+            field: 'groups',
+            operator: 'contains',
+            value: 'cn=Techniciens,ou=groups,dc=exemple,dc=fr',
+          },
+        ],
+        [
+          { field: 'profileId', action: 'assign', value: String(reference('Technicien')) },
+          { field: 'entityId', action: 'assign', value: String(siteA) },
+        ],
+      );
+
+      await regle(
+        'authorization.assign',
+        'Groupe Superviseurs : superviseur sur la Filiale Nord',
+        20,
+        [
+          {
+            field: 'groups',
+            operator: 'contains',
+            value: 'cn=Superviseurs,ou=groups,dc=exemple,dc=fr',
+          },
+        ],
+        [
+          { field: 'profileId', action: 'assign', value: String(reference('Superviseur')) },
+          { field: 'entityId', action: 'assign', value: String(nord) },
+          { field: 'isRecursive', action: 'assign', value: 'true' },
+        ],
+      );
     }
   });
 

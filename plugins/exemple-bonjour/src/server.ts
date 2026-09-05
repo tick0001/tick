@@ -107,6 +107,19 @@ export default definePlugin({
       ]);
     });
 
+    /**
+     * Escalade, apparue avec le SDK 0.4.
+     *
+     * Publiée apres l'application des actions du niveau : un abonne qui relit
+     * le ticket y voit deja le groupe reaffecte et l'urgence relevee.
+     */
+    api.events.on('ticket.escalated', async (payload, context) => {
+      await context.db.query('INSERT INTO journal (evenement, detail) VALUES ($1, $2)', [
+        'ticket.escalated',
+        `#${String(payload.id)} ${payload.agreementName} — ${payload.levelName}`,
+      ]);
+    });
+
     api.events.on('entity.deleted', async (payload, context) => {
       await context.db.query('INSERT INTO journal (evenement, detail) VALUES ($1, $2)', [
         'entity.deleted',
@@ -114,6 +127,6 @@ export default definePlugin({
       ]);
     });
 
-    api.context.logger.log('Enregistré : 2 hooks, 4 abonnements.');
+    api.context.logger.log('Enregistré : 2 hooks, 5 abonnements.');
   },
 });

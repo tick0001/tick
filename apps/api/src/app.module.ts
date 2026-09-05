@@ -9,7 +9,9 @@ import { EntitiesModule } from './entities/entities.module.js';
 import { HealthModule } from './health/health.module.js';
 import { NotificationsModule } from './notifications/notifications.module.js';
 import { PluginsModule } from './plugins/plugins.module.js';
+import { RulesModule } from './rules/rules.module.js';
 import { SearchModule } from './search/search.module.js';
+import { SlmModule } from './slm/slm.module.js';
 import { TicketsModule } from './tickets/tickets.module.js';
 
 @Module({
@@ -25,6 +27,8 @@ import { TicketsModule } from './tickets/tickets.module.js';
     AuthModule,
     PluginsModule,
     EntitiesModule,
+    RulesModule,
+    SlmModule,
     TicketsModule,
     SearchModule,
     NotificationsModule,

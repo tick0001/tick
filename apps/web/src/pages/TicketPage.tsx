@@ -4,6 +4,7 @@ import { itilStatusSchema } from '@tick/contracts';
 import { useState, type FormEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, useParams } from 'react-router';
+import { AgreementBadges } from '@/components/AgreementBadges';
 import { Attachments } from '@/components/Attachments';
 import { PriorityBadge, StatusBadge, TypeBadge } from '@/components/TicketBadges';
 import { ApiError, api } from '@/lib/api';
@@ -97,6 +98,9 @@ export function TicketPage() {
     await queryClient.invalidateQueries({ queryKey: ['ticket', id] });
     await queryClient.invalidateQueries({ queryKey: ['timeline', id] });
     await queryClient.invalidateQueries({ queryKey: ['tickets'] });
+    // Une sortie d'attente repousse les echeances : les badges les afficheraient
+    // sinon perimees jusqu'au prochain rechargement complet.
+    await queryClient.invalidateQueries({ queryKey: ['ticket-agreements', id] });
   };
 
   const publier = useMutation({
@@ -147,6 +151,7 @@ export function TicketPage() {
           <TypeBadge type={detail.type} />
         </div>
         <h2 className="text-xl font-semibold tracking-tight">{detail.name}</h2>
+        <AgreementBadges ticketId={id} />
       </header>
 
       <div className="grid gap-5 lg:grid-cols-[1fr_20rem]">

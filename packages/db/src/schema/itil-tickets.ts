@@ -116,8 +116,35 @@ export const tickets = pgTable(
     templateId: bigint('template_id', { mode: 'number' }).references(() => ticketTemplates.id),
 
     dateOpened: timestamp('date_opened', { withTimezone: true }).notNull().defaultNow(),
-    /** Echeance de resolution. Calculee par le SLA au jalon suivant. */
+    /** Echeance de resolution, calculee par l'engagement en temps ouvre. */
     dateDue: timestamp('date_due', { withTimezone: true }),
+    /** Echeance de prise en compte. */
+    dateDueOwn: timestamp('date_due_own', { withTimezone: true }),
+    /**
+     * Echeances internes, portees par les OLA.
+     *
+     * Distinctes des precedentes : un engagement interne se tient plus tot que
+     * l'engagement opposable au demandeur, et c'est precisement l'ecart entre
+     * les deux qui laisse a l'equipe une marge de rattrapage. Les confondre
+     * reviendrait a n'avoir qu'un seul engagement.
+     */
+    dateDueInternal: timestamp('date_due_internal', { withTimezone: true }),
+    dateDueOwnInternal: timestamp('date_due_own_internal', { withTimezone: true }),
+
+    /**
+     * Engagements appliques.
+     *
+     * Quatre references distinctes : chaque axe se parametre et s'escalade
+     * separement, et un OLA interne n'a pas la meme echeance qu'un SLA opposable.
+     */
+    slaTtoId: bigint('sla_tto_id', { mode: 'number' }),
+    slaTtrId: bigint('sla_ttr_id', { mode: 'number' }),
+    olaTtoId: bigint('ola_tto_id', { mode: 'number' }),
+    olaTtrId: bigint('ola_ttr_id', { mode: 'number' }),
+
+    /** Prochain niveau d'escalade a declencher, et son echeance. */
+    escalationLevelId: bigint('escalation_level_id', { mode: 'number' }),
+    escalationAt: timestamp('escalation_at', { withTimezone: true }),
     dateTakenIntoAccount: timestamp('date_taken_into_account', { withTimezone: true }),
     dateSolved: timestamp('date_solved', { withTimezone: true }),
     dateClosed: timestamp('date_closed', { withTimezone: true }),
@@ -151,6 +178,9 @@ export const tickets = pgTable(
     index('tickets_entity_status_idx').on(t.entityId, t.status),
     index('tickets_category_idx').on(t.categoryId),
     index('tickets_due_idx').on(t.dateDue),
+    // La tache d'escalade balaie cette colonne a chaque cycle : sans index,
+    // elle scannerait toute la table de tickets a chaque minute.
+    index('tickets_escalation_idx').on(t.escalationAt),
   ],
 );
 

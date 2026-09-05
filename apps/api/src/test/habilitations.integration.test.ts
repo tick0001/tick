@@ -6,15 +6,43 @@ import {
   eq,
   entities,
   ldapDirectories,
-  ldapGroupMappings,
   profileRights,
   profiles,
+  ruleActions,
+  ruleCriteria,
+  rules,
   sql,
   users,
   type Connection,
 } from '@tick/db';
 import { DatabaseService } from '../database/database.service.js';
+import type { LdapProfile } from '../ldap/ldap.service.js';
 import { LdapSyncService } from '../ldap/ldap-sync.service.js';
+import { RuleCatalogService } from '../rules/rule-catalog.service.js';
+import { RuleEngineService } from '../rules/rule-engine.service.js';
+import { RulesService } from '../rules/rules.service.js';
+
+/**
+ * Noms distinctifs propres a ce test.
+ *
+ * Volontairement sur un domaine qui n'existe nulle part ailleurs : les regles
+ * du jeu de demonstration vivent dans la meme base, et un domaine partage les
+ * ferait participer aux resultats mesures ici.
+ */
+const DOMAINE = 'DC=habilitations,DC=test';
+const TECHNICIENS = `CN=Techniciens,OU=Groupes,${DOMAINE}`;
+const SUPERVISEURS = `CN=Superviseurs,OU=Groupes,${DOMAINE}`;
+
+function profilAnnuaire(groupDns: string[]): LdapProfile {
+  return {
+    dn: `CN=Utilisateur,${DOMAINE}`,
+    login: 'utilisateur.hab',
+    email: 'utilisateur@habilitations.test',
+    firstName: 'Utilisateur',
+    lastName: 'Habilitations',
+    groupDns,
+  };
+}
 
 /**
  * Habilitations cumulees et reconciliation depuis l'annuaire.
@@ -28,6 +56,7 @@ describe('Habilitations', () => {
   let owner: Connection;
   let app: Connection;
   let sync: LdapSyncService;
+  const regleIds: number[] = [];
 
   const ids = {
     racine: 0,
@@ -43,7 +72,12 @@ describe('Habilitations', () => {
   beforeAll(async () => {
     owner = createDatabase({ connectionString: process.env.DATABASE_URL as string, max: 2 });
     app = createDatabase({ connectionString: process.env.DATABASE_APP_URL as string, max: 2 });
-    sync = new LdapSyncService(new DatabaseService(app.db, owner.db, { owner, app }));
+    const db = new DatabaseService(app.db, owner.db, { owner, app });
+
+    sync = new LdapSyncService(
+      db,
+      new RulesService(db, new RuleCatalogService(), new RuleEngineService()),
+    );
 
     const creerEntite = async (nom: string, parent: number | null): Promise<number> => {
       const [row] = await owner.db
@@ -105,25 +139,51 @@ describe('Habilitations', () => {
       .returning({ id: ldapDirectories.id });
     ids.annuaire = (annuaire as { id: number }).id;
 
-    await owner.db.insert(ldapGroupMappings).values([
-      {
-        directoryId: ids.annuaire,
-        groupDn: 'CN=Techniciens,OU=Groupes,DC=exemple,DC=fr',
-        profileId: ids.technicien,
-        entityId: ids.site,
-        isRecursive: false,
-      },
-      {
-        directoryId: ids.annuaire,
-        groupDn: 'CN=Superviseurs,OU=Groupes,DC=exemple,DC=fr',
-        profileId: ids.superviseur,
-        entityId: ids.racine,
-        isRecursive: true,
-      },
-    ]);
+    // La decision vient desormais du moteur de regles : deux regles
+    // d'affectation remplacent les deux anciennes correspondances de groupe.
+    const creerRegle = async (
+      nom: string,
+      groupe: string,
+      profileId: number,
+      entityId: number,
+      recursif: boolean,
+    ): Promise<void> => {
+      const [ligne] = await owner.db
+        .insert(rules)
+        .values({
+          entityId: ids.racine,
+          entityPath: 'temporaire',
+          isRecursive: true,
+          collection: 'authorization.assign',
+          name: `HAB ${nom}`,
+          ranking: regleIds.length * 10 + 10,
+        })
+        .returning({ id: rules.id });
+
+      const ruleId = (ligne as { id: number }).id;
+
+      regleIds.push(ruleId);
+
+      await owner.db
+        .insert(ruleCriteria)
+        .values({ ruleId, field: 'groups', operator: 'contains', value: groupe });
+
+      await owner.db.insert(ruleActions).values([
+        { ruleId, field: 'profileId', action: 'assign', value: String(profileId) },
+        { ruleId, field: 'entityId', action: 'assign', value: String(entityId) },
+        { ruleId, field: 'isRecursive', action: 'assign', value: String(recursif) },
+      ]);
+    };
+
+    await creerRegle('Techniciens', TECHNICIENS, ids.technicien, ids.site, false);
+    await creerRegle('Superviseurs', SUPERVISEURS, ids.superviseur, ids.racine, true);
   }, 30_000);
 
   afterAll(async () => {
+    for (const id of regleIds) {
+      await owner.db.execute(sql`DELETE FROM rules WHERE id = ${id}`);
+    }
+
     await owner.db.execute(sql`DELETE FROM ldap_directories WHERE id = ${ids.annuaire}`);
     await owner.db.execute(sql`DELETE FROM users WHERE id = ${ids.utilisateur}`);
     await owner.db.execute(
@@ -168,10 +228,10 @@ describe('Habilitations', () => {
   });
 
   it("accorde les habilitations correspondant aux groupes d'annuaire", async () => {
-    const resultat = await sync.applyDynamicAuthorizations(ids.annuaire, ids.utilisateur, [
-      'CN=Techniciens,OU=Groupes,DC=exemple,DC=fr',
-      'CN=Autre,OU=Groupes,DC=exemple,DC=fr',
-    ]);
+    const resultat = await sync.applyDynamicAuthorizations(
+      ids.utilisateur,
+      profilAnnuaire([TECHNICIENS, `CN=Autre,OU=Groupes,${DOMAINE}`]),
+    );
 
     expect(resultat.granted).toBe(1);
 
@@ -185,13 +245,36 @@ describe('Habilitations', () => {
     expect(posees[0]?.isDynamic).toBe(true);
   });
 
-  it('compare les noms distinctifs sans tenir compte de la casse ni des espaces', async () => {
-    const resultat = await sync.applyDynamicAuthorizations(ids.annuaire, ids.utilisateur, [
-      '  cn=techniciens,ou=groupes,dc=exemple,dc=fr  ',
-    ]);
+  it('compare les noms distinctifs sans tenir compte de la casse', async () => {
+    const resultat = await sync.applyDynamicAuthorizations(
+      ids.utilisateur,
+      profilAnnuaire([TECHNICIENS.toLowerCase()]),
+    );
 
     expect(resultat.granted).toBe(1);
     expect(resultat.revoked).toBe(0);
+  });
+
+  it('cumule les habilitations de plusieurs regles satisfaites', async () => {
+    // Sans isolation entre regles, la seconde verrait le profil pose par la
+    // premiere et n'accorderait rien : c'est le cas que le mode « sans
+    // chainage » du moteur existe pour couvrir.
+    const resultat = await sync.applyDynamicAuthorizations(
+      ids.utilisateur,
+      profilAnnuaire([TECHNICIENS, SUPERVISEURS]),
+    );
+
+    expect(resultat.granted).toBe(2);
+
+    const posees = await owner.db
+      .select()
+      .from(authorizations)
+      .where(eq(authorizations.userId, ids.utilisateur));
+
+    expect(posees.map((ligne) => ligne.profileId).sort()).toEqual(
+      [ids.technicien, ids.superviseur].sort(),
+    );
+    expect(posees.find((ligne) => ligne.profileId === ids.superviseur)?.isRecursive).toBe(true);
   });
 
   it('revoque les habilitations dynamiques perdues, et elles seules', async () => {
@@ -204,9 +287,9 @@ describe('Habilitations', () => {
     });
 
     // L'utilisateur quitte tous ses groupes d'annuaire.
-    const resultat = await sync.applyDynamicAuthorizations(ids.annuaire, ids.utilisateur, []);
+    const resultat = await sync.applyDynamicAuthorizations(ids.utilisateur, profilAnnuaire([]));
 
-    expect(resultat.revoked).toBe(1);
+    expect(resultat.revoked).toBe(2);
     expect(resultat.granted).toBe(0);
 
     const restantes = await owner.db
@@ -230,9 +313,7 @@ describe('Habilitations', () => {
       isDynamic: false,
     });
 
-    await sync.applyDynamicAuthorizations(ids.annuaire, ids.utilisateur, [
-      'CN=Techniciens,OU=Groupes,DC=exemple,DC=fr',
-    ]);
+    await sync.applyDynamicAuthorizations(ids.utilisateur, profilAnnuaire([TECHNICIENS]));
 
     const [conservee] = await owner.db
       .select()

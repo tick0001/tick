@@ -10,7 +10,9 @@ import { loadPluginClients, resetPluginClients } from '@/lib/plugins';
 import { EntitiesPage } from '@/pages/EntitiesPage';
 import { LoginPage } from '@/pages/LoginPage';
 import { NewTicketPage } from '@/pages/NewTicketPage';
+import { RulesPage } from '@/pages/RulesPage';
 import { SearchPage } from '@/pages/SearchPage';
+import { ServiceLevelsPage } from '@/pages/ServiceLevelsPage';
 import { TicketPage } from '@/pages/TicketPage';
 import { TicketsPage } from '@/pages/TicketsPage';
 
@@ -84,6 +86,12 @@ export function App() {
               <NavLink to="/entities" className={lienClasses}>
                 {t('navigation.entites')}
               </NavLink>
+              <NavLink to="/service-levels" className={lienClasses}>
+                {t('engagements.titre')}
+              </NavLink>
+              <NavLink to="/rules" className={lienClasses}>
+                {t('regles.titre')}
+              </NavLink>
             </nav>
 
             <ContextSwitcher session={session.data} />
@@ -131,6 +139,8 @@ export function App() {
             <Route path="/search" element={<SearchPage />} />
             <Route path="/tickets/:id" element={<TicketPage />} />
             <Route path="/entities" element={<EntitiesPage session={session.data} />} />
+            <Route path="/service-levels" element={<ServiceLevelsPage />} />
+            <Route path="/rules" element={<RulesPage />} />
             <Route path="*" element={<Navigate to="/tickets" replace />} />
           </Routes>
         </main>

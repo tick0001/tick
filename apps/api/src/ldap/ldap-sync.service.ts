@@ -1,6 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { and, authorizations, eq, ldapDirectories, ldapGroupMappings, users } from '@tick/db';
+import { and, authorizations, eq, ldapDirectories, users } from '@tick/db';
 import { DatabaseService } from '../database/database.service.js';
+import { RulesService } from '../rules/rules.service.js';
 import type { LdapDirectory, LdapProfile } from './ldap.service.js';
 
 export interface SyncResult {
@@ -9,6 +10,12 @@ export interface SyncResult {
   granted: number;
   /** Habilitations dynamiques retirees parce que le groupe a ete quitte. */
   revoked: number;
+}
+
+interface Attendue {
+  profileId: number;
+  entityId: number;
+  isRecursive: boolean;
 }
 
 function keyOf(a: { profileId: number; entityId: number }): string {
@@ -24,17 +31,22 @@ function keyOf(a: { profileId: number; entityId: number }): string {
  *  - reconcilier les habilitations **dynamiques** avec l'appartenance aux
  *    groupes constatee dans l'annuaire.
  *
- * La source de decision est aujourd'hui une simple table de correspondance. Le
- * moteur de regles generique du jalon J4 la remplacera, mais la reconciliation
- * ci-dessous ne changera pas : c'est elle qui garantit qu'une habilitation
- * saisie a la main survit a une synchronisation, et qu'une habilitation heritee
- * d'un groupe disparait avec lui.
+ * La decision revient au moteur de regles, collection `authorization.assign` :
+ * une organisation peut ainsi decider sur le service, le domaine du courriel ou
+ * une expression sur le nom distingue, la ou une table de correspondance ne
+ * savait comparer qu'un groupe. La reconciliation, elle, est inchangee : c'est
+ * elle qui garantit qu'une habilitation saisie a la main survit a une
+ * synchronisation, et qu'une habilitation heritee d'un groupe disparait avec
+ * lui.
  */
 @Injectable()
 export class LdapSyncService {
   private readonly logger = new Logger(LdapSyncService.name);
 
-  constructor(private readonly db: DatabaseService) {}
+  constructor(
+    private readonly db: DatabaseService,
+    private readonly rules: RulesService,
+  ) {}
 
   /** Cree ou met a jour le compte local a partir du profil d'annuaire. */
   async upsertUser(directory: LdapDirectory, profile: LdapProfile): Promise<number> {
@@ -83,32 +95,17 @@ export class LdapSyncService {
   }
 
   /**
-   * Reconcilie les habilitations dynamiques avec l'appartenance aux groupes.
+   * Reconcilie les habilitations dynamiques avec ce que les regles decident.
    *
    * Les habilitations saisies a la main (`is_dynamic = false`) ne sont ni lues
    * ni touchees : un administrateur qui accorde un acces exceptionnel ne doit
    * pas le voir disparaitre a la prochaine synchronisation.
    */
-  async applyDynamicAuthorizations(
-    directoryId: number,
-    userId: number,
-    groupDns: readonly string[],
-  ): Promise<SyncResult> {
-    const normalized = new Set(groupDns.map((dn) => dn.trim().toLowerCase()));
+  async applyDynamicAuthorizations(userId: number, profile: LdapProfile): Promise<SyncResult> {
+    const attendues = await this.decide(profile);
+    const attenduesParCle = new Map(attendues.map((attendue) => [keyOf(attendue), attendue]));
 
     return this.db.asOwner(async (tx) => {
-      const mappings = await tx
-        .select()
-        .from(ldapGroupMappings)
-        .where(eq(ldapGroupMappings.directoryId, directoryId));
-
-      // Les noms distinctifs sont insensibles a la casse et souvent espaces de
-      // maniere variable selon l'annuaire.
-      const attendues = mappings.filter((mapping) =>
-        normalized.has(mapping.groupDn.trim().toLowerCase()),
-      );
-      const attenduesParCle = new Map(attendues.map((mapping) => [keyOf(mapping), mapping]));
-
       const existantes = await tx
         .select()
         .from(authorizations)
@@ -155,5 +152,50 @@ export class LdapSyncService {
 
       return { userId, granted: attendues.length, revoked };
     });
+  }
+
+  /**
+   * Traduit un profil d'annuaire en habilitations attendues.
+   *
+   * Chaque regle qui correspond produit **une** habilitation : la collection
+   * s'evalue sans chainage, sinon la deuxieme regle verrait le profil pose par
+   * la premiere et ne s'appliquerait plus. Une regle incomplete — sans profil
+   * ou sans entite — est ignoree avec un avertissement plutot que d'ecrire une
+   * habilitation a moitie definie.
+   */
+  private async decide(profile: LdapProfile): Promise<Attendue[]> {
+    const { traces } = await this.rules.runForEntity('authorization.assign', null, {
+      uid: profile.login,
+      mail: profile.email,
+      domain: profile.email?.split('@')[1] ?? null,
+      dn: profile.dn,
+      commonName: [profile.firstName, profile.lastName].filter(Boolean).join(' '),
+      groups: profile.groupDns,
+    });
+
+    const attendues: Attendue[] = [];
+
+    for (const trace of traces) {
+      if (!trace.matched) continue;
+
+      const decide = new Map(trace.applied.map((action) => [action.field, action.value]));
+      const profileId = Number(decide.get('profileId'));
+      const entityId = Number(decide.get('entityId'));
+
+      if (!Number.isInteger(profileId) || !Number.isInteger(entityId)) {
+        this.logger.warn(
+          `Regle « ${trace.name} » ignoree : profil ou entite manquant dans ses actions.`,
+        );
+        continue;
+      }
+
+      attendues.push({
+        profileId,
+        entityId,
+        isRecursive: (decide.get('isRecursive') ?? 'false') === 'true',
+      });
+    }
+
+    return attendues;
   }
 }

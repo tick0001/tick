@@ -126,6 +126,19 @@ export interface EventPayloads {
   'ticket.solved': { id: number; entityId: number };
   'ticket.closed': { id: number; entityId: number };
   'ticket.deleted': { id: number; entityId: number };
+  /**
+   * Un niveau d'escalade vient d'etre execute sur un ticket.
+   *
+   * Publie apres l'application des actions du niveau, pas avant : un abonne qui
+   * relit le ticket doit y voir le groupe reaffecte, la priorite relevee.
+   */
+  'ticket.escalated': {
+    id: number;
+    entityId: number;
+    levelId: number;
+    levelName: string;
+    agreementName: string;
+  };
 
   'followup.added': { ticketId: number; followupId: number; isPrivate: boolean };
   'task.added': { ticketId: number; taskId: number };

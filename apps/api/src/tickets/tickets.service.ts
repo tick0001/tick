@@ -2,6 +2,7 @@ import { BadRequestException, Injectable, NotFoundException } from '@nestjs/comm
 import type {
   CreateTicket,
   ItilStatus,
+  RuleCollection,
   TicketActor,
   TicketActorInput,
   TicketDetail,
@@ -15,8 +16,11 @@ import { requireContext } from '../common/request-context.js';
 import { DatabaseService } from '../database/database.service.js';
 import { emitEvent } from '../plugins/event-buffer.js';
 import { HookBus } from '../plugins/hook-bus.service.js';
+import { RulesService } from '../rules/rules.service.js';
+import { SlaService } from '../slm/sla.service.js';
 import { HistoryService } from './history.service.js';
 import { PriorityService } from './priority.service.js';
+import { applyRuleOutput, borne, choix, reference, texte } from './ticket-rules.js';
 import { TicketScopeService } from './ticket-scope.service.js';
 import { TicketTemplatesService } from './ticket-templates.service.js';
 import {
@@ -38,6 +42,9 @@ import {
  * « nouveau » sans réouverture explicite fausse toutes les statistiques. La
  * réouverture existe, elle passe par `solved` ou `closed` vers `assigned`.
  */
+/** Types de ticket, pour valider ce qu'une regle propose. */
+const TYPES = ['incident', 'request'] as const;
+
 const TRANSITIONS: Record<ItilStatus, readonly ItilStatus[]> = {
   new: ['assigned', 'planned', 'waiting', 'solved', 'closed'],
   assigned: ['new', 'planned', 'waiting', 'solved', 'closed'],
@@ -96,6 +103,8 @@ export class TicketsService {
     private readonly priority: PriorityService,
     private readonly scopes: TicketScopeService,
     private readonly templates: TicketTemplatesService,
+    private readonly rules: RulesService,
+    private readonly sla: SlaService,
   ) {}
 
   /**
@@ -128,7 +137,53 @@ export class TicketsService {
       categoryId: rempli.categoryId ?? null,
     });
 
-    const priority = await this.priority.compute(propose.entityId, propose.urgency, propose.impact);
+    // Trois passes, dans cet ordre. Le dictionnaire normalise le texte en
+    // premier, pour que les criteres des regles portent sur un titre deja
+    // nettoye. Les hooks ont deja parle : ce sont des regles de code, celles du
+    // developpeur. Les regles metier passent en dernier parce qu'elles
+    // expriment la configuration de l'organisation, qui doit avoir le dernier
+    // mot sur l'aiguillage.
+    const champs: Record<string, unknown> = {
+      name: propose.name,
+      content: propose.content,
+      type: propose.type,
+      urgency: propose.urgency,
+      impact: propose.impact,
+      categoryId: propose.categoryId,
+      requestSourceId: rempli.requestSourceId ?? null,
+      locationId: rempli.locationId ?? null,
+      slaTtoId: null,
+      slaTtrId: null,
+      olaTtoId: null,
+      olaTtrId: null,
+    };
+
+    const decides = await this.runRules('dictionary.ticket', champs, {});
+    const demandeur = rempli.actors.find((acteur) => acteur.role === 'requester');
+
+    decides.push(
+      ...(await this.runRules('ticket.create', champs, {
+        entityId: context.entityId,
+        entityPath: context.entityPath,
+        requesterId: demandeur?.actorId ?? context.userId,
+        categoryPath: await this.categoryPath(champs['categoryId']),
+      })),
+    );
+
+    // La priorite se recalcule apres les regles, sauf si l'une d'elles l'a
+    // fixee explicitement : forcer une priorite est une decision assumee, la
+    // matrice ne doit pas la reprendre aussitot.
+    const priority =
+      champs['priority'] === undefined || champs['priority'] === null
+        ? await this.priority.compute(
+            propose.entityId,
+            borne(champs['urgency'], propose.urgency),
+            borne(champs['impact'], propose.impact),
+          )
+        : borne(champs['priority'], 3);
+
+    const titre = texte(champs, 'name', propose.name);
+    const genre = choix(champs, 'type', TYPES, propose.type);
 
     const id = await this.db.asUser(async (tx) => {
       const [ticket] = await tx
@@ -136,15 +191,19 @@ export class TicketsService {
         .values({
           entityId: propose.entityId,
           entityPath: 'temporaire',
-          name: propose.name,
-          content: propose.content,
-          type: propose.type,
-          urgency: propose.urgency,
-          impact: propose.impact,
+          name: titre,
+          content: texte(champs, 'content', propose.content),
+          type: genre,
+          urgency: borne(champs['urgency'], propose.urgency),
+          impact: borne(champs['impact'], propose.impact),
           priority,
-          categoryId: propose.categoryId,
-          requestSourceId: rempli.requestSourceId ?? null,
-          locationId: rempli.locationId ?? null,
+          categoryId: reference(champs, 'categoryId'),
+          requestSourceId: reference(champs, 'requestSourceId'),
+          locationId: reference(champs, 'locationId'),
+          slaTtoId: reference(champs, 'slaTtoId'),
+          slaTtrId: reference(champs, 'slaTtrId'),
+          olaTtoId: reference(champs, 'olaTtoId'),
+          olaTtrId: reference(champs, 'olaTtrId'),
           templateId: gabarit?.id ?? null,
           createdById: context.userId,
           updatedById: context.userId,
@@ -158,29 +217,73 @@ export class TicketsService {
       const acteurs: TicketActorInput[] = rempli.actors.some(
         (acteur) => acteur.role === 'requester',
       )
-        ? rempli.actors
-        : [...rempli.actors, { role: 'requester', actorType: 'user', actorId: context.userId }];
+        ? [...rempli.actors, ...decides]
+        : [
+            ...rempli.actors,
+            { role: 'requester', actorType: 'user', actorId: context.userId },
+            ...decides,
+          ];
 
       await this.writeActors(tx, ticket.id, acteurs);
       await this.history.recordAction(
         tx,
         { type: 'ticket', id: ticket.id, entityId: propose.entityId },
         'creation',
-        propose.name,
+        titre,
       );
 
       return ticket.id;
     });
 
+    // Les echeances se calculent une fois le ticket ecrit : leur point de
+    // depart est sa date d'ouverture, que la base vient de poser.
+    await this.sla.refreshQuietly(id);
+
     emitEvent('ticket.created', {
       id,
       entityId: propose.entityId,
-      name: propose.name,
-      type: propose.type,
+      name: titre,
+      type: genre,
       priority,
     });
 
     return this.findById(id);
+  }
+
+  /**
+   * Execute une collection de regles et reporte son resultat sur les champs.
+   *
+   * Renvoie les acteurs decides par les regles : ils ne sont pas des colonnes
+   * du ticket et s'ecrivent separement, une fois son identifiant connu.
+   */
+  private async runRules(
+    collection: RuleCollection,
+    champs: Record<string, unknown>,
+    contexte: Record<string, unknown>,
+  ): Promise<TicketActorInput[]> {
+    const { output } = await this.rules.run(collection, { ...contexte, ...champs });
+
+    return applyRuleOutput(champs, output);
+  }
+
+  /**
+   * Chemin materialise d'une categorie, pour l'operateur « est sous ».
+   *
+   * Sans lui, une regle ne pourrait viser qu'une categorie exacte, et il
+   * faudrait la dupliquer pour chacune de ses sous-categories.
+   */
+  private async categoryPath(categoryId: unknown): Promise<string | null> {
+    if (typeof categoryId !== 'number') return null;
+
+    const rows = await this.db.asUser(async (tx) => {
+      const resultat = await tx.execute<{ path: string }>(
+        sql`SELECT path::text AS path FROM itil_categories WHERE id = ${categoryId}`,
+      );
+
+      return resultat.rows;
+    });
+
+    return rows[0]?.path ?? null;
   }
 
   async findById(id: number): Promise<TicketDetail> {
@@ -430,47 +533,82 @@ export class TicketsService {
 
     const avant = await this.rawById(id, condition);
 
-    if (input.status && input.status !== avant.status) {
+    const propose = await this.hooks.run('ticket.beforeUpdate', {
+      id,
+      changes: { ...input },
+    });
+    const demande = propose.changes as UpdateTicket;
+
+    // Les regles voient l'etat **resultant**, pas l'etat precedent : un critere
+    // « urgence = 5 » doit porter sur l'urgence qui va etre ecrite. Elles
+    // passent donc apres les hooks et avant la validation de transition, de
+    // sorte que le statut controle soit celui qui sera reellement enregistre.
+    const champs: Record<string, unknown> = {
+      name: demande.name ?? avant.name,
+      content: demande.content ?? avant.content,
+      type: demande.type ?? avant.type,
+      status: demande.status ?? avant.status,
+      urgency: demande.urgency ?? avant.urgency,
+      impact: demande.impact ?? avant.impact,
+      categoryId: demande.categoryId ?? avant.categoryId,
+      requestSourceId: demande.requestSourceId ?? avant.requestSourceId,
+      locationId: demande.locationId ?? avant.locationId,
+      slaTtoId: avant.slaTtoId,
+      slaTtrId: avant.slaTtrId,
+      olaTtoId: avant.olaTtoId,
+      olaTtrId: avant.olaTtrId,
+    };
+
+    const decides = await this.runRules('ticket.update', champs, {
+      entityId: avant.entityId,
+      entityPath: String(avant.entityPath),
+      categoryPath: await this.categoryPath(champs['categoryId']),
+    });
+
+    const changes = this.differences(avant, champs, demande);
+
+    if (changes.status && changes.status !== avant.status) {
       const autorisees = TRANSITIONS[avant.status];
 
-      if (!autorisees.includes(input.status)) {
+      if (!autorisees.includes(changes.status)) {
         throw new BadRequestException(
-          `Transition interdite : ${avant.status} vers ${input.status}.`,
+          `Transition interdite : ${avant.status} vers ${changes.status}.`,
         );
       }
 
       await this.hooks.run('ticket.beforeStatusChange', {
         id,
         from: avant.status,
-        to: input.status,
+        to: changes.status,
       });
     }
-
-    const propose = await this.hooks.run('ticket.beforeUpdate', {
-      id,
-      changes: { ...input },
-    });
-    const changes = propose.changes as UpdateTicket;
 
     const patch: Record<string, unknown> = { ...changes, updatedById: context.userId };
 
     if (changes.urgency !== undefined || changes.impact !== undefined) {
-      patch['priority'] = await this.priority.compute(
-        avant.entityId,
-        changes.urgency ?? avant.urgency,
-        changes.impact ?? avant.impact,
-      );
+      patch['priority'] =
+        champs['priority'] === undefined || champs['priority'] === null
+          ? await this.priority.compute(
+              avant.entityId,
+              changes.urgency ?? avant.urgency,
+              changes.impact ?? avant.impact,
+            )
+          : borne(champs['priority'], avant.priority);
+    } else if (champs['priority'] !== undefined && champs['priority'] !== null) {
+      patch['priority'] = borne(champs['priority'], avant.priority);
     }
 
     if (changes.status && changes.status !== avant.status) {
       Object.assign(patch, this.statusTransition(avant, changes.status));
     }
 
-    const champs = await this.db.asUser(async (tx) => {
+    const modifies = await this.db.asUser(async (tx) => {
       await tx
         .update(tickets)
         .set(patch)
         .where(sql`${tickets.id} = ${id}`);
+
+      if (decides.length > 0) await this.writeActors(tx, id, decides);
 
       return this.history.recordChanges(
         tx,
@@ -480,7 +618,11 @@ export class TicketsService {
       );
     });
 
-    emitEvent('ticket.updated', { id, entityId: avant.entityId, changedFields: champs });
+    // Le temps d'attente et les engagements ont pu changer : les echeances se
+    // recalculent a partir de la date d'ouverture, jamais par decalage.
+    await this.sla.refreshQuietly(id);
+
+    emitEvent('ticket.updated', { id, entityId: avant.entityId, changedFields: modifies });
 
     if (changes.status && changes.status !== avant.status) {
       emitEvent('ticket.statusChanged', {
@@ -498,14 +640,42 @@ export class TicketsService {
   }
 
   /**
+   * Ne retient que ce qui change reellement.
+   *
+   * Les regles reconstruisent l'etat complet du ticket ; ecrire tel quel
+   * remplirait l'historique de lignes « urgence : 3 vers 3 ». La saisie
+   * explicite est conservee meme si elle egale l'etat precedent, parce qu'elle
+   * exprime une intention et non un calcul.
+   */
+  private differences(
+    avant: typeof tickets.$inferSelect,
+    champs: Record<string, unknown>,
+    demande: UpdateTicket,
+  ): UpdateTicket {
+    const changes: UpdateTicket & Record<string, unknown> = { ...demande };
+    const precedent = avant as unknown as Record<string, unknown>;
+
+    for (const [cle, valeur] of Object.entries(champs)) {
+      if (cle === 'priority') continue;
+      if (valeur === precedent[cle]) continue;
+
+      changes[cle] = valeur;
+    }
+
+    return changes;
+  }
+
+  /**
    * Effets de bord d'un changement de statut.
    *
    * Le statut « en attente » suspend le décompte : on cumule le temps déjà
    * passé en attente, et les délais constatés le retranchent. Sans cela, un
    * ticket bloqué chez un fournisseur paraîtrait traité en retard par l'équipe.
    *
-   * Les durées sont calculées en temps calendaire. Le calcul en heures ouvrées
-   * arrive avec les calendriers, au jalon J4.
+   * Les délais constatés restent en temps calendaire : ils décrivent ce qui
+   * s'est passé, pas ce qui était promis. Le temps ouvré, lui, sert au calcul
+   * des échéances, que `SlaService` reprend à partir du temps d'attente cumulé
+   * mis à jour ici.
    */
   private statusTransition(
     avant: {

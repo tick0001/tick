@@ -190,11 +190,7 @@ export class AuthService {
       if (!profile) continue;
 
       const userId = await this.ldapSync.upsertUser(directory, profile);
-      const result = await this.ldapSync.applyDynamicAuthorizations(
-        directory.id,
-        userId,
-        profile.groupDns,
-      );
+      const result = await this.ldapSync.applyDynamicAuthorizations(userId, profile);
 
       if (result.revoked > 0) this.rights.invalidate();
 

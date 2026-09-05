@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { RulesCoreModule } from '../rules/rules-core.module.js';
 import { LdapSyncService } from './ldap-sync.service.js';
 import { LdapService } from './ldap.service.js';
 
@@ -7,6 +8,7 @@ import { LdapService } from './ldap.service.js';
  * l'annuaire, jamais l'inverse. Le cycle entre les deux serait sinon inevitable.
  */
 @Module({
+  imports: [RulesCoreModule],
   providers: [LdapService, LdapSyncService],
   exports: [LdapService, LdapSyncService],
 })

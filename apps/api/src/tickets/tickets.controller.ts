@@ -38,10 +38,12 @@ import {
   type TimelineEntry,
   type UpdateTask,
   type UpdateTicket,
+  type TicketAgreement,
 } from '@tick/contracts';
 import { z } from 'zod';
 import { AuthenticatedGuard } from '../auth/guards/authenticated.guard.js';
 import { ZodValidationPipe } from '../common/zod-validation.pipe.js';
+import { SlaService } from '../slm/sla.service.js';
 import { TicketsService } from './tickets.service.js';
 import { TimelineService } from './timeline.service.js';
 
@@ -59,6 +61,7 @@ export class TicketsController {
   constructor(
     private readonly tickets: TicketsService,
     private readonly timeline: TimelineService,
+    private readonly sla: SlaService,
   ) {}
 
   @Get()
@@ -98,6 +101,18 @@ export class TicketsController {
   @HttpCode(204)
   async restore(@Param('id', ParseIntPipe) id: number): Promise<void> {
     await this.tickets.restore(id);
+  }
+
+  /**
+   * Engagements applicables au ticket, avec le temps restant.
+   *
+   * Servi a part de la fiche : c'est une information qui se perime a la
+   * seconde, et la recalculer a chaque lecture de ticket couterait cher pour
+   * une donnee que toutes les vues n'affichent pas.
+   */
+  @Get(':id/agreements')
+  async agreements(@Param('id', ParseIntPipe) id: number): Promise<TicketAgreement[]> {
+    return this.sla.statusOf(id);
   }
 
   @Get(':id/actors')

@@ -19,6 +19,11 @@ import { runWithContext } from '../common/request-context.js';
 import { DatabaseService } from '../database/database.service.js';
 import { EntitiesService } from '../entities/entities.service.js';
 import { HookBus } from '../plugins/hook-bus.service.js';
+import { RuleCatalogService } from '../rules/rule-catalog.service.js';
+import { RuleEngineService } from '../rules/rule-engine.service.js';
+import { RulesService } from '../rules/rules.service.js';
+import { SlaService } from '../slm/sla.service.js';
+import { SlmService } from '../slm/slm.service.js';
 import { HistoryService } from '../tickets/history.service.js';
 import { PriorityService } from '../tickets/priority.service.js';
 import { TicketScopeService } from '../tickets/ticket-scope.service.js';
@@ -119,6 +124,8 @@ describe('Portées de droits sur les tickets', () => {
       new PriorityService(entiteService),
       new TicketScopeService(db, rights),
       new TicketTemplatesService(db, entiteService),
+      new RulesService(db, new RuleCatalogService(), new RuleEngineService()),
+      new SlaService(db, new SlmService(db)),
     );
 
     const creerEntite = async (nom: string, parent: number | null): Promise<number> => {
