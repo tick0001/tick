@@ -1,16 +1,32 @@
 import { useQuery } from '@tanstack/react-query';
+import type { SessionContext } from '@tick/contracts';
 import { useTranslation } from 'react-i18next';
+import { PluginSlot } from '@/components/PluginSlot';
 import { ApiError, api } from '@/lib/api';
 
-export function EntitiesPage() {
-  const { t } = useTranslation();
+export function EntitiesPage({ session }: { session: SessionContext }) {
+  const { t, i18n } = useTranslation();
   const entites = useQuery({ queryKey: ['entities'], queryFn: api.entities, retry: false });
 
   return (
     <section className="space-y-4">
-      <header className="space-y-1">
-        <h2 className="text-xl font-semibold tracking-tight">{t('entites.titre')}</h2>
-        <p className="text-sm text-neutral-500 dark:text-neutral-400">{t('entites.description')}</p>
+      <header className="flex flex-wrap items-start justify-between gap-3">
+        <div className="space-y-1">
+          <h2 className="text-xl font-semibold tracking-tight">{t('entites.titre')}</h2>
+          <p className="text-sm text-neutral-500 dark:text-neutral-400">
+            {t('entites.description')}
+          </p>
+        </div>
+
+        <PluginSlot
+          name="entity.list.actions"
+          className="flex items-center gap-2"
+          context={{
+            locale: i18n.language,
+            entity: session.entity,
+            profile: session.profile,
+          }}
+        />
       </header>
 
       {entites.isPending && <p className="text-sm text-neutral-500">{t('commun.chargement')}</p>}

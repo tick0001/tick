@@ -1,8 +1,11 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
+import { useEffect } from 'react';
 import { ContextSwitcher } from '@/components/ContextSwitcher';
+import { PluginSlot } from '@/components/PluginSlot';
 import { ApiError, api } from '@/lib/api';
 import { changeLocale } from '@/lib/i18n';
+import { loadPluginClients, resetPluginClients } from '@/lib/plugins';
 import { EntitiesPage } from '@/pages/EntitiesPage';
 import { LoginPage } from '@/pages/LoginPage';
 
@@ -21,9 +24,18 @@ export function App() {
   const deconnexion = useMutation({
     mutationFn: api.logout,
     onSuccess: () => {
+      resetPluginClients();
       queryClient.clear();
     },
   });
+
+  // Les extensions d'interface se chargent une fois la session etablie : elles
+  // dependent du contexte de travail, et l'API refuserait la liste avant.
+  const connecte = Boolean(session.data);
+
+  useEffect(() => {
+    if (connecte) void loadPluginClients();
+  }, [connecte]);
 
   if (session.isPending) {
     return (
@@ -44,6 +56,16 @@ export function App() {
           <span className="text-lg font-semibold tracking-tight">Tick&amp;</span>
 
           <ContextSwitcher session={session.data} />
+
+          <PluginSlot
+            name="app.header"
+            className="flex items-center gap-2"
+            context={{
+              locale: i18n.language,
+              entity: session.data.entity,
+              profile: session.data.profile,
+            }}
+          />
 
           <div className="ml-auto flex items-center gap-3 text-sm">
             <span className="text-neutral-500 dark:text-neutral-400">
@@ -75,7 +97,7 @@ export function App() {
       </header>
 
       <main className="mx-auto max-w-6xl p-6">
-        <EntitiesPage />
+        <EntitiesPage session={session.data} />
       </main>
     </div>
   );

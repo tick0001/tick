@@ -61,6 +61,21 @@ illustre un cas que le modèle doit savoir traiter.
 | `pnpm db:reset`       | Repart d'une base vierge, migrée et amorcée |
 | `pnpm services:reset` | Réinitialise les services et leurs volumes  |
 
+### Plugins
+
+Le plugin de référence `plugins/exemple-bonjour` exerce chaque point d'extension et sert de test
+d'intégration permanent. Après `pnpm build`, il apparaît dans l'administration ; on peut l'installer
+et l'activer par l'API :
+
+```bash
+curl -X POST http://localhost:3000/api/plugins/exemple-bonjour/install
+curl -X POST http://localhost:3000/api/plugins/exemple-bonjour/activate
+```
+
+Il normalise alors les noms d'entités à la création, refuse le nom « interdit », journalise les
+créations dans son propre schéma PostgreSQL, et ajoute deux éléments à l'interface. Le désinstaller
+ne laisse rien derrière lui.
+
 ## Documentation
 
 | Document                                                          | Contenu                                                       |

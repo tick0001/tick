@@ -104,8 +104,11 @@ export default definePluginClient({
 });
 ```
 
-React, `@tick/ui` et i18next sont fournis en dépendances partagées par une _import map_ : le plugin
-les importe sans les embarquer, ce qui garantit une instance unique et un rendu cohérent.
+**Aucune dépendance n'est partagée avec l'hôte.** Le bundle est un module ESM autonome, chargé par
+un `import()` ordinaire — ni carte d'import, ni variable globale, ni instance de React commune.
+C'est ce que permet le contrat `render(element, contexte)`, qui remplace le rendu de composants
+React ; la décision et son coût sont exposés dans
+[l'architecture](02-architecture.md#points-dextension-côté-interface).
 
 ## 5. Cycle de vie
 
@@ -128,9 +131,15 @@ jamais dans `public`. Trois bénéfices : aucune collision de noms, désinstalla
 `DROP SCHEMA`, et lisibilité immédiate de ce qu'un plugin a créé. Le `search_path` de sa connexion
 est restreint à son schéma plus les vues de lecture du cœur.
 
-**Aucune modification des tables du cœur.** Un plugin qui veut ajouter des données sur un ticket
-passe par `api.fields.extend`, qui écrit dans son propre schéma avec une clé étrangère. Cela
-préserve les migrations du cœur.
+**Aucune modification des tables du cœur.** Un plugin qui veut ajouter des données sur un objet du
+cœur crée ses propres tables, avec une clé étrangère vers le cœur. Cela préserve entièrement la
+liberté de faire évoluer le schéma central.
+
+**Le `search_path` est restreint.** Les connexions ouvertes pour le compte d'un plugin placent son
+schéma en premier : une requête sans préfixe atteint ses tables, jamais celles du cœur. Hors
+requête HTTP — un gestionnaire d'événement en arrière-plan — le périmètre d'entités est **vide** :
+le plugin voit ses propres tables mais aucune donnée métier. Lui accorder le périmètre total serait
+plus commode et annulerait l'isolation.
 
 **Isolation des défaillances.** Un hook est borné par un délai maximal ; une exception dans un
 hook annule l'opération en cours en la nommant explicitement ; une exception dans un gestionnaire

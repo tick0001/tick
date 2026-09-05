@@ -1,0 +1,17 @@
+{
+  "name": "@tick/plugin-exemple-bonjour",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "lint": "eslint src",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@tick/plugin-sdk": "workspace:*",
+    "tsup": "^8.5.1",
+    "typescript": "^6.0.3"
+  }
+}

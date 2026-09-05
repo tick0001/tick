@@ -12,6 +12,10 @@ import { z } from 'zod';
  * `__dirname` vaut `<racine>/apps/api/{src,dist}/config` : la racine du depot
  * est a quatre niveaux au-dessus, que le code soit compile ou non.
  */
+export function appRoot(): string {
+  return resolve(__dirname, '../../../..');
+}
+
 export function loadEnvFiles(): void {
   const candidates = [resolve(process.cwd(), '.env'), resolve(__dirname, '../../../..', '.env')];
 
@@ -62,6 +66,12 @@ const envSchema = z.object({
 
   DEFAULT_LOCALE: z.enum(['fr', 'en']).default('fr'),
   STORAGE_PATH: z.string().default('./storage'),
+  /**
+   * Racine ou sont cherches les plugins. Relative au repertoire de travail.
+   * Les plugins de premier rang vivent dans le depot ; une installation reelle
+   * pointera vers un dossier de donnees.
+   */
+  PLUGINS_PATH: z.string().default('./plugins'),
 });
 
 export type Env = z.infer<typeof envSchema>;

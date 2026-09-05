@@ -3,6 +3,8 @@ import type { CreateEntity, EntitySummary, UpdateEntity } from '@tick/contracts'
 import { and, asc, eq, entities, entitySettings, isNull, sql } from '@tick/db';
 import { requireContext } from '../common/request-context.js';
 import { DatabaseService } from '../database/database.service.js';
+import { emitEvent } from '../plugins/event-buffer.js';
+import { HookBus } from '../plugins/hook-bus.service.js';
 
 /** Parametres d'entite pouvant etre herites. Une valeur nulle delegue au parent. */
 const INHERITABLE_SETTINGS = [
@@ -34,7 +36,10 @@ function toSummary(row: typeof entities.$inferSelect): EntitySummary {
 
 @Injectable()
 export class EntitiesService {
-  constructor(private readonly db: DatabaseService) {}
+  constructor(
+    private readonly db: DatabaseService,
+    private readonly hooks: HookBus,
+  ) {}
 
   /**
    * Entites visibles dans le perimetre de travail.
@@ -65,22 +70,34 @@ export class EntitiesService {
   }
 
   async create(input: CreateEntity): Promise<EntitySummary> {
+    // Hook synchrone : un plugin peut normaliser le nom, imposer une
+    // convention, ou refuser la creation en levant une exception.
+    const propose = await this.hooks.run('entity.beforeCreate', {
+      name: input.name,
+      parentId: input.parentId,
+      comment: input.comment ?? null,
+    });
+
     const [row] = await this.db.asUser((tx) =>
       tx
         .insert(entities)
         .values({
-          parentId: input.parentId,
-          name: input.name,
-          comment: input.comment ?? null,
+          parentId: propose.parentId,
+          name: propose.name,
+          comment: propose.comment,
           // Recalcules par le declencheur a partir du parent : les valeurs
           // fournies ici sont des marques de position obligatoires.
           path: 'temporaire',
-          completeName: input.name,
+          completeName: propose.name,
         })
         .returning(),
     );
 
     if (!row) throw new BadRequestException('Creation impossible dans ce perimetre.');
+
+    // Evenement asynchrone : retenu jusqu'au commit, donc jamais publie pour
+    // une creation annulee.
+    emitEvent('entity.created', { id: row.id, name: row.name, path: row.path });
 
     return toSummary(row);
   }
@@ -92,19 +109,26 @@ export class EntitiesService {
    * declencheurs, et met a jour les objets qui y sont rattaches.
    */
   async update(id: number, input: UpdateEntity): Promise<EntitySummary> {
+    const propose = await this.hooks.run('entity.beforeUpdate', {
+      id,
+      changes: {
+        ...(input.name !== undefined ? { name: input.name } : {}),
+        ...(input.comment !== undefined ? { comment: input.comment ?? null } : {}),
+        ...(input.parentId !== undefined ? { parentId: input.parentId } : {}),
+      },
+    });
+
     const [row] = await this.db.asUser((tx) =>
       tx
         .update(entities)
-        .set({
-          ...(input.name !== undefined ? { name: input.name } : {}),
-          ...(input.comment !== undefined ? { comment: input.comment ?? null } : {}),
-          ...(input.parentId !== undefined ? { parentId: input.parentId } : {}),
-        })
+        .set(propose.changes)
         .where(and(eq(entities.id, id), isNull(entities.deletedAt)))
         .returning(),
     );
 
     if (!row) throw new NotFoundException('Entite introuvable dans le perimetre courant.');
+
+    emitEvent('entity.updated', { id: row.id, name: row.name });
 
     return toSummary(row);
   }
@@ -126,6 +150,8 @@ export class EntitiesService {
     );
 
     if (!row) throw new NotFoundException('Entite introuvable dans le perimetre courant.');
+
+    emitEvent('entity.deleted', { id: row.id });
   }
 
   /**

@@ -8,3 +8,7 @@ packages:
 # sans decision consciente.
 allowBuilds:
   esbuild: true
+  # Accelerateur natif facultatif de msgpackr, utilise par BullMQ. La
+  # bibliotheque retombe sur une implementation JavaScript sans lui, et le
+  # gain ne justifie pas une compilation native a l'installation.
+  msgpackr-extract: false

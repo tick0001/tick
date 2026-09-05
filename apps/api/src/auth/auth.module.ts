@@ -34,6 +34,7 @@ export class AuthModule implements NestModule {
    * gardes refusent l'acces.
    */
   configure(consumer: MiddlewareConsumer): void {
-    consumer.apply(ContextMiddleware).forRoutes('*');
+    // Syntaxe Express 5 : `*` seul n'est plus accepte par path-to-regexp.
+    consumer.apply(ContextMiddleware).forRoutes('{*path}');
   }
 }

@@ -6,6 +6,7 @@ import { loadEnv } from './config/env.js';
 import { DatabaseModule } from './database/database.module.js';
 import { EntitiesModule } from './entities/entities.module.js';
 import { HealthModule } from './health/health.module.js';
+import { PluginsModule } from './plugins/plugins.module.js';
 
 @Module({
   imports: [
@@ -18,6 +19,7 @@ import { HealthModule } from './health/health.module.js';
     CommonModule,
     DatabaseModule,
     AuthModule,
+    PluginsModule,
     EntitiesModule,
     HealthModule,
   ],

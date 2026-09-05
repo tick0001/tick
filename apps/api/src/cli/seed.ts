@@ -1,4 +1,14 @@
 import 'reflect-metadata';
+
+/**
+ * Ce script doit etre execute compile (`node dist/cli/seed.js`), jamais par un
+ * lanceur fonde sur esbuild comme tsx.
+ *
+ * esbuild n'emet pas `emitDecoratorMetadata` : NestJS ne voit alors aucune
+ * dependance a injecter, construit les services avec des arguments manquants,
+ * et echoue plus loin sur un `undefined` sans rapport apparent avec la cause.
+ * L'echec est silencieux, ce qui le rend particulierement couteux.
+ */
 import { Logger } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import {
@@ -46,6 +56,7 @@ const PROFILE_RIGHTS: Record<string, RightTriple[]> = {
     ['kb', 'read', 'entity'],
   ],
   Superviseur: [
+    ['plugin', 'read', 'recursive'],
     ['ticket', 'read', 'recursive'],
     ['ticket', 'create', 'recursive'],
     ['ticket', 'update', 'recursive'],
@@ -72,6 +83,9 @@ const PROFILE_RIGHTS: Record<string, RightTriple[]> = {
     ['user', 'create', 'all'],
     ['user', 'update', 'all'],
     ['kb', 'read', 'all'],
+    ['plugin', 'read', 'all'],
+    ['plugin', 'update', 'all'],
+    ['plugin', 'delete', 'all'],
   ],
 };
 

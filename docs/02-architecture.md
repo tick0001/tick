@@ -106,10 +106,16 @@ Le front expose des **emplacements** nommés que les plugins remplissent : ongle
 entrées de menu, colonnes de liste, widgets de tableau de bord, actions massives, blocs de
 formulaire, actions de barre d'outils.
 
-Les plugins livrent un module ESM pré-construit, chargé à l'exécution depuis l'API. React,
-`@tick/ui` et i18next sont fournis en dépendances partagées via une _import map_, pour garantir
-une instance unique et éviter qu'un plugin n'embarque son propre React. Conséquence assumée :
-installer un plugin ne nécessite pas de reconstruire l'application.
+Les plugins livrent un module ESM pré-construit, chargé à l'exécution depuis l'API par un
+`import()` ordinaire. Installer un plugin ne nécessite donc pas de reconstruire l'application.
+
+**Le contrat d'affichage est un `render` sur un élément du DOM, pas un composant React.** C'est le
+choix qui rend le reste simple. Rendre des composants React exigerait que l'hôte et le plugin
+partagent la même instance de React, ce qui impose une carte d'import ou des variables globales,
+se règle différemment en développement et en production, et casse silencieusement dès qu'une
+version diverge. Un `render` sur un élément supprime le problème : le bundle du plugin est un
+module autonome, sans aucune dépendance partagée. Le coût est réel — un plugin qui veut React doit
+l'embarquer — et sera réévalué quand on saura ce que les extensions d'interface demandent vraiment.
 
 ## Décisions techniques argumentées
 
@@ -138,6 +144,12 @@ est sans objet à cette taille de code. À rebasculer dès que le support arrive
 **Pas de CLI NestJS.** `nest build` n'est qu'une enveloppe autour de `tsc`, et il traîne toute la
 chaîne `@angular-devkit`, actuellement cassée sous Node 22. La construction se fait donc par `tsc`
 et le rechargement à chaud par `node --watch`, ce qui retire une couche d'outillage opaque.
+
+**Pas de lanceur fondé sur esbuild pour le code NestJS.** `tsx`, `esbuild-register` et leurs
+équivalents n'émettent pas `emitDecoratorMetadata`. NestJS n'y voit alors aucune dépendance à
+injecter, construit les services avec des arguments manquants, et échoue bien plus loin sur un
+`undefined` sans rapport apparent avec la cause. Tout script applicatif s'exécute donc compilé.
+Les tests, eux, assemblent les services à la main et n'ont pas ce besoin.
 
 **Tests dès le socle.** Le moteur de règles, le calcul SLA sur calendrier ouvré et la résolution
 des droits sont trois domaines où un bug est silencieux et coûteux. Vitest pour l'unitaire,
