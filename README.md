@@ -89,14 +89,15 @@ ne laisse rien derrière lui.
 
 ## Documentation
 
-| Document                                                          | Contenu                                                       |
-| ----------------------------------------------------------------- | ------------------------------------------------------------- |
-| [Périmètre fonctionnel](docs/01-perimetre-fonctionnel.md)         | Les 17 modules à couvrir, au détail près                      |
-| [Architecture](docs/02-architecture.md)                           | Monorepo, backend, frontend, décisions techniques argumentées |
-| [Entités, droits et sécurité](docs/03-entites-droits-securite.md) | Le modèle multi-organisation et son application par RLS       |
-| [Système de plugins](docs/04-plugins.md)                          | Manifeste, SDK, hooks, cycle de vie, isolation                |
-| [Modèle de données](docs/05-modele-de-donnees.md)                 | Tables du cœur et conventions                                 |
-| [Feuille de route](docs/06-feuille-de-route.md)                   | Dix jalons, du socle à l'ouverture publique                   |
+| Document                                                                | Contenu                                                       |
+| ----------------------------------------------------------------------- | ------------------------------------------------------------- |
+| [Périmètre fonctionnel](docs/01-perimetre-fonctionnel.md)               | Les 17 modules à couvrir, au détail près                      |
+| [Architecture](docs/02-architecture.md)                                 | Monorepo, backend, frontend, décisions techniques argumentées |
+| [Entités, droits et sécurité](docs/03-entites-droits-securite.md)       | Le modèle multi-organisation et son application par RLS       |
+| [Système de plugins](docs/04-plugins.md)                                | Manifeste, SDK, hooks, cycle de vie, isolation                |
+| [Modèle de données](docs/05-modele-de-donnees.md)                       | Tables du cœur et conventions                                 |
+| [Niveaux de service et règles](docs/07-niveaux-de-service-et-regles.md) | Temps ouvré, engagements, escalade, moteur de règles          |
+| [Feuille de route](docs/06-feuille-de-route.md)                         | Dix jalons, du socle à l'ouverture publique                   |
 
 ## Conventions
 

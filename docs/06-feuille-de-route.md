@@ -77,11 +77,30 @@ persistante ; pièces jointes adressées par empreinte, servies après vérifica
 Le SDK est passé en `0.3` : les plugins peuvent désormais rendre leurs propres champs
 interrogeables depuis la recherche.
 
-### J4 — Niveaux de service et règles `M03` `M04`
+### J4 — Niveaux de service et règles · livré `M03` `M04`
 
 Calendriers ouvrés et jours fériés, SLA et OLA, calcul et recalcul des échéances, suspension,
 niveaux d'escalade. Moteur de règles générique, règles à la création et à la mise à jour,
 dictionnaires, simulateur. Matrice urgence × impact par entité.
+
+_Terminé quand_ : une organisation peut promettre un délai, le tenir en heures ouvrées, être
+alertée avant de le manquer, et expliquer pourquoi un ticket a été aiguillé là où il l'a été.
+
+**Livré** — arithmétique du temps ouvré sur calendriers à fuseau explicite, avec jours fériés
+perpétuels ou ponctuels ; engagements SLA et OLA sur deux axes, quatre échéances par ticket,
+recalculées depuis la date d'ouverture et repoussées du temps d'attente cumulé ; niveaux d'escalade
+à décalage relatif à l'échéance, exécutés par un balayage piloté par la base et protégés du rejeu ;
+moteur de règles sur cinq collections, avec catalogue de champs, opérateurs de chemin, captures
+d'expression régulière réutilisables, chaînage réglable et ordre éditable ; simulateur qui rejoue
+le moteur de production sans rien écrire ; interface de configuration pour les trois objets et
+badges d'engagement sur la fiche de ticket.
+
+La table `ldap_group_mappings` disparaît : la collection `authorization.assign` la remplace, à
+mécanisme de révocation inchangé. Le SDK passe en `0.4` avec l'événement `ticket.escalated`.
+
+Un défaut de visibilité présent depuis J3 est corrigé au passage : joindre `entities` dans une
+requête soumise au Row-Level Security faisait disparaître tout objet de configuration hérité d'un
+ancêtre. Voir [07](07-niveaux-de-service-et-regles.md).
 
 ### J5 — Communication `M07` `M08` `M11`
 

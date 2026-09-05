@@ -63,9 +63,14 @@ filtre l'entité à la main.
 
 ### Files d'attente et tâches planifiées
 
-**BullMQ sur Redis** pour : envoi des notifications, collecteur de courriel, calcul des échéances
-et escalades SLA, génération des tickets récurrents, enquêtes de satisfaction, synchronisation
-LDAP, et toute tâche déclarée par un plugin. Une interface d'administration expose l'état des
+**BullMQ sur Redis** pour : envoi des notifications, collecteur de courriel, escalades SLA,
+génération des tickets récurrents, enquêtes de satisfaction, synchronisation LDAP, et toute tâche
+déclarée par un plugin.
+
+L'escalade illustre le principe retenu pour toutes les tâches périodiques : **l'état est en base,
+la file ne fait que cadencer**. Le balayage lit `tickets.escalation_at` sur un index dédié, et la
+trace des niveaux déjà joués vit dans `ticket_escalations`. Un vidage de Redis ne perd donc aucune
+escalade, et plusieurs instances de l'API peuvent tourner sans se marcher dessus. Une interface d'administration expose l'état des
 files, les échecs et le rejeu — l'équivalent lisible des tâches automatiques de GLPI.
 
 ### Recherche
@@ -156,6 +161,12 @@ démarrerait sinon un consommateur : un script en ligne de commande dépilerait 
 destinés à l API et les acquitterait sans les traiter, sans laisser de trace puisque le travail
 est bien consommé. La consommation est donc déclarée explicitement, et refusée par défaut aux
 outils.
+
+**Le nom d'une entité ne se joint pas sous Row-Level Security.** Un objet de configuration
+hérité vit sur un ancêtre, hors du périmètre descendant : joindre `entities` fait disparaître la
+ligne entière, sans erreur ni trace. Le nom est donc résolu à part, avec le rôle propriétaire, une
+fois la visibilité de l'objet déjà tranchée par sa propre politique. Même forme que la résolution
+de configuration héritée décrite dans [03](03-entites-droits-securite.md).
 
 **Tests dès le socle.** Le moteur de règles, le calcul SLA sur calendrier ouvré et la résolution
 des droits sont trois domaines où un bug est silencieux et coûteux. Vitest pour l'unitaire,
