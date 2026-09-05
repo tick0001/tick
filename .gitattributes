@@ -1,0 +1,17 @@
+# Fins de ligne normalisees en LF dans le depot et dans la copie de travail.
+# Sans cela, un depot partage entre Windows et Linux accumule des differences
+# invisibles sur des fichiers non modifies.
+* text=auto eol=lf
+
+# Fichiers binaires : aucune conversion.
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.woff binary
+*.woff2 binary
+*.pdf binary
+
+# Verrou de dependances : genere, exclu des diffs et des statistiques de langage.
+pnpm-lock.yaml -diff linguist-generated
