@@ -1,5 +1,21 @@
-import type { EntitySummary, Login, SessionContext, SwitchContext } from '@tick/contracts';
-import { entitySummarySchema, sessionContextSchema } from '@tick/contracts';
+import type {
+  AddFollowup,
+  EntitySummary,
+  ItilStatus,
+  Login,
+  SessionContext,
+  SwitchContext,
+  TicketDetail,
+  TicketPage,
+  TimelineEntry,
+} from '@tick/contracts';
+import {
+  entitySummarySchema,
+  sessionContextSchema,
+  ticketDetailSchema,
+  ticketPageSchema,
+  timelineEntrySchema,
+} from '@tick/contracts';
 import type { ZodType } from 'zod';
 
 /**
@@ -60,4 +76,65 @@ export const api = {
   },
 
   entities: (): Promise<EntitySummary[]> => request('/entities', entitySummarySchema.array()),
+
+  tickets: (filtre: TicketQuery): Promise<TicketPage> =>
+    request(`/tickets${toQuery(filtre)}`, ticketPageSchema),
+
+  ticket: (id: number): Promise<TicketDetail> =>
+    request(`/tickets/${String(id)}`, ticketDetailSchema),
+
+  timeline: (id: number): Promise<TimelineEntry[]> =>
+    request(`/tickets/${String(id)}/timeline`, timelineEntrySchema.array()),
+
+  addFollowup: async (id: number, body: AddFollowup): Promise<void> => {
+    const response = await fetch(`/api/tickets/${String(id)}/followups`, {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+
+    if (!response.ok) {
+      const detail = (await response.json().catch(() => null)) as { message?: string } | null;
+
+      throw new ApiError(response.status, detail?.message ?? `HTTP ${String(response.status)}`);
+    }
+  },
+
+  setStatus: (id: number, status: ItilStatus): Promise<TicketDetail> =>
+    request(`/tickets/${String(id)}`, ticketDetailSchema, {
+      method: 'PATCH',
+      body: JSON.stringify({ status }),
+    }),
 };
+
+export interface TicketQuery {
+  status?: ItilStatus[];
+  search?: string;
+  mine?: boolean;
+  deleted?: boolean;
+  cursor?: string;
+  limit?: number;
+}
+
+/**
+ * Assemble la chaîne de requête.
+ *
+ * Les listes sont jointes par des virgules et les booléens écrits en toutes
+ * lettres : le schéma côté serveur attend cette forme, parce que `"false"` doit
+ * valoir faux et non « chaîne non vide ».
+ */
+function toQuery(filtre: TicketQuery): string {
+  const params = new URLSearchParams();
+
+  if (filtre.status?.length) params.set('status', filtre.status.join(','));
+  if (filtre.search) params.set('search', filtre.search);
+  if (filtre.mine) params.set('mine', 'true');
+  if (filtre.deleted) params.set('deleted', 'true');
+  if (filtre.cursor) params.set('cursor', filtre.cursor);
+  if (filtre.limit) params.set('limit', String(filtre.limit));
+
+  const chaine = params.toString();
+
+  return chaine ? `?${chaine}` : '';
+}

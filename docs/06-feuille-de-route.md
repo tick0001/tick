@@ -61,6 +61,17 @@ d'intégration permanent du contrat.
 _Terminé quand_ : une équipe peut réellement traiter des tickets, et un plugin peut ajouter un
 onglet, un champ et une règle sans toucher au cœur.
 
+**Livré à ce stade** — modèle ITIL complet (tickets, acteurs polymorphes, suivis, tâches,
+solutions, validations, coûts, liens, historique universel), référentiels arborescents, cycle de
+vie avec transitions contrôlées et suspension des délais en attente, priorité dérivée d'une matrice
+héritée par entité, les cinq portées de droits traduites en conditions SQL, pagination par curseur,
+et l'interface technicien : liste dense filtrable et fiche avec chronologie unifiée. SDK 0.2 avec
+les hooks et événements du ticket, exercés par le plugin de référence.
+
+**Reste à faire dans J3** — gabarits de ticket `M05` (le schéma existe, ni service ni écran),
+recherche multi-critères et recherches sauvegardées `M13` (seuls des filtres simples existent),
+notifications élémentaires, et pièces jointes.
+
 ### J4 — Niveaux de service et règles `M03` `M04`
 
 Calendriers ouvrés et jours fériés, SLA et OLA, calcul et recalcul des échéances, suspension,
