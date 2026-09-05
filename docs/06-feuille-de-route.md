@@ -47,7 +47,7 @@ désinstalle sans laisser de trace.
 > connaître le domaine réel produit une surface élégante et inadaptée. On construit donc la
 > mécanique maintenant, et on dessine ce qu'elle expose au jalon suivant.
 
-### J3 — Le ticket, de bout en bout `M01` `M02` `M05`
+### J3 — Le ticket, de bout en bout · livré `M01` `M02` `M05`
 
 Ticket avec tous ses champs et statuts, acteurs, suivis, tâches, solution, validations, documents,
 coûts, historique, gabarits, corbeille. Interface technicien : liste dense, formulaire, chronologie.
@@ -68,9 +68,14 @@ héritée par entité, les cinq portées de droits traduites en conditions SQL, 
 et l'interface technicien : liste dense filtrable et fiche avec chronologie unifiée. SDK 0.2 avec
 les hooks et événements du ticket, exercés par le plugin de référence.
 
-**Reste à faire dans J3** — gabarits de ticket `M05` (le schéma existe, ni service ni écran),
-recherche multi-critères et recherches sauvegardées `M13` (seuls des filtres simples existent),
-notifications élémentaires, et pièces jointes.
+**Complété ensuite** — gabarits de ticket `M05` avec les trois natures de champ (prérempli,
+obligatoire, masqué) et formulaire de création piloté par le gabarit ; recherche multi-critères
+`M13` sur un registre de champs déclarés, avec recherches sauvegardées personnelles ou partagées ;
+notifications élémentaires avec modèles multilingues, destinataires par rôle et file d'envoi
+persistante ; pièces jointes adressées par empreinte, servies après vérification du périmètre.
+
+Le SDK est passé en `0.3` : les plugins peuvent désormais rendre leurs propres champs
+interrogeables depuis la recherche.
 
 ### J4 — Niveaux de service et règles `M03` `M04`
 

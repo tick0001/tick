@@ -38,6 +38,7 @@ export const pluginPermissionSchema = z.enum([
   'cron',
   'notification:send',
   'http:outbound',
+  'search',
 ]);
 
 export const pluginManifestSchema = z.object({

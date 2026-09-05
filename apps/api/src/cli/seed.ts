@@ -13,6 +13,11 @@ import { Logger } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import {
   authorizations,
+  notificationTemplateTargets,
+  notificationTemplateTranslations,
+  notificationTemplates,
+  ticketTemplateFields,
+  ticketTemplates,
   entities,
   entitySettings,
   groupMembers,
@@ -128,7 +133,10 @@ async function main(): Promise<void> {
 
   await db.asOwner(async (tx) => {
     await tx.execute(sql`
-      TRUNCATE logs, itil_links, itil_costs, itil_validations, itil_solutions,
+      TRUNCATE document_items, documents, notification_queue,
+               notification_template_targets, notification_template_translations,
+               notification_templates, notification_preferences, saved_searches,
+               logs, itil_links, itil_costs, itil_validations, itil_solutions,
                itil_tasks, itil_followups, itil_actors, tickets,
                ticket_template_fields, ticket_templates, suppliers, locations,
                solution_types, task_categories, request_sources, itil_categories,
@@ -303,6 +311,122 @@ async function main(): Promise<void> {
         { userId: reference('thomas'), groupId: supportN1.id },
         { userId: reference('lea'), groupId: supportN1.id, isManager: true },
       ]);
+    }
+
+    // ------------------------------------------------------------------
+    // Gabarit de ticket
+    //
+    // Prerempli, obligatoire et masque se combinent : le type et l'urgence sont
+    // proposes, le titre et la description exiges, le lieu retire du formulaire.
+    // ------------------------------------------------------------------
+    const [gabarit] = await tx
+      .insert(ticketTemplates)
+      .values({
+        entityId: racine,
+        entityPath: 'temporaire',
+        isRecursive: true,
+        name: 'Incident standard',
+        comment: 'Gabarit de demonstration : valeurs proposees et champs exiges.',
+      })
+      .returning({ id: ticketTemplates.id });
+
+    if (gabarit) {
+      await tx.insert(ticketTemplateFields).values([
+        { templateId: gabarit.id, field: 'type', kind: 'predefined', value: '"incident"' },
+        { templateId: gabarit.id, field: 'urgency', kind: 'predefined', value: '3' },
+        { templateId: gabarit.id, field: 'impact', kind: 'predefined', value: '3' },
+        { templateId: gabarit.id, field: 'name', kind: 'mandatory', value: null },
+        { templateId: gabarit.id, field: 'content', kind: 'mandatory', value: null },
+        { templateId: gabarit.id, field: 'locationId', kind: 'hidden', value: null },
+      ]);
+    }
+
+    // ------------------------------------------------------------------
+    // Modeles de notification
+    //
+    // Recursifs depuis la racine : toute l'organisation en herite sans avoir a
+    // les redeclarer. Les destinataires sont des roles, resolus a l'envoi.
+    // ------------------------------------------------------------------
+    const modeles: {
+      event: string;
+      name: string;
+      cibles: ('requester' | 'observer' | 'assigned')[];
+      fr: { subject: string; body: string };
+      en: { subject: string; body: string };
+    }[] = [
+      {
+        event: 'ticket.created',
+        name: 'Ouverture de ticket',
+        cibles: ['requester', 'assigned'],
+        fr: {
+          subject: '[Tick&] Ticket #{{ ticket.id }} ouvert : {{ ticket.name }}',
+          body: 'Le ticket #{{ ticket.id }} a ete ouvert.\n\nSujet : {{ ticket.name }}\nSuivi : {{ ticket.url }}',
+        },
+        en: {
+          subject: '[Tick&] Ticket #{{ ticket.id }} opened: {{ ticket.name }}',
+          body: 'Ticket #{{ ticket.id }} has been opened.\n\nSubject: {{ ticket.name }}\nFollow: {{ ticket.url }}',
+        },
+      },
+      {
+        event: 'followup.added',
+        name: 'Nouveau suivi',
+        cibles: ['requester', 'assigned', 'observer'],
+        fr: {
+          subject: '[Tick&] Nouveau suivi sur le ticket #{{ ticket.id }}',
+          body: 'Un suivi a ete ajoute au ticket #{{ ticket.id }} ({{ ticket.name }}).\n\n{{ ticket.url }}',
+        },
+        en: {
+          subject: '[Tick&] New followup on ticket #{{ ticket.id }}',
+          body: 'A followup was added to ticket #{{ ticket.id }} ({{ ticket.name }}).\n\n{{ ticket.url }}',
+        },
+      },
+      {
+        event: 'ticket.solved',
+        name: 'Ticket resolu',
+        cibles: ['requester'],
+        fr: {
+          subject: '[Tick&] Ticket #{{ ticket.id }} resolu',
+          body: 'Le ticket #{{ ticket.id }} ({{ ticket.name }}) a ete marque comme resolu.\n\n{{ ticket.url }}',
+        },
+        en: {
+          subject: '[Tick&] Ticket #{{ ticket.id }} solved',
+          body: 'Ticket #{{ ticket.id }} ({{ ticket.name }}) has been marked as solved.\n\n{{ ticket.url }}',
+        },
+      },
+    ];
+
+    for (const modele of modeles) {
+      const [cree] = await tx
+        .insert(notificationTemplates)
+        .values({
+          entityId: racine,
+          entityPath: 'temporaire',
+          isRecursive: true,
+          event: modele.event,
+          name: modele.name,
+        })
+        .returning({ id: notificationTemplates.id });
+
+      if (!cree) continue;
+
+      await tx.insert(notificationTemplateTranslations).values([
+        {
+          templateId: cree.id,
+          locale: 'fr',
+          subject: modele.fr.subject,
+          bodyText: modele.fr.body,
+        },
+        {
+          templateId: cree.id,
+          locale: 'en',
+          subject: modele.en.subject,
+          bodyText: modele.en.body,
+        },
+      ]);
+
+      await tx
+        .insert(notificationTemplateTargets)
+        .values(modele.cibles.map((cible) => ({ templateId: cree.id, target: cible })));
     }
 
     // Annuaire de developpement, servi par le conteneur openldap du Compose.

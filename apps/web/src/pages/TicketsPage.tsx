@@ -47,11 +47,19 @@ export function TicketsPage({ session }: { session: SessionContext }) {
           </p>
         </div>
 
-        <PluginSlot
-          name="entity.list.actions"
-          className="flex items-center gap-2"
-          context={{ locale: i18n.language, entity: session.entity, profile: session.profile }}
-        />
+        <div className="flex items-center gap-2">
+          <PluginSlot
+            name="entity.list.actions"
+            className="flex items-center gap-2"
+            context={{ locale: i18n.language, entity: session.entity, profile: session.profile }}
+          />
+          <Link
+            to="/tickets/new"
+            className="rounded-md bg-neutral-900 px-3 py-1.5 text-sm font-medium text-white transition hover:bg-neutral-700 dark:bg-neutral-100 dark:text-neutral-900 dark:hover:bg-neutral-300"
+          >
+            {t('creation.nouveau')}
+          </Link>
+        </div>
       </header>
 
       <div className="flex flex-wrap items-center gap-2">

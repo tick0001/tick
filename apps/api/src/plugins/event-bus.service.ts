@@ -6,6 +6,9 @@ import { setEventPublisher, type PendingEvent } from './event-buffer.js';
 
 export const EVENT_QUEUE = 'tick.events';
 
+/** Identifiant conventionnel des abonnements du coeur. */
+const CORE = '@core';
+
 interface Registration {
   pluginId: string;
   /** Non typee dans le registre, pour la meme raison que dans le bus de hooks. */
@@ -93,7 +96,38 @@ export class EventBus implements OnModuleInit, OnModuleDestroy {
     this.registrations.set(name, liste);
   }
 
+  /**
+   * Abonnement d'un module du coeur.
+   *
+   * Distinct de `register` : un module du coeur n'a ni manifeste ni permission
+   * a declarer, et ne doit pas etre retire quand on desactive un plugin. Le
+   * faire passer pour un plugin le rendrait desactivable par accident.
+   */
+  registerCore<K extends EventName>(name: K, handler: EventHandler<K>): void {
+    const liste = this.registrations.get(name) ?? [];
+
+    liste.push({
+      pluginId: CORE,
+      handler: handler as (payload: unknown, context: PluginContext) => unknown,
+      context: {
+        id: CORE,
+        version: '0',
+        schema: 'public',
+        logger: {
+          debug: () => undefined,
+          log: () => undefined,
+          warn: () => undefined,
+          error: () => undefined,
+        },
+        db: { query: () => Promise.resolve([]) },
+      },
+    });
+    this.registrations.set(name, liste);
+  }
+
   unregisterPlugin(pluginId: string): void {
+    if (pluginId === CORE) return;
+
     for (const [name, liste] of this.registrations) {
       this.registrations.set(
         name,

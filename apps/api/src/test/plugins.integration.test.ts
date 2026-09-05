@@ -9,8 +9,9 @@ import { EntitiesService } from '../entities/entities.service.js';
 import { EventBus } from '../plugins/event-bus.service.js';
 import { HookBus } from '../plugins/hook-bus.service.js';
 import { PluginMigrator } from '../plugins/plugin-migrator.service.js';
-import { PluginRegistry } from '../plugins/plugin-registry.service.js';
+import { PluginRegistry, SDK_VERSION } from '../plugins/plugin-registry.service.js';
 import { PluginsService } from '../plugins/plugins.service.js';
+import { SearchRegistry } from '../search/search-registry.service.js';
 
 const PLUGIN_ID = 'essai-substrat';
 const SCHEMA = 'plugin_essai_substrat';
@@ -41,7 +42,9 @@ describe("Substrat d'extension", () => {
           id: PLUGIN_ID,
           name: 'Essai du substrat',
           version,
-          sdk: '^0.2.0',
+          // Derive de la version reelle : le test suit les montees du SDK au lieu
+          // d'echouer a chacune.
+          sdk: `^${SDK_VERSION}`,
           permissions: ['schema:own', 'hooks', 'events'],
           server: './server.js',
           migrations: './migrations',
@@ -116,7 +119,14 @@ describe("Substrat d'extension", () => {
     const events = new EventBus();
     const registry = new PluginRegistry();
 
-    plugins = new PluginsService(db, registry, new PluginMigrator(db), hooks, events);
+    plugins = new PluginsService(
+      db,
+      registry,
+      new PluginMigrator(db),
+      hooks,
+      events,
+      new SearchRegistry(),
+    );
     entites = new EntitiesService(db, hooks);
 
     await plugins.synchronize();

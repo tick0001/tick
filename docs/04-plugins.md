@@ -73,8 +73,12 @@ export default definePlugin({
     // Champs additionnels sur un objet existant (stockés en jsonb, dans le schéma du plugin)
     api.fields.extend('ticket', { … });
 
-    // Recherche : rendre ses champs interrogeables et exportables
-    api.search.registerField({ … });
+    // Recherche : rendre ses champs interrogeables
+    //
+    // La cle est prefixee par l'identifiant du plugin, et l'expression SQL
+    // fournie est du code de l'extension — jamais une saisie d'utilisateur.
+    // Les valeurs comparees, elles, passent en parametres lies.
+    api.search.registerField({ key: 'delai', label: '…', type: 'number', operators: ['gte'], sql: '…' });
 
     // Tâches planifiées
     api.cron.register('rapport-quotidien', '0 2 * * *', handler);

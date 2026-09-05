@@ -4,6 +4,7 @@ import { itilStatusSchema } from '@tick/contracts';
 import { useState, type FormEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, useParams } from 'react-router';
+import { Attachments } from '@/components/Attachments';
 import { PriorityBadge, StatusBadge, TypeBadge } from '@/components/TicketBadges';
 import { ApiError, api } from '@/lib/api';
 
@@ -153,6 +154,8 @@ export function TicketPage() {
           <article className="whitespace-pre-wrap rounded-lg border border-neutral-200 p-4 text-sm dark:border-neutral-800">
             {detail.content || '—'}
           </article>
+
+          <Attachments itemType="ticket" itemId={id} />
 
           <section className="space-y-3">
             <h3 className="text-sm font-semibold">{t('tickets.detail.chronologie')}</h3>

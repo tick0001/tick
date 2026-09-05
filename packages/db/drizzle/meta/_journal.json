@@ -57,6 +57,20 @@
       "when": 1788631187977,
       "tag": "0007_rls_itil",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1788633582134,
+      "tag": "0008_sturdy_toad",
+      "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1788633583134,
+      "tag": "0009_rls_recherches_notifications",
+      "breakpoints": true
     }
   ]
 }

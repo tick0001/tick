@@ -57,6 +57,8 @@ export const entitySettings = pgTable('entity_settings', {
   defaultLocale: text('default_locale'),
   /** Matrice urgence x impact vers priorite, propre a l'entite. */
   priorityMatrix: jsonb('priority_matrix'),
+  /** Gabarit applique par defaut a la creation d'un ticket. */
+  defaultTicketTemplateId: bigint('default_ticket_template_id', { mode: 'number' }),
   updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
 });
 

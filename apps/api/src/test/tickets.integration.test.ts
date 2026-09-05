@@ -22,6 +22,7 @@ import { HookBus } from '../plugins/hook-bus.service.js';
 import { HistoryService } from '../tickets/history.service.js';
 import { PriorityService } from '../tickets/priority.service.js';
 import { TicketScopeService } from '../tickets/ticket-scope.service.js';
+import { TicketTemplatesService } from '../tickets/ticket-templates.service.js';
 import { TicketsService } from '../tickets/tickets.service.js';
 
 /**
@@ -117,6 +118,7 @@ describe('Portées de droits sur les tickets', () => {
       new HistoryService(),
       new PriorityService(entiteService),
       new TicketScopeService(db, rights),
+      new TicketTemplatesService(db, entiteService),
     );
 
     const creerEntite = async (nom: string, parent: number | null): Promise<number> => {

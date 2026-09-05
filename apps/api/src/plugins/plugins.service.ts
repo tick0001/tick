@@ -16,7 +16,9 @@ import type {
   PluginApi,
   PluginContext,
   PluginDefinition,
+  PluginSearchField,
 } from '@tick/plugin-sdk';
+import { SearchRegistry } from '../search/search-registry.service.js';
 import { DatabaseService } from '../database/database.service.js';
 import { EventBus } from './event-bus.service.js';
 import { emitEvent } from './event-buffer.js';
@@ -52,6 +54,7 @@ export class PluginsService implements OnApplicationBootstrap {
     private readonly migrator: PluginMigrator,
     private readonly hooks: HookBus,
     private readonly events: EventBus,
+    private readonly search: SearchRegistry,
   ) {}
 
   async onApplicationBootstrap(): Promise<void> {
@@ -156,6 +159,7 @@ export class PluginsService implements OnApplicationBootstrap {
     // fois les mêmes hooks.
     this.hooks.unregisterPlugin(id);
     this.events.unregisterPlugin(id);
+    this.search.unregisterPlugin(id);
 
     await definition.register(this.createApi(plugin, context));
 
@@ -168,6 +172,7 @@ export class PluginsService implements OnApplicationBootstrap {
   async deactivate(id: string): Promise<void> {
     this.hooks.unregisterPlugin(id);
     this.events.unregisterPlugin(id);
+    this.search.unregisterPlugin(id);
     this.loaded.delete(id);
 
     await this.setState(id, 'inactif', {});
@@ -351,6 +356,22 @@ export class PluginsService implements OnApplicationBootstrap {
         on: <K extends EventName>(name: K, handler: EventHandler<K>) => {
           exiger('events');
           this.events.register(plugin.manifest.id, context, name, handler);
+        },
+      },
+      search: {
+        registerField: (field: PluginSearchField) => {
+          exiger('search');
+          this.search.register({
+            // Prefixe force : deux plugins ne peuvent pas se disputer une cle,
+            // et l'origine d'un champ reste lisible dans l'interface.
+            key: `plugin:${plugin.manifest.id}:${field.key}`,
+            labelKey: field.label,
+            type: field.type,
+            operators: field.operators,
+            column: sql.raw(field.sql),
+            ...(field.options ? { options: field.options } : {}),
+            pluginId: plugin.manifest.id,
+          });
         },
       },
     };

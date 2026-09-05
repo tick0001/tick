@@ -14,6 +14,7 @@ const INHERITABLE_SETTINGS = [
   'mailReplyTo',
   'defaultLocale',
   'priorityMatrix',
+  'defaultTicketTemplateId',
 ] as const;
 
 export type InheritableSetting = (typeof INHERITABLE_SETTINGS)[number];
@@ -192,7 +193,8 @@ export class EntitiesService {
           s.mail_from             AS "mailFrom",
           s.mail_reply_to         AS "mailReplyTo",
           s.default_locale        AS "defaultLocale",
-          s.priority_matrix       AS "priorityMatrix"
+          s.priority_matrix       AS "priorityMatrix",
+          s.default_ticket_template_id AS "defaultTicketTemplateId"
         FROM entities cible
         JOIN entities ancetre ON ancetre.path @> cible.path
         LEFT JOIN entity_settings s ON s.entity_id = ancetre.id

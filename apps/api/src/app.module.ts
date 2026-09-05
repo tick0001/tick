@@ -4,9 +4,12 @@ import { AuthModule } from './auth/auth.module.js';
 import { CommonModule } from './common/common.module.js';
 import { loadEnv } from './config/env.js';
 import { DatabaseModule } from './database/database.module.js';
+import { DocumentsModule } from './documents/documents.module.js';
 import { EntitiesModule } from './entities/entities.module.js';
 import { HealthModule } from './health/health.module.js';
+import { NotificationsModule } from './notifications/notifications.module.js';
 import { PluginsModule } from './plugins/plugins.module.js';
+import { SearchModule } from './search/search.module.js';
 import { TicketsModule } from './tickets/tickets.module.js';
 
 @Module({
@@ -23,6 +26,9 @@ import { TicketsModule } from './tickets/tickets.module.js';
     PluginsModule,
     EntitiesModule,
     TicketsModule,
+    SearchModule,
+    NotificationsModule,
+    DocumentsModule,
     HealthModule,
   ],
 })

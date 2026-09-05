@@ -10,7 +10,7 @@ import type {
   TicketSummary,
   UpdateTicket,
 } from '@tick/contracts';
-import { itilActors, sql, tickets, type Transaction } from '@tick/db';
+import { itilActors, sql, tickets, type SQL, type Transaction } from '@tick/db';
 import { requireContext } from '../common/request-context.js';
 import { DatabaseService } from '../database/database.service.js';
 import { emitEvent } from '../plugins/event-buffer.js';
@@ -18,6 +18,7 @@ import { HookBus } from '../plugins/hook-bus.service.js';
 import { HistoryService } from './history.service.js';
 import { PriorityService } from './priority.service.js';
 import { TicketScopeService } from './ticket-scope.service.js';
+import { TicketTemplatesService } from './ticket-templates.service.js';
 import {
   actorLabels,
   decodeCursor,
@@ -94,6 +95,7 @@ export class TicketsService {
     private readonly history: HistoryService,
     private readonly priority: PriorityService,
     private readonly scopes: TicketScopeService,
+    private readonly templates: TicketTemplatesService,
   ) {}
 
   /**
@@ -108,14 +110,22 @@ export class TicketsService {
 
     await this.scopes.conditionFor('ticket', 'create');
 
+    // Le gabarit s'applique avant les hooks : il exprime une regle de saisie,
+    // les hooks une regle metier. Inverser laisserait un gabarit ecraser ce
+    // qu'un plugin vient de decider.
+    const gabarit = await this.templates.resolve(input.templateId);
+    const rempli = this.templates.applyDefaults(gabarit, input);
+
+    this.templates.assertMandatory(gabarit, rempli);
+
     const propose = await this.hooks.run('ticket.beforeCreate', {
       entityId: context.entityId,
-      name: input.name,
-      content: input.content,
-      type: input.type,
-      urgency: input.urgency,
-      impact: input.impact,
-      categoryId: input.categoryId ?? null,
+      name: rempli.name,
+      content: rempli.content,
+      type: rempli.type,
+      urgency: rempli.urgency,
+      impact: rempli.impact,
+      categoryId: rempli.categoryId ?? null,
     });
 
     const priority = await this.priority.compute(propose.entityId, propose.urgency, propose.impact);
@@ -133,9 +143,9 @@ export class TicketsService {
           impact: propose.impact,
           priority,
           categoryId: propose.categoryId,
-          requestSourceId: input.requestSourceId ?? null,
-          locationId: input.locationId ?? null,
-          templateId: input.templateId ?? null,
+          requestSourceId: rempli.requestSourceId ?? null,
+          locationId: rempli.locationId ?? null,
+          templateId: gabarit?.id ?? null,
           createdById: context.userId,
           updatedById: context.userId,
         })
@@ -145,9 +155,11 @@ export class TicketsService {
 
       // Sans demandeur explicite, l'auteur le devient : un ticket sans demandeur
       // n'a personne a qui repondre.
-      const acteurs: TicketActorInput[] = input.actors.some((acteur) => acteur.role === 'requester')
-        ? input.actors
-        : [...input.actors, { role: 'requester', actorType: 'user', actorId: context.userId }];
+      const acteurs: TicketActorInput[] = rempli.actors.some(
+        (acteur) => acteur.role === 'requester',
+      )
+        ? rempli.actors
+        : [...rempli.actors, { role: 'requester', actorType: 'user', actorId: context.userId }];
 
       await this.writeActors(tx, ticket.id, acteurs);
       await this.history.recordAction(
@@ -246,17 +258,9 @@ export class TicketsService {
    * deux ans d'exploitation.
    */
   async list(filter: TicketFilter): Promise<TicketPage> {
-    const condition = await this.scopes.conditionFor('ticket', 'read');
     const context = requireContext();
-    const colonne = SORTABLE[filter.sort];
-    const descendant = filter.direction === 'desc';
-    const curseur = decodeCursor(filter.cursor);
+    const conditions = await this.baseConditions(filter.deleted);
 
-    const conditions = [
-      filter.deleted ? sql`tickets.deleted_at IS NOT NULL` : sql`tickets.deleted_at IS NULL`,
-    ];
-
-    if (condition) conditions.push(condition);
     if (filter.type) conditions.push(sql`tickets.type = ${filter.type}`);
     if (filter.categoryId) conditions.push(sql`tickets.category_id = ${filter.categoryId}`);
 
@@ -292,6 +296,65 @@ export class TicketsService {
       )`);
     }
 
+    return this.paginate(conditions, filter);
+  }
+
+  /**
+   * Recherche multi-criteres.
+   *
+   * La clause vient du compilateur, qui n'accepte que des champs enregistres.
+   * Elle s'ajoute au perimetre et a la portee du droit : une recherche ne peut
+   * pas elargir ce que l'utilisateur a le droit de voir, seulement le restreindre.
+   */
+  async search(
+    clause: SQL | undefined,
+    options: {
+      sort: TicketFilter['sort'];
+      direction: TicketFilter['direction'];
+      limit: number;
+      cursor?: string | undefined;
+      deleted: boolean;
+    },
+  ): Promise<TicketPage> {
+    const conditions = await this.baseConditions(options.deleted);
+
+    if (clause) conditions.push(clause);
+
+    return this.paginate(conditions, options);
+  }
+
+  /** Corbeille et perimetre : le socle commun a toute liste de tickets. */
+  private async baseConditions(deleted: boolean): Promise<SQL[]> {
+    const condition = await this.scopes.conditionFor('ticket', 'read');
+    const conditions: SQL[] = [
+      deleted ? sql`tickets.deleted_at IS NOT NULL` : sql`tickets.deleted_at IS NULL`,
+    ];
+
+    if (condition) conditions.push(condition);
+
+    return conditions;
+  }
+
+  /**
+   * Execute la requete paginee.
+   *
+   * Pas d'`OFFSET` : il s'effondre au-dela de quelques centaines de milliers de
+   * lignes, et c'est exactement la volumetrie d'un outil de ticketing apres
+   * deux ans d'exploitation.
+   */
+  private async paginate(
+    conditions: SQL[],
+    options: {
+      sort: TicketFilter['sort'];
+      direction: TicketFilter['direction'];
+      limit: number;
+      cursor?: string | undefined;
+    },
+  ): Promise<TicketPage> {
+    const colonne = SORTABLE[options.sort];
+    const descendant = options.direction === 'desc';
+    const curseur = decodeCursor(options.cursor);
+
     if (curseur) {
       // Comparaison lexicographique sur (valeur de tri, identifiant) : deux
       // tickets ouverts a la meme seconde restent departages.
@@ -321,14 +384,14 @@ export class TicketsService {
         WHERE ${sql.join(conditions, sql` AND `)}
         ORDER BY ${colonne} ${descendant ? sql`DESC` : sql`ASC`},
                  tickets.id ${descendant ? sql`DESC` : sql`ASC`}
-        LIMIT ${filter.limit + 1}
+        LIMIT ${options.limit + 1}
       `);
 
       return resultat.rows;
     });
 
-    const complet = rows.length > filter.limit;
-    const page = complet ? rows.slice(0, filter.limit) : rows;
+    const complet = rows.length > options.limit;
+    const page = complet ? rows.slice(0, options.limit) : rows;
     const dernier = page.at(-1);
 
     return {

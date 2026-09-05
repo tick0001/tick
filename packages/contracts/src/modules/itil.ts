@@ -292,3 +292,46 @@ export const ticketPageSchema = z.object({
   nextCursor: z.string().nullable(),
 });
 export type TicketPage = z.infer<typeof ticketPageSchema>;
+
+// --- Gabarits ----------------------------------------------------------------
+
+export const templateFieldKindSchema = z.enum(['predefined', 'mandatory', 'hidden']);
+export type TemplateFieldKind = z.infer<typeof templateFieldKindSchema>;
+
+/**
+ * Gabarit de ticket.
+ *
+ * Un gabarit ne fige pas un formulaire : il déclare, champ par champ, une
+ * valeur préremplie, une obligation, ou un masquage. Les trois natures se
+ * combinent — un champ peut être prérempli **et** obligatoire, ce qui revient à
+ * proposer une valeur que l'utilisateur peut changer mais pas effacer.
+ */
+export const ticketTemplateSchema = z.object({
+  id: z.number().int().positive(),
+  name: z.string(),
+  comment: z.string().nullable(),
+  entity: z.object({ id: z.number().int().positive(), name: z.string() }),
+  isRecursive: z.boolean(),
+  /** Valeurs préremplies, par nom de champ. */
+  predefined: z.record(z.string(), z.unknown()),
+  /** Champs dont la saisie est bloquante. */
+  mandatory: z.array(z.string()),
+  /** Champs retirés du formulaire. */
+  hidden: z.array(z.string()),
+});
+export type TicketTemplate = z.infer<typeof ticketTemplateSchema>;
+
+export const templateFieldInputSchema = z.object({
+  field: z.string().min(1).max(64),
+  kind: templateFieldKindSchema,
+  /** Valeur préremplie, en JSON. Ignorée pour `mandatory` et `hidden`. */
+  value: z.unknown().optional(),
+});
+
+export const saveTicketTemplateSchema = z.object({
+  name: z.string().min(1).max(255),
+  comment: z.string().max(2000).nullish(),
+  isRecursive: z.boolean().default(false),
+  fields: z.array(templateFieldInputSchema).default([]),
+});
+export type SaveTicketTemplate = z.infer<typeof saveTicketTemplateSchema>;

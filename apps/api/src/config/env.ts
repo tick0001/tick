@@ -36,6 +36,17 @@ export function loadEnvFiles(): void {
  * une API qui demarre avec une configuration incomplete echoue plus tard, ailleurs,
  * et pour une raison illisible.
  */
+/**
+ * Booleen venant d'une variable d'environnement.
+ *
+ * `z.coerce.boolean()` ne convient pas : il applique la veracite JavaScript, ou
+ * la chaine « false » vaut vrai. Un `SMTP_SECURE=false` activait ainsi le TLS
+ * implicite, et l'echec ne se voyait qu'au premier envoi.
+ */
+const envBoolean = z
+  .union([z.boolean(), z.enum(['true', 'false', '1', '0'])])
+  .transform((valeur) => valeur === true || valeur === 'true' || valeur === '1');
+
 const envSchema = z.object({
   NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
   API_PORT: z.coerce.number().int().positive().default(3000),
@@ -61,7 +72,7 @@ const envSchema = z.object({
 
   SMTP_HOST: z.string().default('localhost'),
   SMTP_PORT: z.coerce.number().int().positive().default(1025),
-  SMTP_SECURE: z.coerce.boolean().default(false),
+  SMTP_SECURE: envBoolean.default(false),
   SMTP_FROM: z.string().default('tick@localhost'),
 
   DEFAULT_LOCALE: z.enum(['fr', 'en']).default('fr'),
@@ -85,10 +96,7 @@ const envSchema = z.object({
    * evenements destines a l'API et les acquitterait sans les traiter — sans
    * aucune trace, puisque le travail est bien depile.
    */
-  RUN_EVENT_WORKER: z
-    .union([z.boolean(), z.enum(['true', 'false'])])
-    .default(true)
-    .transform((valeur) => valeur === true || valeur === 'true'),
+  RUN_EVENT_WORKER: envBoolean.default(true),
 });
 
 export type Env = z.infer<typeof envSchema>;

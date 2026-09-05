@@ -9,3 +9,5 @@ export * from './itil-enums.js';
 export * from './itil-referentials.js';
 export * from './itil-tickets.js';
 export * from './logs.js';
+export * from './search.js';
+export * from './notifications.js';

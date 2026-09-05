@@ -153,6 +153,41 @@ export interface HookOptions {
   priority?: number;
 }
 
+/** Opérateurs applicables à un champ de recherche. */
+export type PluginSearchOperator =
+  | 'eq'
+  | 'ne'
+  | 'contains'
+  | 'startsWith'
+  | 'lt'
+  | 'lte'
+  | 'gt'
+  | 'gte'
+  | 'in'
+  | 'isNull'
+  | 'isNotNull';
+
+export interface PluginSearchField {
+  /** Clé exposée à l'interface. Préfixée par l'identifiant du plugin. */
+  key: string;
+  /** Libellé déjà traduit, ou clé de traduction du cœur. */
+  label: string;
+  type: 'text' | 'number' | 'enum' | 'date' | 'boolean' | 'reference';
+  operators: PluginSearchOperator[];
+  /**
+   * Expression SQL de la colonne, évaluée dans le contexte d'une requête sur
+   * `tickets`.
+   *
+   * C'est du SQL écrit par l'auteur du plugin, donc du code au même titre que
+   * le reste de son extension — pas une valeur venue d'un utilisateur. Le
+   * moteur n'y injecte jamais de saisie : les valeurs comparées passent en
+   * paramètres liés.
+   */
+  sql: string;
+  /** Valeurs possibles, pour un champ énuméré. */
+  options?: string[];
+}
+
 export interface PluginApi {
   readonly context: PluginContext;
 
@@ -162,6 +197,11 @@ export interface PluginApi {
 
   events: {
     on<K extends EventName>(name: K, handler: EventHandler<K>): void;
+  };
+
+  search: {
+    /** Rend un champ interrogeable depuis la recherche multi-critères. */
+    registerField(field: PluginSearchField): void;
   };
 }
 

@@ -1,21 +1,42 @@
 import type {
   AddFollowup,
+  CreateTicket,
   EntitySummary,
   ItilStatus,
   Login,
+  SavedSearch,
+  SaveSearch,
+  SearchField,
+  SearchRequest,
   SessionContext,
   SwitchContext,
   TicketDetail,
   TicketPage,
+  TicketTemplate,
   TimelineEntry,
 } from '@tick/contracts';
 import {
   entitySummarySchema,
+  savedSearchSchema,
+  searchFieldSchema,
   sessionContextSchema,
   ticketDetailSchema,
   ticketPageSchema,
+  ticketTemplateSchema,
   timelineEntrySchema,
 } from '@tick/contracts';
+import { z } from 'zod';
+
+/** Piece jointe telle que l'API la renvoie. */
+export const attachmentSchema = z.object({
+  id: z.number().int().positive(),
+  name: z.string(),
+  mimeType: z.string(),
+  size: z.number().int().nonnegative(),
+  createdAt: z.string(),
+  uploadedBy: z.string().nullable(),
+});
+export type Attachment = z.infer<typeof attachmentSchema>;
 import type { ZodType } from 'zod';
 
 /**
@@ -99,6 +120,59 @@ export const api = {
 
       throw new ApiError(response.status, detail?.message ?? `HTTP ${String(response.status)}`);
     }
+  },
+
+  createTicket: (body: CreateTicket): Promise<TicketDetail> =>
+    request('/tickets', ticketDetailSchema, { method: 'POST', body: JSON.stringify(body) }),
+
+  templates: (): Promise<TicketTemplate[]> =>
+    request('/ticket-templates', ticketTemplateSchema.array()),
+
+  searchFields: (): Promise<SearchField[]> => request('/search/fields', searchFieldSchema.array()),
+
+  searchTickets: (body: SearchRequest): Promise<TicketPage> =>
+    request('/search/tickets', ticketPageSchema, { method: 'POST', body: JSON.stringify(body) }),
+
+  savedSearches: (): Promise<SavedSearch[]> => request('/search/saved', savedSearchSchema.array()),
+
+  saveSearch: (body: SaveSearch): Promise<SavedSearch> =>
+    request('/search/saved', savedSearchSchema, { method: 'POST', body: JSON.stringify(body) }),
+
+  deleteSearch: async (id: number): Promise<void> => {
+    await fetch(`/api/search/saved/${String(id)}`, { method: 'DELETE', credentials: 'include' });
+  },
+
+  attachments: (itemType: string, itemId: number): Promise<Attachment[]> =>
+    request(`/documents/items/${itemType}/${String(itemId)}`, attachmentSchema.array()),
+
+  /**
+   * Envoi d'une piece jointe.
+   *
+   * Pas de `Content-Type` explicite : le navigateur doit poser lui-meme la
+   * frontiere multipart, et la fixer a la main casse l'envoi.
+   */
+  upload: async (itemType: string, itemId: number, fichier: File): Promise<Attachment> => {
+    const corps = new FormData();
+
+    corps.append('file', fichier);
+
+    const response = await fetch(`/api/documents/items/${itemType}/${String(itemId)}`, {
+      method: 'POST',
+      credentials: 'include',
+      body: corps,
+    });
+
+    if (!response.ok) {
+      const detail = (await response.json().catch(() => null)) as { message?: string } | null;
+
+      throw new ApiError(response.status, detail?.message ?? `HTTP ${String(response.status)}`);
+    }
+
+    return attachmentSchema.parse(await response.json());
+  },
+
+  deleteAttachment: async (id: number): Promise<void> => {
+    await fetch(`/api/documents/${String(id)}`, { method: 'DELETE', credentials: 'include' });
   },
 
   setStatus: (id: number, status: ItilStatus): Promise<TicketDetail> =>
