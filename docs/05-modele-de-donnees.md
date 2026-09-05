@@ -15,34 +15,34 @@ vérité ; ce document donne la structure et les intentions.
 
 ## Socle organisationnel
 
-| Table | Rôle |
-|---|---|
-| `entities` | Arbre des entités (`parent_id`, `path` ltree) |
-| `entity_settings` | Configuration par entité, `NULL` signifiant « hériter du parent » |
-| `users` | Comptes, locaux ou issus de l'annuaire |
-| `groups` | Groupes arborescents, avec superviseur et indicateurs demandeur/assignable |
-| `group_users` | Appartenances, avec rôle de responsable |
-| `profiles` | Profils (Self-service, Technicien, Superviseur, Administrateur…) |
-| `profile_rights` | Droits : objet × action × portée |
-| `authorizations` | Habilitations `(utilisateur, profil, entité, récursif, dynamique)` |
-| `ldap_directories` | Annuaires configurés et paramètres de synchronisation |
-| `sessions` | Sessions actives et jetons de rafraîchissement révocables |
+| Table              | Rôle                                                                       |
+| ------------------ | -------------------------------------------------------------------------- |
+| `entities`         | Arbre des entités (`parent_id`, `path` ltree)                              |
+| `entity_settings`  | Configuration par entité, `NULL` signifiant « hériter du parent »          |
+| `users`            | Comptes, locaux ou issus de l'annuaire                                     |
+| `groups`           | Groupes arborescents, avec superviseur et indicateurs demandeur/assignable |
+| `group_users`      | Appartenances, avec rôle de responsable                                    |
+| `profiles`         | Profils (Self-service, Technicien, Superviseur, Administrateur…)           |
+| `profile_rights`   | Droits : objet × action × portée                                           |
+| `authorizations`   | Habilitations `(utilisateur, profil, entité, récursif, dynamique)`         |
+| `ldap_directories` | Annuaires configurés et paramètres de synchronisation                      |
+| `sessions`         | Sessions actives et jetons de rafraîchissement révocables                  |
 
 ## Objets ITIL
 
-| Table | Rôle |
-|---|---|
-| `tickets` | Incidents et demandes |
-| `problems` | Problèmes |
-| `changes` | Changements |
-| `itil_actors` | Acteurs, polymorphe : `(itil_type, itil_id, role, actor_type, actor_id)` |
-| `itil_followups` | Suivis, avec visibilité privée et source |
-| `itil_tasks` | Tâches, avec planification et durée |
-| `itil_solutions` | Solutions, avec type et statut d'approbation |
-| `itil_validations` | Demandes d'approbation et réponses |
-| `itil_costs` | Coûts |
-| `itil_links` | Liens entre objets : duplicata, lié, parent/enfant |
-| `itil_documents` | Rattachement de documents |
+| Table              | Rôle                                                                     |
+| ------------------ | ------------------------------------------------------------------------ |
+| `tickets`          | Incidents et demandes                                                    |
+| `problems`         | Problèmes                                                                |
+| `changes`          | Changements                                                              |
+| `itil_actors`      | Acteurs, polymorphe : `(itil_type, itil_id, role, actor_type, actor_id)` |
+| `itil_followups`   | Suivis, avec visibilité privée et source                                 |
+| `itil_tasks`       | Tâches, avec planification et durée                                      |
+| `itil_solutions`   | Solutions, avec type et statut d'approbation                             |
+| `itil_validations` | Demandes d'approbation et réponses                                       |
+| `itil_costs`       | Coûts                                                                    |
+| `itil_links`       | Liens entre objets : duplicata, lié, parent/enfant                       |
+| `itil_documents`   | Rattachement de documents                                                |
 
 Le triplet `(itil_type, itil_id)` est indexé sur chaque satellite. Les trois objets principaux
 partagent délibérément le même jeu de colonnes communes, ce qui permet un service générique sans
@@ -56,12 +56,12 @@ porteurs de `is_recursive`.
 
 ## Niveaux de service
 
-| Table | Rôle |
-|---|---|
-| `calendars`, `calendar_segments`, `holidays` | Heures ouvrées et jours fériés |
-| `slas`, `olas` | Engagements, type (prise en compte ou résolution), durée, calendrier |
-| `sla_levels`, `sla_level_actions` | Niveaux d'escalade et actions associées |
-| `itil_sla_state` | Échéances calculées et cumul des périodes de suspension |
+| Table                                        | Rôle                                                                 |
+| -------------------------------------------- | -------------------------------------------------------------------- |
+| `calendars`, `calendar_segments`, `holidays` | Heures ouvrées et jours fériés                                       |
+| `slas`, `olas`                               | Engagements, type (prise en compte ou résolution), durée, calendrier |
+| `sla_levels`, `sla_level_actions`            | Niveaux d'escalade et actions associées                              |
+| `itil_sla_state`                             | Échéances calculées et cumul des périodes de suspension              |
 
 Les échéances sont **calculées et stockées**, puis recalculées à chaque événement pertinent
 (changement de SLA, suspension, reprise). Les recalculer à la lecture rendrait toute liste triée
@@ -91,14 +91,14 @@ visibilité), `kb_item_feedback`.
 
 ## Transverse
 
-| Table | Rôle |
-|---|---|
-| `documents`, `document_types` | Fichiers et types autorisés |
-| `logs` | Historique universel : objet, champ, ancienne et nouvelle valeur, auteur |
-| `saved_searches` | Recherches sauvegardées, personnelles ou publiques |
-| `dashboards`, `dashboard_widgets` | Tableaux de bord composables |
-| `plugins` | Plugins installés : version, état, date |
-| `jobs` | Traçabilité des tâches planifiées |
+| Table                             | Rôle                                                                     |
+| --------------------------------- | ------------------------------------------------------------------------ |
+| `documents`, `document_types`     | Fichiers et types autorisés                                              |
+| `logs`                            | Historique universel : objet, champ, ancienne et nouvelle valeur, auteur |
+| `saved_searches`                  | Recherches sauvegardées, personnelles ou publiques                       |
+| `dashboards`, `dashboard_widgets` | Tableaux de bord composables                                             |
+| `plugins`                         | Plugins installés : version, état, date                                  |
+| `jobs`                            | Traçabilité des tâches planifiées                                        |
 
 ## Recherche plein texte
 

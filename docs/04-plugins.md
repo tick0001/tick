@@ -32,9 +32,7 @@ mon-plugin/
   "homepage": "…",
   "dependencies": { "socle-reporting": "^2.0.0" },
   "permissions": ["ticket:read", "schema:own", "cron", "notification:send", "http:outbound"],
-  "rights": [
-    { "key": "sla_report", "label": "Rapports SLA", "actions": ["read", "update"] }
-  ],
+  "rights": [{ "key": "sla_report", "label": "Rapports SLA", "actions": ["read", "update"] }],
   "server": "./dist/server.js",
   "client": "./dist/client.js",
   "migrations": "./migrations"
@@ -106,7 +104,7 @@ export default definePluginClient({
 });
 ```
 
-React, `@tick/ui` et i18next sont fournis en dépendances partagées par une *import map* : le plugin
+React, `@tick/ui` et i18next sont fournis en dépendances partagées par une _import map_ : le plugin
 les importe sans les embarquer, ce qui garantit une instance unique et un rendu cohérent.
 
 ## 5. Cycle de vie
@@ -121,7 +119,7 @@ les importe sans les embarquer, ce qui garantit une instance unique et un rendu 
 6. **Désactivation** — retrait des enregistrements, données conservées.
 7. **Désinstallation** — `uninstall()` puis suppression du schéma et des droits.
 
-Les états possibles sont : *découvert*, *installé*, *actif*, *inactif*, *en erreur*.
+Les états possibles sont : _découvert_, _installé_, _actif_, _inactif_, _en erreur_.
 
 ## 6. Garde-fous
 

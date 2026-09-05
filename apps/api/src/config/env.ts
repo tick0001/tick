@@ -1,0 +1,46 @@
+import { z } from 'zod';
+
+/**
+ * Configuration d'execution, validee au demarrage.
+ *
+ * Le processus refuse de demarrer si une variable est absente ou mal formee :
+ * une API qui demarre avec une configuration incomplete echoue plus tard, ailleurs,
+ * et pour une raison illisible.
+ */
+const envSchema = z.object({
+  NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
+  API_PORT: z.coerce.number().int().positive().default(3000),
+  API_URL: z.string().url().default('http://localhost:3000'),
+  WEB_URL: z.string().url().default('http://localhost:5173'),
+
+  // Role proprietaire : migrations uniquement, exempte de Row-Level Security.
+  DATABASE_URL: z.string().url(),
+  // Role applicatif : tout le trafic normal, soumis au Row-Level Security.
+  DATABASE_APP_URL: z.string().url(),
+
+  REDIS_URL: z.string().url(),
+  SESSION_SECRET: z.string().min(16),
+
+  SMTP_HOST: z.string().default('localhost'),
+  SMTP_PORT: z.coerce.number().int().positive().default(1025),
+  SMTP_SECURE: z.coerce.boolean().default(false),
+  SMTP_FROM: z.string().default('tick@localhost'),
+
+  DEFAULT_LOCALE: z.enum(['fr', 'en']).default('fr'),
+  STORAGE_PATH: z.string().default('./storage'),
+});
+
+export type Env = z.infer<typeof envSchema>;
+
+export function loadEnv(source: NodeJS.ProcessEnv = process.env): Env {
+  const result = envSchema.safeParse(source);
+
+  if (!result.success) {
+    const details = result.error.issues
+      .map((issue) => `  - ${issue.path.join('.')} : ${issue.message}`)
+      .join('\n');
+    throw new Error(`Configuration invalide.\n${details}\n\nVoir .env.example.`);
+  }
+
+  return result.data;
+}

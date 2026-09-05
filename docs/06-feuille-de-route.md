@@ -11,10 +11,10 @@ Les identifiants `M01`…`M17` renvoient au [périmètre fonctionnel](01-perimet
 ### J0 — Fondations
 
 Monorepo pnpm et Turborepo, `apps/api` et `apps/web` qui démarrent, Docker Compose (PostgreSQL,
-Redis, MailHog), TypeScript strict, ESLint et Prettier, Vitest, intégration continue, conventions
+Redis, Mailpit), TypeScript strict, ESLint et Prettier, Vitest, intégration continue, conventions
 de commit, documentation initiale.
 
-*Terminé quand* : `docker compose up` puis un lancement suffisent à obtenir une API et une
+_Terminé quand_ : `docker compose up` puis un lancement suffisent à obtenir une API et une
 interface fonctionnelles sur une machine vierge.
 
 ### J1 — Socle de sécurité `M16`
@@ -23,7 +23,7 @@ Arbre des entités en `ltree`, utilisateurs, groupes, profils et droits, habilit
 requête, **Row-Level Security**, authentification locale, LDAP et synchronisation, règles
 d'affectation d'habilitations, internationalisation, configuration héritée par entité.
 
-*Terminé quand* : les six tests d'isolation de [la section 9](03-entites-droits-securite.md) passent
+_Terminé quand_ : les six tests d'isolation de [la section 9](03-entites-droits-securite.md) passent
 sur une vraie base PostgreSQL.
 
 ### J2 — Substrat d'extension
@@ -33,12 +33,12 @@ Bus de hooks et bus d'événements, contexte d'exécution des plugins, cycle de 
 jour, désinstallation), schéma PostgreSQL par plugin et migrations, chargement ESM dynamique côté
 interface avec dépendances partagées.
 
-*Terminé quand* : un plugin minimal s'installe, s'active, intercepte un hook, se met à jour et se
+_Terminé quand_ : un plugin minimal s'installe, s'active, intercepte un hook, se met à jour et se
 désinstalle sans laisser de trace.
 
 > **Le substrat vient avant le métier, la surface publique vient après.** L'infrastructure
 > d'extension dicte la façon dont les services sont écrits : la greffer après coup imposerait de
-> tout réécrire. Mais concevoir le catalogue de hooks et l'API de champs additionnels *avant* de
+> tout réécrire. Mais concevoir le catalogue de hooks et l'API de champs additionnels _avant_ de
 > connaître le domaine réel produit une surface élégante et inadaptée. On construit donc la
 > mécanique maintenant, et on dessine ce qu'elle expose au jalon suivant.
 
@@ -53,7 +53,7 @@ emplacement d'interface et chaque extension de champ est extrait d'un besoin con
 ticket, jamais imaginé. Le plugin de référence `exemple-bonjour` naît avec elle et sert de test
 d'intégration permanent du contrat.
 
-*Terminé quand* : une équipe peut réellement traiter des tickets, et un plugin peut ajouter un
+_Terminé quand_ : une équipe peut réellement traiter des tickets, et un plugin peut ajouter un
 onglet, un champ et une règle sans toucher au cœur.
 
 ### J4 — Niveaux de service et règles `M03` `M04`

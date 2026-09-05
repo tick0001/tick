@@ -1,0 +1,16 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    // NodeNext herite de la base. Le paquet ne declarant pas "type": "module",
+    // l'emission se fait en CommonJS, ce qu'attend NestJS. Les imports relatifs
+    // portent donc l'extension .js : un passage ulterieur a l'ESM ne demandera
+    // aucune reecriture.
+    "lib": ["ES2023"],
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true,
+    "outDir": "dist",
+    "rootDir": "src"
+  },
+  "include": ["src/**/*.ts"],
+  "exclude": ["node_modules", "dist"]
+}

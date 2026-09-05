@@ -38,13 +38,13 @@ et des dépôts de données, plus **deux bus distincts** décrits ci-dessous.
 C'est la distinction qui fait ou défait un système de plugins. Les deux mécanismes existent et ne
 se remplacent pas :
 
-| | Hooks | Événements |
-|---|---|---|
-| Exécution | Synchrone, dans la transaction | Asynchrone, après commit |
-| Peut modifier la donnée | Oui | Non |
-| Peut annuler l'opération | Oui, en levant une exception | Non |
-| Exemples | `ticket.beforeCreate`, `ticket.beforeUpdate`, `ticket.validate` | `ticket.created`, `ticket.statusChanged`, `followup.added` |
-| Usage type | Règles métier, validation, valeurs calculées | Notifications, statistiques, webhooks, synchronisations |
+|                          | Hooks                                                           | Événements                                                 |
+| ------------------------ | --------------------------------------------------------------- | ---------------------------------------------------------- |
+| Exécution                | Synchrone, dans la transaction                                  | Asynchrone, après commit                                   |
+| Peut modifier la donnée  | Oui                                                             | Non                                                        |
+| Peut annuler l'opération | Oui, en levant une exception                                    | Non                                                        |
+| Exemples                 | `ticket.beforeCreate`, `ticket.beforeUpdate`, `ticket.validate` | `ticket.created`, `ticket.statusChanged`, `followup.added` |
+| Usage type               | Règles métier, validation, valeurs calculées                    | Notifications, statistiques, webhooks, synchronisations    |
 
 Un hook lent ou en erreur dégrade l'écriture, donc il est borné par un délai maximal et le plugin
 fautif est désactivé après répétition. Un événement est publié dans BullMQ après le commit : il
@@ -107,7 +107,7 @@ entrées de menu, colonnes de liste, widgets de tableau de bord, actions massive
 formulaire, actions de barre d'outils.
 
 Les plugins livrent un module ESM pré-construit, chargé à l'exécution depuis l'API. React,
-`@tick/ui` et i18next sont fournis en dépendances partagées via une *import map*, pour garantir
+`@tick/ui` et i18next sont fournis en dépendances partagées via une _import map_, pour garantir
 une instance unique et éviter qu'un plugin n'embarque son propre React. Conséquence assumée :
 installer un plugin ne nécessite pas de reconstruire l'application.
 
@@ -130,6 +130,15 @@ est un incident métier.
 **Pagination par curseur** sur toutes les listes ITIL dès le départ. Le `OFFSET` s'effondre au-delà
 de quelques centaines de milliers de lignes, et c'est précisément la volumétrie visée.
 
+**TypeScript 6, pas 7.** Le compilateur natif TypeScript 7 fonctionne, mais `typescript-eslint`
+ne le prend pas encore en charge : l'adopter reviendrait à renoncer aux règles typées
+(`no-floating-promises` en tête), qui attrapent de vrais bugs. Le gain de vitesse de compilation
+est sans objet à cette taille de code. À rebasculer dès que le support arrive.
+
+**Pas de CLI NestJS.** `nest build` n'est qu'une enveloppe autour de `tsc`, et il traîne toute la
+chaîne `@angular-devkit`, actuellement cassée sous Node 22. La construction se fait donc par `tsc`
+et le rechargement à chaud par `node --watch`, ce qui retire une couche d'outillage opaque.
+
 **Tests dès le socle.** Le moteur de règles, le calcul SLA sur calendrier ouvré et la résolution
 des droits sont trois domaines où un bug est silencieux et coûteux. Vitest pour l'unitaire,
 Testcontainers pour l'intégration sur une vraie base PostgreSQL (le RLS ne se teste pas en SQLite),
@@ -137,7 +146,7 @@ Playwright pour les parcours critiques.
 
 ## Environnement de développement
 
-`docker compose up` fournit PostgreSQL, Redis et MailHog. L'API et le front tournent en local avec
+`docker compose up` fournit PostgreSQL, Redis et Mailpit. L'API et le front tournent en local avec
 rechargement à chaud. Un jeu de données de démonstration (arbre d'entités, profils, techniciens,
 catégories, SLA, tickets) est généré par une commande dédiée — indispensable pour éprouver le
 modèle d'entités autrement qu'en théorie.

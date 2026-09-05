@@ -35,11 +35,11 @@ transitions autorisées sont configurables ; le statut « en attente » suspend 
 
 **Acteurs** — trois rôles × trois natures, un ticket pouvant en cumuler autant que nécessaire :
 
-| | Utilisateur | Groupe | Fournisseur |
-|---|---|---|---|
-| Demandeur | ✓ | ✓ | ✓ |
-| Observateur | ✓ | ✓ | ✓ |
-| Attribué à | ✓ | ✓ | ✓ |
+|             | Utilisateur | Groupe | Fournisseur |
+| ----------- | ----------- | ------ | ----------- |
+| Demandeur   | ✓           | ✓      | ✓           |
+| Observateur | ✓           | ✓      | ✓           |
+| Attribué à  | ✓           | ✓      | ✓           |
 
 **Suivis** — contenu riche, public ou privé, source (interface, courriel, téléphone, autre), date
 d'échéance facultative, auteur.

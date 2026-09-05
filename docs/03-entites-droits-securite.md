@@ -110,13 +110,13 @@ Ce contexte détermine :
 
 Un droit n'est jamais un simple booléen. C'est le triplet **objet × action × portée** :
 
-| Portée | Signification |
-|---|---|
-| `own` | Les objets dont l'utilisateur est demandeur ou auteur |
-| `group` | Ceux de ses groupes |
-| `entity` | Ceux de l'entité active |
-| `recursive` | Ceux de l'entité active et de sa descendance |
-| `all` | Tous, dans le périmètre d'habilitation |
+| Portée      | Signification                                         |
+| ----------- | ----------------------------------------------------- |
+| `own`       | Les objets dont l'utilisateur est demandeur ou auteur |
+| `group`     | Ceux de ses groupes                                   |
+| `entity`    | Ceux de l'entité active                               |
+| `recursive` | Ceux de l'entité active et de sa descendance          |
+| `all`       | Tous, dans le périmètre d'habilitation                |
 
 Exemple : un technicien de niveau 1 a `ticket:read = entity` et `ticket:update = group`. Il voit
 tous les tickets de son entité mais ne modifie que ceux affectés à ses groupes.

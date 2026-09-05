@@ -1,0 +1,10 @@
+packages:
+  - 'apps/*'
+  - 'packages/*'
+  - 'plugins/*'
+
+# Scripts d'installation explicitement autorises. Tout le reste est ignore :
+# une dependance transitive ne doit pas pouvoir executer du code a l'installation
+# sans decision consciente.
+allowBuilds:
+  esbuild: true
