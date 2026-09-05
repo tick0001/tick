@@ -5,3 +5,7 @@ export * from './profiles.js';
 export * from './sessions.js';
 export * from './ldap.js';
 export * from './plugins.js';
+export * from './itil-enums.js';
+export * from './itil-referentials.js';
+export * from './itil-tickets.js';
+export * from './logs.js';
