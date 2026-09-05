@@ -164,7 +164,22 @@ export class EntitiesService {
    * production devient une devinette.
    */
   async resolveSettings(entityId: number): Promise<ResolvedSettings> {
-    const rows = await this.db.asUser(async (tx) => {
+    // Deux temps, et c'est deliberé.
+    //
+    // Un parametre herite vit sur un **ancetre** de l'entite, donc hors du
+    // perimetre descendant que le Row-Level Security applique. Resoudre
+    // l'heritage avec la connexion applicative ne trouverait jamais la valeur du
+    // parent et retomberait silencieusement sur le defaut — panne invisible,
+    // puisqu'un defaut raisonnable ressemble a un fonctionnement normal.
+    //
+    // Plutot que d'ouvrir la politique aux ancetres, ce qui rendrait fausse la
+    // garantie « on ne voit que son perimetre », on verifie d'abord que l'entite
+    // demandee est visible, puis on remonte la chaine avec le role proprietaire.
+    // L'exception est ainsi bornee, explicite et ancree sur un identifiant deja
+    // autorise.
+    await this.findById(entityId);
+
+    const rows = await this.db.asOwner(async (tx) => {
       const result = await tx.execute<
         Record<string, unknown> & { entityId: number; completeName: string; depth: number }
       >(sql`
