@@ -278,11 +278,11 @@ export const fr = {
     arretee: 'évaluation arrêtée ici',
     valeurObtenue: 'valeur lue',
     collections: {
-      'ticket.create': 'Tickets — à la création',
-      'ticket.update': 'Tickets — à la modification',
-      'authorization.assign': 'Habilitations — affectation depuis l’annuaire',
-      'entity.assign': 'Entités — affectation depuis l’annuaire',
-      'dictionary.ticket': 'Dictionnaire — tickets',
+      ticketCreate: 'Tickets — à la création',
+      ticketUpdate: 'Tickets — à la modification',
+      authorizationAssign: 'Habilitations — affectation depuis l’annuaire',
+      entityAssign: 'Entités — affectation depuis l’annuaire',
+      dictionaryTicket: 'Dictionnaire — tickets',
     },
     operateurs: {
       is: 'est',

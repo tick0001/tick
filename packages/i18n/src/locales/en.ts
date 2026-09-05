@@ -277,11 +277,11 @@ export const en: Traductions = {
     arretee: 'evaluation stopped here',
     valeurObtenue: 'actual value',
     collections: {
-      'ticket.create': 'Tickets — on creation',
-      'ticket.update': 'Tickets — on update',
-      'authorization.assign': 'Authorizations — from the directory',
-      'entity.assign': 'Entities — from the directory',
-      'dictionary.ticket': 'Dictionary — tickets',
+      ticketCreate: 'Tickets — on creation',
+      ticketUpdate: 'Tickets — on update',
+      authorizationAssign: 'Authorizations — from the directory',
+      entityAssign: 'Entities — from the directory',
+      dictionaryTicket: 'Dictionary — tickets',
     },
     operateurs: {
       is: 'is',

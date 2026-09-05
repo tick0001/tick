@@ -20,6 +20,21 @@ const COLLECTIONS: RuleCollection[] = [
   'entity.assign',
 ];
 
+/**
+ * Clé de traduction d'une collection.
+ *
+ * Les identifiants de collection contiennent un point, que la bibliothèque de
+ * traduction lit comme un séparateur de niveau : les traduire directement
+ * ferait chercher une clé imbriquée qui n'existe pas.
+ */
+const LIBELLE_COLLECTION: Record<RuleCollection, string> = {
+  'ticket.create': 'ticketCreate',
+  'ticket.update': 'ticketUpdate',
+  'dictionary.ticket': 'dictionaryTicket',
+  'authorization.assign': 'authorizationAssign',
+  'entity.assign': 'entityAssign',
+};
+
 /** Opérateurs qui n'attendent aucune valeur : la saisir n'aurait aucun sens. */
 const SANS_VALEUR: readonly RuleOperator[] = ['is_empty', 'is_not_empty'];
 
@@ -172,7 +187,9 @@ export function RulesPage() {
           >
             {COLLECTIONS.map((valeur) => (
               <option key={valeur} value={valeur}>
-                {t(`regles.collections.${valeur}`)}
+                {t(
+                  `regles.collections.${LIBELLE_COLLECTION[valeur]}` as 'regles.collections.ticketCreate',
+                )}
               </option>
             ))}
           </select>
