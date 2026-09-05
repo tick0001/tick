@@ -114,6 +114,10 @@ async function createEntity(
 
 async function main(): Promise<void> {
   loadEnvFiles();
+  // Un outil en ligne de commande ne consomme pas la file : il volerait des
+  // evenements a l'API et les acquitterait sans les traiter.
+  process.env['RUN_EVENT_WORKER'] = 'false';
+
   const logger = new Logger('Amorcage');
   const app = await NestFactory.createApplicationContext(AppModule, { logger: ['warn', 'error'] });
   const db = app.get(DatabaseService);

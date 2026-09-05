@@ -28,7 +28,8 @@ export class EventBus implements OnModuleInit, OnModuleDestroy {
   private worker?: Worker;
 
   onModuleInit(): void {
-    const connection = { url: loadEnv().REDIS_URL };
+    const env = loadEnv();
+    const connection = { url: env.REDIS_URL };
 
     this.queue = new Queue(EVENT_QUEUE, {
       connection,
@@ -39,6 +40,15 @@ export class EventBus implements OnModuleInit, OnModuleDestroy {
         removeOnFail: 5_000,
       },
     });
+
+    // Publier reste toujours possible ; consommer est reserve aux processus
+    // qui le declarent. Un outil en ligne de commande depilerait sinon des
+    // evenements destines a l'API.
+    if (!env.RUN_EVENT_WORKER) {
+      setEventPublisher((events) => this.publish(events));
+
+      return;
+    }
 
     this.worker = new Worker(
       EVENT_QUEUE,

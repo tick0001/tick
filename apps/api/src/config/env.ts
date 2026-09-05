@@ -77,6 +77,18 @@ const envSchema = z.object({
    * `debug` trace notamment la distribution des evenements aux plugins.
    */
   LOG_LEVEL: z.enum(['error', 'warn', 'log', 'debug', 'verbose']).default('log'),
+  /**
+   * Ce processus consomme-t-il la file d'evenements ?
+   *
+   * Faux pour tout outil en ligne de commande : un script qui demarre le
+   * conteneur applicatif demarrerait sinon un consommateur, qui prendrait des
+   * evenements destines a l'API et les acquitterait sans les traiter — sans
+   * aucune trace, puisque le travail est bien depile.
+   */
+  RUN_EVENT_WORKER: z
+    .union([z.boolean(), z.enum(['true', 'false'])])
+    .default(true)
+    .transform((valeur) => valeur === true || valeur === 'true'),
 });
 
 export type Env = z.infer<typeof envSchema>;

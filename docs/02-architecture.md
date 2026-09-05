@@ -151,6 +151,12 @@ injecter, construit les services avec des arguments manquants, et échoue bien p
 `undefined` sans rapport apparent avec la cause. Tout script applicatif s'exécute donc compilé.
 Les tests, eux, assemblent les services à la main et n'ont pas ce besoin.
 
+**Seule l API consomme la file d événements.** Tout processus qui démarre le conteneur applicatif
+démarrerait sinon un consommateur : un script en ligne de commande dépilerait des événements
+destinés à l API et les acquitterait sans les traiter, sans laisser de trace puisque le travail
+est bien consommé. La consommation est donc déclarée explicitement, et refusée par défaut aux
+outils.
+
 **Tests dès le socle.** Le moteur de règles, le calcul SLA sur calendrier ouvré et la résolution
 des droits sont trois domaines où un bug est silencieux et coûteux. Vitest pour l'unitaire,
 Testcontainers pour l'intégration sur une vraie base PostgreSQL (le RLS ne se teste pas en SQLite),
