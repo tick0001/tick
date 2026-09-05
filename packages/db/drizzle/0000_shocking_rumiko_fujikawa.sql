@@ -1,3 +1,41 @@
+-- =============================================================================
+-- Preambule : tout ce dont le schema depend avant sa premiere table.
+--
+-- Volontairement porte par la migration et non par un script d'initialisation
+-- du conteneur : l'integration continue, un poste de developpement et une
+-- installation reelle passent alors exactement par le meme chemin. Un role
+-- applicatif absent en integration continue ferait tourner les tests
+-- d'isolation en tant que proprietaire, donc hors Row-Level Security : ils
+-- passeraient sans rien prouver.
+-- =============================================================================
+CREATE EXTENSION IF NOT EXISTS ltree;
+CREATE EXTENSION IF NOT EXISTS pg_trgm;
+CREATE EXTENSION IF NOT EXISTS unaccent;
+CREATE EXTENSION IF NOT EXISTS citext;
+--> statement-breakpoint
+-- Role applicatif, soumis au Row-Level Security. Le role proprietaire possede
+-- les tables et en est exempte : il ne sert qu'aux migrations et a l'amorcage.
+DO $preambule$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'tick_app') THEN
+    CREATE ROLE tick_app LOGIN PASSWORD 'tick_app';
+  END IF;
+END
+$preambule$;
+--> statement-breakpoint
+GRANT USAGE ON SCHEMA public TO tick_app;
+--> statement-breakpoint
+-- Collation francaise explicite, applicable colonne par colonne. Declaree ici
+-- plutot que forcee a l'initialisation du cluster : le fournisseur ICU impose
+-- des arguments d'initdb fragiles selon l'environnement.
+DO $collation$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_collation WHERE collname = 'fr_icu') THEN
+    CREATE COLLATION fr_icu (provider = icu, locale = 'fr-FR');
+  END IF;
+END
+$collation$;
+--> statement-breakpoint
 CREATE TYPE "public"."auth_source" AS ENUM('local', 'ldap');--> statement-breakpoint
 CREATE TYPE "public"."profile_interface" AS ENUM('standard', 'self_service');--> statement-breakpoint
 CREATE TYPE "public"."right_scope" AS ENUM('own', 'group', 'entity', 'recursive', 'all');--> statement-breakpoint

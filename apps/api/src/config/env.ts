@@ -1,4 +1,29 @@
+import { resolve } from 'node:path';
 import { z } from 'zod';
+
+/**
+ * Charge les fichiers `.env` avant toute lecture de configuration.
+ *
+ * Appele explicitement plutot que laisse a l'environnement du shell : `node
+ * dist/main.js` doit se comporter comme `pnpm dev`, sur un poste comme dans un
+ * conteneur. Les variables deja definies dans l'environnement ont la priorite,
+ * ce que garantit `process.loadEnvFile`.
+ *
+ * `__dirname` vaut `<racine>/apps/api/{src,dist}/config` : la racine du depot
+ * est a quatre niveaux au-dessus, que le code soit compile ou non.
+ */
+export function loadEnvFiles(): void {
+  const candidates = [resolve(process.cwd(), '.env'), resolve(__dirname, '../../../..', '.env')];
+
+  for (const candidate of candidates) {
+    try {
+      process.loadEnvFile(candidate);
+      return;
+    } catch {
+      // Fichier absent : on essaie le suivant, puis on s'en remet a l'environnement.
+    }
+  }
+}
 
 /**
  * Configuration d'execution, validee au demarrage.

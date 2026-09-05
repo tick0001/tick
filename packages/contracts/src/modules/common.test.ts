@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { DEFAULT_LOCALE, healthSchema, localeSchema } from './index.js';
+import { DEFAULT_LOCALE, healthSchema, localeSchema } from './common.js';
 
 describe('healthSchema', () => {
   it('accepte une reponse valide', () => {

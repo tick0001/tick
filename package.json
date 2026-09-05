@@ -18,7 +18,10 @@
     "format:check": "prettier --check \"**/*.{ts,tsx,js,mjs,json,md,yaml,yml}\"",
     "services:up": "docker compose -f docker/compose.yaml up -d",
     "services:down": "docker compose -f docker/compose.yaml down",
-    "services:reset": "docker compose -f docker/compose.yaml down -v && pnpm services:up"
+    "services:reset": "docker compose -f docker/compose.yaml down -v && pnpm services:up",
+    "db:migrate": "pnpm --filter @tick/db db:migrate",
+    "db:seed": "pnpm --filter @tick/api db:seed",
+    "db:reset": "pnpm services:reset && pnpm db:migrate && pnpm db:seed"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",

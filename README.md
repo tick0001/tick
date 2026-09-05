@@ -31,19 +31,35 @@ Prérequis : Node 22 ou plus, pnpm 11, Docker.
 pnpm install
 cp .env.example .env
 pnpm services:up      # PostgreSQL, Redis, Mailpit
+pnpm db:migrate       # schéma, déclencheurs, politiques RLS
+pnpm db:seed          # jeu de démonstration
 pnpm dev              # API sur :3000, interface sur :5173
 ```
 
 Vérification : `curl http://localhost:3000/api/health`, ou ouvrir <http://localhost:5173>.
 
-| Commande              | Effet                                      |
-| --------------------- | ------------------------------------------ |
-| `pnpm build`          | Construit tous les paquets                 |
-| `pnpm test`           | Exécute les tests                          |
-| `pnpm lint`           | ESLint avec règles typées                  |
-| `pnpm typecheck`      | Vérification de types sans émission        |
-| `pnpm format`         | Applique Prettier                          |
-| `pnpm services:reset` | Réinitialise les services et leurs volumes |
+### Comptes de démonstration
+
+Mot de passe commun : `tick`. Ils existent pour rendre le modèle d'entités tangible — chacun
+illustre un cas que le modèle doit savoir traiter.
+
+| Compte      | Habilitations                                       | Ce qu'il démontre                                             |
+| ----------- | --------------------------------------------------- | ------------------------------------------------------------- |
+| `admin`     | Administrateur sur Racine, récursif                 | Accès complet à l'arborescence                                |
+| `sophie`    | Superviseur sur Filiale Nord, récursif              | Une branche entière, sans voir le Siège                       |
+| `thomas`    | Technicien sur Site A, non récursif                 | Une seule entité, sans sa descendance                         |
+| `lea`       | Technicien sur Site B **et** Self-service sur Siège | Le cumul : les droits suivent le profil actif, jamais l'union |
+| `demandeur` | Self-service sur DSI                                | L'interface simplifiée                                        |
+
+| Commande              | Effet                                       |
+| --------------------- | ------------------------------------------- |
+| `pnpm build`          | Construit tous les paquets                  |
+| `pnpm test`           | Exécute les tests                           |
+| `pnpm lint`           | ESLint avec règles typées                   |
+| `pnpm typecheck`      | Vérification de types sans émission         |
+| `pnpm format`         | Applique Prettier                           |
+| `pnpm db:reset`       | Repart d'une base vierge, migrée et amorcée |
+| `pnpm services:reset` | Réinitialise les services et leurs volumes  |
 
 ## Documentation
 

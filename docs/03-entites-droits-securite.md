@@ -138,23 +138,52 @@ SET LOCAL tick.scope_paths  = 'racine.filiale_nord.site_a';  -- ou le sous-arbre
 SET LOCAL tick.user_id      = '42';
 ```
 
-Les deux formes de politique correspondent aux deux natures d'objets de la section 3 :
+Les deux formes de politique correspondent aux deux natures d'objets de la section 3. Elles sont
+encapsulées dans deux fonctions, pour que chaque nouvelle table n'ait qu'à choisir sa nature :
 
 ```sql
--- Données : descendant du périmètre actif
-CREATE POLICY tickets_scope ON tickets
-  USING (entity_path <@ current_setting('tick.scope_paths')::ltree);
+-- Données : le périmètre habilité, et rien d'autre.
+CREATE FUNCTION tick_in_scope(target ltree) RETURNS boolean AS $$
+  SELECT target <@ tick_scope_paths() OR target = ANY (tick_exact_paths())
+$$ LANGUAGE sql STABLE;
 
--- Configuration : entité courante, ou ancêtre marqué récursif
-CREATE POLICY categories_scope ON itil_categories
-  USING (
-    entity_path = current_setting('tick.entity_path')::ltree
-    OR (is_recursive AND entity_path @> current_setting('tick.entity_path')::ltree)
-  );
+-- Configuration : le périmètre habilité, plus ce qu'un ancêtre partage
+-- explicitement vers le bas par son drapeau récursif.
+CREATE FUNCTION tick_config_visible(target ltree, recursive_flag boolean) RETURNS boolean AS $$
+  SELECT tick_in_scope(target) OR (recursive_flag AND target @> tick_entity_path())
+$$ LANGUAGE sql STABLE;
+
+CREATE POLICY entities_scope ON entities FOR ALL TO tick_app
+  USING (tick_in_scope(path));
+
+CREATE POLICY groups_scope ON groups FOR ALL TO tick_app
+  USING (tick_config_visible(entity_path, is_recursive))
+  -- Un objet de configuration se crée dans l'entité active, jamais ailleurs.
+  WITH CHECK (entity_path = tick_entity_path());
 ```
+
+La politique de configuration couvre deux besoins qu'il serait tentant de confondre :
+**l'administration** (quels groupes existent dans mon périmètre) et **l'usage** (quels groupes
+puis-je choisir depuis l'entité active). Le premier terme répond au premier, le second au
+deuxième — et c'est bien l'union des deux que GLPI présente.
 
 Deux rôles PostgreSQL : un rôle applicatif soumis au RLS pour tout le trafic normal, et un rôle
 de migration qui en est exempté. L'API n'utilise jamais le second en dehors des migrations.
+
+### Le périmètre habilité n'est pas le périmètre de travail
+
+Deux notions que le mot « périmètre » recouvre indistinctement, et qu'il faut séparer :
+
+- le **périmètre habilité** est l'union de toutes les habilitations de l'utilisateur, toutes
+  branches et tous profils confondus. Il n'alimente qu'une chose : le sélecteur d'entité ;
+- le **périmètre de travail** est l'entité active et, si l'utilisateur l'a demandé _et_ qu'une
+  habilitation récursive le permet, sa descendance. C'est lui, et lui seul, qui est injecté dans
+  le Row-Level Security.
+
+Injecter le périmètre habilité dans le RLS reviendrait à faire fuiter une branche dans l'autre dès
+qu'un utilisateur cumule deux habilitations. Demander la descendance ne suffit pas non plus à y
+avoir droit : `includeSubEntities` n'est honoré que si une habilitation récursive couvre
+réellement l'entité active.
 
 ## 8. Configuration héritée par entité
 
@@ -168,14 +197,25 @@ vient la valeur effective — sans cela, le diagnostic devient impossible en pro
 
 ## 9. Ce que l'on teste obligatoirement
 
-Ces cas sont des tests d'intégration exécutés contre une vraie base PostgreSQL, pas des intentions :
+Ces cas sont des tests d'intégration exécutés contre une vraie base PostgreSQL **avec le rôle
+applicatif**, pas des intentions. Les exécuter avec le rôle propriétaire les ferait tous passer
+sans rien prouver, puisque celui-ci est exempté des politiques : c'est la raison pour laquelle le
+rôle `tick_app` est créé par la première migration et non par un script d'initialisation de
+conteneur, que l'intégration continue n'exécuterait pas.
 
-1. Un technicien de `Site A` ne voit aucun ticket de `Site B`, y compris par requête brute.
-2. Un SLA racine récursif est sélectionnable depuis `Site A` ; le même sans le drapeau ne l'est pas.
-3. Un utilisateur cumulant deux habilitations obtient exactement les droits du profil actif, jamais
-   l'union des deux.
-4. Déplacer `Site A` sous `Siège` met à jour tous les chemins descendants et change immédiatement
-   les visibilités.
-5. Un plugin qui exécute du SQL brut reste confiné au périmètre de la transaction courante.
-6. Retirer un utilisateur d'un groupe annuaire révoque ses habilitations `is_dynamic`, et
+1. Un technicien de `Site A` ne voit que `Site A`, quelle que soit la requête.
+2. Un objet de configuration récursif défini à la racine est visible depuis `Site A` ; le même
+   sans le drapeau ne l'est pas ; celui d'une entité sœur non plus.
+3. Une requête SQL brute, telle qu'en écrirait un plugin, reste confinée au même périmètre.
+4. Une habilitation récursive ouvre la descendance ; la même sans le drapeau ne l'ouvre pas.
+5. Déplacer une entité met à jour tous les chemins descendants, fait suivre les objets rattachés,
+   et bascule immédiatement les visibilités.
+6. Une écriture visant une entité hors périmètre est refusée.
+7. Une connexion sans contexte établi voit un périmètre **vide**, jamais un périmètre total.
+
+Deux cas supplémentaires relèvent des services et non des politiques :
+
+8. Un utilisateur cumulant deux habilitations obtient exactement les droits du profil actif,
+   jamais l'union des deux.
+9. Retirer un utilisateur d'un groupe d'annuaire révoque ses habilitations `is_dynamic`, et
    uniquement celles-là.

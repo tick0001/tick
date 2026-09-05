@@ -38,7 +38,10 @@ jobs:
 
     env:
       DATABASE_URL: postgres://tick:tick@localhost:5432/tick
-      DATABASE_APP_URL: postgres://tick:tick@localhost:5432/tick
+      # Role applicatif distinct : c'est lui qui subit le Row-Level Security.
+      # Reutiliser le role proprietaire ferait passer les tests d'isolation
+      # sans rien verifier. Le role est cree par la premiere migration.
+      DATABASE_APP_URL: postgres://tick_app:tick_app@localhost:5432/tick
       REDIS_URL: redis://localhost:6379
       SESSION_SECRET: secret-de-test-integration
 
@@ -53,6 +56,9 @@ jobs:
           cache: pnpm
 
       - run: pnpm install --frozen-lockfile
+
+      - name: Migrations
+        run: pnpm --filter @tick/db db:migrate
 
       - name: Format
         run: pnpm format:check

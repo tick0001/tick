@@ -17,14 +17,14 @@ async function main(): Promise<void> {
     throw new Error('DATABASE_URL est absent. Voir .env.example.');
   }
 
-  const { db, pool } = createDatabase({ connectionString });
+  const { db, close } = createDatabase({ connectionString });
   const migrationsFolder = fileURLToPath(new URL('../drizzle', import.meta.url));
 
   try {
     await migrate(db, { migrationsFolder });
     console.log('Migrations appliquees.');
   } finally {
-    await pool.end();
+    await close();
   }
 }
 

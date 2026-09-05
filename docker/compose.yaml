@@ -16,7 +16,6 @@ services:
       # PostgreSQL 18 stocke les donnees dans un sous-dossier par version majeure :
       # le volume se monte sur /var/lib/postgresql, plus sur .../data comme avant.
       - postgres-data:/var/lib/postgresql
-      - ./postgres/init:/docker-entrypoint-initdb.d:ro
     healthcheck:
       test: ['CMD-SHELL', 'pg_isready -U tick -d tick']
       interval: 5s
