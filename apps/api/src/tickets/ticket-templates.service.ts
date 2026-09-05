@@ -1,6 +1,7 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import type { CreateTicket, SaveTicketTemplate, TicketTemplate } from '@tick/contracts';
 import { sql, ticketTemplateFields, ticketTemplates } from '@tick/db';
+import { entityNames } from '../common/entity-names.js';
 import { requireContext } from '../common/request-context.js';
 import { DatabaseService } from '../database/database.service.js';
 import { EntitiesService } from '../entities/entities.service.js';
@@ -36,7 +37,6 @@ interface TemplateRow extends Record<string, unknown> {
   comment: string | null;
   isRecursive: boolean;
   entityId: number;
-  entityName: string;
   field: string | null;
   kind: 'predefined' | 'mandatory' | 'hidden' | null;
   value: string | null;
@@ -53,10 +53,9 @@ export class TicketTemplatesService {
     const rows = await this.db.asUser(async (tx) => {
       const resultat = await tx.execute<TemplateRow>(sql`
         SELECT m.id, m.name, m.comment, m.is_recursive AS "isRecursive",
-               m.entity_id AS "entityId", e.name AS "entityName",
+               m.entity_id AS "entityId",
                f.field, f.kind, f.value
           FROM ticket_templates m
-          JOIN entities e ON e.id = m.entity_id
           LEFT JOIN ticket_template_fields f ON f.template_id = m.id
          WHERE m.deleted_at IS NULL
          ORDER BY m.name, f.field
@@ -65,7 +64,16 @@ export class TicketTemplatesService {
       return resultat.rows;
     });
 
-    return this.assemble(rows);
+    // Le nom de l'entite est resolu a part : une jointure sur `entities`
+    // ferait disparaitre les gabarits herites d'un ancetre, hors perimetre
+    // descendant. Voir `entityNames`.
+    return this.assemble(
+      rows,
+      await entityNames(
+        this.db,
+        rows.map((row) => row.entityId),
+      ),
+    );
   }
 
   async findById(id: number): Promise<TicketTemplate> {
@@ -202,7 +210,7 @@ export class TicketTemplatesService {
   }
 
   /** Reconstitue les gabarits depuis les lignes aplaties par la jointure. */
-  private assemble(rows: readonly TemplateRow[]): TicketTemplate[] {
+  private assemble(rows: readonly TemplateRow[], noms: Map<number, string>): TicketTemplate[] {
     const modeles = new Map<number, TicketTemplate>();
 
     for (const row of rows) {
@@ -213,7 +221,7 @@ export class TicketTemplatesService {
           id: row.id,
           name: row.name,
           comment: row.comment,
-          entity: { id: row.entityId, name: row.entityName },
+          entity: { id: row.entityId, name: noms.get(row.entityId) ?? '' },
           isRecursive: row.isRecursive,
           predefined: {},
           mandatory: [],
