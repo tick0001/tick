@@ -2,6 +2,8 @@ import { Injectable, UnauthorizedException } from '@nestjs/common';
 import type { AvailableContext, SessionContext } from '@tick/contracts';
 import { and, eq, isNull, users } from '@tick/db';
 import { DatabaseService } from '../database/database.service.js';
+import { LdapSyncService } from '../ldap/ldap-sync.service.js';
+import { LdapService } from '../ldap/ldap.service.js';
 import { PasswordService } from './password.service.js';
 import { RightsService } from './rights.service.js';
 import { ScopeService, type AuthorizedEntity } from './scope.service.js';
@@ -45,6 +47,8 @@ export class AuthService {
     private readonly sessions: SessionService,
     private readonly scopes: ScopeService,
     private readonly rights: RightsService,
+    private readonly ldap: LdapService,
+    private readonly ldapSync: LdapSyncService,
   ) {}
 
   /**
@@ -55,16 +59,15 @@ export class AuthService {
    * revient a offrir un oracle d'existence de comptes.
    */
   async login(username: string, password: string, metadata: LoginMetadata): Promise<IssuedSession> {
-    const [user] = await this.db.asOwner((tx) =>
-      tx
-        .select()
-        .from(users)
-        .where(and(eq(users.username, username), isNull(users.deletedAt))),
-    );
+    const local = await this.findByUsername(username);
+    const localValid = await this.passwords.verify(local?.passwordHash ?? null, password);
 
-    const valid = await this.passwords.verify(user?.passwordHash ?? null, password);
+    // L'annuaire n'est interroge que si l'authentification locale echoue :
+    // un compte local reste utilisable meme annuaire injoignable, ce qui evite
+    // de perdre l'acces administrateur en cas de panne reseau.
+    const user = localValid ? local : await this.authenticateAgainstDirectories(username, password);
 
-    if (!user || !valid || !user.isActive) {
+    if (!user || !user.isActive) {
       throw new UnauthorizedException('Identifiants invalides.');
     }
 
@@ -157,5 +160,47 @@ export class AuthService {
 
   async logout(sessionId: string): Promise<void> {
     await this.sessions.revoke(sessionId);
+  }
+
+  private async findByUsername(username: string): Promise<typeof users.$inferSelect | undefined> {
+    const [user] = await this.db.asOwner((tx) =>
+      tx
+        .select()
+        .from(users)
+        .where(and(eq(users.username, username), isNull(users.deletedAt))),
+    );
+
+    return user;
+  }
+
+  /**
+   * Tente l'authentification contre chaque annuaire actif, par defaut d'abord.
+   *
+   * Une authentification reussie declenche la synchronisation du compte et la
+   * reconciliation des habilitations dynamiques : les droits sont ainsi a jour
+   * des la premiere requete de la session, et non a la prochaine tache planifiee.
+   */
+  private async authenticateAgainstDirectories(
+    username: string,
+    password: string,
+  ): Promise<typeof users.$inferSelect | undefined> {
+    for (const directory of await this.ldap.activeDirectories()) {
+      const profile = await this.ldap.authenticate(directory, username, password);
+
+      if (!profile) continue;
+
+      const userId = await this.ldapSync.upsertUser(directory, profile);
+      const result = await this.ldapSync.applyDynamicAuthorizations(
+        directory.id,
+        userId,
+        profile.groupDns,
+      );
+
+      if (result.revoked > 0) this.rights.invalidate();
+
+      return this.findByUsername(profile.login);
+    }
+
+    return undefined;
   }
 }

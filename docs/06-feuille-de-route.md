@@ -8,7 +8,7 @@ Les identifiants `M01`…`M17` renvoient au [périmètre fonctionnel](01-perimet
 
 ---
 
-### J0 — Fondations
+### J0 — Fondations · livré
 
 Monorepo pnpm et Turborepo, `apps/api` et `apps/web` qui démarrent, Docker Compose (PostgreSQL,
 Redis, Mailpit), TypeScript strict, ESLint et Prettier, Vitest, intégration continue, conventions
@@ -17,14 +17,19 @@ de commit, documentation initiale.
 _Terminé quand_ : `docker compose up` puis un lancement suffisent à obtenir une API et une
 interface fonctionnelles sur une machine vierge.
 
-### J1 — Socle de sécurité `M16`
+### J1 — Socle de sécurité `M16` · livré
 
 Arbre des entités en `ltree`, utilisateurs, groupes, profils et droits, habilitations, contexte de
 requête, **Row-Level Security**, authentification locale, LDAP et synchronisation, règles
 d'affectation d'habilitations, internationalisation, configuration héritée par entité.
 
-_Terminé quand_ : les six tests d'isolation de [la section 9](03-entites-droits-securite.md) passent
-sur une vraie base PostgreSQL.
+_Terminé quand_ : les neuf cas de [la section 9](03-entites-droits-securite.md) passent contre une
+vraie base PostgreSQL, avec le rôle applicatif.
+
+**Livré.** Le jalon inclut aussi le socle d'annuaire : authentification LDAP, synchronisation des
+comptes, et réconciliation des habilitations dynamiques. La _décision_ d'affectation repose pour
+l'instant sur une table de correspondance groupe → habilitation ; le moteur de règles générique du
+jalon J4 remplacera cette source sans toucher au mécanisme de révocation.
 
 ### J2 — Substrat d'extension
 

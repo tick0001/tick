@@ -1,4 +1,5 @@
 import { Module, type MiddlewareConsumer, type NestModule } from '@nestjs/common';
+import { LdapModule } from '../ldap/ldap.module.js';
 import { AuthController } from './auth.controller.js';
 import { AuthService } from './auth.service.js';
 import { ContextMiddleware } from './context.middleware.js';
@@ -10,6 +11,7 @@ import { ScopeService } from './scope.service.js';
 import { SessionService } from './session.service.js';
 
 @Module({
+  imports: [LdapModule],
   controllers: [AuthController],
   providers: [
     AuthService,

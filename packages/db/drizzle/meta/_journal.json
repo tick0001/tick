@@ -15,6 +15,20 @@
       "when": 1788614442742,
       "tag": "0001_rls_et_arbre",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1788615930598,
+      "tag": "0002_glamorous_the_liberteens",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1788615962542,
+      "tag": "0003_droits_ldap",
+      "breakpoints": true
     }
   ]
 }

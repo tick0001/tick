@@ -6,6 +6,7 @@ const minimal = {
   DATABASE_APP_URL: 'postgres://tick_app:tick_app@localhost:5432/tick',
   REDIS_URL: 'redis://localhost:6379',
   SESSION_SECRET: 'un-secret-assez-long',
+  ENCRYPTION_KEY: '0'.repeat(64),
 };
 
 describe('loadEnv', () => {
@@ -33,5 +34,14 @@ describe('loadEnv', () => {
 
   it('refuse une langue non prise en charge', () => {
     expect(() => loadEnv({ ...minimal, DEFAULT_LOCALE: 'de' })).toThrowError(/DEFAULT_LOCALE/);
+  });
+
+  it('refuse une cle de chiffrement mal formee', () => {
+    // Une cle trop courte ferait echouer createCipheriv a la premiere ecriture
+    // de secret, donc bien apres le demarrage et loin de la cause.
+    expect(() => loadEnv({ ...minimal, ENCRYPTION_KEY: 'abcdef' })).toThrowError(/ENCRYPTION_KEY/);
+    expect(() => loadEnv({ ...minimal, ENCRYPTION_KEY: 'z'.repeat(64) })).toThrowError(
+      /ENCRYPTION_KEY/,
+    );
   });
 });

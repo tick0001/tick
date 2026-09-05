@@ -1,10 +1,27 @@
 @import 'tailwindcss';
 
-@custom-variant dark (&:where(.dark, .dark *));
+/**
+ * Variante sombre a deux entrees.
+ *
+ * `data-theme` sur la racine, quand l'utilisateur a choisi explicitement, et la
+ * preference systeme sinon. Ne garder que la premiere rendrait le theme sombre
+ * inatteignable tant qu'aucun selecteur n'existe ; ne garder que la seconde
+ * empecherait de choisir autre chose que son systeme.
+ */
+@custom-variant dark {
+  &:where([data-theme='dark'], [data-theme='dark'] *) {
+    @slot;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    &:where(:root:not([data-theme='light']), :root:not([data-theme='light']) *) {
+      @slot;
+    }
+  }
+}
 
 @theme {
-  --font-sans:
-    'Inter', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-sans: 'Inter', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
   --font-mono: ui-monospace, 'JetBrains Mono', 'Cascadia Code', monospace;
 }
 

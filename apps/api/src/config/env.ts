@@ -45,6 +45,15 @@ const envSchema = z.object({
 
   REDIS_URL: z.string().url(),
   SESSION_SECRET: z.string().min(16),
+  /**
+   * Cle de chiffrement des secrets stockes en base (mots de passe de comptes de
+   * service d'annuaire, jetons d'integration). 32 octets en hexadecimal.
+   * Distincte de SESSION_SECRET : la perdre invalide des secrets reutilisables,
+   * pas seulement des sessions.
+   */
+  ENCRYPTION_KEY: z
+    .string()
+    .regex(/^[0-9a-fA-F]{64}$/, 'doit faire 32 octets en hexadecimal (64 caracteres)'),
 
   SMTP_HOST: z.string().default('localhost'),
   SMTP_PORT: z.coerce.number().int().positive().default(1025),
