@@ -102,11 +102,30 @@ Un défaut de visibilité présent depuis J3 est corrigé au passage : joindre `
 requête soumise au Row-Level Security faisait disparaître tout objet de configuration hérité d'un
 ancêtre. Voir [07](07-niveaux-de-service-et-regles.md).
 
-### J5 — Communication `M07` `M08` `M11`
+### J5 — Communication · livré `M07` `M08` `M11`
 
 Notifications complètes : événements, modèles multilingues, destinataires calculés, file d'attente
 avec rejeu, préférences utilisateur. Collecteur de courriel entrant et réponse par courriel.
 Enquêtes de satisfaction.
+
+_Terminé quand_ : un demandeur peut ouvrir un ticket par courriel, y répondre par courriel, et
+donner son avis sans jamais ouvrir l'interface.
+
+**Livré** — quatorze événements notifiables, modèles multilingues avec destinataires calculés parmi
+dix rôles dont les groupes et leurs responsables, traduction choisie **par destinataire**, variables
+de l'événement exposées telles quelles, restriction automatique des rôles pour un objet privé,
+préférences par utilisateur et par événement, file consultable avec rejeu et purge ; collecteur IMAP
+qui rattache une réponse par les en-têtes puis par le marqueur du sujet, coupe les boucles et les
+réponses automatiques, extrait les pièces jointes et journalise chaque décision ; adresses
+d'expédition et de réponse héritées par entité ; enquêtes de satisfaction programmées à la clôture
+selon un taux, avec relance unique, formulaire public par jeton et exploitation statistique.
+
+Le SDK passe en `0.5` : `authorId` rejoint la charge utile des suivis, tâches et solutions —
+sans quoi personne ne peut notifier « l'auteur du suivi » — et les événements
+`satisfaction.requested` et `satisfaction.answered` apparaissent.
+
+Le compose gagne **GreenMail** : Mailpit montre ce qui sort, GreenMail fournit la boîte IMAP que le
+collecteur relève. Deux serveurs, deux rôles.
 
 ### J6 — Self-service `M09` `M10` `M12`
 

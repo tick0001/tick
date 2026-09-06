@@ -67,6 +67,9 @@ filtre l'entité à la main.
 génération des tickets récurrents, enquêtes de satisfaction, synchronisation LDAP, et toute tâche
 déclarée par un plugin.
 
+Le collecteur de courriel relève toutes les deux minutes, les enquêtes de satisfaction partent par
+un balayage au quart d'heure : dans les deux cas la file ne fait que cadencer, l'état vit en base.
+
 L'escalade illustre le principe retenu pour toutes les tâches périodiques : **l'état est en base,
 la file ne fait que cadencer**. Le balayage lit `tickets.escalation_at` sur un index dédié, et la
 trace des niveaux déjà joués vit dans `ticket_escalations`. Un vidage de Redis ne perd donc aucune
@@ -167,6 +170,12 @@ hérité vit sur un ancêtre, hors du périmètre descendant : joindre `entities
 ligne entière, sans erreur ni trace. Le nom est donc résolu à part, avec le rôle propriétaire, une
 fois la visibilité de l'objet déjà tranchée par sa propre politique. Même forme que la résolution
 de configuration héritée décrite dans [03](03-entites-droits-securite.md).
+
+**Un contexte reconstitué plutôt qu'une écriture directe.** Le collecteur de courriel crée ses
+tickets en passant par les services applicatifs, sous un contexte composé de l'expéditeur, du profil
+déclaré par la boîte et de l'entité de celle-ci. Écrire directement avec le rôle propriétaire aurait
+été plus court, et aurait privé les tickets nés d'un courriel de leurs règles, de leurs engagements
+et de leur historique.
 
 **Tests dès le socle.** Le moteur de règles, le calcul SLA sur calendrier ouvré et la résolution
 des droits sont trois domaines où un bug est silencieux et coûteux. Vitest pour l'unitaire,

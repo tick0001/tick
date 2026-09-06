@@ -89,10 +89,24 @@ colonne : c'est ce qui empêche une règle d'écrire n'importe où. Voir
 
 ## Notifications et courriel
 
-`notifications` (événement, actif), `notification_templates`,
+`notification_templates` (événement, actif, entité, récursif),
 `notification_template_translations` (langue, sujet, corps texte, corps HTML),
-`notification_targets`, `notification_queue` (état, tentatives, erreur),
-`user_notification_preferences`, `mail_collectors`, `mail_collector_logs`.
+`notification_template_targets` (rôle, adresse pour le rôle `fixed`),
+`notification_queue` (état, tentatives, erreur, **identifiant du message envoyé**),
+`notification_preferences` (utilisateur, événement, actif),
+`mail_collectors`, `mail_collector_logs`.
+
+`notification_queue.message_id` n'est pas une commodité : c'est lui qui rattache une réponse au bon
+ticket, là où un sujet peut avoir été réécrit, traduit ou tronqué. Voir [08](08-communication.md).
+
+## Satisfaction
+
+`satisfaction_configs` (taux, délai, validité, relance — configuration, donc héritable) et
+`satisfactions` (une par ticket, jeton du lien public, dates d'envoi, de relance et de réponse,
+note, commentaire).
+
+Le jeton est unique et fait autorisation : il ouvre l'accès à une seule enquête, à quelqu'un qui n'a
+pas de compte.
 
 ## Connaissance, formulaires, satisfaction
 

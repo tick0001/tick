@@ -97,6 +97,7 @@ ne laisse rien derrière lui.
 | [Système de plugins](docs/04-plugins.md)                                | Manifeste, SDK, hooks, cycle de vie, isolation                |
 | [Modèle de données](docs/05-modele-de-donnees.md)                       | Tables du cœur et conventions                                 |
 | [Niveaux de service et règles](docs/07-niveaux-de-service-et-regles.md) | Temps ouvré, engagements, escalade, moteur de règles          |
+| [Communication](docs/08-communication.md)                               | Notifications, courriel entrant, enquêtes de satisfaction     |
 | [Feuille de route](docs/06-feuille-de-route.md)                         | Dix jalons, du socle à l'ouverture publique                   |
 
 ## Conventions
