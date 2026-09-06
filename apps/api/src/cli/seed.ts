@@ -156,6 +156,7 @@ const PROFILE_RIGHTS: Record<string, RightTriple[]> = {
     ['group', 'read', 'all'],
     ['group', 'create', 'all'],
     ['group', 'update', 'all'],
+    ['group', 'delete', 'all'],
     ['profile', 'read', 'all'],
     ['profile', 'update', 'all'],
     ['ldap', 'read', 'all'],

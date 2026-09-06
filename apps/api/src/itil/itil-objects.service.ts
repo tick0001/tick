@@ -7,6 +7,7 @@ import type {
   ItilStatus,
   TicketActor,
   TicketActorInput,
+  UpdateItilObject,
   UpsertItilObject,
 } from '@tick/contracts';
 import { itilActors, sql, type SQL, type Transaction } from '@tick/db';
@@ -283,11 +284,16 @@ export class ItilObjectsService {
     return this.findById(kind, id);
   }
 
-  async update(kind: ItilKind, id: number, input: UpsertItilObject): Promise<ItilObject> {
+  async update(kind: ItilKind, id: number, patch: UpdateItilObject): Promise<ItilObject> {
     const context = requireContext();
     const avant = await this.findById(kind, id);
 
     await this.scopes.conditionFor(ITIL_KINDS[kind].right, 'update', kind);
+
+    // Les cles absentes gardent leur valeur : la modification est partielle,
+    // comme le verbe l'annonce. Reprendre les defauts du schema de creation
+    // effacerait la description a chaque changement de statut.
+    const input = this.merge(kind, avant, patch);
 
     const priority =
       input.urgency === avant.urgency && input.impact === avant.impact
@@ -336,6 +342,36 @@ export class ItilObjectsService {
    * champ à un problème ne demande alors qu'une ligne dans `ITIL_KINDS`, et le
    * champ d'un changement ne peut pas se retrouver sur un problème.
    */
+  /**
+   * Complete une modification partielle avec l'etat courant.
+   *
+   * Seules les cles reellement transmises changent : `undefined` signifie « ne
+   * pas toucher », et se distingue de `null`, qui detache.
+   */
+  private merge(kind: ItilKind, avant: ItilObject, patch: UpdateItilObject): UpsertItilObject {
+    const courant = avant as unknown as Record<string, unknown>;
+    const donnees = patch as unknown as Record<string, unknown>;
+
+    const fusionne = (cle: string): unknown =>
+      donnees[cle] === undefined ? courant[cle] : donnees[cle];
+
+    const complet: Record<string, unknown> = {
+      name: fusionne('name'),
+      content: fusionne('content'),
+      status: patch.status ?? avant.status,
+      urgency: fusionne('urgency'),
+      impact: fusionne('impact'),
+      categoryId: fusionne('categoryId'),
+      locationId: fusionne('locationId'),
+    };
+
+    for (const propriete of ITIL_KINDS[kind].extra) {
+      complet[propriete] = fusionne(propriete);
+    }
+
+    return complet as unknown as UpsertItilObject;
+  }
+
   private writableValues(kind: ItilKind, input: UpsertItilObject): [string, SQL][] {
     const socle: [string, SQL][] = [
       ['name', sql`${input.name}`],

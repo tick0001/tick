@@ -44,7 +44,9 @@
     "@types/node": "^26.4.1",
     "@types/nodemailer": "^8.0.1",
     "@types/semver": "^7.8.0",
+    "@types/supertest": "^7.2.1",
     "concurrently": "^10.0.5",
+    "supertest": "^7.2.2",
     "tsx": "^4.23.13",
     "typescript": "^6.0.3",
     "vitest": "^5.0.0"

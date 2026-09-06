@@ -24,7 +24,9 @@ import {
   requestValidationSchema,
   ticketActorInputSchema,
   updateTaskSchema,
+  updateItilObjectSchema,
   upsertItilObjectSchema,
+  type UpdateItilObject,
   type AddFollowup,
   type AddSolution,
   type AddTask,
@@ -129,7 +131,7 @@ export class ItilController {
   async update(
     @Param('kind') kind: string,
     @Param('id', ParseIntPipe) id: number,
-    @Body(new ZodValidationPipe(upsertItilObjectSchema)) body: z.infer<typeof upsertItilObjectSchema>,
+    @Body(new ZodValidationPipe(updateItilObjectSchema)) body: UpdateItilObject,
   ): Promise<ItilObject> {
     return this.objects.update(kindDe(kind), id, body);
   }

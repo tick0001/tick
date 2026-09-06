@@ -3,6 +3,7 @@ import { Logger, type LogLevel } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import cookieParser from 'cookie-parser';
 import { AppModule } from './app.module.js';
+import { DatabaseExceptionFilter } from './common/database-exception.filter.js';
 import { loadEnv, loadEnvFiles } from './config/env.js';
 
 async function bootstrap(): Promise<void> {
@@ -17,6 +18,7 @@ async function bootstrap(): Promise<void> {
 
   app.setGlobalPrefix('api');
   app.use(cookieParser());
+  app.useGlobalFilters(new DatabaseExceptionFilter(app.getHttpAdapter()));
   app.enableCors({ origin: env.WEB_URL, credentials: true });
   app.enableShutdownHooks();
 

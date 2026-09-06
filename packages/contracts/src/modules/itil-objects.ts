@@ -88,6 +88,41 @@ export const upsertItilObjectSchema = z.object({
 });
 export type UpsertItilObject = z.infer<typeof upsertItilObjectSchema>;
 
+/**
+ * Modification partielle d'un problème ou d'un changement.
+ *
+ * Le verbe est `PATCH`, et il doit tenir sa promesse. Valider une modification
+ * avec le schéma de création remettrait `content` à la chaîne vide et les
+ * sévérités à 3 dès qu'un appelant les omet : une requête qui ne veut changer
+ * que le statut effacerait la description, sans erreur ni trace.
+ *
+ * Les champs sont réécrits un par un plutôt que dérivés par `.partial()`.
+ * Celui-ci rend les clés facultatives **sans neutraliser les valeurs par
+ * défaut** : `upsertItilObjectSchema.partial().parse({})` rend
+ * `{ content: '', urgency: 3, impact: 3 }`, c'est-à-dire précisément l'effacement
+ * qu'on cherche à empêcher. Le piège est silencieux — il se voit sur la donnée,
+ * pas sur le type.
+ */
+export const updateItilObjectSchema = z.object({
+  name: z.string().min(1).max(255).optional(),
+  content: z.string().max(200_000).optional(),
+  status: itilStatusSchema.optional(),
+  urgency: z.number().int().min(1).max(5).optional(),
+  impact: z.number().int().min(1).max(5).optional(),
+  categoryId: z.number().int().positive().nullish(),
+  locationId: z.number().int().positive().nullish(),
+
+  symptoms: z.string().max(20_000).nullish(),
+  causes: z.string().max(20_000).nullish(),
+  impacts: z.string().max(20_000).nullish(),
+
+  deploymentPlan: z.string().max(20_000).nullish(),
+  rollbackPlan: z.string().max(20_000).nullish(),
+  validationPlan: z.string().max(20_000).nullish(),
+  checklist: z.array(checklistItemSchema).max(100).optional(),
+});
+export type UpdateItilObject = z.infer<typeof updateItilObjectSchema>;
+
 export const itilObjectFilterSchema = z.object({
   status: z.string().optional(),
   search: z.string().max(200).optional(),
