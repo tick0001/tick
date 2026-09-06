@@ -897,6 +897,7 @@ export const fr = {
   configuration: {
     titre: 'Configuration',
     description: 'Ce qui se règle une fois, et s’applique ensuite tout seul.',
+    retour: 'Retour à l’assistance',
     groupes: {
       assistance: 'Assistance',
       communication: 'Communication',

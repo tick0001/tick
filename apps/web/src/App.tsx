@@ -22,7 +22,6 @@ import { PlanningPage } from '@/pages/PlanningPage';
 import { ProfilesPage } from '@/pages/ProfilesPage';
 import { RulesPage } from '@/pages/RulesPage';
 import { SatisfactionPage } from '@/pages/SatisfactionPage';
-import { SettingsLayout } from '@/components/SettingsLayout';
 import { SearchPage } from '@/pages/SearchPage';
 import { SettingsPage } from '@/pages/SettingsPage';
 import { StatsPage } from '@/pages/StatsPage';
@@ -125,108 +124,21 @@ function Application() {
         <Route path="/knowledge" element={<KnowledgePage session={session.data} />} />
         <Route path="/catalogue" element={<CataloguePage />} />
 
-        {/* La configuration a sa propre coquille : une colonne de sous-navigation
-            a gauche, l'ecran a droite. */}
-        <Route
-          path="/settings"
-          element={<Navigate to="/settings/service-levels" replace />}
-        />
-        <Route
-          path="/settings/service-levels"
-          element={
-            <SettingsLayout>
-              <ServiceLevelsPage />
-            </SettingsLayout>
-          }
-        />
-        <Route
-          path="/settings/rules"
-          element={
-            <SettingsLayout>
-              <RulesPage />
-            </SettingsLayout>
-          }
-        />
-        <Route
-          path="/settings/forms"
-          element={
-            <SettingsLayout>
-              <FormsPage />
-            </SettingsLayout>
-          }
-        />
-        <Route
-          path="/settings/notifications"
-          element={
-            <SettingsLayout>
-              <NotificationsPage />
-            </SettingsLayout>
-          }
-        />
-        <Route
-          path="/settings/mail"
-          element={
-            <SettingsLayout>
-              <MailPage />
-            </SettingsLayout>
-          }
-        />
-        <Route
-          path="/settings/surveys"
-          element={
-            <SettingsLayout>
-              <SurveysPage session={session.data} />
-            </SettingsLayout>
-          }
-        />
-        <Route
-          path="/settings/entities"
-          element={
-            <SettingsLayout>
-              <EntitiesPage session={session.data} />
-            </SettingsLayout>
-          }
-        />
-        <Route
-          path="/settings/users"
-          element={
-            <SettingsLayout>
-              <UsersPage />
-            </SettingsLayout>
-          }
-        />
-        <Route
-          path="/settings/groups"
-          element={
-            <SettingsLayout>
-              <GroupsPage />
-            </SettingsLayout>
-          }
-        />
-        <Route
-          path="/settings/profiles"
-          element={
-            <SettingsLayout>
-              <ProfilesPage />
-            </SettingsLayout>
-          }
-        />
-        <Route
-          path="/settings/directories"
-          element={
-            <SettingsLayout>
-              <DirectoriesPage />
-            </SettingsLayout>
-          }
-        />
-        <Route
-          path="/settings/general"
-          element={
-            <SettingsLayout>
-              <SettingsPage session={session.data} />
-            </SettingsLayout>
-          }
-        />
+        {/* La configuration est une zone : la barre laterale devient la sienne,
+            et `/settings` seul ouvre le premier ecran. */}
+        <Route path="/settings" element={<Navigate to="/settings/service-levels" replace />} />
+        <Route path="/settings/service-levels" element={<ServiceLevelsPage />} />
+        <Route path="/settings/rules" element={<RulesPage />} />
+        <Route path="/settings/forms" element={<FormsPage />} />
+        <Route path="/settings/notifications" element={<NotificationsPage />} />
+        <Route path="/settings/mail" element={<MailPage />} />
+        <Route path="/settings/surveys" element={<SurveysPage session={session.data} />} />
+        <Route path="/settings/entities" element={<EntitiesPage session={session.data} />} />
+        <Route path="/settings/users" element={<UsersPage />} />
+        <Route path="/settings/groups" element={<GroupsPage />} />
+        <Route path="/settings/profiles" element={<ProfilesPage />} />
+        <Route path="/settings/directories" element={<DirectoriesPage />} />
+        <Route path="/settings/general" element={<SettingsPage session={session.data} />} />
 
         {/* Anciennes adresses : un signet ne doit pas tomber sur une page
             d'accueil sans explication. */}

@@ -5,21 +5,33 @@ import { NavLink, useLocation } from 'react-router';
 import { ContextSwitcher } from '@/components/ContextSwitcher';
 import { PluginSlot } from '@/components/PluginSlot';
 import {
+  IconAnnuaire,
   IconCatalogue,
   IconChangement,
   IconConnaissance,
+  IconCourriel,
+  IconDroits,
   IconEcran,
+  IconEngagement,
+  IconEnquete,
+  IconEntites,
   IconFermer,
+  IconFormulaire,
+  IconGroupes,
   IconLune,
   IconMenu,
+  IconNotification,
   IconPlanning,
   IconProbleme,
   IconRecherche,
   IconReglages,
+  IconRegles,
+  IconRetour,
   IconSoleil,
   IconSortie,
   IconStatistiques,
   IconTicket,
+  IconUtilisateurs,
   type Icone,
 } from '@/components/ui/icons';
 import { changeLocale } from '@/lib/i18n';
@@ -121,15 +133,20 @@ export function AppShell({
   const simplifiee = session.profile.interface === 'self_service';
 
   /**
-   * Navigation du travail quotidien.
+   * Deux zones, une seule barre.
    *
-   * Trois groupes, huit entrées : ce qu'on ouvre chaque matin, ce qu'on
-   * consulte, ce qu'on analyse. La configuration — douze écrans qu'on règle une
-   * fois par trimestre — a sa propre zone : la garder ici faisait dépasser la
-   * barre, et donnait à « Courriel entrant » le même poids visuel qu'à
-   * « Tickets ».
+   * La configuration remplace la navigation du travail au lieu de s'y ajouter.
+   * Une colonne de réglages posée à côté de la barre principale faisait deux
+   * barres latérales côte à côte, et gardait à l'écran huit entrées dont on n'a
+   * que faire quand on configure.
+   *
+   * C'est un changement de contexte, pas une descente dans l'arborescence : on
+   * y entre, la barre devient celle des réglages ; on en sort par le retour
+   * placé en tête, et le travail quotidien revient.
    */
-  const sections: Groupe[] = simplifiee
+  const dansConfiguration = location.pathname.startsWith('/settings');
+
+  const travail: Groupe[] = simplifiee
     ? [
         {
           titre: t('navigation.groupes.travail'),
@@ -166,6 +183,51 @@ export function AppShell({
         },
       ];
 
+  const reglages: Groupe[] = [
+    {
+      titre: t('configuration.groupes.assistance'),
+      entrees: [
+        { to: '/settings/service-levels', label: t('engagements.titre'), icone: IconEngagement },
+        { to: '/settings/rules', label: t('regles.titre'), icone: IconRegles },
+        { to: '/settings/forms', label: t('formulaires.titre'), icone: IconFormulaire },
+      ],
+    },
+    {
+      titre: t('configuration.groupes.communication'),
+      entrees: [
+        { to: '/settings/notifications', label: t('notifications.titre'), icone: IconNotification },
+        { to: '/settings/mail', label: t('courriel.titre'), icone: IconCourriel },
+        { to: '/settings/surveys', label: t('enquetes.titre'), icone: IconEnquete },
+      ],
+    },
+    {
+      titre: t('configuration.groupes.organisation'),
+      entrees: [
+        { to: '/settings/entities', label: t('navigation.entites'), icone: IconEntites },
+        {
+          to: '/settings/users',
+          label: t('administration.utilisateurs.titre'),
+          icone: IconUtilisateurs,
+        },
+        { to: '/settings/groups', label: t('administration.groupes.titre'), icone: IconGroupes },
+        { to: '/settings/profiles', label: t('administration.profils.titre'), icone: IconDroits },
+      ],
+    },
+    {
+      titre: t('configuration.groupes.systeme'),
+      entrees: [
+        {
+          to: '/settings/directories',
+          label: t('administration.annuaires.titre'),
+          icone: IconAnnuaire,
+        },
+        { to: '/settings/general', label: t('administration.reglages.titre'), icone: IconReglages },
+      ],
+    },
+  ];
+
+  const sections = dansConfiguration ? reglages : travail;
+
   // Le tiroir se referme à chaque navigation : le laisser ouvert masquerait la
   // page qu'on vient de demander.
   useEffect(() => {
@@ -199,10 +261,22 @@ export function AppShell({
         )}
       >
         <div className="flex h-14 items-center gap-2 px-4">
-          <span className="grid size-7 place-items-center rounded-lg bg-brand text-sm font-bold text-on-brand">
-            T
-          </span>
-          <span className="text-base font-semibold tracking-tight">Tick&amp;</span>
+          {dansConfiguration ? (
+            <NavLink
+              to="/tickets"
+              className="flex min-w-0 items-center gap-2 text-sm font-medium text-muted transition-colors hover:text-ink"
+            >
+              <IconRetour className="size-4 shrink-0" />
+              <span className="truncate">{t('configuration.retour')}</span>
+            </NavLink>
+          ) : (
+            <>
+              <span className="grid size-7 place-items-center rounded-lg bg-brand text-sm font-bold text-on-brand">
+                T
+              </span>
+              <span className="text-base font-semibold tracking-tight">Tick&amp;</span>
+            </>
+          )}
 
           <button
             type="button"
@@ -215,6 +289,13 @@ export function AppShell({
             <IconFermer className="size-5" />
           </button>
         </div>
+
+        {dansConfiguration && (
+          <div className="border-b border-line px-4 pb-3">
+            <h2 className="text-base font-semibold tracking-tight">{t('configuration.titre')}</h2>
+            <p className="text-xs text-muted">{t('configuration.description')}</p>
+          </div>
+        )}
 
         <nav className="flex-1 space-y-5 overflow-y-auto px-3 pb-4">
           {sections.map((groupe) => (
@@ -240,7 +321,7 @@ export function AppShell({
         <div className="space-y-1 border-t border-line p-3">
           {/* La configuration est en pied de barre, separee du travail
               quotidien : on l'ouvre rarement, et jamais par erreur. */}
-          {!simplifiee && (
+          {!simplifiee && !dansConfiguration && (
             <NavLink
               to="/settings"
               className={({ isActive }) =>

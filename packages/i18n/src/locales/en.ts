@@ -895,6 +895,7 @@ export const en: Traductions = {
   configuration: {
     titre: 'Configuration',
     description: 'What you set once, and that applies by itself afterwards.',
+    retour: 'Back to the service desk',
     groupes: {
       assistance: 'Service desk',
       communication: 'Communication',

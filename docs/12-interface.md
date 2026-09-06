@@ -94,14 +94,24 @@ trimestre.
 
 Les douze écrans de réglage vivent donc sous `/settings`, atteints par une
 entrée unique posée **en pied de barre** — là où l'on met ce qu'on ouvre
-rarement, et jamais par erreur. Ils y disposent de leur propre colonne de
-navigation, groupée à leur tour en Assistance, Communication, Organisation et
-Système.
+rarement, et jamais par erreur.
 
-Cette colonne est une liste et non des onglets : douze onglets ne tiennent pas
-sur une ligne, et les replier dans un menu déroulant coûterait un clic à chaque
-va-et-vient entre deux écrans de réglage — ce qu'on fait précisément quand on
-configure.
+**La configuration remplace la barre au lieu de s'y ajouter.** Une première
+tentative lui donnait sa propre colonne, posée à côté de la barre principale :
+deux barres latérales côte à côte, et huit entrées de travail quotidien
+maintenues à l'écran alors qu'on n'en a que faire quand on configure.
+
+C'est un changement de contexte, pas une descente dans l'arborescence. On y
+entre, la barre devient celle des réglages — groupée à son tour en Assistance,
+Communication, Organisation et Système — avec un retour explicite en tête, là où
+l'identité du produit s'affiche le reste du temps. On en sort par ce retour, et
+le travail quotidien revient. Une seule barre à tout moment, et le contenu
+occupe toute la largeur restante.
+
+La navigation des réglages est une liste et non des onglets : douze onglets ne
+tiennent pas sur une ligne, et les replier dans un menu déroulant coûterait un
+clic à chaque va-et-vient entre deux écrans de réglage — ce qu'on fait
+précisément quand on configure.
 
 Les anciennes adresses (`/rules`, `/admin/users`…) redirigent : un signet ne doit
 pas tomber sur une page d'accueil sans explication.
