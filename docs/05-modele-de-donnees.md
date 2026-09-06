@@ -129,10 +129,29 @@ visibilité), `kb_item_feedback`.
 | `plugins`                         | Plugins installés : version, état, date                                  |
 | `jobs`                            | Traçabilité des tâches planifiées                                        |
 
+## Connaissance et formulaires
+
+`kb_categories` (arborescentes), `kb_articles` (titre, contenu, catégorie, **FAQ publique**,
+brouillon, compteur de consultations, version), `kb_article_revisions` (état précédent, entier),
+`kb_article_targets` (profil, groupe ou utilisateur — aucune cible signifiant « tout le périmètre »),
+`kb_favorites`.
+
+`forms`, `form_sections`, `form_questions`, `form_question_conditions` (question dont dépend
+l'affichage, opérateur, valeur), `form_translations`, `form_access`, `form_destinations`
+(correspondances champ de l'objet vers question ou valeur fixe), `form_submissions` (réponses
+complètes, conservées même quand aucune correspondance ne les reprend).
+
+Les conditions et les correspondances désignent une question par son **rang** dans le formulaire,
+jamais par un identifiant : voir [09](09-self-service.md).
+
 ## Recherche plein texte
 
-Colonne `search_vector tsvector` générée sur `tickets`, `problems`, `changes`, `kb_items` et
-`itil_followups`, indexée en GIN. Configuration linguistique choisie selon la langue du contenu.
+Colonne `search_vector tsvector` **générée** — pas alimentée par un déclencheur — indexée en GIN.
+En place sur `kb_articles`, où le titre pèse plus que le corps ; à venir sur `tickets`, `problems`,
+`changes` et `itil_followups`.
+
+Générée plutôt que déclenchée : la base garantit alors qu'elle est toujours à jour, y compris pour
+une écriture faite hors de l'application.
 
 ## Points d'extension non implémentés
 

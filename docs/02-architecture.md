@@ -177,6 +177,12 @@ déclaré par la boîte et de l'entité de celle-ci. Écrire directement avec le
 été plus court, et aurait privé les tickets nés d'un courriel de leurs règles, de leurs engagements
 et de leur historique.
 
+**La même comparaison des deux côtés.** Les conditions d'affichage d'un formulaire sont évaluées
+par l'interface pour montrer un champ, et par le serveur pour exiger une réponse. Les deux appellent
+la même fonction `matchesOperator`, extraite du moteur de règles : deux implémentations finiraient
+par ne plus répondre pareil au même opérateur, et une question cachée d'un côté mais exigée de
+l'autre produirait un refus impossible à comprendre.
+
 **Tests dès le socle.** Le moteur de règles, le calcul SLA sur calendrier ouvré et la résolution
 des droits sont trois domaines où un bug est silencieux et coûteux. Vitest pour l'unitaire,
 Testcontainers pour l'intégration sur une vraie base PostgreSQL (le RLS ne se teste pas en SQLite),

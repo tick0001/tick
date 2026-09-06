@@ -127,10 +127,28 @@ sans quoi personne ne peut notifier « l'auteur du suivi » — et les événeme
 Le compose gagne **GreenMail** : Mailpit montre ce qui sort, GreenMail fournit la boîte IMAP que le
 collecteur relève. Deux serveurs, deux rôles.
 
-### J6 — Self-service `M09` `M10` `M12`
+### J6 — Self-service · livré `M09` `M10` `M12`
 
 Interface simplifiée, base de connaissances et FAQ publique, constructeur de formulaires avec
 logique conditionnelle et destinations, catalogue de services.
+
+_Terminé quand_ : un demandeur trouve sa réponse seul, ou ouvre sa demande en répondant à des
+questions plutôt qu'en remplissant des champs ITIL qu'il ne comprend pas.
+
+**Livré** — base de connaissances avec catégories arborescentes, révisions conservant l'état
+précédent, ciblage de visibilité par profil, groupe ou utilisateur, brouillons réservés à leur
+auteur, favoris, compteur de consultations et recherche plein texte sur colonne générée ; FAQ
+publique servie sans authentification par le même service que l'interface authentifiée ;
+constructeur de formulaires avec sections, questions typées, affichage conditionnel, politique
+d'accès et correspondances explicites vers les champs du ticket ; catalogue de services et
+interface simplifiée portée par le profil actif.
+
+Un formulaire soumis passe par `TicketsService` : le ticket qu'il produit reçoit ses règles, ses
+engagements et son historique comme n'importe quel autre. La comparaison d'opérateurs est extraite
+du moteur de règles et partagée avec l'interface, pour qu'une question cachée d'un côté ne soit pas
+exigée de l'autre.
+
+Voir [09](09-self-service.md).
 
 ### J7 — Problèmes et changements `M01`
 
