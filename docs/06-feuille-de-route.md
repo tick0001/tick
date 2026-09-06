@@ -150,10 +150,28 @@ exigée de l'autre.
 
 Voir [09](09-self-service.md).
 
-### J7 — Problèmes et changements `M01`
+### J7 — Problèmes et changements · livré `M01`
 
 Les deux objets restants sur le socle ITIL commun, liens entre objets, promotion d'un ticket vers
 un problème puis un changement.
+
+_Terminé quand_ : un incident révèle un problème, qui appelle un changement, sans que le demandeur
+de l'incident perde son ticket de vue.
+
+**Livré** — `problems` et `changes` en tables distinctes partageant le cycle de vie du ticket, avec
+leurs colonnes propres : symptômes, causes et impacts d'un côté ; plans de déploiement, de retour
+arrière et de validation, plus liste de contrôle, de l'autre. La chronologie, les acteurs,
+l'historique, les pièces jointes et la portée des droits sont ceux du ticket, généralisés par un
+descripteur unique plutôt que dupliqués. Liens entre objets quelconques, lus symétriquement et
+filtrés bout par bout selon le périmètre de chacun. Promotion qui **crée et rattache** au lieu de
+déplacer, reportant demandeurs, urgence, impact, catégorie et entité d'origine, mais ni le statut,
+ni les affectés, ni la priorité — recalculée.
+
+Le SDK passe en `0.6` : les six événements des deux objets, plus `itil.linked`, `itil.unlinked` et
+`itil.promoted`. Ils restent hors du catalogue des notifications, dont les modèles résolvent leurs
+destinataires dans `tickets`.
+
+Voir [10](10-problemes-et-changements.md).
 
 ### J8 — Pilotage `M06` `M14` `M15`
 

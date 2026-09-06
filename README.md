@@ -99,6 +99,7 @@ ne laisse rien derrière lui.
 | [Niveaux de service et règles](docs/07-niveaux-de-service-et-regles.md) | Temps ouvré, engagements, escalade, moteur de règles          |
 | [Communication](docs/08-communication.md)                               | Notifications, courriel entrant, enquêtes de satisfaction     |
 | [Self-service](docs/09-self-service.md)                                 | Base de connaissances, formulaires, interface demandeur       |
+| [Problèmes et changements](docs/10-problemes-et-changements.md)         | Socle ITIL commun, liens entre objets, promotion              |
 | [Feuille de route](docs/06-feuille-de-route.md)                         | Dix jalons, du socle à l'ouverture publique                   |
 
 ## Conventions
