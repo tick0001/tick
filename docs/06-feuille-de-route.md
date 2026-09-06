@@ -17,7 +17,7 @@ de commit, documentation initiale.
 _Terminé quand_ : `docker compose up` puis un lancement suffisent à obtenir une API et une
 interface fonctionnelles sur une machine vierge.
 
-### J1 — Socle de sécurité `M16` · livré
+### J1 — Socle de sécurité · livré
 
 Arbre des entités en `ltree`, utilisateurs, groupes, profils et droits, habilitations, contexte de
 requête, **Row-Level Security**, authentification locale, LDAP et synchronisation, règles
@@ -30,6 +30,12 @@ vraie base PostgreSQL, avec le rôle applicatif.
 comptes, et réconciliation des habilitations dynamiques. La _décision_ d'affectation repose pour
 l'instant sur une table de correspondance groupe → habilitation ; le moteur de règles générique du
 jalon J4 remplacera cette source sans toucher au mécanisme de révocation.
+
+> **Correction de comptabilité.** Ce jalon était marqué `M16` — Administration. C'était faux : il a
+> livré le **substrat** de sécurité — tables, RLS, résolution des droits, habilitations, annuaire —
+> mais aucun écran d'administration, et aucune route hors `entities`. Un administrateur ne pouvait
+> ni créer un compte, ni composer un profil, ni accorder une habilitation. Le module est livré au
+> jalon [J8+](#j8--pilotage--livré-m06-m14-m15), avec les écrans qui manquaient.
 
 ### J2 — Substrat d'extension
 
@@ -198,6 +204,29 @@ Le SDK passe en `0.7` : `recurrence.generated`, et `dashboards.registerWidget` s
 `search.registerField`.
 
 Voir [11](11-pilotage.md).
+
+### J8+ — Administration et refonte de l'interface · livré `M16`
+
+Deux manques constatés à l'usage, corrigés avant l'ouverture publique.
+
+**Administration** — l'écran des entités passe en écriture, et trois écrans manquants apparaissent :
+comptes avec leurs habilitations, groupes avec leurs membres, profils avec leur **matrice de
+droits**. Le catalogue des droits est servi par le serveur, groupé par domaine, et les portées y
+sont restreintes objet par objet — proposer « les miens » sur un modèle de notification n'aurait eu
+aucun sens. Les plugins peuvent y déclarer leurs propres objets, sans quoi leurs droits seraient
+inconfigurables et leurs écrans inatteignables.
+
+Trois garde-fous, appris de ce qui se répare sinon en base : on ne se désactive pas soi-même, on ne
+retire pas son habilitation active, et on ne supprime pas un profil sur lequel des habilitations
+s'appuient. La matrice invalide le cache de `RightsService` — sans quoi un droit retiré continuerait
+de s'appliquer jusqu'au redémarrage.
+
+Au passage, les droits `planning`, `recurrence` et `stats` que la graine distribuait n'étaient
+vérifiés par personne : les contrôleurs se contentaient du droit sur les tickets. Ils sont
+désormais exigés.
+
+**Interface** — jetons de couleur sémantiques, navigation groupée en cinq sections, briques
+communes. Voir [12](12-interface.md).
 
 ### J9 — Ouverture
 

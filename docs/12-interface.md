@@ -75,13 +75,15 @@ Quatorze liens en une barre horizontale donnaient le même poids visuel à
 « Tickets » et à « Courriel entrant ». L'œil devait relire toute la liste à
 chaque fois.
 
-La barre latérale les range en quatre groupes, par intention :
+La barre latérale les range en cinq groupes, par intention :
 
 - **Travail** — ce qu'on ouvre chaque matin : tickets, problèmes, changements,
   planning.
 - **Services** — ce qu'on consulte : catalogue, base de connaissances.
 - **Analyse** — recherche, statistiques.
-- **Configuration** — ce qu'on règle une fois par trimestre.
+- **Configuration** — ce qu'on règle une fois par trimestre : engagements,
+  règles, formulaires, notifications, courriel, enquêtes.
+- **Administration** — entités, comptes, groupes, profils et droits.
 
 L'interface simplifiée n'a qu'un groupe, avec trois entrées. Elle est portée par
 le **profil actif**, pas par l'utilisateur : la même personne peut être

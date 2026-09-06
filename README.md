@@ -102,6 +102,7 @@ ne laisse rien derrière lui.
 | [Problèmes et changements](docs/10-problemes-et-changements.md)         | Socle ITIL commun, liens entre objets, promotion              |
 | [Pilotage](docs/11-pilotage.md)                                         | Planning, statistiques, tableaux de bord, exports             |
 | [Interface](docs/12-interface.md)                                       | Jetons de couleur, navigation, briques communes               |
+| [Administration](docs/13-administration.md)                             | Comptes, groupes, profils et matrice de droits                |
 | [Feuille de route](docs/06-feuille-de-route.md)                         | Dix jalons, du socle à l'ouverture publique                   |
 
 ## Conventions
