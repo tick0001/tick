@@ -4,6 +4,7 @@ import { useMemo, useState, type FormEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router';
 import { api } from '@/lib/api';
+import { CONTROLE, PageHeader } from '@/components/ui/primitives';
 
 const VIDE: CreateTicket = {
   name: '',
@@ -74,12 +75,9 @@ export function NewTicketPage() {
     creation.mutate();
   };
 
-  const champ =
-    'w-full rounded-lg border border-line bg-surface px-3 py-2 text-sm focus:border-brand';
-
   return (
     <form onSubmit={soumettre} className="mx-auto max-w-2xl space-y-4">
-      <h2 className="text-xl font-semibold tracking-tight">{t('creation.titre')}</h2>
+      <PageHeader title={t('creation.titre')} />
 
       <label className="block space-y-1">
         <span className="text-sm font-medium">{t('gabarits.titre')}</span>
@@ -88,7 +86,7 @@ export function NewTicketPage() {
           onChange={(event) => {
             appliquerGabarit(event.target.value ? Number(event.target.value) : null);
           }}
-          className={champ}
+          className={CONTROLE}
         >
           <option value="">{t('gabarits.aucun')}</option>
           {(gabarits.data ?? []).map((modele) => (
@@ -110,7 +108,7 @@ export function NewTicketPage() {
           onChange={(event) => {
             setSaisie((precedent) => ({ ...precedent, name: event.target.value }));
           }}
-          className={champ}
+          className={CONTROLE}
         />
       </label>
 
@@ -126,7 +124,7 @@ export function NewTicketPage() {
           onChange={(event) => {
             setSaisie((precedent) => ({ ...precedent, content: event.target.value }));
           }}
-          className={champ}
+          className={CONTROLE}
         />
       </label>
 
@@ -142,7 +140,7 @@ export function NewTicketPage() {
                   type: event.target.value as CreateTicket['type'],
                 }));
               }}
-              className={champ}
+              className={CONTROLE}
             >
               <option value="incident">{t('tickets.types.incident')}</option>
               <option value="request">{t('tickets.types.request')}</option>
@@ -161,7 +159,7 @@ export function NewTicketPage() {
                 onChange={(event) => {
                   setSaisie((precedent) => ({ ...precedent, [cle]: Number(event.target.value) }));
                 }}
-                className={champ}
+                className={CONTROLE}
               >
                 {[1, 2, 3, 4, 5].map((niveau) => (
                   <option key={niveau} value={niveau}>

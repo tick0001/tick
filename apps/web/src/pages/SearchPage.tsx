@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router';
 import { PriorityBadge, StatusBadge } from '@/components/TicketBadges';
 import { ApiError, api } from '@/lib/api';
+import { CONTROLE } from '@/components/ui/primitives';
 
 interface Ligne {
   field: string;
@@ -193,13 +194,12 @@ export function SearchPage() {
   });
 
   const champDe = (cle: string) => champs.data?.find((element) => element.key === cle);
-  const controle =
-    'rounded-lg border border-line bg-surface px-2 py-1.5 text-sm';
 
   return (
     <div className="grid gap-6 lg:grid-cols-[1fr_18rem]">
       <section className="space-y-4">
         <h2 className="text-xl font-semibold tracking-tight">{t('recherche.titre')}</h2>
+          <p className="max-w-2xl text-sm text-muted">{t('recherche.intro')}</p>
 
         <div className="space-y-2 rounded-card border border-line bg-surface p-4 shadow-card">
           <div className="flex overflow-hidden rounded-lg border border-line text-xs">
@@ -243,7 +243,7 @@ export function SearchPage() {
                       ),
                     );
                   }}
-                  className={`${controle} min-w-44`}
+                  className={`${CONTROLE} min-w-44`}
                 >
                   <option value="">—</option>
                   {(champs.data ?? []).map((element) => (
@@ -266,7 +266,7 @@ export function SearchPage() {
                       ),
                     );
                   }}
-                  className={controle}
+                  className={CONTROLE}
                 >
                   {(descripteur?.operators ?? []).map((operateur) => (
                     <option key={operateur} value={operateur}>
@@ -288,7 +288,7 @@ export function SearchPage() {
                           ),
                         );
                       }}
-                      className={controle}
+                      className={CONTROLE}
                     >
                       <option value="">—</option>
                       {descripteur.options.map((option) => (
@@ -310,7 +310,7 @@ export function SearchPage() {
                           ),
                         );
                       }}
-                      className={controle}
+                      className={CONTROLE}
                     />
                   ))}
 
@@ -371,7 +371,7 @@ export function SearchPage() {
                 setAction(event.target.value as BulkAction['action']);
                 setValeur('');
               }}
-              className={controle}
+              className={CONTROLE}
             >
               {(
                 [
@@ -396,7 +396,7 @@ export function SearchPage() {
                   setValeur(event.target.value);
                 }}
                 placeholder={action === 'setStatus' ? 'assigned' : '1'}
-                className={`${controle} w-28`}
+                className={`${CONTROLE} w-28`}
               />
             )}
 
@@ -526,7 +526,7 @@ export function SearchPage() {
               setNom(event.target.value);
             }}
             placeholder={t('recherche.nomRecherche')}
-            className={`${controle} w-full`}
+            className={`${CONTROLE} w-full`}
           />
           <label className="flex items-center gap-1.5 text-xs">
             <input

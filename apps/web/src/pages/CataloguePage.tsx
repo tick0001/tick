@@ -4,13 +4,9 @@ import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router';
 import { api } from '@/lib/api';
-import { BOUTON } from '@/components/ui/primitives';
+import { BOUTON, CARTE, CONTROLE } from '@/components/ui/primitives';
 
 type Reponses = Record<string, string | string[] | null>;
-
-const champ =
-  'w-full rounded-lg border border-line bg-surface px-2 py-1 text-sm';
-const carte = 'rounded-card border border-line bg-surface p-4 shadow-card';
 
 /** Réponse sous forme de texte, une réponse multiple étant jointe. */
 function enTexte(valeur: string | string[] | null | undefined): string | null {
@@ -162,7 +158,7 @@ export function CataloguePage() {
               <button
                 key={service.id}
                 type="button"
-                className={`${carte} text-left transition hover:bg-sunken`}
+                className={`${CARTE} text-left transition hover:bg-sunken`}
                 onClick={() => {
                   setChoisi(service.id);
                   setErreur(null);
@@ -183,7 +179,7 @@ export function CataloguePage() {
 
       {choisi !== null && formulaire.data && (
         <form
-          className={`${carte} space-y-5`}
+          className={`${CARTE} space-y-5`}
           onSubmit={(event) => {
             event.preventDefault();
             soumettre.mutate();
@@ -234,7 +230,7 @@ export function CataloguePage() {
 
                     {question.kind === 'textarea' && (
                       <textarea
-                        className={`${champ} h-28`}
+                        className={`${CONTROLE} h-28`}
                         value={typeof valeur === 'string' ? valeur : ''}
                         onChange={(event) => {
                           poser(event.target.value);
@@ -244,7 +240,7 @@ export function CataloguePage() {
 
                     {(question.kind === 'select' || question.kind === 'urgency') && (
                       <select
-                        className={champ}
+                        className={CONTROLE}
                         value={typeof valeur === 'string' ? valeur : ''}
                         onChange={(event) => {
                           poser(event.target.value || null);
@@ -276,7 +272,7 @@ export function CataloguePage() {
 
                     {!['textarea', 'select', 'urgency', 'checkbox'].includes(question.kind) && (
                       <input
-                        className={champ}
+                        className={CONTROLE}
                         type={
                           question.kind === 'number'
                             ? 'number'

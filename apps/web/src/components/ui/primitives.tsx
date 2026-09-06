@@ -45,6 +45,10 @@ const SOCLE =
 export const BOUTON = cn(SOCLE, VARIANTES.secondaire, TAILLES.md);
 export const BOUTON_PRIMAIRE = cn(SOCLE, VARIANTES.primaire, TAILLES.md);
 export const BOUTON_DANGER = cn(SOCLE, VARIANTES.danger, TAILLES.sm);
+export const BOUTON_SM = cn(SOCLE, VARIANTES.secondaire, TAILLES.sm);
+
+/** Carte, en classes : quelques listes composent leurs cartes dans une boucle. */
+export const CARTE = 'rounded-card border border-line bg-surface p-4 shadow-card';
 
 export function Button({
   variante = 'secondaire',
@@ -104,8 +108,8 @@ export function Field({
   children,
 }: {
   label: string;
-  hint?: string;
-  className?: string;
+  hint?: string | undefined;
+  className?: string | undefined;
   children: ReactNode;
 }) {
   return (

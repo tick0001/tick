@@ -10,7 +10,7 @@ import type {
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ApiError, api } from '@/lib/api';
-import { BOUTON, BOUTON_PRIMAIRE } from '@/components/ui/primitives';
+import { BOUTON, BOUTON_PRIMAIRE, CARTE, CONTROLE } from '@/components/ui/primitives';
 
 const NATURES: FormQuestionKind[] = [
   'text',
@@ -50,10 +50,6 @@ const CHAMPS = [
   'assignedGroupId',
   'assignedUserId',
 ];
-
-const champ =
-  'w-full rounded-lg border border-line bg-surface px-2 py-1 text-sm';
-const carte = 'rounded-card border border-line bg-surface p-4 shadow-card';
 
 function formulaireVide(): UpsertForm {
   return {
@@ -203,7 +199,7 @@ export function FormsPage() {
 
       <div className="grid gap-2 md:grid-cols-2">
         {formulaires.data?.map((forme) => (
-          <div key={forme.id} className={carte}>
+          <div key={forme.id} className={CARTE}>
             <div className="flex items-start justify-between gap-2">
               <div>
                 <p className="font-medium">{forme.name}</p>
@@ -243,7 +239,7 @@ export function FormsPage() {
 
       {edite && (
         <form
-          className={`${carte} space-y-4`}
+          className={`${CARTE} space-y-4`}
           onSubmit={(event) => {
             event.preventDefault();
             enregistrer.mutate(edite);
@@ -253,7 +249,7 @@ export function FormsPage() {
             <label className="space-y-1 md:col-span-2">
               <span className="text-xs text-muted">{t('formulaires.nom')}</span>
               <input
-                className={champ}
+                className={CONTROLE}
                 required
                 value={edite.valeurs.name}
                 onChange={(event) => {
@@ -265,7 +261,7 @@ export function FormsPage() {
             <label className="space-y-1">
               <span className="text-xs text-muted">{t('formulaires.rubrique')}</span>
               <input
-                className={champ}
+                className={CONTROLE}
                 value={edite.valeurs.category ?? ''}
                 onChange={(event) => {
                   maj({ category: event.target.value || null });
@@ -277,7 +273,7 @@ export function FormsPage() {
               <span className="text-xs text-muted">{t('formulaires.rang')}</span>
               <input
                 type="number"
-                className={champ}
+                className={CONTROLE}
                 value={edite.valeurs.ranking}
                 onChange={(event) => {
                   maj({ ranking: Number(event.target.value) });
@@ -288,7 +284,7 @@ export function FormsPage() {
             <label className="space-y-1 md:col-span-3">
               <span className="text-xs text-muted">{t('formulaires.description')}</span>
               <input
-                className={champ}
+                className={CONTROLE}
                 value={edite.valeurs.description ?? ''}
                 onChange={(event) => {
                   maj({ description: event.target.value || null });
@@ -328,7 +324,7 @@ export function FormsPage() {
             >
               <div className="flex items-center gap-2">
                 <input
-                  className={`${champ} flex-1`}
+                  className={`${CONTROLE} flex-1`}
                   required
                   value={section.name}
                   onChange={(event) => {
@@ -369,7 +365,7 @@ export function FormsPage() {
                       </span>
 
                       <input
-                        className={`${champ} w-64`}
+                        className={`${CONTROLE} w-64`}
                         required
                         placeholder={t('formulaires.libelle')}
                         value={question.label}
@@ -379,7 +375,7 @@ export function FormsPage() {
                       />
 
                       <select
-                        className={`${champ} w-40`}
+                        className={`${CONTROLE} w-40`}
                         value={question.kind}
                         onChange={(event) => {
                           majQuestion(indexSection, indexQuestion, {
@@ -431,7 +427,7 @@ export function FormsPage() {
 
                     {question.kind === 'select' && (
                       <textarea
-                        className={`${champ} h-20`}
+                        className={`${CONTROLE} h-20`}
                         placeholder={t('formulaires.choix')}
                         value={question.options.join('\n')}
                         onChange={(event) => {
@@ -449,7 +445,7 @@ export function FormsPage() {
                         </span>
 
                         <select
-                          className={`${champ} w-56`}
+                          className={`${CONTROLE} w-56`}
                           value={condition.dependsOn}
                           onChange={(event) => {
                             majQuestion(indexSection, indexQuestion, {
@@ -471,7 +467,7 @@ export function FormsPage() {
                         </select>
 
                         <select
-                          className={`${champ} w-40`}
+                          className={`${CONTROLE} w-40`}
                           value={condition.operator}
                           onChange={(event) => {
                             majQuestion(indexSection, indexQuestion, {
@@ -491,7 +487,7 @@ export function FormsPage() {
                         </select>
 
                         <input
-                          className={`${champ} w-40`}
+                          className={`${CONTROLE} w-40`}
                           value={condition.value ?? ''}
                           onChange={(event) => {
                             majQuestion(indexSection, indexQuestion, {
@@ -597,7 +593,7 @@ export function FormsPage() {
               {destination.mappings.map((mapping, indexMapping) => (
                 <div key={indexMapping} className="flex flex-wrap items-center gap-2">
                   <select
-                    className={`${champ} w-48`}
+                    className={`${CONTROLE} w-48`}
                     value={mapping.field}
                     onChange={(event) => {
                       majMappings(
@@ -617,7 +613,7 @@ export function FormsPage() {
                   </select>
 
                   <select
-                    className={`${champ} w-36`}
+                    className={`${CONTROLE} w-36`}
                     value={mapping.source}
                     onChange={(event) => {
                       majMappings(
@@ -635,7 +631,7 @@ export function FormsPage() {
 
                   {mapping.source === 'question' ? (
                     <select
-                      className={`${champ} w-56`}
+                      className={`${CONTROLE} w-56`}
                       value={mapping.question ?? 0}
                       onChange={(event) => {
                         majMappings(
@@ -655,7 +651,7 @@ export function FormsPage() {
                     </select>
                   ) : (
                     <input
-                      className={`${champ} w-56`}
+                      className={`${CONTROLE} w-56`}
                       value={mapping.value ?? ''}
                       onChange={(event) => {
                         majMappings(

@@ -3,11 +3,7 @@ import type { KbArticle, SessionContext, UpsertKbArticle } from '@tick/contracts
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ApiError, api } from '@/lib/api';
-import { BOUTON, BOUTON_PRIMAIRE } from '@/components/ui/primitives';
-
-const champ =
-  'w-full rounded-lg border border-line bg-surface px-2 py-1 text-sm';
-const carte = 'rounded-card border border-line bg-surface p-4 shadow-card';
+import { BOUTON, BOUTON_PRIMAIRE, CARTE, CONTROLE } from '@/components/ui/primitives';
 
 function articleVide(): UpsertKbArticle {
   return {
@@ -139,6 +135,7 @@ export function KnowledgePage({ session }: { session: SessionContext }) {
     <section className="space-y-5">
       <header className="flex flex-wrap items-center justify-between gap-3">
         <h2 className="text-xl font-semibold tracking-tight">{t('connaissance.titre')}</h2>
+          <p className="max-w-2xl text-sm text-muted">{t('connaissance.intro')}</p>
         {peutEcrire && (
           <button
             type="button"
@@ -157,7 +154,7 @@ export function KnowledgePage({ session }: { session: SessionContext }) {
 
       <div className="flex flex-wrap items-center gap-2">
         <input
-          className={`${champ} w-64`}
+          className={`${CONTROLE} w-64`}
           placeholder={t('connaissance.rechercher')}
           value={recherche}
           onChange={(event) => {
@@ -166,7 +163,7 @@ export function KnowledgePage({ session }: { session: SessionContext }) {
         />
 
         <select
-          className={`${champ} w-auto`}
+          className={`${CONTROLE} w-auto`}
           value={categorie}
           onChange={(event) => {
             setCategorie(event.target.value === '' ? '' : Number(event.target.value));
@@ -206,7 +203,7 @@ export function KnowledgePage({ session }: { session: SessionContext }) {
                   setOuvert(resume.id);
                   setEdite(null);
                 }}
-                className={`${carte} w-full text-left transition hover:bg-sunken ${
+                className={`${CARTE} w-full text-left transition hover:bg-sunken ${
                   ouvert === resume.id ? 'border-brand' : ''
                 }`}
               >
@@ -229,14 +226,14 @@ export function KnowledgePage({ session }: { session: SessionContext }) {
         <div className="space-y-4">
           {edite && (
             <form
-              className={`${carte} space-y-3`}
+              className={`${CARTE} space-y-3`}
               onSubmit={(event) => {
                 event.preventDefault();
                 enregistrer.mutate(edite);
               }}
             >
               <input
-                className={champ}
+                className={CONTROLE}
                 required
                 placeholder={t('connaissance.titreArticle')}
                 value={edite.valeurs.name}
@@ -246,7 +243,7 @@ export function KnowledgePage({ session }: { session: SessionContext }) {
               />
 
               <textarea
-                className={`${champ} h-64`}
+                className={`${CONTROLE} h-64`}
                 required
                 placeholder={t('connaissance.contenu')}
                 value={edite.valeurs.content}
@@ -257,7 +254,7 @@ export function KnowledgePage({ session }: { session: SessionContext }) {
 
               <div className="flex flex-wrap items-center gap-4 text-sm">
                 <select
-                  className={`${champ} w-auto`}
+                  className={`${CONTROLE} w-auto`}
                   value={edite.valeurs.categoryId ?? ''}
                   onChange={(event) => {
                     maj({
@@ -331,7 +328,7 @@ export function KnowledgePage({ session }: { session: SessionContext }) {
           )}
 
           {!edite && article.data && (
-            <article className={`${carte} space-y-3`}>
+            <article className={`${CARTE} space-y-3`}>
               <header className="flex flex-wrap items-start justify-between gap-2">
                 <div>
                   <h3 className="text-lg font-semibold tracking-tight">{article.data.name}</h3>

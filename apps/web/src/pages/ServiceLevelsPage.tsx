@@ -12,7 +12,7 @@ import type {
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ApiError, api } from '@/lib/api';
-import { BOUTON, BOUTON_PRIMAIRE } from '@/components/ui/primitives';
+import { BOUTON, BOUTON_PRIMAIRE, CARTE, CONTROLE } from '@/components/ui/primitives';
 
 const JOURS = [1, 2, 3, 4, 5, 6, 0];
 
@@ -24,10 +24,6 @@ const ACTIONS_ESCALADE: EscalationAction[] = [
   'add_observer',
   'notify',
 ];
-
-const champ =
-  'w-full rounded-lg border border-line bg-surface px-2 py-1 text-sm';
-const carte = 'rounded-card border border-line bg-surface p-4 shadow-card';
 
 function calendrierVide(): UpsertCalendar {
   return {
@@ -208,6 +204,7 @@ export function ServiceLevelsPage() {
       <div className="space-y-3">
         <header className="flex items-center justify-between gap-3">
           <h2 className="text-xl font-semibold tracking-tight">{t('calendriers.titre')}</h2>
+          <p className="max-w-2xl text-sm text-muted">{t('calendriers.intro')}</p>
           <button
             type="button"
             className={BOUTON_PRIMAIRE}
@@ -225,7 +222,7 @@ export function ServiceLevelsPage() {
 
         <div className="grid gap-2 md:grid-cols-2">
           {calendriers.data?.map((calendrier) => (
-            <div key={calendrier.id} className={carte}>
+            <div key={calendrier.id} className={CARTE}>
               <div className="flex items-start justify-between gap-2">
                 <div>
                   <p className="font-medium">{calendrier.name}</p>
@@ -269,7 +266,7 @@ export function ServiceLevelsPage() {
 
         {calendrierEdite && (
           <form
-            className={`${carte} space-y-3`}
+            className={`${CARTE} space-y-3`}
             onSubmit={(event) => {
               event.preventDefault();
               enregistrerCalendrier.mutate(calendrierEdite);
@@ -279,7 +276,7 @@ export function ServiceLevelsPage() {
               <label className="space-y-1">
                 <span className="text-xs text-muted">{t('calendriers.nom')}</span>
                 <input
-                  className={champ}
+                  className={CONTROLE}
                   required
                   value={calendrierEdite.valeurs.name}
                   onChange={(event) => {
@@ -294,7 +291,7 @@ export function ServiceLevelsPage() {
               <label className="space-y-1">
                 <span className="text-xs text-muted">{t('calendriers.fuseau')}</span>
                 <input
-                  className={champ}
+                  className={CONTROLE}
                   required
                   value={calendrierEdite.valeurs.timezone}
                   onChange={(event) => {
@@ -329,7 +326,7 @@ export function ServiceLevelsPage() {
               {calendrierEdite.valeurs.segments.map((segment, index) => (
                 <div key={index} className="flex flex-wrap items-center gap-2">
                   <select
-                    className={`${champ} w-auto`}
+                    className={`${CONTROLE} w-auto`}
                     value={segment.weekday}
                     onChange={(event) => {
                       setCalendrierEdite({
@@ -349,7 +346,7 @@ export function ServiceLevelsPage() {
 
                   <input
                     type="time"
-                    className={`${champ} w-auto`}
+                    className={`${CONTROLE} w-auto`}
                     value={segment.beginAt}
                     onChange={(event) => {
                       setCalendrierEdite({
@@ -362,7 +359,7 @@ export function ServiceLevelsPage() {
                   />
                   <input
                     type="time"
-                    className={`${champ} w-auto`}
+                    className={`${CONTROLE} w-auto`}
                     value={segment.endAt}
                     onChange={(event) => {
                       setCalendrierEdite({
@@ -419,7 +416,7 @@ export function ServiceLevelsPage() {
               {calendrierEdite.valeurs.holidays.map((ferie, index) => (
                 <div key={index} className="flex flex-wrap items-center gap-2">
                   <input
-                    className={`${champ} w-48`}
+                    className={`${CONTROLE} w-48`}
                     value={ferie.name}
                     onChange={(event) => {
                       setCalendrierEdite({
@@ -432,7 +429,7 @@ export function ServiceLevelsPage() {
                   />
                   <input
                     type="date"
-                    className={`${champ} w-auto`}
+                    className={`${CONTROLE} w-auto`}
                     value={ferie.day}
                     onChange={(event) => {
                       setCalendrierEdite({
@@ -520,7 +517,7 @@ export function ServiceLevelsPage() {
 
         <div className="grid gap-2 md:grid-cols-2">
           {engagements.data?.map((engagement) => (
-            <div key={engagement.id} className={carte}>
+            <div key={engagement.id} className={CARTE}>
               <div className="flex items-start justify-between gap-2">
                 <div>
                   <p className="font-medium">{engagement.name}</p>
@@ -574,7 +571,7 @@ export function ServiceLevelsPage() {
 
         {engagementEdite && (
           <form
-            className={`${carte} space-y-3`}
+            className={`${CARTE} space-y-3`}
             onSubmit={(event) => {
               event.preventDefault();
               enregistrerEngagement.mutate(engagementEdite);
@@ -584,7 +581,7 @@ export function ServiceLevelsPage() {
               <label className="space-y-1 md:col-span-2">
                 <span className="text-xs text-muted">{t('engagements.nom')}</span>
                 <input
-                  className={champ}
+                  className={CONTROLE}
                   required
                   value={engagementEdite.valeurs.name}
                   onChange={(event) => {
@@ -599,7 +596,7 @@ export function ServiceLevelsPage() {
               <label className="space-y-1">
                 <span className="text-xs text-muted">{t('engagements.nature')}</span>
                 <select
-                  className={champ}
+                  className={CONTROLE}
                   value={engagementEdite.valeurs.kind}
                   onChange={(event) => {
                     setEngagementEdite({
@@ -619,7 +616,7 @@ export function ServiceLevelsPage() {
               <label className="space-y-1">
                 <span className="text-xs text-muted">{t('engagements.axe')}</span>
                 <select
-                  className={champ}
+                  className={CONTROLE}
                   value={engagementEdite.valeurs.axis}
                   onChange={(event) => {
                     setEngagementEdite({
@@ -641,7 +638,7 @@ export function ServiceLevelsPage() {
                 <input
                   type="number"
                   min={1}
-                  className={champ}
+                  className={CONTROLE}
                   value={Math.round(engagementEdite.valeurs.duration / 3600)}
                   onChange={(event) => {
                     setEngagementEdite({
@@ -658,7 +655,7 @@ export function ServiceLevelsPage() {
               <label className="space-y-1 md:col-span-2">
                 <span className="text-xs text-muted">{t('engagements.calendrier')}</span>
                 <select
-                  className={champ}
+                  className={CONTROLE}
                   value={engagementEdite.valeurs.calendarId ?? ''}
                   onChange={(event) => {
                     setEngagementEdite({
@@ -703,7 +700,7 @@ export function ServiceLevelsPage() {
               {engagementEdite.valeurs.levels.map((niveau, index) => (
                 <div key={index} className="flex flex-wrap items-center gap-2">
                   <input
-                    className={`${champ} w-56`}
+                    className={`${CONTROLE} w-56`}
                     placeholder={t('engagements.nom')}
                     value={niveau.name}
                     onChange={(event) => {
@@ -718,7 +715,7 @@ export function ServiceLevelsPage() {
 
                   <input
                     type="number"
-                    className={`${champ} w-24`}
+                    className={`${CONTROLE} w-24`}
                     value={Math.round(niveau.offsetSeconds / 3600)}
                     onChange={(event) => {
                       setEngagementEdite({
@@ -737,7 +734,7 @@ export function ServiceLevelsPage() {
                   </span>
 
                   <select
-                    className={`${champ} w-auto`}
+                    className={`${CONTROLE} w-auto`}
                     value={niveau.actions[0]?.action ?? 'notify'}
                     onChange={(event) => {
                       setEngagementEdite({
@@ -761,7 +758,7 @@ export function ServiceLevelsPage() {
                   </select>
 
                   <input
-                    className={`${champ} w-24`}
+                    className={`${CONTROLE} w-24`}
                     placeholder="valeur"
                     value={niveau.actions[0]?.value ?? ''}
                     onChange={(event) => {

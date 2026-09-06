@@ -138,8 +138,6 @@ export function PlanningPage() {
     if (technicien && absence.beginAt && absence.endAt) declarer.mutate();
   };
 
-  const controle = CONTROLE;
-
   return (
     <section className="space-y-5">
       <PageHeader title={t('planning.titre')} description={t('planning.description')} />
@@ -203,7 +201,7 @@ export function PlanningPage() {
               onChange={(event) => {
                 setTechnicien(event.target.value);
               }}
-              className={controle}
+              className={CONTROLE}
             >
               <option value="">{t('planning.tous')}</option>
               {techniciens.map(([id, nom]) => (
@@ -248,7 +246,7 @@ export function PlanningPage() {
                   onChange={(event) => {
                     setAbsence((precedent) => ({ ...precedent, beginAt: event.target.value }));
                   }}
-                  className={controle}
+                  className={CONTROLE}
                 />
               </label>
               <label className="space-y-0.5">
@@ -261,7 +259,7 @@ export function PlanningPage() {
                   onChange={(event) => {
                     setAbsence((precedent) => ({ ...precedent, endAt: event.target.value }));
                   }}
-                  className={controle}
+                  className={CONTROLE}
                 />
               </label>
               <label className="flex-1 space-y-0.5">
@@ -273,7 +271,7 @@ export function PlanningPage() {
                   onChange={(event) => {
                     setAbsence((precedent) => ({ ...precedent, reason: event.target.value }));
                   }}
-                  className={`${controle} w-full`}
+                  className={`${CONTROLE} w-full`}
                 />
               </label>
               <button

@@ -3,13 +3,9 @@ import type { MailAfterRead, MailCollector, UpsertMailCollector } from '@tick/co
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ApiError, api } from '@/lib/api';
-import { BOUTON, BOUTON_PRIMAIRE } from '@/components/ui/primitives';
+import { BOUTON, BOUTON_PRIMAIRE, CARTE, CONTROLE } from '@/components/ui/primitives';
 
 const APRES_LECTURE: MailAfterRead[] = ['flag', 'move', 'delete'];
-
-const champ =
-  'w-full rounded-lg border border-line bg-surface px-2 py-1 text-sm';
-const carte = 'rounded-card border border-line bg-surface p-4 shadow-card';
 
 function collecteurVide(profileId: number): UpsertMailCollector {
   return {
@@ -130,6 +126,7 @@ export function MailPage() {
     <section className="space-y-6">
       <header className="flex items-center justify-between gap-3">
         <h2 className="text-xl font-semibold tracking-tight">{t('courriel.titre')}</h2>
+          <p className="max-w-2xl text-sm text-muted">{t('courriel.intro')}</p>
         <button
           type="button"
           className={BOUTON_PRIMAIRE}
@@ -149,7 +146,7 @@ export function MailPage() {
 
       <div className="grid gap-2 md:grid-cols-2">
         {collecteurs.data?.map((collecteur) => (
-          <div key={collecteur.id} className={carte}>
+          <div key={collecteur.id} className={CARTE}>
             <div className="flex items-start justify-between gap-2">
               <div className="space-y-1">
                 <p className="font-medium">
@@ -223,7 +220,7 @@ export function MailPage() {
 
       {edite && (
         <form
-          className={`${carte} space-y-3`}
+          className={`${CARTE} space-y-3`}
           onSubmit={(event) => {
             event.preventDefault();
             enregistrer.mutate(edite);
@@ -233,7 +230,7 @@ export function MailPage() {
             <label className="space-y-1 md:col-span-2">
               <span className="text-xs text-muted">{t('courriel.nom')}</span>
               <input
-                className={champ}
+                className={CONTROLE}
                 required
                 value={edite.valeurs.name}
                 onChange={(event) => {
@@ -245,7 +242,7 @@ export function MailPage() {
             <label className="space-y-1">
               <span className="text-xs text-muted">{t('courriel.hote')}</span>
               <input
-                className={champ}
+                className={CONTROLE}
                 required
                 value={edite.valeurs.host}
                 onChange={(event) => {
@@ -258,7 +255,7 @@ export function MailPage() {
               <span className="text-xs text-muted">{t('courriel.port')}</span>
               <input
                 type="number"
-                className={champ}
+                className={CONTROLE}
                 value={edite.valeurs.port}
                 onChange={(event) => {
                   maj({ port: Number(event.target.value) });
@@ -269,7 +266,7 @@ export function MailPage() {
             <label className="space-y-1 md:col-span-2">
               <span className="text-xs text-muted">{t('courriel.identifiant')}</span>
               <input
-                className={champ}
+                className={CONTROLE}
                 required
                 value={edite.valeurs.login}
                 onChange={(event) => {
@@ -282,7 +279,7 @@ export function MailPage() {
               <span className="text-xs text-muted">{t('courriel.motDePasse')}</span>
               <input
                 type="password"
-                className={champ}
+                className={CONTROLE}
                 placeholder={edite.id ? t('courriel.motDePasseInchange') : ''}
                 value={edite.valeurs.password ?? ''}
                 onChange={(event) => {
@@ -294,7 +291,7 @@ export function MailPage() {
             <label className="space-y-1">
               <span className="text-xs text-muted">{t('courriel.dossier')}</span>
               <input
-                className={champ}
+                className={CONTROLE}
                 required
                 value={edite.valeurs.folder}
                 onChange={(event) => {
@@ -306,7 +303,7 @@ export function MailPage() {
             <label className="space-y-1">
               <span className="text-xs text-muted">{t('courriel.apresLecture')}</span>
               <select
-                className={champ}
+                className={CONTROLE}
                 value={edite.valeurs.afterRead}
                 onChange={(event) => {
                   maj({ afterRead: event.target.value as MailAfterRead });
@@ -324,7 +321,7 @@ export function MailPage() {
               <label className="space-y-1">
                 <span className="text-xs text-muted">{t('courriel.dossierCible')}</span>
                 <input
-                  className={champ}
+                  className={CONTROLE}
                   required
                   value={edite.valeurs.targetFolder ?? ''}
                   onChange={(event) => {
@@ -338,7 +335,7 @@ export function MailPage() {
               <span className="text-xs text-muted">{t('courriel.profil')}</span>
               <input
                 type="number"
-                className={champ}
+                className={CONTROLE}
                 required
                 value={edite.valeurs.profileId}
                 onChange={(event) => {
@@ -409,7 +406,7 @@ export function MailPage() {
           {logs.data && logs.data.length > 0 && (
             <div className="overflow-x-auto rounded-card border border-line">
               <table className="w-full text-left text-sm">
-                <thead className="border-b border-line bg-sunken bg-surface">
+                <thead className="border-b border-line bg-sunken">
                   <tr>
                     <th className="px-3 py-2 font-medium">{t('courriel.action')}</th>
                     <th className="px-3 py-2 font-medium">{t('courriel.expediteur')}</th>

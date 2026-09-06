@@ -11,7 +11,7 @@ import type {
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ApiError, api } from '@/lib/api';
-import { BOUTON, BOUTON_PRIMAIRE } from '@/components/ui/primitives';
+import { BOUTON, BOUTON_PRIMAIRE, CARTE, CONTROLE } from '@/components/ui/primitives';
 
 const COLLECTIONS: RuleCollection[] = [
   'ticket.create',
@@ -38,10 +38,6 @@ const LIBELLE_COLLECTION: Record<RuleCollection, string> = {
 
 /** Opérateurs qui n'attendent aucune valeur : la saisir n'aurait aucun sens. */
 const SANS_VALEUR: readonly RuleOperator[] = ['is_empty', 'is_not_empty'];
-
-const champ =
-  'w-full rounded-lg border border-line bg-surface px-2 py-1 text-sm';
-const carte = 'rounded-card border border-line bg-surface p-4 shadow-card';
 
 function regleVide(collection: RuleCollection): UpsertRule {
   return {
@@ -175,8 +171,9 @@ export function RulesPage() {
       <header className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-3">
           <h2 className="text-xl font-semibold tracking-tight">{t('regles.titre')}</h2>
+          <p className="max-w-2xl text-sm text-muted">{t('regles.intro')}</p>
           <select
-            className={`${champ} w-auto`}
+            className={`${CONTROLE} w-auto`}
             value={collection}
             onChange={(event) => {
               setCollection(event.target.value as RuleCollection);
@@ -213,7 +210,7 @@ export function RulesPage() {
 
       <ol className="space-y-2">
         {regles.data?.map((regle, index) => (
-          <li key={regle.id} className={carte}>
+          <li key={regle.id} className={CARTE}>
             <div className="flex flex-wrap items-start justify-between gap-2">
               <div className="space-y-1">
                 <p className="font-medium">
@@ -241,7 +238,7 @@ export function RulesPage() {
                   {regle.actions.map((action, position) => (
                     <li
                       key={`a${String(position)}`}
-                      className="text-ink text-muted"
+                      className="text-ink"
                     >
                       → {t(`regles.typesAction.${action.action}`)}{' '}
                       {definitionDe(action.field)?.label ?? action.field}{' '}
@@ -298,7 +295,7 @@ export function RulesPage() {
 
       {edite && (
         <form
-          className={`${carte} space-y-3`}
+          className={`${CARTE} space-y-3`}
           onSubmit={(event) => {
             event.preventDefault();
             enregistrer.mutate(edite);
@@ -308,7 +305,7 @@ export function RulesPage() {
             <label className="space-y-1 md:col-span-2">
               <span className="text-xs text-muted">{t('regles.nom')}</span>
               <input
-                className={champ}
+                className={CONTROLE}
                 required
                 value={edite.valeurs.name}
                 onChange={(event) => {
@@ -321,7 +318,7 @@ export function RulesPage() {
               <span className="text-xs text-muted">{t('regles.rang')}</span>
               <input
                 type="number"
-                className={champ}
+                className={CONTROLE}
                 value={edite.valeurs.ranking}
                 onChange={(event) => {
                   setEdite({
@@ -408,7 +405,7 @@ export function RulesPage() {
               return (
                 <div key={index} className="flex flex-wrap items-center gap-2">
                   <select
-                    className={`${champ} w-56`}
+                    className={`${CONTROLE} w-56`}
                     value={critere.field}
                     onChange={(event) => {
                       const suivant = definitionDe(event.target.value);
@@ -444,7 +441,7 @@ export function RulesPage() {
                   </select>
 
                   <select
-                    className={`${champ} w-44`}
+                    className={`${CONTROLE} w-44`}
                     value={critere.operator}
                     onChange={(event) => {
                       setEdite({
@@ -470,7 +467,7 @@ export function RulesPage() {
                   {!SANS_VALEUR.includes(critere.operator) &&
                     (definition?.options ? (
                       <select
-                        className={`${champ} w-44`}
+                        className={`${CONTROLE} w-44`}
                         value={critere.value ?? ''}
                         onChange={(event) => {
                           setEdite({
@@ -495,7 +492,7 @@ export function RulesPage() {
                       </select>
                     ) : (
                       <input
-                        className={`${champ} w-56`}
+                        className={`${CONTROLE} w-56`}
                         value={critere.value ?? ''}
                         onChange={(event) => {
                           setEdite({
@@ -573,7 +570,7 @@ export function RulesPage() {
               return (
                 <div key={index} className="flex flex-wrap items-center gap-2">
                   <select
-                    className={`${champ} w-44`}
+                    className={`${CONTROLE} w-44`}
                     value={action.action}
                     onChange={(event) => {
                       setEdite({
@@ -597,7 +594,7 @@ export function RulesPage() {
                   </select>
 
                   <select
-                    className={`${champ} w-56`}
+                    className={`${CONTROLE} w-56`}
                     value={action.field}
                     onChange={(event) => {
                       const suivant = definitionDe(event.target.value);
@@ -630,7 +627,7 @@ export function RulesPage() {
 
                   {action.action !== 'clear' && (
                     <input
-                      className={`${champ} w-56`}
+                      className={`${CONTROLE} w-56`}
                       value={action.value ?? ''}
                       onChange={(event) => {
                         setEdite({
@@ -716,13 +713,13 @@ export function RulesPage() {
       )}
 
       {/* ---- Simulateur ---- */}
-      <div className={`${carte} space-y-3`}>
+      <div className={`${CARTE} space-y-3`}>
         <h3 className="font-medium">{t('regles.simulation')}</h3>
 
         <label className="space-y-1 block">
           <span className="text-xs text-muted">{t('regles.donneesEntree')}</span>
           <textarea
-            className={`${champ} h-32 font-mono`}
+            className={`${CONTROLE} h-32 font-mono`}
             value={entree}
             onChange={(event) => {
               setEntree(event.target.value);

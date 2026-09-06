@@ -76,8 +76,6 @@ export function StatsPage() {
     },
   });
 
-  const controle = CONTROLE;
-
   return (
     <section className="space-y-5">
       <PageHeader title={t('statistiques.titre')} description={t('statistiques.description')} />
@@ -104,7 +102,7 @@ export function StatsPage() {
                 onChange={(event) => {
                   setBornes((precedent) => ({ ...precedent, from: event.target.value }));
                 }}
-                className={controle}
+                className={CONTROLE}
               />
             </label>
             <label className="space-y-0.5">
@@ -117,7 +115,7 @@ export function StatsPage() {
                 onChange={(event) => {
                   setBornes((precedent) => ({ ...precedent, to: event.target.value }));
                 }}
-                className={controle}
+                className={CONTROLE}
               />
             </label>
             <label className="space-y-0.5">
@@ -129,7 +127,7 @@ export function StatsPage() {
                 onChange={(event) => {
                   setDimension(statDimensionSchema.parse(event.target.value));
                 }}
-                className={controle}
+                className={CONTROLE}
               >
                 {statDimensionSchema.options.map((valeur) => (
                   <option key={valeur} value={valeur}>
@@ -191,7 +189,7 @@ export function StatsPage() {
                 onChange={(event) => {
                   setNouveau(event.target.value);
                 }}
-                className={`${controle} w-64`}
+                className={`${CONTROLE} w-64`}
               />
             </label>
             <button

@@ -3,11 +3,7 @@ import type { SessionContext, UpsertSatisfactionConfig } from '@tick/contracts';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ApiError, api } from '@/lib/api';
-import { BOUTON } from '@/components/ui/primitives';
-
-const champ =
-  'w-full rounded-lg border border-line bg-surface px-2 py-1 text-sm';
-const carte = 'rounded-card border border-line bg-surface p-4 shadow-card';
+import { BOUTON, CARTE, CONTROLE } from '@/components/ui/primitives';
 
 const DEFAUT: UpsertSatisfactionConfig = {
   isRecursive: true,
@@ -90,6 +86,7 @@ export function SurveysPage({ session }: { session: SessionContext }) {
     <section className="space-y-6">
       <header className="space-y-1">
         <h2 className="text-xl font-semibold tracking-tight">{t('enquetes.titre')}</h2>
+          <p className="max-w-2xl text-sm text-muted">{t('enquetes.intro')}</p>
         <p className="text-sm text-muted">
           {t('enquetes.description', { entite: session.entity.name })}
         </p>
@@ -98,7 +95,7 @@ export function SurveysPage({ session }: { session: SessionContext }) {
       {erreur && <p className="text-sm text-critical">{erreur}</p>}
 
       <form
-        className={`${carte} space-y-3`}
+        className={`${CARTE} space-y-3`}
         onSubmit={(event) => {
           event.preventDefault();
           enregistrer.mutate();
@@ -111,7 +108,7 @@ export function SurveysPage({ session }: { session: SessionContext }) {
               type="number"
               min={0}
               max={100}
-              className={champ}
+              className={CONTROLE}
               value={valeurs.percentage}
               onChange={(event) => {
                 maj({ percentage: Number(event.target.value) });
@@ -124,7 +121,7 @@ export function SurveysPage({ session }: { session: SessionContext }) {
             <input
               type="number"
               min={0}
-              className={champ}
+              className={CONTROLE}
               value={valeurs.delayDays}
               onChange={(event) => {
                 maj({ delayDays: Number(event.target.value) });
@@ -137,7 +134,7 @@ export function SurveysPage({ session }: { session: SessionContext }) {
             <input
               type="number"
               min={1}
-              className={champ}
+              className={CONTROLE}
               value={valeurs.durationDays}
               onChange={(event) => {
                 maj({ durationDays: Number(event.target.value) });
@@ -150,7 +147,7 @@ export function SurveysPage({ session }: { session: SessionContext }) {
             <input
               type="number"
               min={1}
-              className={champ}
+              className={CONTROLE}
               value={valeurs.reminderDays ?? ''}
               onChange={(event) => {
                 maj({
@@ -190,7 +187,7 @@ export function SurveysPage({ session }: { session: SessionContext }) {
       </form>
 
       {stats.data && (
-        <div className={`${carte} space-y-3`}>
+        <div className={`${CARTE} space-y-3`}>
           <h3 className="text-sm font-semibold">{t('enquetes.resultats')}</h3>
 
           <div className="flex flex-wrap gap-6 text-sm">

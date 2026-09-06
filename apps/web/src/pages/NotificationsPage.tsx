@@ -9,7 +9,7 @@ import type {
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ApiError, api } from '@/lib/api';
-import { BOUTON, BOUTON_PRIMAIRE } from '@/components/ui/primitives';
+import { BOUTON, BOUTON_PRIMAIRE, CARTE, CONTROLE } from '@/components/ui/primitives';
 
 const CIBLES: NotificationTarget[] = [
   'requester',
@@ -27,10 +27,6 @@ const CIBLES: NotificationTarget[] = [
 const LANGUES: Locale[] = ['fr', 'en'];
 
 const ETATS: NotificationState[] = ['pending', 'sent', 'failed', 'cancelled'];
-
-const champ =
-  'w-full rounded-lg border border-line bg-surface px-2 py-1 text-sm';
-const carte = 'rounded-card border border-line bg-surface p-4 shadow-card';
 
 function modeleVide(event: string): UpsertNotificationTemplate {
   return {
@@ -211,7 +207,7 @@ export function NotificationsPage() {
 
             <div className="grid gap-2 md:grid-cols-2">
               {modeles.data?.map((modele) => (
-                <div key={modele.id} className={carte}>
+                <div key={modele.id} className={CARTE}>
                   <div className="flex items-start justify-between gap-2">
                     <div className="space-y-1">
                       <p className="font-medium">
@@ -267,7 +263,7 @@ export function NotificationsPage() {
 
             {edite && (
               <form
-                className={`${carte} space-y-3`}
+                className={`${CARTE} space-y-3`}
                 onSubmit={(event) => {
                   event.preventDefault();
                   enregistrer.mutate(edite);
@@ -277,7 +273,7 @@ export function NotificationsPage() {
                   <label className="space-y-1 md:col-span-2">
                     <span className="text-xs text-muted">{t('notifications.nom')}</span>
                     <input
-                      className={champ}
+                      className={CONTROLE}
                       required
                       value={edite.valeurs.name}
                       onChange={(event) => {
@@ -292,7 +288,7 @@ export function NotificationsPage() {
                   <label className="space-y-1">
                     <span className="text-xs text-muted">{t('notifications.evenement')}</span>
                     <select
-                      className={champ}
+                      className={CONTROLE}
                       value={edite.valeurs.event}
                       onChange={(event) => {
                         setEdite({
@@ -348,7 +344,7 @@ export function NotificationsPage() {
                   {edite.valeurs.targets.map((cible, index) => (
                     <div key={index} className="flex flex-wrap items-center gap-2">
                       <select
-                        className={`${champ} w-72`}
+                        className={`${CONTROLE} w-72`}
                         value={cible.target}
                         onChange={(event) => {
                           setEdite({
@@ -375,7 +371,7 @@ export function NotificationsPage() {
                         <input
                           type="email"
                           required
-                          className={`${champ} w-72`}
+                          className={`${CONTROLE} w-72`}
                           placeholder={t('notifications.adresse')}
                           value={cible.address ?? ''}
                           onChange={(event) => {
@@ -447,7 +443,7 @@ export function NotificationsPage() {
                     >
                       <div className="flex flex-wrap items-center gap-2">
                         <select
-                          className={`${champ} w-28`}
+                          className={`${CONTROLE} w-28`}
                           value={traduction.locale}
                           onChange={(event) => {
                             setEdite({
@@ -466,7 +462,7 @@ export function NotificationsPage() {
                         </select>
 
                         <input
-                          className={`${champ} flex-1`}
+                          className={`${CONTROLE} flex-1`}
                           required
                           placeholder={t('notifications.sujet')}
                           value={traduction.subject}
@@ -500,7 +496,7 @@ export function NotificationsPage() {
                       </div>
 
                       <textarea
-                        className={`${champ} h-28 font-mono`}
+                        className={`${CONTROLE} h-28 font-mono`}
                         required
                         placeholder={t('notifications.corpsTexte')}
                         value={traduction.bodyText}
@@ -564,7 +560,7 @@ export function NotificationsPage() {
               <div className="flex items-center gap-3">
                 <h2 className="text-xl font-semibold tracking-tight">{t('notifications.file')}</h2>
                 <select
-                  className={`${champ} w-auto`}
+                  className={`${CONTROLE} w-auto`}
                   value={filtre}
                   onChange={(event) => {
                     setFiltre(event.target.value as NotificationState | '');
@@ -598,7 +594,7 @@ export function NotificationsPage() {
             {file.data && file.data.length > 0 && (
               <div className="overflow-x-auto rounded-card border border-line">
                 <table className="w-full text-left text-sm">
-                  <thead className="border-b border-line bg-sunken bg-surface">
+                  <thead className="border-b border-line bg-sunken">
                     <tr>
                       <th className="px-3 py-2 font-medium">{t('notifications.etat')}</th>
                       <th className="px-3 py-2 font-medium">{t('notifications.destinataire')}</th>
