@@ -176,6 +176,20 @@
       "when": 1788692354713,
       "tag": "0024_rls_formulaires",
       "breakpoints": true
+    },
+    {
+      "idx": 25,
+      "version": "7",
+      "when": 1788694159552,
+      "tag": "0025_rich_silk_fever",
+      "breakpoints": true
+    },
+    {
+      "idx": 26,
+      "version": "7",
+      "when": 1788694160552,
+      "tag": "0026_rls_problemes_changements",
+      "breakpoints": true
     }
   ]
 }

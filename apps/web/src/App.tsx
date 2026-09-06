@@ -11,6 +11,8 @@ import { CataloguePage } from '@/pages/CataloguePage';
 import { EntitiesPage } from '@/pages/EntitiesPage';
 import { FaqPage } from '@/pages/FaqPage';
 import { FormsPage } from '@/pages/FormsPage';
+import { ItilObjectPage } from '@/pages/ItilObjectPage';
+import { ItilObjectsPage } from '@/pages/ItilObjectsPage';
 import { KnowledgePage } from '@/pages/KnowledgePage';
 import { LoginPage } from '@/pages/LoginPage';
 import { NewTicketPage } from '@/pages/NewTicketPage';
@@ -126,6 +128,12 @@ function Application() {
                 montrer pour qu'ils refusent l'acces serait pire que les taire. */}
             {!simplifiee && (
               <>
+                <NavLink to="/itil/problems" className={lienClasses}>
+                  {t('navigation.problemes')}
+                </NavLink>
+                <NavLink to="/itil/changes" className={lienClasses}>
+                  {t('navigation.changements')}
+                </NavLink>
                 <NavLink to="/search" className={lienClasses}>
                   {t('recherche.titre')}
                 </NavLink>
@@ -201,6 +209,10 @@ function Application() {
           <Route path="/tickets/new" element={<NewTicketPage />} />
           <Route path="/search" element={<SearchPage />} />
           <Route path="/tickets/:id" element={<TicketPage />} />
+          <Route path="/itil/problems" element={<ItilObjectsPage kind="problem" />} />
+          <Route path="/itil/problems/:id" element={<ItilObjectPage kind="problem" />} />
+          <Route path="/itil/changes" element={<ItilObjectsPage kind="change" />} />
+          <Route path="/itil/changes/:id" element={<ItilObjectPage kind="change" />} />
           <Route path="/entities" element={<EntitiesPage session={session.data} />} />
           <Route path="/service-levels" element={<ServiceLevelsPage />} />
           <Route path="/rules" element={<RulesPage />} />

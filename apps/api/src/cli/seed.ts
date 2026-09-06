@@ -13,6 +13,9 @@ import { Logger } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import {
   agreementLevelActions,
+  changes,
+  itilLinks,
+  problems,
   formDestinations,
   formQuestionConditions,
   formQuestions,
@@ -82,6 +85,10 @@ const PROFILE_RIGHTS: Record<string, RightTriple[]> = {
     ['ticket', 'read', 'entity'],
     ['ticket', 'create', 'entity'],
     ['ticket', 'update', 'group'],
+    // Lecture seule sur le socle ITIL : un technicien consulte le probleme
+    // auquel son incident est rattache, il ne decide pas de son analyse.
+    ['problem', 'read', 'entity'],
+    ['change', 'read', 'entity'],
     ['entity', 'read', 'entity'],
     ['group', 'read', 'entity'],
     ['kb', 'read', 'entity'],
@@ -98,6 +105,14 @@ const PROFILE_RIGHTS: Record<string, RightTriple[]> = {
     ['ticket', 'create', 'recursive'],
     ['ticket', 'update', 'recursive'],
     ['ticket', 'delete', 'recursive'],
+    ['problem', 'read', 'recursive'],
+    ['problem', 'create', 'recursive'],
+    ['problem', 'update', 'recursive'],
+    ['problem', 'delete', 'recursive'],
+    ['change', 'read', 'recursive'],
+    ['change', 'create', 'recursive'],
+    ['change', 'update', 'recursive'],
+    ['change', 'delete', 'recursive'],
     ['entity', 'read', 'recursive'],
     ['group', 'read', 'recursive'],
     ['kb', 'read', 'recursive'],
@@ -107,6 +122,14 @@ const PROFILE_RIGHTS: Record<string, RightTriple[]> = {
     ['ticket', 'create', 'all'],
     ['ticket', 'update', 'all'],
     ['ticket', 'delete', 'all'],
+    ['problem', 'read', 'all'],
+    ['problem', 'create', 'all'],
+    ['problem', 'update', 'all'],
+    ['problem', 'delete', 'all'],
+    ['change', 'read', 'all'],
+    ['change', 'create', 'all'],
+    ['change', 'update', 'all'],
+    ['change', 'delete', 'all'],
     ['entity', 'read', 'all'],
     ['entity', 'create', 'all'],
     ['entity', 'update', 'all'],
@@ -174,7 +197,8 @@ async function main(): Promise<void> {
                notification_template_targets, notification_template_translations,
                notification_templates, notification_preferences, saved_searches,
                logs, itil_links, itil_costs, itil_validations, itil_solutions,
-               itil_tasks, itil_followups, itil_actors, ticket_escalations, tickets,
+               itil_tasks, itil_followups, itil_actors, ticket_escalations,
+               problems, changes, tickets,
                ticket_template_fields, ticket_templates, suppliers, locations,
                solution_types, task_categories, request_sources, itil_categories,
                form_submissions, form_destinations, form_access,
@@ -759,6 +783,101 @@ async function main(): Promise<void> {
         isPrivate: true,
         authorId: reference('thomas'),
         source: 'interface' as const,
+      },
+    ]);
+
+    // ---- Probleme et changement --------------------------------------------
+    //
+    // L'incident de l'imprimante reste ouvert : le demandeur attend toujours
+    // une reponse. Le probleme qu'il revele vit a cote, dans l'entite qui en a
+    // la charge, et le changement qui le corrigera est encore a planifier.
+    const [probleme] = await tx
+      .insert(problems)
+      .values({
+        entityId: nord,
+        entityPath: 'temporaire',
+        name: 'Pannes repetees sur le parc d impression du Site A',
+        content: 'Quatre incidents en trois semaines sur le meme modele d imprimante.',
+        status: 'assigned',
+        urgency: 4,
+        impact: 4,
+        priority: 4,
+        categoryId: impression,
+        symptoms: 'Voyant rouge clignotant, bourrage papier signale a chaque fois.',
+        causes: 'Tambours en fin de vie sur une serie livree en meme temps.',
+        impacts: 'Le service comptabilite imprime au 3e etage, avec deux etages de marche.',
+        createdById: reference('sophie'),
+        updatedById: reference('sophie'),
+      })
+      .returning({ id: problems.id });
+
+    if (!probleme) throw new Error('Probleme de demonstration non cree.');
+
+    const [changement] = await tx
+      .insert(changes)
+      .values({
+        entityId: nord,
+        entityPath: 'temporaire',
+        name: 'Remplacement du parc d impression du Site A',
+        content: 'Remplacer les six imprimantes de la serie concernee.',
+        status: 'planned',
+        urgency: 3,
+        impact: 4,
+        priority: 4,
+        categoryId: impression,
+        deploymentPlan: 'Livraison le samedi, installation etage par etage le dimanche.',
+        rollbackPlan: 'Les anciens materiels restent stockes une semaine, reinstallables en deux heures.',
+        validationPlan: 'Une impression de test par etage, et une semaine sans incident.',
+        checklist: [
+          { label: 'Commander les six materiels', done: true },
+          { label: 'Prevenir les utilisateurs', done: false },
+          { label: 'Reprendre les anciens materiels', done: false },
+        ],
+        createdById: reference('sophie'),
+        updatedById: reference('sophie'),
+      })
+      .returning({ id: changes.id });
+
+    if (!changement) throw new Error('Changement de demonstration non cree.');
+
+    await tx.insert(itilActors).values([
+      {
+        itilType: 'problem' as const,
+        itilId: probleme.id,
+        role: 'requester' as const,
+        actorType: 'user' as const,
+        actorId: reference('sophie'),
+      },
+      {
+        itilType: 'problem' as const,
+        itilId: probleme.id,
+        role: 'assigned' as const,
+        actorType: 'user' as const,
+        actorId: reference('thomas'),
+      },
+      {
+        itilType: 'change' as const,
+        itilId: changement.id,
+        role: 'requester' as const,
+        actorType: 'user' as const,
+        actorId: reference('sophie'),
+      },
+    ]);
+
+    await tx.insert(itilLinks).values([
+      {
+        sourceType: 'ticket' as const,
+        sourceId: premier,
+        targetType: 'problem' as const,
+        targetId: probleme.id,
+        linkType: 'linked' as const,
+      },
+      {
+        sourceType: 'problem' as const,
+        sourceId: probleme.id,
+        targetType: 'change' as const,
+        targetId: changement.id,
+        linkType: 'linked' as const,
       },
     ]);
 

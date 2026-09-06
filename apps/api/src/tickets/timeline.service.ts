@@ -1,5 +1,6 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import type {
+  ItilType,
   AddFollowup,
   AddSolution,
   AddTask,
@@ -9,9 +10,10 @@ import type {
   TimelineEntry,
   UpdateTask,
 } from '@tick/contracts';
-import { itilFollowups, itilSolutions, itilTasks, itilValidations, sql, tickets } from '@tick/db';
+import { itilFollowups, itilSolutions, itilTasks, itilValidations, sql } from '@tick/db';
 import { requireContext } from '../common/request-context.js';
 import { DatabaseService } from '../database/database.service.js';
+import { ITIL_KINDS } from '../itil/itil-kinds.js';
 import { emitEvent } from '../plugins/event-buffer.js';
 import { HookBus } from '../plugins/hook-bus.service.js';
 import { HistoryService } from './history.service.js';
@@ -22,6 +24,15 @@ interface TicketRef {
   id: number;
   entityId: number;
 }
+
+/**
+ * Type de l'objet portant la chronologie.
+ *
+ * Passe en dernier argument, avec une valeur par defaut : le ticket reste le
+ * cas courant, et les appelants qui ne connaissent que lui n'ont rien a
+ * changer. Les satellites, eux, sont polymorphes depuis le premier jour.
+ */
+type Porteur = ItilType;
 
 /**
  * Chronologie du ticket : suivis, tâches, solutions, validations, historique.
@@ -46,35 +57,41 @@ export class TimelineService {
    * et c'est exactement de lui que les éléments privés doivent être cachés.
    * Toute portée plus large désigne un intervenant.
    */
-  private async seesPrivate(): Promise<boolean> {
-    return (await this.scopes.scopeOf('ticket', 'read')) !== 'own';
+  private async seesPrivate(porteur: Porteur = 'ticket'): Promise<boolean> {
+    return (await this.scopes.scopeOf(ITIL_KINDS[porteur].right, 'read')) !== 'own';
   }
 
-  /** Vérifie l'accès au ticket et renvoie ses références. */
-  private async requireTicket(ticketId: number, action: 'read' | 'update'): Promise<TicketRef> {
-    const condition = await this.scopes.conditionFor('ticket', action);
+  /** Vérifie l'accès à l'objet porteur et renvoie ses références. */
+  private async requireTicket(
+    ticketId: number,
+    action: 'read' | 'update',
+    porteur: Porteur = 'ticket',
+  ): Promise<TicketRef> {
+    const descripteur = ITIL_KINDS[porteur];
+    const condition = await this.scopes.conditionFor(descripteur.right, action, porteur);
+    const table = sql.raw(descripteur.table);
 
     const [row] = await this.db.asUser(async (tx) => {
       const resultat = await tx.execute<TicketRef & Record<string, unknown>>(sql`
-        SELECT tickets.id, tickets.entity_id AS "entityId"
-          FROM tickets
-         WHERE tickets.id = ${ticketId}
-           AND tickets.deleted_at IS NULL
+        SELECT ${table}.id, ${table}.entity_id AS "entityId"
+          FROM ${table}
+         WHERE ${table}.id = ${ticketId}
+           AND ${table}.deleted_at IS NULL
            ${condition ? sql`AND ${condition}` : sql``}
       `);
 
       return resultat.rows;
     });
 
-    if (!row) throw new NotFoundException('Ticket introuvable ou hors de votre perimetre.');
+    if (!row) throw new NotFoundException('Objet introuvable ou hors de votre perimetre.');
 
     return row;
   }
 
-  async timelineFor(ticketId: number): Promise<TimelineEntry[]> {
-    await this.requireTicket(ticketId, 'read');
+  async timelineFor(ticketId: number, porteur: Porteur = 'ticket'): Promise<TimelineEntry[]> {
+    await this.requireTicket(ticketId, 'read', porteur);
 
-    const prive = await this.seesPrivate();
+    const prive = await this.seesPrivate(porteur);
     const filtrePrive = prive ? sql`TRUE` : sql`is_private = false`;
 
     return this.db.asUser(async (tx) => {
@@ -90,7 +107,7 @@ export class TimelineService {
                  NULL::text AS "requestComment", NULL::text AS "responseComment",
                  NULL::text AS field, NULL::text AS "oldValue", NULL::text AS "newValue"
             FROM itil_followups s
-           WHERE s.itil_type = 'ticket' AND s.itil_id = ${ticketId}
+           WHERE s.itil_type = ${porteur} AND s.itil_id = ${ticketId}
              AND s.deleted_at IS NULL AND ${filtrePrive}
 
           UNION ALL
@@ -101,7 +118,7 @@ export class TimelineService {
                  k.begin_at, k.end_at, k.technician_id, k.group_id,
                  k.category_id, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL
             FROM itil_tasks k
-           WHERE k.itil_type = 'ticket' AND k.itil_id = ${ticketId}
+           WHERE k.itil_type = ${porteur} AND k.itil_id = ${ticketId}
              AND k.deleted_at IS NULL AND ${filtrePrive}
 
           UNION ALL
@@ -112,7 +129,7 @@ export class TimelineService {
                  NULL, NULL, NULL, NULL,
                  NULL, o.solution_type_id, o.approval_comment, NULL, NULL, NULL, NULL, NULL, NULL
             FROM itil_solutions o
-           WHERE o.itil_type = 'ticket' AND o.itil_id = ${ticketId}
+           WHERE o.itil_type = ${porteur} AND o.itil_id = ${ticketId}
 
           UNION ALL
 
@@ -123,7 +140,7 @@ export class TimelineService {
                  NULL, NULL, NULL, v.validator_id, v.request_comment, v.response_comment,
                  NULL, NULL, NULL
             FROM itil_validations v
-           WHERE v.itil_type = 'ticket' AND v.itil_id = ${ticketId}
+           WHERE v.itil_type = ${porteur} AND v.itil_id = ${ticketId}
 
           UNION ALL
 
@@ -134,7 +151,7 @@ export class TimelineService {
                  NULL, NULL, NULL, NULL, NULL, NULL,
                  l.field, l.old_value, l.new_value
             FROM logs l
-           WHERE l.item_type = 'ticket' AND l.item_id = ${ticketId}
+           WHERE l.item_type = ${porteur} AND l.item_id = ${ticketId}
         ) chronologie
         ORDER BY at ASC, id ASC
       `);
@@ -243,8 +260,12 @@ export class TimelineService {
     });
   }
 
-  async addFollowup(ticketId: number, input: AddFollowup): Promise<void> {
-    const ticket = await this.requireTicket(ticketId, 'update');
+  async addFollowup(
+    ticketId: number,
+    input: AddFollowup,
+    porteur: Porteur = 'ticket',
+  ): Promise<void> {
+    const ticket = await this.requireTicket(ticketId, 'update', porteur);
     const context = requireContext();
 
     const propose = await this.hooks.run('followup.beforeAdd', {
@@ -257,7 +278,7 @@ export class TimelineService {
       const [ligne] = await tx
         .insert(itilFollowups)
         .values({
-          itilType: 'ticket',
+          itilType: porteur,
           itilId: ticketId,
           entityId: ticket.entityId,
           entityPath: 'temporaire',
@@ -271,23 +292,28 @@ export class TimelineService {
       return ligne?.id ?? 0;
     });
 
-    emitEvent('followup.added', {
-      ticketId,
-      followupId: id,
-      isPrivate: propose.isPrivate,
-      authorId: context.userId,
-    });
+    // Les evenements restent ceux du ticket : les modeles de notification
+    // resolvent l'identifiant dans `tickets`, et le publier pour un probleme
+    // designerait le ticket portant le meme numero.
+    if (porteur === 'ticket') {
+      emitEvent('followup.added', {
+        ticketId,
+        followupId: id,
+        isPrivate: propose.isPrivate,
+        authorId: context.userId,
+      });
+    }
   }
 
-  async addTask(ticketId: number, input: AddTask): Promise<void> {
-    const ticket = await this.requireTicket(ticketId, 'update');
+  async addTask(ticketId: number, input: AddTask, porteur: Porteur = 'ticket'): Promise<void> {
+    const ticket = await this.requireTicket(ticketId, 'update', porteur);
     const context = requireContext();
 
     const id = await this.db.asUser(async (tx) => {
       const [ligne] = await tx
         .insert(itilTasks)
         .values({
-          itilType: 'ticket',
+          itilType: porteur,
           itilId: ticketId,
           entityId: ticket.entityId,
           entityPath: 'temporaire',
@@ -304,16 +330,23 @@ export class TimelineService {
         })
         .returning({ id: itilTasks.id });
 
-      await this.recomputeInternalTime(tx, ticketId);
+      await this.recomputeInternalTime(tx, ticketId, porteur);
 
       return ligne?.id ?? 0;
     });
 
-    emitEvent('task.added', { ticketId, taskId: id, authorId: context.userId });
+    if (porteur === 'ticket') {
+      emitEvent('task.added', { ticketId, taskId: id, authorId: context.userId });
+    }
   }
 
-  async updateTask(ticketId: number, taskId: number, input: UpdateTask): Promise<void> {
-    await this.requireTicket(ticketId, 'update');
+  async updateTask(
+    ticketId: number,
+    taskId: number,
+    input: UpdateTask,
+    porteur: Porteur = 'ticket',
+  ): Promise<void> {
+    await this.requireTicket(ticketId, 'update', porteur);
 
     await this.db.asUser(async (tx) => {
       const patch: Record<string, unknown> = { ...input, updatedAt: new Date() };
@@ -328,9 +361,13 @@ export class TimelineService {
       await tx
         .update(itilTasks)
         .set(patch)
-        .where(sql`${itilTasks.id} = ${taskId} AND ${itilTasks.itilId} = ${ticketId}`);
+        .where(
+          sql`${itilTasks.id} = ${taskId}
+              AND ${itilTasks.itilType} = ${porteur}
+              AND ${itilTasks.itilId} = ${ticketId}`,
+        );
 
-      await this.recomputeInternalTime(tx, ticketId);
+      await this.recomputeInternalTime(tx, ticketId, porteur);
     });
   }
 
@@ -344,25 +381,30 @@ export class TimelineService {
   private async recomputeInternalTime(
     tx: Parameters<Parameters<DatabaseService['asUser']>[0]>[0],
     ticketId: number,
+    porteur: Porteur = 'ticket',
   ): Promise<void> {
     await tx.execute(sql`
-      UPDATE tickets SET internal_time = (
+      UPDATE ${sql.raw(ITIL_KINDS[porteur].table)} SET internal_time = (
         SELECT coalesce(sum(action_time), 0) FROM itil_tasks
-         WHERE itil_type = 'ticket' AND itil_id = ${ticketId} AND deleted_at IS NULL
+         WHERE itil_type = ${porteur} AND itil_id = ${ticketId} AND deleted_at IS NULL
       )
       WHERE id = ${ticketId}
     `);
   }
 
-  async addSolution(ticketId: number, input: AddSolution): Promise<void> {
-    const ticket = await this.requireTicket(ticketId, 'update');
+  async addSolution(
+    ticketId: number,
+    input: AddSolution,
+    porteur: Porteur = 'ticket',
+  ): Promise<void> {
+    const ticket = await this.requireTicket(ticketId, 'update', porteur);
     const context = requireContext();
 
     const id = await this.db.asUser(async (tx) => {
       const [ligne] = await tx
         .insert(itilSolutions)
         .values({
-          itilType: 'ticket',
+          itilType: porteur,
           itilId: ticketId,
           entityId: ticket.entityId,
           entityPath: 'temporaire',
@@ -375,7 +417,9 @@ export class TimelineService {
       return ligne?.id ?? 0;
     });
 
-    emitEvent('solution.proposed', { ticketId, solutionId: id, authorId: context.userId });
+    if (porteur === 'ticket') {
+      emitEvent('solution.proposed', { ticketId, solutionId: id, authorId: context.userId });
+    }
   }
 
   /**
@@ -385,8 +429,12 @@ export class TimelineService {
    * refusée le ferait disparaître des listes de travail alors que le problème
    * persiste.
    */
-  async answerSolution(ticketId: number, input: AnswerSolution): Promise<void> {
-    const ticket = await this.requireTicket(ticketId, 'read');
+  async answerSolution(
+    ticketId: number,
+    input: AnswerSolution,
+    porteur: Porteur = 'ticket',
+  ): Promise<void> {
+    const ticket = await this.requireTicket(ticketId, 'read', porteur);
     const context = requireContext();
 
     const solutionId = await this.db.asUser(async (tx) => {
@@ -394,7 +442,7 @@ export class TimelineService {
         .select({ id: itilSolutions.id })
         .from(itilSolutions)
         .where(
-          sql`${itilSolutions.itilType} = 'ticket' AND ${itilSolutions.itilId} = ${ticketId}
+          sql`${itilSolutions.itilType} = ${porteur} AND ${itilSolutions.itilId} = ${ticketId}
               AND ${itilSolutions.status} = 'proposed'`,
         )
         .orderBy(sql`${itilSolutions.createdAt} DESC`)
@@ -412,18 +460,19 @@ export class TimelineService {
         })
         .where(sql`${itilSolutions.id} = ${derniere.id}`);
 
-      await tx
-        .update(tickets)
-        .set(
-          input.accepted
-            ? { status: 'closed', dateClosed: new Date() }
-            : { status: 'assigned', dateSolved: null },
-        )
-        .where(sql`${tickets.id} = ${ticketId}`);
+      await tx.execute(sql`
+        UPDATE ${sql.raw(ITIL_KINDS[porteur].table)}
+           SET ${
+             input.accepted
+               ? sql`status = 'closed', date_closed = now()`
+               : sql`status = 'assigned', date_solved = NULL`
+           }
+         WHERE id = ${ticketId}
+      `);
 
       await this.history.recordAction(
         tx,
-        { type: 'ticket', id: ticketId, entityId: ticket.entityId },
+        { type: porteur, id: ticketId, entityId: ticket.entityId },
         input.accepted ? 'solution acceptee' : 'solution refusee',
         input.comment ?? null,
       );
@@ -431,20 +480,26 @@ export class TimelineService {
       return derniere.id;
     });
 
+    if (porteur !== 'ticket') return;
+
     emitEvent('solution.answered', { ticketId, solutionId, accepted: input.accepted });
 
     if (input.accepted) emitEvent('ticket.closed', { id: ticketId, entityId: ticket.entityId });
   }
 
-  async requestValidation(ticketId: number, input: RequestValidation): Promise<void> {
-    const ticket = await this.requireTicket(ticketId, 'update');
+  async requestValidation(
+    ticketId: number,
+    input: RequestValidation,
+    porteur: Porteur = 'ticket',
+  ): Promise<void> {
+    const ticket = await this.requireTicket(ticketId, 'update', porteur);
     const context = requireContext();
 
     const id = await this.db.asUser(async (tx) => {
       const [ligne] = await tx
         .insert(itilValidations)
         .values({
-          itilType: 'ticket',
+          itilType: porteur,
           itilId: ticketId,
           entityId: ticket.entityId,
           entityPath: 'temporaire',
@@ -455,23 +510,25 @@ export class TimelineService {
         })
         .returning({ id: itilValidations.id });
 
-      await tx
-        .update(tickets)
-        .set({ validationStatus: 'waiting' })
-        .where(sql`${tickets.id} = ${ticketId}`);
+      await tx.execute(sql`
+        UPDATE ${sql.raw(ITIL_KINDS[porteur].table)}
+           SET validation_status = 'waiting'
+         WHERE id = ${ticketId}
+      `);
 
       return ligne?.id ?? 0;
     });
 
-    emitEvent('validation.requested', { ticketId, validationId: id });
+    if (porteur === 'ticket') emitEvent('validation.requested', { ticketId, validationId: id });
   }
 
   async answerValidation(
     ticketId: number,
     validationId: number,
     input: AnswerValidation,
+    porteur: Porteur = 'ticket',
   ): Promise<void> {
-    const ticket = await this.requireTicket(ticketId, 'read');
+    const ticket = await this.requireTicket(ticketId, 'read', porteur);
     const context = requireContext();
 
     await this.db.asUser(async (tx) => {
@@ -485,6 +542,7 @@ export class TimelineService {
         })
         .where(
           sql`${itilValidations.id} = ${validationId}
+              AND ${itilValidations.itilType} = ${porteur}
               AND ${itilValidations.itilId} = ${ticketId}
               AND ${itilValidations.status} = 'waiting'`,
         )
@@ -494,29 +552,31 @@ export class TimelineService {
         throw new BadRequestException('Validation introuvable ou deja repondue.');
       }
 
-      // L'etat agrege du ticket : refuse s'il existe un refus, accorde si tout
+      // L'etat agrege de l'objet : refuse s'il existe un refus, accorde si tout
       // est accorde, en attente sinon.
       await tx.execute(sql`
-        UPDATE tickets SET validation_status = (
+        UPDATE ${sql.raw(ITIL_KINDS[porteur].table)} SET validation_status = (
           SELECT CASE
             WHEN bool_or(status = 'refused') THEN 'refused'::validation_state
             WHEN bool_and(status = 'granted') THEN 'granted'::validation_state
             ELSE 'waiting'::validation_state
           END
           FROM itil_validations
-          WHERE itil_type = 'ticket' AND itil_id = ${ticketId}
+          WHERE itil_type = ${porteur} AND itil_id = ${ticketId}
         )
         WHERE id = ${ticketId}
       `);
 
       await this.history.recordAction(
         tx,
-        { type: 'ticket', id: ticketId, entityId: ticket.entityId },
+        { type: porteur, id: ticketId, entityId: ticket.entityId },
         input.granted ? 'validation accordee' : 'validation refusee',
         input.comment ?? null,
       );
     });
 
-    emitEvent('validation.answered', { ticketId, validationId, granted: input.granted });
+    if (porteur === 'ticket') {
+      emitEvent('validation.answered', { ticketId, validationId, granted: input.granted });
+    }
   }
 }

@@ -24,6 +24,13 @@ import { TimelineService } from './timeline.service.js';
     HistoryService,
     TicketTemplatesService,
   ],
-  exports: [TicketsService, TimelineService, TicketScopeService, TicketTemplatesService],
+  exports: [
+    TicketsService,
+    TimelineService,
+    TicketScopeService,
+    TicketTemplatesService,
+    HistoryService,
+    PriorityService,
+  ],
 })
 export class TicketsModule {}

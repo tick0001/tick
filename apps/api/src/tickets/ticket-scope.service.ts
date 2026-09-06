@@ -1,7 +1,9 @@
 import { ForbiddenException, Injectable } from '@nestjs/common';
+import type { ItilType } from '@tick/contracts';
 import { groupMembers, sql, type SQL } from '@tick/db';
 import { requireContext } from '../common/request-context.js';
 import { DatabaseService } from '../database/database.service.js';
+import { ITIL_KINDS } from '../itil/itil-kinds.js';
 import { RightsService, type RightScope } from '../auth/rights.service.js';
 
 /**
@@ -42,14 +44,22 @@ export class TicketScopeService {
   }
 
   /**
-   * Condition à appliquer aux requêtes sur `tickets`, ou refus.
+   * Condition à appliquer aux requêtes sur un objet ITIL, ou refus.
    *
    * L'absence de droit lève plutôt que de renvoyer une condition toujours
    * fausse : une liste vide et un accès refusé demandent des réactions
    * différentes de l'utilisateur, et les confondre transforme un problème
    * d'habilitation en apparente perte de données.
+   *
+   * `kind` choisit la table visée. Les trois objets partagent exactement la
+   * même règle de portée : elle porte sur les acteurs et l'entité, que rien ne
+   * distingue d'un type à l'autre.
    */
-  async conditionFor(object: string, action: string): Promise<SQL | undefined> {
+  async conditionFor(
+    object: string,
+    action: string,
+    kind: ItilType = 'ticket',
+  ): Promise<SQL | undefined> {
     const context = requireContext();
     const scope: RightScope | undefined = await this.rights.scopeFor(
       context.profileId,
@@ -61,10 +71,14 @@ export class TicketScopeService {
       throw new ForbiddenException(`Droit manquant : ${object}:${action} pour le profil actif.`);
     }
 
+    // Nom de table interpole en SQL brut : c'est une constante du code,
+    // choisie par une cle du type `ItilType`, jamais une saisie.
+    const table = sql.raw(ITIL_KINDS[kind].table);
+
     const estActeur = (roles: string[], types: string[], ids: number[]): SQL => sql`EXISTS (
       SELECT 1 FROM itil_actors a
-       WHERE a.itil_type = 'ticket'
-         AND a.itil_id = tickets.id
+       WHERE a.itil_type = ${kind}
+         AND a.itil_id = ${table}.id
          AND a.role IN (${sql.join(
            roles.map((role) => sql`${role}`),
            sql`, `,
@@ -82,12 +96,12 @@ export class TicketScopeService {
     switch (scope) {
       case 'own':
         return sql`(${estActeur(['requester', 'observer'], ['user'], [context.userId])}
-                    OR tickets.created_by_id = ${context.userId})`;
+                    OR ${table}.created_by_id = ${context.userId})`;
 
       case 'group': {
         const groupes = await this.groupIdsOf(context.userId);
         const propres = sql`(${estActeur(['requester', 'observer'], ['user'], [context.userId])}
-                             OR tickets.created_by_id = ${context.userId})`;
+                             OR ${table}.created_by_id = ${context.userId})`;
 
         if (groupes.length === 0) return propres;
 
@@ -101,10 +115,10 @@ export class TicketScopeService {
       case 'entity':
         // Volontairement l'entité seule : la portée `entity` ne suit pas la
         // descendance, même quand la session l'inclut.
-        return sql`tickets.entity_id = ${context.entityId}`;
+        return sql`${table}.entity_id = ${context.entityId}`;
 
       case 'recursive':
-        return sql`tickets.entity_path <@ ${context.entityPath}::ltree`;
+        return sql`${table}.entity_path <@ ${context.entityPath}::ltree`;
 
       case 'all':
         // Rien à ajouter : le Row-Level Security borne déjà au périmètre.

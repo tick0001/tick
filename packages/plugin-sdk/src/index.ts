@@ -108,6 +108,9 @@ export type ItilStatus = 'new' | 'assigned' | 'planned' | 'waiting' | 'solved' |
  * synchronisations — tout ce qui ne doit pas se produire si la transaction
  * échoue, ni faire échouer la transaction.
  */
+/** Les trois objets ITIL partageant le socle commun. */
+export type ItilObjectType = 'ticket' | 'problem' | 'change';
+
 export interface EventPayloads {
   'entity.created': { id: number; name: string; path: string };
   'entity.updated': { id: number; name: string };
@@ -166,6 +169,37 @@ export interface EventPayloads {
    * de composer un lien utilisable sans compte, et pour un plugin de relayer
    * l'enquete ailleurs que par courriel.
    */
+  /**
+   * Problemes et changements.
+   *
+   * Volontairement absents du catalogue des notifications : les modeles
+   * resolvent leurs destinataires dans `tickets`, et un identifiant de probleme
+   * y designerait le ticket portant le meme numero. Les plugins, eux, savent de
+   * quel objet on leur parle.
+   */
+  'problem.created': { id: number; entityId: number; name: string };
+  'problem.updated': { id: number; entityId: number };
+  'problem.deleted': { id: number; entityId: number };
+  'change.created': { id: number; entityId: number; name: string };
+  'change.updated': { id: number; entityId: number };
+  'change.deleted': { id: number; entityId: number };
+
+  'itil.linked': {
+    sourceType: ItilObjectType;
+    sourceId: number;
+    targetType: ItilObjectType;
+    targetId: number;
+    linkType: 'linked' | 'duplicate' | 'child';
+  };
+  'itil.unlinked': { sourceType: ItilObjectType; sourceId: number; linkId: number };
+  /** Un objet vient d'en engendrer un autre. L'original reste ouvert. */
+  'itil.promoted': {
+    fromType: ItilObjectType;
+    fromId: number;
+    toType: 'problem' | 'change';
+    toId: number;
+  };
+
   'satisfaction.requested': { id: number; entityId: number; token: string; url: string };
   'satisfaction.answered': { id: number; entityId: number; rating: number };
 }

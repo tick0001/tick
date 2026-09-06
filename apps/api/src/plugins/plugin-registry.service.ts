@@ -10,7 +10,7 @@ import { satisfies, validRange } from 'semver';
 import { appRoot, loadEnv } from '../config/env.js';
 
 /** Version du contrat exposé aux plugins. Doit suivre `@tick/plugin-sdk`. */
-export const SDK_VERSION = '0.5.0';
+export const SDK_VERSION = '0.6.0';
 
 export interface DiscoveredPlugin {
   manifest: PluginManifest;

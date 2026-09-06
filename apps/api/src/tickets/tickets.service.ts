@@ -309,8 +309,8 @@ export class TicketsService {
           tickets.created_at AS "createdAt", tickets.updated_at AS "updatedAt",
           ${actorLabels('requester')} AS "requesters",
           ${actorLabels('assigned')} AS "assignees",
-          ${followupCount} AS "followupCount",
-          ${taskCount} AS "taskCount"
+          ${followupCount()} AS "followupCount",
+          ${taskCount()} AS "taskCount"
         FROM tickets
         JOIN entities entites ON entites.id = tickets.entity_id
         LEFT JOIN itil_categories categories ON categories.id = tickets.category_id
@@ -478,8 +478,8 @@ export class TicketsService {
           tickets.date_opened AS "dateOpened", tickets.date_due AS "dateDue",
           ${actorLabels('requester')} AS "requesters",
           ${actorLabels('assigned')} AS "assignees",
-          ${followupCount} AS "followupCount",
-          ${taskCount} AS "taskCount",
+          ${followupCount()} AS "followupCount",
+          ${taskCount()} AS "taskCount",
           ${colonne} AS "sortValue"
         FROM tickets
         JOIN entities entites ON entites.id = tickets.entity_id

@@ -1,15 +1,33 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import type { ItilStatus } from '@tick/contracts';
-import { itilStatusSchema } from '@tick/contracts';
+import type { ItilKind } from '@tick/contracts';
 import { useState, type FormEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, useParams } from 'react-router';
-import { AgreementBadges } from '@/components/AgreementBadges';
 import { Attachments } from '@/components/Attachments';
 import { LinksPanel } from '@/components/LinksPanel';
-import { PriorityBadge, StatusBadge, TypeBadge } from '@/components/TicketBadges';
+import { PriorityBadge, StatusBadge } from '@/components/TicketBadges';
 import { Timeline } from '@/components/Timeline';
 import { ApiError, api } from '@/lib/api';
+
+/**
+ * Champs propres à chaque type, dans l'ordre où ils se lisent.
+ *
+ * Les clés sont énumérées plutôt que dérivées de `keyof ItilObject` : la clé de
+ * traduction se construit à partir d'elles, et une union élargie ferait
+ * réclamer au compilateur des libellés pour `id` et `status`.
+ */
+type ChampExtra =
+  | 'symptoms'
+  | 'causes'
+  | 'impacts'
+  | 'deploymentPlan'
+  | 'rollbackPlan'
+  | 'validationPlan';
+
+const CHAMPS: Record<ItilKind, readonly ChampExtra[]> = {
+  problem: ['symptoms', 'causes', 'impacts'],
+  change: ['deploymentPlan', 'rollbackPlan', 'validationPlan'],
+};
 
 function Champ({ libelle, children }: { libelle: string; children: React.ReactNode }) {
   return (
@@ -20,7 +38,14 @@ function Champ({ libelle, children }: { libelle: string; children: React.ReactNo
   );
 }
 
-export function TicketPage() {
+/**
+ * Fiche d'un problème ou d'un changement.
+ *
+ * La chronologie, les pièces jointes et les liens sont exactement ceux du
+ * ticket : ce sont les satellites du socle commun, et leur donner ici une autre
+ * apparence ferait croire à un autre mécanisme.
+ */
+export function ItilObjectPage({ kind }: { kind: ItilKind }) {
   const { t, i18n } = useTranslation();
   const queryClient = useQueryClient();
   const params = useParams();
@@ -29,51 +54,40 @@ export function TicketPage() {
   const [suivi, setSuivi] = useState('');
   const [prive, setPrive] = useState(false);
 
-  const ticket = useQuery({
-    queryKey: ['ticket', id],
-    queryFn: () => api.ticket(id),
-    retry: false,
-  });
-  const timeline = useQuery({
-    queryKey: ['timeline', id],
-    queryFn: () => api.timeline(id),
+  const objet = useQuery({
+    queryKey: ['itil-object', kind, id],
+    queryFn: () => api.itilObject(kind, id),
     retry: false,
   });
 
-  const rafraichir = async (): Promise<void> => {
-    await queryClient.invalidateQueries({ queryKey: ['ticket', id] });
-    await queryClient.invalidateQueries({ queryKey: ['timeline', id] });
-    await queryClient.invalidateQueries({ queryKey: ['tickets'] });
-    // Une sortie d'attente repousse les echeances : les badges les afficheraient
-    // sinon perimees jusqu'au prochain rechargement complet.
-    await queryClient.invalidateQueries({ queryKey: ['ticket-agreements', id] });
-  };
+  const timeline = useQuery({
+    queryKey: ['itil-timeline', kind, id],
+    queryFn: () => api.itilTimeline(kind, id),
+    retry: false,
+  });
 
   const publier = useMutation({
     mutationFn: () =>
-      api.addFollowup(id, { content: suivi, isPrivate: prive, source: 'interface' }),
+      api.addItilFollowup(kind, id, { content: suivi, isPrivate: prive, source: 'interface' }),
     onSuccess: async () => {
       setSuivi('');
-      await rafraichir();
+      await queryClient.invalidateQueries({ queryKey: ['itil-timeline', kind, id] });
+      await queryClient.invalidateQueries({ queryKey: ['itil-object', kind, id] });
     },
   });
 
-  const changerStatut = useMutation({
-    mutationFn: (statut: ItilStatus) => api.setStatus(id, statut),
-    onSuccess: rafraichir,
-  });
-
-  if (ticket.error instanceof ApiError) {
+  if (objet.error instanceof ApiError) {
     return (
       <p className="rounded-md border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-200">
-        {ticket.error.status === 403 ? t('tickets.interdit') : ticket.error.message}
+        {objet.error.status === 403 ? t('tickets.interdit') : objet.error.message}
       </p>
     );
   }
 
-  if (!ticket.data) return <p className="text-sm text-neutral-500">{t('commun.chargement')}</p>;
+  if (!objet.data) return <p className="text-sm text-neutral-500">{t('commun.chargement')}</p>;
 
-  const detail = ticket.data;
+  const detail = objet.data;
+  const section = kind === 'problem' ? 'problemes' : 'changements';
   const dates = new Intl.DateTimeFormat(i18n.language, { dateStyle: 'short', timeStyle: 'short' });
 
   const soumettre = (event: FormEvent): void => {
@@ -84,8 +98,11 @@ export function TicketPage() {
   return (
     <div className="space-y-5">
       <div>
-        <Link to="/tickets" className="text-xs text-neutral-500 underline-offset-2 hover:underline">
-          ← {t('tickets.detail.retour')}
+        <Link
+          to={`/itil/${kind === 'problem' ? 'problems' : 'changes'}`}
+          className="text-xs text-neutral-500 underline-offset-2 hover:underline"
+        >
+          ← {t(`itil.${section}.titre`)}
         </Link>
       </div>
 
@@ -94,10 +111,11 @@ export function TicketPage() {
           <span className="text-sm tabular-nums text-neutral-500">#{detail.id}</span>
           <StatusBadge status={detail.status} />
           <PriorityBadge value={detail.priority} />
-          <TypeBadge type={detail.type} />
+          <span className="rounded bg-neutral-100 px-1.5 py-0.5 text-xs dark:bg-neutral-800">
+            {t(`itil.objets.${kind}`)}
+          </span>
         </div>
         <h2 className="text-xl font-semibold tracking-tight">{detail.name}</h2>
-        <AgreementBadges ticketId={id} />
       </header>
 
       <div className="grid gap-5 lg:grid-cols-[1fr_20rem]">
@@ -106,11 +124,38 @@ export function TicketPage() {
             {detail.content || '—'}
           </article>
 
-          <Attachments itemType="ticket" itemId={id} />
+          {CHAMPS[kind].map((champ) => (
+            <section
+              key={champ}
+              className="space-y-1 rounded-lg border border-neutral-200 p-4 dark:border-neutral-800"
+            >
+              <h3 className="text-sm font-semibold">{t(`itil.champs.${champ}`)}</h3>
+              <p className="whitespace-pre-wrap text-sm text-neutral-600 dark:text-neutral-300">
+                {detail[champ] || '—'}
+              </p>
+            </section>
+          ))}
+
+          {kind === 'change' && detail.checklist.length > 0 && (
+            <section className="space-y-1 rounded-lg border border-neutral-200 p-4 dark:border-neutral-800">
+              <h3 className="text-sm font-semibold">{t('itil.champs.checklist')}</h3>
+              <ul className="space-y-1 text-sm">
+                {detail.checklist.map((ligne) => (
+                  <li key={ligne.label} className="flex items-center gap-2">
+                    <input type="checkbox" checked={ligne.done} readOnly />
+                    <span className={ligne.done ? 'text-neutral-400 line-through' : ''}>
+                      {ligne.label}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          )}
+
+          <Attachments itemType={kind} itemId={id} />
 
           <section className="space-y-3">
             <h3 className="text-sm font-semibold">{t('tickets.detail.chronologie')}</h3>
-
             <Timeline entrees={timeline.data} locale={i18n.language} />
           </section>
 
@@ -154,45 +199,15 @@ export function TicketPage() {
         </div>
 
         <aside className="space-y-4 rounded-lg border border-neutral-200 p-4 dark:border-neutral-800">
-          <label className="block space-y-1">
-            <span className="text-xs uppercase tracking-wide text-neutral-500">
-              {t('tickets.detail.changerStatut')}
-            </span>
-            <select
-              value={detail.status}
-              disabled={changerStatut.isPending}
-              onChange={(event) => {
-                changerStatut.mutate(itilStatusSchema.parse(event.target.value));
-              }}
-              className="w-full rounded-md border border-neutral-300 bg-white px-2 py-1.5 text-sm dark:border-neutral-700 dark:bg-neutral-950"
-            >
-              {itilStatusSchema.options.map((statut) => (
-                <option key={statut} value={statut}>
-                  {t(`tickets.statuts.${statut}`)}
-                </option>
-              ))}
-            </select>
-          </label>
-
-          {changerStatut.error && (
-            <p className="text-xs text-red-600 dark:text-red-400">{changerStatut.error.message}</p>
-          )}
-
           <dl className="space-y-3">
-            <Champ libelle={t('tickets.entite')}>{detail.entity.name}</Champ>
-            <Champ libelle={t('tickets.categorie')}>{detail.category?.name ?? '—'}</Champ>
-            <Champ libelle={t('tickets.detail.urgence')}>{detail.urgency} / 5</Champ>
-            <Champ libelle={t('tickets.detail.impact')}>{detail.impact} / 5</Champ>
-            <Champ libelle={t('tickets.detail.source')}>{detail.requestSource?.name ?? '—'}</Champ>
-            <Champ libelle={t('tickets.detail.lieu')}>{detail.location?.name ?? '—'}</Champ>
+            <Champ libelle={t('tickets.entite')}>{detail.entityName}</Champ>
+            <Champ libelle={t('tickets.categorie')}>{detail.categoryName ?? '—'}</Champ>
+            <Champ libelle={t('itil.formulaire.urgence')}>{detail.urgency} / 5</Champ>
+            <Champ libelle={t('itil.formulaire.impact')}>{detail.impact} / 5</Champ>
+            <Champ libelle={t('tickets.detail.lieu')}>{detail.locationName ?? '—'}</Champ>
             <Champ libelle={t('tickets.ouvertLe')}>
               {dates.format(new Date(detail.dateOpened))}
             </Champ>
-            {detail.dateTakenIntoAccount && (
-              <Champ libelle={t('tickets.detail.priseEnCompte')}>
-                {dates.format(new Date(detail.dateTakenIntoAccount))}
-              </Champ>
-            )}
             {detail.dateSolved && (
               <Champ libelle={t('tickets.detail.resolu')}>
                 {dates.format(new Date(detail.dateSolved))}
@@ -208,18 +223,20 @@ export function TicketPage() {
               {t('tickets.detail.acteurs')}
             </h3>
             <ul className="space-y-1 text-sm">
-              {detail.actors.map((acteur) => (
-                <li key={`${acteur.role}-${acteur.actorType}-${String(acteur.actorId)}`}>
-                  <span className="text-neutral-500">{t(`tickets.roles.${acteur.role}`)} : </span>
-                  {acteur.label}
-                </li>
-              ))}
+              <li>
+                <span className="text-neutral-500">{t('tickets.roles.requester')} : </span>
+                {detail.requesters.join(', ') || '—'}
+              </li>
+              <li>
+                <span className="text-neutral-500">{t('tickets.roles.assigned')} : </span>
+                {detail.assignees.join(', ') || '—'}
+              </li>
             </ul>
           </div>
         </aside>
       </div>
 
-      <LinksPanel type="ticket" id={id} />
+      <LinksPanel type={kind} id={id} />
     </div>
   );
 }

@@ -1,4 +1,11 @@
+import type { ItilType } from '@tick/contracts';
 import { sql, type SQL } from '@tick/db';
+import { ITIL_KINDS } from '../itil/itil-kinds.js';
+
+/** Table de l'objet porteur, interpolee en SQL brut depuis une constante. */
+function table(porteur: ItilType): SQL {
+  return sql.raw(ITIL_KINDS[porteur].table);
+}
 
 /**
  * Libellé d'un acteur, quelle que soit sa nature.
@@ -11,7 +18,10 @@ import { sql, type SQL } from '@tick/db';
  * produit un libellé nul, filtré ensuite, plutôt que de faire disparaître le
  * ticket entier de la liste.
  */
-export function actorLabels(role: 'requester' | 'observer' | 'assigned'): SQL {
+export function actorLabels(
+  role: 'requester' | 'observer' | 'assigned',
+  porteur: ItilType = 'ticket',
+): SQL {
   return sql`(
     SELECT array_remove(array_agg(
       CASE acteur.actor_type
@@ -27,23 +37,29 @@ export function actorLabels(role: 'requester' | 'observer' | 'assigned'): SQL {
     LEFT JOIN users u ON acteur.actor_type = 'user' AND u.id = acteur.actor_id
     LEFT JOIN groups g ON acteur.actor_type = 'group' AND g.id = acteur.actor_id
     LEFT JOIN suppliers f ON acteur.actor_type = 'supplier' AND f.id = acteur.actor_id
-    WHERE acteur.itil_type = 'ticket'
-      AND acteur.itil_id = tickets.id
+    WHERE acteur.itil_type = ${porteur}
+      AND acteur.itil_id = ${table(porteur)}.id
       AND acteur.role = ${role}
   )`;
 }
 
-/** Nombre de suivis non supprimés d'un ticket. */
-export const followupCount = sql`(
-  SELECT count(*) FROM itil_followups s
-   WHERE s.itil_type = 'ticket' AND s.itil_id = tickets.id AND s.deleted_at IS NULL
-)`;
+/** Nombre de suivis non supprimés de l'objet. */
+export function followupCount(porteur: ItilType = 'ticket'): SQL {
+  return sql`(
+    SELECT count(*) FROM itil_followups s
+     WHERE s.itil_type = ${porteur} AND s.itil_id = ${table(porteur)}.id
+       AND s.deleted_at IS NULL
+  )`;
+}
 
-/** Nombre de tâches non supprimées d'un ticket. */
-export const taskCount = sql`(
-  SELECT count(*) FROM itil_tasks k
-   WHERE k.itil_type = 'ticket' AND k.itil_id = tickets.id AND k.deleted_at IS NULL
-)`;
+/** Nombre de tâches non supprimées de l'objet. */
+export function taskCount(porteur: ItilType = 'ticket'): SQL {
+  return sql`(
+    SELECT count(*) FROM itil_tasks k
+     WHERE k.itil_type = ${porteur} AND k.itil_id = ${table(porteur)}.id
+       AND k.deleted_at IS NULL
+  )`;
+}
 
 /** Colonnes de tri autorisées, vers leur expression SQL. */
 export const SORTABLE = {

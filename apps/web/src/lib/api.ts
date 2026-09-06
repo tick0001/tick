@@ -5,6 +5,15 @@ import type {
   CreateTicket,
   EntitySummary,
   ItilStatus,
+  CreateLink,
+  ItilKind,
+  ItilLink,
+  ItilObject,
+  ItilObjectSummary,
+  ItilType,
+  Promote,
+  PromotionResult,
+  UpsertItilObject,
   Form,
   FormSubmissionResult,
   FormSummary,
@@ -58,6 +67,10 @@ import {
   formSchema,
   formSubmissionResultSchema,
   formSummarySchema,
+  itilLinkSchema,
+  itilObjectSchema,
+  itilObjectSummarySchema,
+  promotionResultSchema,
   kbArticleSchema,
   kbArticleSummarySchema,
   kbCategorySchema,
@@ -137,6 +150,35 @@ async function request<T>(
   return schema.parse(await response.json());
 }
 
+/** Segment d'URL de chaque objet ITIL. */
+const SEGMENTS: Record<ItilType, string> = {
+  ticket: 'tickets',
+  problem: 'problems',
+  change: 'changes',
+};
+
+/**
+ * Appel sans corps de reponse.
+ *
+ * `request` exige un schema, ce qui n'a pas de sens pour un 204. Le refus reste
+ * explicite : silencier l'echec ferait croire a l'interface que l'ecriture a eu
+ * lieu, et elle reafficherait l'etat d'avant sans le dire.
+ */
+async function send(path: string, method: string, body?: unknown): Promise<void> {
+  const response = await fetch(`/api${path}`, {
+    method,
+    credentials: 'include',
+    headers: { 'Content-Type': 'application/json' },
+    ...(body === undefined ? {} : { body: JSON.stringify(body) }),
+  });
+
+  if (!response.ok) {
+    const detail = (await response.json().catch(() => null)) as { message?: string } | null;
+
+    throw new ApiError(response.status, detail?.message ?? `HTTP ${String(response.status)}`);
+  }
+}
+
 export const api = {
   login: (credentials: Login): Promise<SessionContext> =>
     request('/auth/login', sessionContextSchema, {
@@ -166,6 +208,55 @@ export const api = {
 
   timeline: (id: number): Promise<TimelineEntry[]> =>
     request(`/tickets/${String(id)}/timeline`, timelineEntrySchema.array()),
+
+  // --- Problemes et changements -------------------------------------------
+  //
+  // Le segment d'URL est au pluriel, le modele au singulier : `SEGMENTS` fait
+  // la conversion une seule fois, ici, plutot qu'a chaque appel.
+
+  itilObjects: (kind: ItilKind, filtre: ItilQuery = {}): Promise<ItilObjectSummary[]> =>
+    request(`/itil/${SEGMENTS[kind]}${toItilQuery(filtre)}`, itilObjectSummarySchema.array()),
+
+  itilObject: (kind: ItilKind, id: number): Promise<ItilObject> =>
+    request(`/itil/${SEGMENTS[kind]}/${String(id)}`, itilObjectSchema),
+
+  createItilObject: (kind: ItilKind, body: UpsertItilObject): Promise<ItilObject> =>
+    request(`/itil/${SEGMENTS[kind]}`, itilObjectSchema, {
+      method: 'POST',
+      body: JSON.stringify(body),
+    }),
+
+  updateItilObject: (kind: ItilKind, id: number, body: UpsertItilObject): Promise<ItilObject> =>
+    request(`/itil/${SEGMENTS[kind]}/${String(id)}`, itilObjectSchema, {
+      method: 'PATCH',
+      body: JSON.stringify(body),
+    }),
+
+  itilTimeline: (kind: ItilKind, id: number): Promise<TimelineEntry[]> =>
+    request(`/itil/${SEGMENTS[kind]}/${String(id)}/timeline`, timelineEntrySchema.array()),
+
+  addItilFollowup: async (kind: ItilKind, id: number, body: AddFollowup): Promise<void> => {
+    await send(`/itil/${SEGMENTS[kind]}/${String(id)}/followups`, 'POST', body);
+  },
+
+  links: (type: ItilType, id: number): Promise<ItilLink[]> =>
+    request(`/itil/${SEGMENTS[type]}/${String(id)}/links`, itilLinkSchema.array()),
+
+  link: (type: ItilType, id: number, body: CreateLink): Promise<ItilLink[]> =>
+    request(`/itil/${SEGMENTS[type]}/${String(id)}/links`, itilLinkSchema.array(), {
+      method: 'POST',
+      body: JSON.stringify(body),
+    }),
+
+  unlink: async (type: ItilType, id: number, linkId: number): Promise<void> => {
+    await send(`/itil/${SEGMENTS[type]}/${String(id)}/links/${String(linkId)}`, 'DELETE');
+  },
+
+  promote: (type: ItilType, id: number, body: Promote): Promise<PromotionResult> =>
+    request(`/itil/${SEGMENTS[type]}/${String(id)}/promote`, promotionResultSchema, {
+      method: 'POST',
+      body: JSON.stringify(body),
+    }),
 
   addFollowup: async (id: number, body: AddFollowup): Promise<void> => {
     const response = await fetch(`/api/tickets/${String(id)}/followups`, {
@@ -480,6 +571,24 @@ export const api = {
     });
   },
 };
+
+export interface ItilQuery {
+  status?: string | undefined;
+  search?: string | undefined;
+  deleted?: boolean | undefined;
+}
+
+function toItilQuery(filtre: ItilQuery): string {
+  const params = new URLSearchParams();
+
+  if (filtre.status) params.set('status', filtre.status);
+  if (filtre.search) params.set('search', filtre.search);
+  if (filtre.deleted) params.set('deleted', 'true');
+
+  const chaine = params.toString();
+
+  return chaine ? `?${chaine}` : '';
+}
 
 export interface KbFilter {
   search?: string | undefined;
