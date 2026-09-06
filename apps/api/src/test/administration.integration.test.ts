@@ -3,11 +3,14 @@ import { profileRights, profiles, sql, users } from '@tick/db';
 import { PasswordService } from '../auth/password.service.js';
 import { RightsService } from '../auth/rights.service.js';
 import { GroupsService } from '../admin/groups.service.js';
+import { SettingsService } from '../admin/settings.service.js';
 import { ProfilesService } from '../admin/profiles.service.js';
 import { RIGHT_CATALOGUE } from '../admin/right-catalogue.js';
 import { UsersService } from '../admin/users.service.js';
 import { runWithContext } from '../common/request-context.js';
 import { DatabaseService } from '../database/database.service.js';
+import { EntitiesService } from '../entities/entities.service.js';
+import { HookBus } from '../plugins/hook-bus.service.js';
 import { createFixture, type Fixture } from './fixtures.js';
 
 /**
@@ -25,6 +28,7 @@ describe('Administration', () => {
   let usersService: UsersService;
   let groupsService: GroupsService;
   let profilesService: ProfilesService;
+  let settingsService: SettingsService;
 
   const ids = { profilAdmin: 0, admin: 0, profilCree: 0, compteCree: 0 };
 
@@ -61,6 +65,7 @@ describe('Administration', () => {
     usersService = new UsersService(db, new PasswordService());
     groupsService = new GroupsService(db);
     profilesService = new ProfilesService(db, rights);
+    settingsService = new SettingsService(new EntitiesService(db, new HookBus()));
 
     const [profil] = await fixture.owner.db
       .insert(profiles)
@@ -84,6 +89,10 @@ describe('Administration', () => {
   });
 
   afterAll(async () => {
+    await fixture.owner.db.execute(
+      sql`DELETE FROM entity_settings WHERE entity_id IN (
+            SELECT id FROM entities WHERE path <@ ${fixture.paths['racine'] as string}::ltree)`,
+    );
     await fixture.owner.db.execute(
       sql`DELETE FROM authorizations WHERE user_id IN (${ids.admin}, ${ids.compteCree})`,
     );
@@ -140,6 +149,8 @@ describe('Administration', () => {
         ['group', 'delete'],
         ['profile', 'read'],
         ['profile', 'update'],
+        ['ldap', 'read'],
+        ['ldap', 'update'],
         ['plugin', 'read'],
         ['plugin', 'update'],
         ['plugin', 'delete'],
@@ -288,6 +299,58 @@ describe('Administration', () => {
           ),
         ),
       ).rejects.toThrow(/propre habilitation/i);
+    });
+  });
+
+  describe('Réglages par entité', () => {
+    it('rend l’origine de chaque valeur, posée ou héritée', async () => {
+      const racine = fixture.entityIds['racine'] as number;
+      const siteA = fixture.entityIds['siteA'] as number;
+
+      await commeAdmin(() => settingsService.write(racine, { autoCloseDelayDays: 7 }));
+
+      const surSiteA = await commeAdmin(() => settingsService.read(siteA));
+      const cloture = surSiteA.settings.find((reglage) => reglage.key === 'autoCloseDelayDays');
+
+      // L'origine est tout l'interet de l'ecran : « 7 jours » ne dit pas d'ou
+      // la valeur vient, et c'est ce qu'il faut savoir avant de la changer.
+      expect(cloture?.value).toBe(7);
+      expect(cloture?.origin?.id).toBe(racine);
+      expect(cloture?.isOwn).toBe(false);
+    });
+
+    it('detache du parent, puis retablit l’heritage', async () => {
+      const racine = fixture.entityIds['racine'] as number;
+      const siteA = fixture.entityIds['siteA'] as number;
+
+      const detache = await commeAdmin(() =>
+        settingsService.write(siteA, { autoCloseDelayDays: 1 }),
+      );
+
+      expect(detache.settings.find((r) => r.key === 'autoCloseDelayDays')?.isOwn).toBe(true);
+
+      // `null` n'est pas « vide » mais « retablir l'heritage » : sans cette
+      // lecture, on ne pourrait jamais revenir au comportement du parent.
+      const rendu = await commeAdmin(() =>
+        settingsService.write(siteA, { autoCloseDelayDays: null }),
+      );
+      const cloture = rendu.settings.find((r) => r.key === 'autoCloseDelayDays');
+
+      expect(cloture?.value).toBe(7);
+      expect(cloture?.origin?.id).toBe(racine);
+      expect(cloture?.isOwn).toBe(false);
+    });
+
+    it('ne touche pas aux cles absentes du corps', async () => {
+      const siteA = fixture.entityIds['siteA'] as number;
+
+      await commeAdmin(() => settingsService.write(siteA, { mailFrom: 'a@exemple.fr' }));
+      await commeAdmin(() => settingsService.write(siteA, { defaultLocale: 'en' }));
+
+      const lu = await commeAdmin(() => settingsService.read(siteA));
+
+      expect(lu.settings.find((r) => r.key === 'mailFrom')?.value).toBe('a@exemple.fr');
+      expect(lu.settings.find((r) => r.key === 'defaultLocale')?.value).toBe('en');
     });
   });
 

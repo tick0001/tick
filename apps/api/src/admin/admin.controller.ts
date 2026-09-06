@@ -13,32 +13,41 @@ import {
 } from '@nestjs/common';
 import {
   upsertAuthorizationSchema,
+  upsertLdapDirectorySchema,
+  writeSettingsSchema,
   upsertGroupSchema,
   upsertMemberSchema,
   upsertProfileSchema,
   upsertUserSchema,
   userFilterSchema,
   type Authorization,
+  type DirectoryTest,
+  type EntitySettings,
   type Group,
+  type LdapDirectory,
   type Profile,
   type RightObject,
   type UpsertAuthorization,
   type UpsertGroup,
+  type UpsertLdapDirectory,
   type UpsertMember,
   type UpsertProfile,
   type UpsertUser,
   type UserDetail,
   type UserFilter,
   type UserSummary,
+  type WriteSettings,
 } from '@tick/contracts';
 import { AuthenticatedGuard } from '../auth/guards/authenticated.guard.js';
 import { RequireRight, RightsGuard } from '../auth/guards/rights.guard.js';
 import { currentContext } from '../common/request-context.js';
 import { ZodValidationPipe } from '../common/zod-validation.pipe.js';
 import { translate } from '../search/search-labels.js';
+import { DirectoriesService } from './directories.service.js';
 import { GroupsService } from './groups.service.js';
 import { ProfilesService } from './profiles.service.js';
 import { RIGHT_CATALOGUE } from './right-catalogue.js';
+import { SettingsService } from './settings.service.js';
 import { UsersService } from './users.service.js';
 
 /**
@@ -57,6 +66,8 @@ export class AdminController {
     private readonly users: UsersService,
     private readonly groups: GroupsService,
     private readonly profiles: ProfilesService,
+    private readonly directories: DirectoriesService,
+    private readonly settings: SettingsService,
   ) {}
 
   /**
@@ -212,5 +223,69 @@ export class AdminController {
   @RequireRight('profile', 'update')
   async removeProfile(@Param('id', ParseIntPipe) id: number): Promise<void> {
     await this.profiles.remove(id);
+  }
+
+  // --- Annuaires ------------------------------------------------------------
+
+  @Get('directories')
+  @RequireRight('ldap', 'read')
+  async listDirectories(): Promise<LdapDirectory[]> {
+    return this.directories.list();
+  }
+
+  @Post('directories')
+  @RequireRight('ldap', 'update')
+  async createDirectory(
+    @Body(new ZodValidationPipe(upsertLdapDirectorySchema)) body: UpsertLdapDirectory,
+  ): Promise<LdapDirectory> {
+    return this.directories.save(body);
+  }
+
+  @Put('directories/:id')
+  @RequireRight('ldap', 'update')
+  async updateDirectory(
+    @Param('id', ParseIntPipe) id: number,
+    @Body(new ZodValidationPipe(upsertLdapDirectorySchema)) body: UpsertLdapDirectory,
+  ): Promise<LdapDirectory> {
+    return this.directories.save(body, id);
+  }
+
+  @Delete('directories/:id')
+  @HttpCode(204)
+  @RequireRight('ldap', 'update')
+  async removeDirectory(@Param('id', ParseIntPipe) id: number): Promise<void> {
+    await this.directories.remove(id);
+  }
+
+  /**
+   * Essai de connexion.
+   *
+   * En `POST` bien qu'il ne modifie rien : il ouvre une connexion sortante vers
+   * un hote arbitraire, et un `GET` serait declenchable depuis une image.
+   */
+  @Post('directories/:id/test')
+  @HttpCode(200)
+  @RequireRight('ldap', 'update')
+  async testDirectory(@Param('id', ParseIntPipe) id: number): Promise<DirectoryTest> {
+    return this.directories.test(id);
+  }
+
+  // --- Reglages par entite --------------------------------------------------
+
+  @Get('settings/:entityId')
+  @RequireRight('entity', 'read')
+  async readSettings(
+    @Param('entityId', ParseIntPipe) entityId: number,
+  ): Promise<EntitySettings> {
+    return this.settings.read(entityId);
+  }
+
+  @Put('settings/:entityId')
+  @RequireRight('entity', 'update')
+  async writeSettings(
+    @Param('entityId', ParseIntPipe) entityId: number,
+    @Body(new ZodValidationPipe(writeSettingsSchema)) body: WriteSettings,
+  ): Promise<EntitySettings> {
+    return this.settings.write(entityId, body);
   }
 }

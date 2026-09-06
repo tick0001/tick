@@ -28,6 +28,8 @@ Le tableau au moment du constat :
 | Groupes | ✅ | — | — |
 | Profils et droits | ✅ | — | — |
 | Habilitations | ✅ | — | — |
+| Annuaires LDAP | ✅ | — | — |
+| Réglages par entité | ✅ | lecture seule | — |
 
 ## 2. Ce que le modèle impose
 
@@ -119,9 +121,67 @@ Les tests d'intégration laissaient aussi derrière eux leurs profils et leurs
 comptes, qui s'accumulaient à chaque exécution — visible dès que l'écran
 d'administration a existé. Le nettoyage des fixtures s'en charge.
 
-## 6. Ce qui reste hors périmètre
+## 6. Annuaires LDAP
 
-La gestion des annuaires LDAP a une API et une synchronisation, mais pas encore
-d'écran : leur configuration reste dans la graine. Idem pour la configuration
-générale par entité, exposée en lecture seule par `GET /entities/:id/settings`.
-Ces deux points relèvent de J9.
+La configuration d'un annuaire est longue parce qu'elle l'est réellement : deux
+annuaires du marché ne se décrivent pas avec les mêmes attributs. Masquer la
+moitié des champs derrière un mode « avancé » enverrait chercher dans la
+documentation ce que l'écran peut dire lui-même.
+
+**Le mot de passe du compte de service** est chiffré, jamais renvoyé — seule sa
+présence l'est — et jamais effacé par une saisie vide. « Ne rien taper » veut
+dire « ne pas y toucher », ce qui est la seule interprétation utile d'un champ de
+mot de passe dans un formulaire de modification. En base, cela se traduit par un
+`COALESCE` : le formulaire n'a pas à se souvenir de ce qu'il n'a jamais reçu.
+
+**Le mode de résolution des groupes** ne montre que l'attribut qui sert :
+`memberOf` en mode *attribut* (Active Directory), l'attribut des membres en mode
+*recherche* (OpenLDAP). Afficher l'autre inviterait à le renseigner pour rien.
+
+**L'essai de connexion** rend le message d'erreur de l'annuaire **tel quel**.
+C'est un écart assumé à la règle qui gouverne l'authentification, où toutes les
+causes se ressemblent : ici, celui qui lit le message est l'administrateur qui
+vient de saisir la configuration, pas un inconnu qui sonde des identifiants.
+« invalid credentials » et « no such object » désignent deux fautes différentes,
+et les confondre obligerait à ouvrir les journaux du serveur.
+
+Il est exposé en `POST` bien qu'il ne modifie rien : il ouvre une connexion
+sortante vers un hôte arbitraire, et un `GET` serait déclenchable depuis une
+simple image.
+
+**La suppression désactive** quand des comptes proviennent de l'annuaire. Ils
+survivraient à sa disparition mais ne pourraient plus s'authentifier : le dire
+vaut mieux que de le laisser découvrir au prochain matin.
+
+Le droit `ldap` n'a qu'une portée, `all` : un annuaire ne se rattache à aucune
+entité, il sert toute l'installation.
+
+## 7. Réglages par entité
+
+Chaque valeur affiche son **origine** : posée ici, ou héritée d'un ancêtre — et
+lequel. C'est tout l'intérêt de l'écran. « 7 jours » ne dit pas si la valeur
+vient de la racine, et modifier une valeur héritée la détache du parent,
+définitivement et sans le dire.
+
+`null` n'est donc pas « vide » mais « rétablir l'héritage ». C'est la seule façon
+de revenir au comportement du parent après avoir posé une valeur locale, et
+l'écran en fait une action nommée plutôt qu'un champ qu'on efface.
+
+Les clés absentes du corps ne sont pas touchées : l'écran n'envoie que ce qu'il a
+modifié, ce qui évite qu'une page ouverte depuis dix minutes n'écrase une valeur
+changée entre-temps par quelqu'un d'autre.
+
+La résolution passe par `EntitiesService`, qui remonte l'arbre **avec le rôle
+propriétaire** après avoir vérifié la visibilité de l'entité demandée. Un
+paramètre hérité vit sur un ancêtre, donc hors du périmètre descendant : le
+résoudre avec la connexion applicative ne trouverait jamais la valeur du parent
+et retomberait silencieusement sur le défaut du code. L'exception est bornée et
+ancrée sur un identifiant déjà autorisé.
+
+## 8. Ce qui reste hors périmètre
+
+Les règles d'affectation d'habilitations depuis l'annuaire se configurent par le
+moteur de règles (`authorization.assign`), qui a son propre écran. Le
+déclenchement manuel d'une synchronisation complète n'est pas exposé : elle a
+lieu à chaque authentification, ce qui suffit tant qu'aucun besoin de
+réconciliation en masse ne s'est manifesté.

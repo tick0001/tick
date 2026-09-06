@@ -6,6 +6,7 @@ import { AppShell } from '@/components/AppShell';
 import { ApiError, api } from '@/lib/api';
 import { loadPluginClients, resetPluginClients } from '@/lib/plugins';
 import { CataloguePage } from '@/pages/CataloguePage';
+import { DirectoriesPage } from '@/pages/DirectoriesPage';
 import { EntitiesPage } from '@/pages/EntitiesPage';
 import { FaqPage } from '@/pages/FaqPage';
 import { FormsPage } from '@/pages/FormsPage';
@@ -22,6 +23,7 @@ import { ProfilesPage } from '@/pages/ProfilesPage';
 import { RulesPage } from '@/pages/RulesPage';
 import { SatisfactionPage } from '@/pages/SatisfactionPage';
 import { SearchPage } from '@/pages/SearchPage';
+import { SettingsPage } from '@/pages/SettingsPage';
 import { StatsPage } from '@/pages/StatsPage';
 import { SurveysPage } from '@/pages/SurveysPage';
 import { ServiceLevelsPage } from '@/pages/ServiceLevelsPage';
@@ -123,6 +125,8 @@ function Application() {
         <Route path="/admin/users" element={<UsersPage />} />
         <Route path="/admin/groups" element={<GroupsPage />} />
         <Route path="/admin/profiles" element={<ProfilesPage />} />
+        <Route path="/admin/directories" element={<DirectoriesPage />} />
+        <Route path="/admin/settings" element={<SettingsPage session={session.data} />} />
         <Route path="/service-levels" element={<ServiceLevelsPage />} />
         <Route path="/rules" element={<RulesPage />} />
         <Route path="/knowledge" element={<KnowledgePage session={session.data} />} />

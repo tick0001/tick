@@ -10,6 +10,7 @@ export * from './modules/common.js';
 export * from './modules/entities.js';
 export * from './modules/auth.js';
 export * from './modules/admin.js';
+export * from './modules/directories.js';
 export * from './modules/itil.js';
 export * from './modules/itil-objects.js';
 export * from './modules/search.js';

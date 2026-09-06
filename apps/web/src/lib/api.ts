@@ -8,18 +8,23 @@ import type {
   Authorization,
   BulkRequest,
   CreateEntity,
+  DirectoryTest,
+  EntitySettings,
   Group,
+  LdapDirectory,
   Profile,
   RightObject,
   UpdateEntity,
   UpsertAuthorization,
   UpsertGroup,
+  UpsertLdapDirectory,
   UpsertMember,
   UpsertProfile,
   UpsertUser,
   UserDetail,
   UserFilter,
   UserSummary,
+  WriteSettings,
   BulkResult,
   CreateLink,
   Dashboard,
@@ -97,6 +102,9 @@ import {
   formSummarySchema,
   authorizationSchema,
   bulkResultSchema,
+  directoryTestSchema,
+  entitySettingsSchema,
+  ldapDirectorySchema,
   dashboardSchema,
   groupSchema,
   profileSchema,
@@ -318,6 +326,32 @@ export const api = {
   deleteProfile: async (id: number): Promise<void> => {
     await send(`/admin/profiles/${String(id)}`, 'DELETE');
   },
+
+  directories: (): Promise<LdapDirectory[]> =>
+    request('/admin/directories', ldapDirectorySchema.array()),
+
+  saveDirectory: (body: UpsertLdapDirectory, id?: number): Promise<LdapDirectory> =>
+    request(
+      id === undefined ? '/admin/directories' : `/admin/directories/${String(id)}`,
+      ldapDirectorySchema,
+      { method: id === undefined ? 'POST' : 'PUT', body: JSON.stringify(body) },
+    ),
+
+  deleteDirectory: async (id: number): Promise<void> => {
+    await send(`/admin/directories/${String(id)}`, 'DELETE');
+  },
+
+  testDirectory: (id: number): Promise<DirectoryTest> =>
+    request(`/admin/directories/${String(id)}/test`, directoryTestSchema, { method: 'POST' }),
+
+  entitySettings: (entityId: number): Promise<EntitySettings> =>
+    request(`/admin/settings/${String(entityId)}`, entitySettingsSchema),
+
+  writeEntitySettings: (entityId: number, body: WriteSettings): Promise<EntitySettings> =>
+    request(`/admin/settings/${String(entityId)}`, entitySettingsSchema, {
+      method: 'PUT',
+      body: JSON.stringify(body),
+    }),
 
   tickets: (filtre: TicketQuery): Promise<TicketPage> =>
     request(`/tickets${toQuery(filtre)}`, ticketPageSchema),

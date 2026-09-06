@@ -5,6 +5,7 @@ import { NavLink, useLocation } from 'react-router';
 import { ContextSwitcher } from '@/components/ContextSwitcher';
 import { PluginSlot } from '@/components/PluginSlot';
 import {
+  IconAnnuaire,
   IconCatalogue,
   IconChangement,
   IconConnaissance,
@@ -23,6 +24,7 @@ import {
   IconPlanning,
   IconProbleme,
   IconRecherche,
+  IconReglages,
   IconRegles,
   IconSoleil,
   IconSortie,
@@ -201,6 +203,16 @@ export function AppShell({
               to: '/admin/profiles',
               label: t('administration.profils.titre'),
               icone: IconDroits,
+            },
+            {
+              to: '/admin/directories',
+              label: t('administration.annuaires.titre'),
+              icone: IconAnnuaire,
+            },
+            {
+              to: '/admin/settings',
+              label: t('administration.reglages.titre'),
+              icone: IconReglages,
             },
           ],
         },

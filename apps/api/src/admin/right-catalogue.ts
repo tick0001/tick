@@ -152,6 +152,15 @@ export const RIGHT_CATALOGUE: readonly CatalogueEntry[] = [
     scopes: PORTEES_CONFIG,
   },
   {
+    object: 'ldap',
+    labelKey: 'administration.annuaires.titre',
+    group: 'administration',
+    actions: ['read', 'update'],
+    // Un annuaire ne se rattache a aucune entite : il sert toute
+    // l'installation. La seule portee qui ait un sens est donc `all`.
+    scopes: ['all'],
+  },
+  {
     object: 'plugin',
     labelKey: 'administration.plugins',
     group: 'administration',

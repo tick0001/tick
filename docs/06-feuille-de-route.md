@@ -225,6 +225,10 @@ Au passage, les droits `planning`, `recurrence` et `stats` que la graine distrib
 vérifiés par personne : les contrôleurs se contentaient du droit sur les tickets. Ils sont
 désormais exigés.
 
+S'y ajoutent les deux écrans qui n'avaient qu'une API : la configuration des **annuaires LDAP**,
+avec essai de connexion, et les **réglages par entité**, où chaque valeur affiche son origine —
+posée ici, ou héritée, et de quel ancêtre. Voir [13](13-administration.md).
+
 **Interface** — jetons de couleur sémantiques, navigation groupée en cinq sections, briques
 communes. Voir [12](12-interface.md).
 

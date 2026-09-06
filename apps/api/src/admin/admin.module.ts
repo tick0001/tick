@@ -1,8 +1,11 @@
 import { Module } from '@nestjs/common';
 import { AuthModule } from '../auth/auth.module.js';
+import { EntitiesModule } from '../entities/entities.module.js';
 import { AdminController } from './admin.controller.js';
+import { DirectoriesService } from './directories.service.js';
 import { GroupsService } from './groups.service.js';
 import { ProfilesService } from './profiles.service.js';
+import { SettingsService } from './settings.service.js';
 import { UsersService } from './users.service.js';
 
 /**
@@ -14,9 +17,9 @@ import { UsersService } from './users.service.js';
  * de s'appliquer jusqu'au prochain redemarrage.
  */
 @Module({
-  imports: [AuthModule],
+  imports: [AuthModule, EntitiesModule],
   controllers: [AdminController],
-  providers: [UsersService, GroupsService, ProfilesService],
-  exports: [UsersService, GroupsService, ProfilesService],
+  providers: [UsersService, GroupsService, ProfilesService, DirectoriesService, SettingsService],
+  exports: [UsersService, GroupsService, ProfilesService, DirectoriesService, SettingsService],
 })
 export class AdminModule {}
