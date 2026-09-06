@@ -100,6 +100,7 @@ ne laisse rien derrière lui.
 | [Communication](docs/08-communication.md)                               | Notifications, courriel entrant, enquêtes de satisfaction     |
 | [Self-service](docs/09-self-service.md)                                 | Base de connaissances, formulaires, interface demandeur       |
 | [Problèmes et changements](docs/10-problemes-et-changements.md)         | Socle ITIL commun, liens entre objets, promotion              |
+| [Pilotage](docs/11-pilotage.md)                                         | Planning, statistiques, tableaux de bord, exports             |
 | [Feuille de route](docs/06-feuille-de-route.md)                         | Dix jalons, du socle à l'ouverture publique                   |
 
 ## Conventions

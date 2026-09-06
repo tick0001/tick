@@ -173,10 +173,31 @@ destinataires dans `tickets`.
 
 Voir [10](10-problemes-et-changements.md).
 
-### J8 — Pilotage `M06` `M14` `M15`
+### J8 — Pilotage · livré `M06` `M14` `M15`
 
 Planning et calendrier des tâches, statistiques et tableaux de bord composables, exports CSV et
 PDF, actions massives, tickets récurrents.
+
+_Terminé quand_ : un responsable de service voit ce qui est prévu, ce qui s'est passé, et peut agir
+sur une sélection sans ouvrir les tickets un par un.
+
+**Livré** — planning superposant tâches planifiées et indisponibilités dans une seule liste, avec
+détection des chevauchements par technicien et export iCal ; tickets récurrents pilotés par la base,
+tenant l'heure murale à travers les changements d'heure et le quantième à travers les mois courts,
+avec avance de création et trace anti-rejeu ; statistiques globales et ventilées selon huit
+dimensions fermées, courbe d'activité sans trou de série ; tableaux de bord composables dont chaque
+widget porte sa propre configuration, avec un registre alimentable par les plugins ; exports CSV et
+PDF écrits sans dépendance ; actions massives passant par le service ordinaire, ticket par ticket,
+et rendant chaque échec nommément.
+
+Toutes les agrégations passent par la portée du droit de lecture, via un alias de table demandé à
+`TicketScopeService` : un agrégat est une lecture, et compter « tous les tickets » aurait divulgué
+exactement ce que la liste refuse de montrer.
+
+Le SDK passe en `0.7` : `recurrence.generated`, et `dashboards.registerWidget` sur le modèle de
+`search.registerField`.
+
+Voir [11](11-pilotage.md).
 
 ### J9 — Ouverture
 
