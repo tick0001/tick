@@ -6,8 +6,19 @@ import type {
   EntitySummary,
   ItilStatus,
   Login,
+  MailCollector,
+  MailCollectorLog,
+  NotificationEvent,
+  NotificationPreference,
+  NotificationQueueEntry,
+  NotificationState,
+  NotificationTemplate,
+  PublicSurvey,
+  AnswerSurvey,
   Rule,
   RuleCollection,
+  SatisfactionConfig,
+  SatisfactionStats,
   RuleField,
   SavedSearch,
   SaveSearch,
@@ -23,12 +34,24 @@ import type {
   TimelineEntry,
   UpsertAgreement,
   UpsertCalendar,
+  UpsertMailCollector,
+  UpsertNotificationTemplate,
   UpsertRule,
+  UpsertSatisfactionConfig,
 } from '@tick/contracts';
 import {
   agreementSchema,
   calendarSchema,
   entitySummarySchema,
+  mailCollectorLogSchema,
+  mailCollectorSchema,
+  notificationEventSchema,
+  notificationPreferenceSchema,
+  notificationQueueEntrySchema,
+  notificationTemplateSchema,
+  publicSurveySchema,
+  satisfactionConfigSchema,
+  satisfactionStatsSchema,
   ruleFieldSchema,
   ruleSchema,
   savedSearchSchema,
@@ -261,6 +284,118 @@ export const api = {
       method: 'POST',
       body: JSON.stringify({ collection, input }),
     }),
+
+  // --- Notifications ---------------------------------------------------------
+
+  notificationEvents: (): Promise<NotificationEvent[]> =>
+    request('/notifications/events', notificationEventSchema.array()),
+
+  notificationVariables: (): Promise<string[]> =>
+    request('/notifications/variables', z.string().array()),
+
+  notificationTemplates: (): Promise<NotificationTemplate[]> =>
+    request('/notifications/templates', notificationTemplateSchema.array()),
+
+  saveNotificationTemplate: (
+    body: UpsertNotificationTemplate,
+    id?: number,
+  ): Promise<NotificationTemplate> =>
+    request(
+      id ? `/notifications/templates/${String(id)}` : '/notifications/templates',
+      notificationTemplateSchema,
+      { method: id ? 'PUT' : 'POST', body: JSON.stringify(body) },
+    ),
+
+  deleteNotificationTemplate: async (id: number): Promise<void> => {
+    await fetch(`/api/notifications/templates/${String(id)}`, {
+      method: 'DELETE',
+      credentials: 'include',
+    });
+  },
+
+  notificationQueue: (state?: NotificationState): Promise<NotificationQueueEntry[]> =>
+    request(
+      `/notifications/queue${state ? `?state=${state}` : ''}`,
+      notificationQueueEntrySchema.array(),
+    ),
+
+  replayNotification: async (id: number): Promise<void> => {
+    const response = await fetch(`/api/notifications/queue/${String(id)}/replay`, {
+      method: 'POST',
+      credentials: 'include',
+    });
+
+    if (!response.ok) throw new ApiError(response.status, `HTTP ${String(response.status)}`);
+  },
+
+  purgeNotifications: (): Promise<{ removed: number }> =>
+    request('/notifications/queue/purge?days=30', z.object({ removed: z.number() }), {
+      method: 'POST',
+    }),
+
+  notificationPreferences: (): Promise<NotificationPreference[]> =>
+    request('/notifications/preferences', notificationPreferenceSchema.array()),
+
+  // --- Collecteurs de courriel ----------------------------------------------
+
+  mailCollectors: (): Promise<MailCollector[]> =>
+    request('/mail-collectors', mailCollectorSchema.array()),
+
+  mailCollectorLogs: (id: number): Promise<MailCollectorLog[]> =>
+    request(`/mail-collectors/${String(id)}/logs`, mailCollectorLogSchema.array()),
+
+  saveMailCollector: (body: UpsertMailCollector, id?: number): Promise<MailCollector> =>
+    request(id ? `/mail-collectors/${String(id)}` : '/mail-collectors', mailCollectorSchema, {
+      method: id ? 'PUT' : 'POST',
+      body: JSON.stringify(body),
+    }),
+
+  deleteMailCollector: async (id: number): Promise<void> => {
+    await fetch(`/api/mail-collectors/${String(id)}`, { method: 'DELETE', credentials: 'include' });
+  },
+
+  collectMail: (id: number): Promise<{ processed: number }> =>
+    request(`/mail-collectors/${String(id)}/collect`, z.object({ processed: z.number() }), {
+      method: 'POST',
+    }),
+
+  // --- Enquetes de satisfaction ---------------------------------------------
+
+  satisfactionConfigs: (): Promise<SatisfactionConfig[]> =>
+    request('/satisfaction/configs', satisfactionConfigSchema.array()),
+
+  saveSatisfactionConfig: (body: UpsertSatisfactionConfig): Promise<SatisfactionConfig> =>
+    request('/satisfaction/configs', satisfactionConfigSchema, {
+      method: 'PUT',
+      body: JSON.stringify(body),
+    }),
+
+  satisfactionStats: (): Promise<SatisfactionStats> =>
+    request('/satisfaction/stats', satisfactionStatsSchema),
+
+  // --- Enquete de satisfaction, sans session --------------------------------
+
+  survey: (token: string): Promise<PublicSurvey> =>
+    request(`/public/satisfaction/${encodeURIComponent(token)}`, publicSurveySchema),
+
+  answerSurvey: async (token: string, body: AnswerSurvey): Promise<void> => {
+    const response = await fetch(`/api/public/satisfaction/${encodeURIComponent(token)}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+
+    if (!response.ok) throw new ApiError(response.status, `HTTP ${String(response.status)}`);
+  },
+
+  setNotificationPreference: async (event: string, enabled: boolean): Promise<void> => {
+    await fetch('/api/notifications/preferences', {
+      method: 'PUT',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ event, enabled }),
+    });
+  },
 };
 
 export interface TicketQuery {

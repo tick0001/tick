@@ -1,5 +1,6 @@
 import { Injectable, Logger, type OnModuleDestroy, type OnModuleInit } from '@nestjs/common';
 import { eq, notificationQueue, sql } from '@tick/db';
+import { withSubjectToken } from '../mail/mail-message.js';
 import { Queue, Worker, type Job } from 'bullmq';
 import { createTransport, type Transporter } from 'nodemailer';
 import { loadEnv } from '../config/env.js';
@@ -73,6 +74,45 @@ export class MailerService implements OnModuleInit, OnModuleDestroy {
   }
 
   /**
+   * Adresses d'expedition et de reponse applicables a une entite.
+   *
+   * Heritees de l'ancetre le plus proche qui en declare, comme toute
+   * configuration. Resolues avec le role proprietaire : l'envoi a lieu hors de
+   * toute session, et le parametre lu ne revele rien d'autre qu'une adresse
+   * deja portee par chaque message envoye.
+   */
+  private async adressesDe(
+    entityId: number | null,
+  ): Promise<{ from: string; replyTo: string | null }> {
+    const env = loadEnv();
+
+    if (!entityId) return { from: env.SMTP_FROM, replyTo: null };
+
+    const rows = await this.db.asOwner(async (tx) => {
+      const resultat = await tx.execute<{
+        mailFrom: string | null;
+        mailReplyTo: string | null;
+      }>(sql`
+        SELECT s.mail_from AS "mailFrom", s.mail_reply_to AS "mailReplyTo"
+          FROM entity_settings s
+          JOIN entities origine ON origine.id = s.entity_id
+          JOIN entities cible ON cible.id = ${entityId}
+         WHERE origine.path @> cible.path
+           AND (s.mail_from IS NOT NULL OR s.mail_reply_to IS NOT NULL)
+         ORDER BY nlevel(origine.path) DESC
+         LIMIT 1
+      `);
+
+      return resultat.rows;
+    });
+
+    return {
+      from: rows[0]?.mailFrom ?? env.SMTP_FROM,
+      replyTo: rows[0]?.mailReplyTo ?? null,
+    };
+  }
+
+  /**
    * Envoie un message de la file.
    *
    * Relit l'état en base avant d'envoyer : un message déjà parti ne doit pas
@@ -85,19 +125,35 @@ export class MailerService implements OnModuleInit, OnModuleDestroy {
 
     if (!ligne || ligne.state !== 'pending') return;
 
+    // Le sujet porte le marqueur du ticket, et l'identifiant du message est
+    // conserve : ce sont les deux fils par lesquels une reponse retrouvera son
+    // ticket, le second etant le seul fiable quand le sujet a ete reecrit.
+    const sujet =
+      ligne.itemType === 'ticket' && ligne.itemId
+        ? withSubjectToken(ligne.subject, ligne.itemId)
+        : ligne.subject;
+
+    const adresses = await this.adressesDe(ligne.entityId);
+
     try {
-      await this.transport?.sendMail({
-        from: loadEnv().SMTP_FROM,
+      const envoi = await this.transport?.sendMail({
+        from: adresses.from,
         to: ligne.recipientEmail,
-        subject: ligne.subject,
+        subject: sujet,
         text: ligne.bodyText,
+        ...(adresses.replyTo ? { replyTo: adresses.replyTo } : {}),
         ...(ligne.bodyHtml ? { html: ligne.bodyHtml } : {}),
       });
 
       await this.db.asOwner((tx) =>
         tx
           .update(notificationQueue)
-          .set({ state: 'sent', sentAt: new Date(), attempts: ligne.attempts + 1 })
+          .set({
+            state: 'sent',
+            sentAt: new Date(),
+            attempts: ligne.attempts + 1,
+            messageId: envoi?.messageId ?? null,
+          })
           .where(eq(notificationQueue.id, id)),
       );
     } catch (erreur) {

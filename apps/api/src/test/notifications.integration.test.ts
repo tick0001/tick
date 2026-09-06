@@ -80,6 +80,12 @@ describe('Destinataires des notifications', () => {
     await creerUtilisateur('membre', 'membre');
     await creerUtilisateur('auteur', 'auteur');
 
+    // Le technicien lit l'anglais : c'est lui qui prouve que la traduction est
+    // choisie par destinataire et non une fois pour toute la fournee.
+    await fixture.owner.db.execute(
+      sql`UPDATE users SET locale = 'en' WHERE id = ${ids.technicien}`,
+    );
+
     // Le membre appartient au groupe attribué, sans être acteur du ticket : il
     // ne doit être joint que par le rôle « groupe attribué ».
     await fixture.owner.db.insert(groupMembers).values({
@@ -135,12 +141,20 @@ describe('Destinataires des notifications', () => {
       .returning({ id: notificationTemplates.id });
     ids.modele = (modele as { id: number }).id;
 
-    await fixture.owner.db.insert(notificationTemplateTranslations).values({
-      templateId: ids.modele,
-      locale: 'fr',
-      subject: 'Escalade #{{ ticket.id }}',
-      bodyText: 'Niveau {{ levelName }} de {{ agreementName }} sur {{ ticket.name }}.',
-    });
+    await fixture.owner.db.insert(notificationTemplateTranslations).values([
+      {
+        templateId: ids.modele,
+        locale: 'fr',
+        subject: 'Escalade #{{ ticket.id }}',
+        bodyText: 'Niveau {{ levelName }} de {{ agreementName }} sur {{ ticket.name }}.',
+      },
+      {
+        templateId: ids.modele,
+        locale: 'en',
+        subject: 'Escalation #{{ ticket.id }}',
+        bodyText: 'Level {{ levelName }} of {{ agreementName }} on {{ ticket.name }}.',
+      },
+    ]);
   }, 30_000);
 
   afterAll(async () => {
@@ -224,7 +238,9 @@ describe('Destinataires des notifications', () => {
   });
 
   it('substitue les variables de l’evenement, pas seulement celles du ticket', async () => {
-    await envoyer(['assigned']);
+    // Le demandeur, dont la langue est le francais : la traduction servie est
+    // donc connue, et l'assertion porte sur la substitution, pas sur la langue.
+    await envoyer(['requester']);
 
     const resultat = await fixture.owner.db.execute<{ subject: string; body: string }>(sql`
       SELECT subject, body_text AS body FROM notification_queue
@@ -239,5 +255,82 @@ describe('Destinataires des notifications', () => {
 
   it('met les messages en file pour envoi', () => {
     expect(enfiles.length).toBeGreaterThan(0);
+  });
+
+  it('sert a chacun la traduction de sa langue', async () => {
+    await envoyer(['requester', 'assigned']);
+
+    const resultat = await fixture.owner.db.execute<{
+      email: string;
+      locale: string;
+      subject: string;
+    }>(
+      sql`
+        SELECT recipient_email AS email, locale, subject FROM notification_queue
+         WHERE item_id = ${ids.ticket} ORDER BY recipient_email
+      `,
+    );
+
+    const parAdresse = new Map(resultat.rows.map((ligne) => [ligne.email, ligne]));
+
+    expect(parAdresse.get('demandeur@notifications.test')?.locale).toBe('fr');
+    expect(parAdresse.get('demandeur@notifications.test')?.subject).toContain('Escalade');
+    // Sans choix par destinataire, ce message serait parti en francais.
+    expect(parAdresse.get('technicien@notifications.test')?.locale).toBe('en');
+    expect(parAdresse.get('technicien@notifications.test')?.subject).toContain('Escalation');
+  });
+
+  it('respecte une preference, sans couper les autres evenements', async () => {
+    await fixture.owner.db.execute(sql`
+      INSERT INTO notification_preferences (user_id, event, enabled)
+      VALUES (${ids.demandeur}, 'ticket.created', false)
+    `);
+
+    // La preference porte sur un autre evenement : celui-ci doit passer.
+    expect(await envoyer(['requester'])).toEqual(['demandeur@notifications.test']);
+
+    await fixture.owner.db.execute(sql`
+      UPDATE notification_preferences SET event = 'ticket.escalated'
+       WHERE user_id = ${ids.demandeur}
+    `);
+
+    expect(await envoyer(['requester'])).toEqual([]);
+
+    await fixture.owner.db.execute(
+      sql`DELETE FROM notification_preferences WHERE user_id = ${ids.demandeur}`,
+    );
+  });
+
+  it('ne notifie pas le demandeur d’un objet prive', async () => {
+    await fixture.owner.db.execute(
+      sql`DELETE FROM notification_queue WHERE item_id = ${ids.ticket}`,
+    );
+    await fixture.owner.db.execute(
+      sql`DELETE FROM notification_template_targets WHERE template_id = ${ids.modele}`,
+    );
+    await fixture.owner.db.insert(notificationTemplateTargets).values([
+      { templateId: ids.modele, target: 'requester' },
+      { templateId: ids.modele, target: 'assigned' },
+    ]);
+
+    const declencher = gestionnaires.get('ticket.escalated');
+
+    if (!declencher) throw new Error('Aucun gestionnaire pour ticket.escalated.');
+
+    await declencher({
+      id: ids.ticket,
+      entityId: fixture.entityIds['siteA'] as number,
+      levelName: 'Rappel',
+      agreementName: 'Test',
+      // Ce que l'interface cache au demandeur, la notification ne doit pas le
+      // lui reveler par un autre canal.
+      isPrivate: true,
+    });
+
+    const resultat = await fixture.owner.db.execute<{ email: string }>(sql`
+      SELECT recipient_email AS email FROM notification_queue WHERE item_id = ${ids.ticket}
+    `);
+
+    expect(resultat.rows.map((ligne) => ligne.email)).toEqual(['technicien@notifications.test']);
   });
 });

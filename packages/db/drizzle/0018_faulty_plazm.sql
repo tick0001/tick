@@ -1,0 +1,2 @@
+ALTER TABLE "mail_collectors" ADD COLUMN "profile_id" bigint NOT NULL;--> statement-breakpoint
+ALTER TABLE "mail_collectors" ADD CONSTRAINT "mail_collectors_profile_id_profiles_id_fk" FOREIGN KEY ("profile_id") REFERENCES "public"."profiles"("id") ON DELETE no action ON UPDATE no action;

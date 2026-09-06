@@ -271,7 +271,12 @@ export class TimelineService {
       return ligne?.id ?? 0;
     });
 
-    emitEvent('followup.added', { ticketId, followupId: id, isPrivate: propose.isPrivate });
+    emitEvent('followup.added', {
+      ticketId,
+      followupId: id,
+      isPrivate: propose.isPrivate,
+      authorId: context.userId,
+    });
   }
 
   async addTask(ticketId: number, input: AddTask): Promise<void> {
@@ -304,7 +309,7 @@ export class TimelineService {
       return ligne?.id ?? 0;
     });
 
-    emitEvent('task.added', { ticketId, taskId: id });
+    emitEvent('task.added', { ticketId, taskId: id, authorId: context.userId });
   }
 
   async updateTask(ticketId: number, taskId: number, input: UpdateTask): Promise<void> {
@@ -370,7 +375,7 @@ export class TimelineService {
       return ligne?.id ?? 0;
     });
 
-    emitEvent('solution.proposed', { ticketId, solutionId: id });
+    emitEvent('solution.proposed', { ticketId, solutionId: id, authorId: context.userId });
   }
 
   /**

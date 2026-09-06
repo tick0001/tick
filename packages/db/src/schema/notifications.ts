@@ -37,6 +37,15 @@ export const notificationTargetEnum = pgEnum('notification_target', [
   'assigned',
   'assigned_group',
   'author',
+  /** Responsables du groupe attribue : le relais naturel d'une escalade. */
+  'assigned_group_manager',
+  /** Groupe demandeur, quand la demande emane d'un service et non d'une personne. */
+  'requester_group',
+  'requester_group_manager',
+  /** Auteur du suivi, de la tache ou de la solution qui declenche l'evenement. */
+  'followup_author',
+  /** Adresse fixe portee par le modele : liste de diffusion, supervision. */
+  'fixed',
 ]);
 
 /** Un modèle par événement métier. */
@@ -90,6 +99,13 @@ export const notificationTemplateTargets = pgTable(
       .notNull()
       .references(() => notificationTemplates.id, { onDelete: 'cascade' }),
     target: notificationTargetEnum('target').notNull(),
+    /**
+     * Adresse du destinataire `fixed`, nulle pour tous les autres roles.
+     *
+     * Une seule par modele : au-dela, c'est une liste de diffusion qu'il faut,
+     * et la messagerie sait deja faire cela mieux que nous.
+     */
+    address: text('address'),
   },
   (t) => [primaryKey({ columns: [t.templateId, t.target] })],
 );
@@ -117,6 +133,14 @@ export const notificationQueue = pgTable(
     subject: text('subject').notNull(),
     bodyText: text('body_text').notNull(),
     bodyHtml: text('body_html'),
+    /**
+     * Identifiant du message sortant, tel que la messagerie l'a pose.
+     *
+     * C'est lui qui permet de rattacher une reponse au bon ticket : l'en-tete
+     * `In-Reply-To` d'un client de messagerie le cite tel quel, la ou un sujet
+     * peut avoir ete reecrit, traduit ou tronque.
+     */
+    messageId: text('message_id'),
     state: notificationStateEnum('state').notNull().default('pending'),
     attempts: integer('attempts').notNull().default(0),
     lastError: text('last_error'),
@@ -126,6 +150,7 @@ export const notificationQueue = pgTable(
   (t) => [
     index('notification_queue_state_idx').on(t.state, t.createdAt),
     index('notification_queue_item_idx').on(t.itemType, t.itemId),
+    index('notification_queue_message_idx').on(t.messageId),
   ],
 );
 

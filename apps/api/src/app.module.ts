@@ -7,9 +7,11 @@ import { DatabaseModule } from './database/database.module.js';
 import { DocumentsModule } from './documents/documents.module.js';
 import { EntitiesModule } from './entities/entities.module.js';
 import { HealthModule } from './health/health.module.js';
+import { MailModule } from './mail/mail.module.js';
 import { NotificationsModule } from './notifications/notifications.module.js';
 import { PluginsModule } from './plugins/plugins.module.js';
 import { RulesModule } from './rules/rules.module.js';
+import { SatisfactionModule } from './satisfaction/satisfaction.module.js';
 import { SearchModule } from './search/search.module.js';
 import { SlmModule } from './slm/slm.module.js';
 import { TicketsModule } from './tickets/tickets.module.js';
@@ -33,6 +35,8 @@ import { TicketsModule } from './tickets/tickets.module.js';
     SearchModule,
     NotificationsModule,
     DocumentsModule,
+    MailModule,
+    SatisfactionModule,
     HealthModule,
   ],
 })

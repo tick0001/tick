@@ -140,12 +140,34 @@ export interface EventPayloads {
     agreementName: string;
   };
 
-  'followup.added': { ticketId: number; followupId: number; isPrivate: boolean };
-  'task.added': { ticketId: number; taskId: number };
-  'solution.proposed': { ticketId: number; solutionId: number };
+  /**
+   * `authorId` fait partie de la charge utile, et non d'une relecture ulterieure.
+   *
+   * Un abonne qui veut notifier « l'auteur du suivi » ne peut pas le deviner :
+   * le relire en base supposerait qu'il connaisse le schema du coeur, ce que le
+   * contrat de plugin lui refuse justement.
+   */
+  'followup.added': {
+    ticketId: number;
+    followupId: number;
+    isPrivate: boolean;
+    authorId: number | null;
+  };
+  'task.added': { ticketId: number; taskId: number; authorId: number | null };
+  'solution.proposed': { ticketId: number; solutionId: number; authorId: number | null };
   'solution.answered': { ticketId: number; solutionId: number; accepted: boolean };
   'validation.requested': { ticketId: number; validationId: number };
   'validation.answered': { ticketId: number; validationId: number; granted: boolean };
+
+  /**
+   * Une enquete de satisfaction vient d'etre envoyee.
+   *
+   * `url` porte le jeton : c'est la seule facon pour un modele de notification
+   * de composer un lien utilisable sans compte, et pour un plugin de relayer
+   * l'enquete ailleurs que par courriel.
+   */
+  'satisfaction.requested': { id: number; entityId: number; token: string; url: string };
+  'satisfaction.answered': { id: number; entityId: number; rating: number };
 }
 
 export type HookName = keyof HookPayloads;

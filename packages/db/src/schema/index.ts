@@ -12,3 +12,5 @@ export * from './logs.js';
 export * from './search.js';
 export * from './notifications.js';
 export * from './slm.js';
+export * from './mail.js';
+export * from './satisfaction.js';

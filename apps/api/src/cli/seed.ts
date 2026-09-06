@@ -13,6 +13,8 @@ import { Logger } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import {
   agreementLevelActions,
+  mailCollectors,
+  satisfactionConfigs,
   agreementLevels,
   agreements,
   authorizations,
@@ -81,6 +83,9 @@ const PROFILE_RIGHTS: Record<string, RightTriple[]> = {
     ['plugin', 'read', 'recursive'],
     ['slm', 'read', 'recursive'],
     ['rule', 'read', 'recursive'],
+    ['notification', 'read', 'recursive'],
+    ['mailcollector', 'read', 'recursive'],
+    ['satisfaction', 'read', 'recursive'],
     ['ticket', 'read', 'recursive'],
     ['ticket', 'create', 'recursive'],
     ['ticket', 'update', 'recursive'],
@@ -114,6 +119,12 @@ const PROFILE_RIGHTS: Record<string, RightTriple[]> = {
     ['slm', 'update', 'all'],
     ['rule', 'read', 'all'],
     ['rule', 'update', 'all'],
+    ['notification', 'read', 'all'],
+    ['notification', 'update', 'all'],
+    ['mailcollector', 'read', 'all'],
+    ['mailcollector', 'update', 'all'],
+    ['satisfaction', 'read', 'all'],
+    ['satisfaction', 'update', 'all'],
   ],
 };
 
@@ -155,6 +166,8 @@ async function main(): Promise<void> {
                itil_tasks, itil_followups, itil_actors, ticket_escalations, tickets,
                ticket_template_fields, ticket_templates, suppliers, locations,
                solution_types, task_categories, request_sources, itil_categories,
+               satisfactions, satisfaction_configs,
+               mail_collector_logs, mail_collectors,
                rule_actions, rule_criteria, rules,
                agreement_level_actions, agreement_levels, agreements,
                holidays, calendar_segments, calendars,
@@ -177,7 +190,10 @@ async function main(): Promise<void> {
       {
         entityId: racine,
         autoCloseDelayDays: 7,
-        mailFrom: 'assistance@exemple.fr',
+        // L'adresse de reponse est celle que le collecteur releve : c'est ce
+        // qui ferme la boucle, une reponse au courriel revenant au ticket.
+        mailFrom: 'support@exemple.fr',
+        mailReplyTo: 'support@exemple.fr',
         defaultLocale: 'fr',
       },
       { entityId: nord, autoCloseDelayDays: 3 },
@@ -377,24 +393,24 @@ async function main(): Promise<void> {
         name: 'Ouverture de ticket',
         cibles: ['requester', 'assigned'],
         fr: {
-          subject: '[Tick&] Ticket #{{ ticket.id }} ouvert : {{ ticket.name }}',
+          subject: '[Tick&] Ouverture : {{ ticket.name }}',
           body: 'Le ticket #{{ ticket.id }} a ete ouvert.\n\nSujet : {{ ticket.name }}\nSuivi : {{ ticket.url }}',
         },
         en: {
-          subject: '[Tick&] Ticket #{{ ticket.id }} opened: {{ ticket.name }}',
+          subject: '[Tick&] Opened: {{ ticket.name }}',
           body: 'Ticket #{{ ticket.id }} has been opened.\n\nSubject: {{ ticket.name }}\nFollow: {{ ticket.url }}',
         },
       },
       {
         event: 'followup.added',
         name: 'Nouveau suivi',
-        cibles: ['requester', 'assigned', 'observer'],
+        cibles: ['requester', 'assigned', 'assigned_group', 'observer'],
         fr: {
-          subject: '[Tick&] Nouveau suivi sur le ticket #{{ ticket.id }}',
+          subject: '[Tick&] Nouveau suivi : {{ ticket.name }}',
           body: 'Un suivi a ete ajoute au ticket #{{ ticket.id }} ({{ ticket.name }}).\n\n{{ ticket.url }}',
         },
         en: {
-          subject: '[Tick&] New followup on ticket #{{ ticket.id }}',
+          subject: '[Tick&] New followup: {{ ticket.name }}',
           body: 'A followup was added to ticket #{{ ticket.id }} ({{ ticket.name }}).\n\n{{ ticket.url }}',
         },
       },
@@ -403,11 +419,11 @@ async function main(): Promise<void> {
         name: 'Ticket resolu',
         cibles: ['requester'],
         fr: {
-          subject: '[Tick&] Ticket #{{ ticket.id }} resolu',
+          subject: '[Tick&] Resolu : {{ ticket.name }}',
           body: 'Le ticket #{{ ticket.id }} ({{ ticket.name }}) a ete marque comme resolu.\n\n{{ ticket.url }}',
         },
         en: {
-          subject: '[Tick&] Ticket #{{ ticket.id }} solved',
+          subject: '[Tick&] Solved: {{ ticket.name }}',
           body: 'Ticket #{{ ticket.id }} ({{ ticket.name }}) has been marked as solved.\n\n{{ ticket.url }}',
         },
       },
@@ -415,15 +431,28 @@ async function main(): Promise<void> {
       // rien a envoyer : c'est le modele qui decide du contenu et des
       // destinataires, l'escalade ne fait que publier l'evenement.
       {
+        event: 'satisfaction.requested',
+        name: 'Enquete de satisfaction',
+        cibles: ['requester'],
+        fr: {
+          subject: '[Tick&] Votre avis sur : {{ ticket.name }}',
+          body: 'Votre demande a ete close. Un avis en une minute nous aide a faire mieux.\n\n{{ url }}',
+        },
+        en: {
+          subject: '[Tick&] Your feedback on: {{ ticket.name }}',
+          body: 'Your request has been closed. One minute of feedback helps us improve.\n\n{{ url }}',
+        },
+      },
+      {
         event: 'ticket.escalated',
         name: 'Escalade',
         cibles: ['assigned', 'assigned_group'],
         fr: {
-          subject: '[Tick&] Escalade sur le ticket #{{ ticket.id }}',
+          subject: '[Tick&] Escalade : {{ ticket.name }}',
           body: "Le ticket #{{ ticket.id }} ({{ ticket.name }}) a franchi le niveau « {{ levelName }} » de l'engagement {{ agreementName }}.\n\n{{ ticket.url }}",
         },
         en: {
-          subject: '[Tick&] Escalation on ticket #{{ ticket.id }}',
+          subject: '[Tick&] Escalation: {{ ticket.name }}',
           body: 'Ticket #{{ ticket.id }} ({{ ticket.name }}) crossed level "{{ levelName }}" of agreement {{ agreementName }}.\n\n{{ ticket.url }}',
         },
       },
@@ -512,7 +541,7 @@ async function main(): Promise<void> {
     const messagerie = await creerCategorie('Messagerie', logiciel);
     await creerCategorie('Acces et comptes', null);
 
-    const [sourceTelephone] = await tx
+    const [sourceTelephone, sourceCourriel] = await tx
       .insert(requestSources)
       .values([
         { ...referentielRacine, name: 'Telephone', isDefault: true },
@@ -717,6 +746,46 @@ async function main(): Promise<void> {
         source: 'interface' as const,
       },
     ]);
+
+    // ---- Enquetes de satisfaction ------------------------------------------
+    //
+    // Actives a la racine, recursives : toute l'arborescence en herite. Le taux
+    // est volontairement eleve dans le jeu de demonstration — en production, un
+    // ticket sur trois suffit a mesurer sans lasser.
+    await tx.insert(satisfactionConfigs).values({
+      entityId: racine,
+      entityPath: 'temporaire',
+      isRecursive: true,
+      isActive: true,
+      percentage: 100,
+      delayDays: 0,
+      durationDays: 30,
+      reminderDays: 7,
+    });
+
+    // ---- Boite relevee de demonstration ------------------------------------
+    //
+    // Pointe sur GreenMail, le serveur de test du compose : SMTP et IMAP dans
+    // un seul conteneur, authentification desactivee, boite creee a la volee.
+    // C'est ce qui permet d'eprouver le collecteur sans compte reel.
+    await tx.insert(mailCollectors).values({
+      entityId: racine,
+      entityPath: 'temporaire',
+      name: 'Assistance (GreenMail)',
+      host: 'localhost',
+      port: 3143,
+      useTls: false,
+      login: 'support@exemple.fr',
+      passwordEncrypted: secrets.encrypt('support'),
+      folder: 'INBOX',
+      afterRead: 'flag',
+      profileId: reference('Self-service'),
+      requestSourceId: sourceCourriel?.id ?? null,
+      // Un expediteur inconnu est refuse : c'est le reglage sur : ouvrir la
+      // creation de comptes a quiconque sait ecrire un courriel se decide, cela
+      // ne s'herite pas d'un jeu de demonstration.
+      createUnknownRequester: false,
+    });
 
     // ---- Calendrier ouvre, defini une fois a la racine et partage ----------
     const [ouvre] = await tx

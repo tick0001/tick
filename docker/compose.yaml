@@ -45,6 +45,29 @@ services:
       - '1025:1025'
       - '8025:8025'
 
+  # Serveur de messagerie complet pour le collecteur entrant.
+  #
+  # Mailpit n'expose que SMTP : il recoit tout et montre bien, mais ne sait pas
+  # etre relu en IMAP, ce dont le collecteur a precisement besoin. GreenMail
+  # apporte SMTP **et** IMAP dans un seul conteneur, avec creation de boite a la
+  # volee — l'authentification est desactivee, ce qui est acceptable pour une
+  # dependance de test qui n'est jamais deployee.
+  #
+  # Les deux cohabitent a dessein : Mailpit reste la destination des envois
+  # sortants, ou l'on inspecte ce que l'outil produit ; GreenMail est la boite
+  # d'arrivee, ou l'on depose ce qu'il doit lire.
+  greenmail:
+    image: greenmail/standalone:2.1.3
+    container_name: tick-greenmail
+    restart: unless-stopped
+    environment:
+      GREENMAIL_OPTS: >-
+        -Dgreenmail.setup.test.smtp -Dgreenmail.setup.test.imap
+        -Dgreenmail.hostname=0.0.0.0 -Dgreenmail.auth.disabled
+    ports:
+      - '3025:3025'
+      - '3143:3143'
+
   # Annuaire de developpement et d'integration.
   #
   # osixia/openldap n'est plus maintenu, ce qui est acceptable pour une
