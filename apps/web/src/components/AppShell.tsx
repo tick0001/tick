@@ -5,32 +5,21 @@ import { NavLink, useLocation } from 'react-router';
 import { ContextSwitcher } from '@/components/ContextSwitcher';
 import { PluginSlot } from '@/components/PluginSlot';
 import {
-  IconAnnuaire,
   IconCatalogue,
   IconChangement,
   IconConnaissance,
-  IconCourriel,
   IconEcran,
-  IconEngagement,
-  IconEnquete,
-  IconDroits,
-  IconEntites,
-  IconGroupes,
   IconFermer,
-  IconFormulaire,
   IconLune,
   IconMenu,
-  IconNotification,
   IconPlanning,
   IconProbleme,
   IconRecherche,
   IconReglages,
-  IconRegles,
   IconSoleil,
   IconSortie,
   IconStatistiques,
   IconTicket,
-  IconUtilisateurs,
   type Icone,
 } from '@/components/ui/icons';
 import { changeLocale } from '@/lib/i18n';
@@ -132,12 +121,13 @@ export function AppShell({
   const simplifiee = session.profile.interface === 'self_service';
 
   /**
-   * Navigation, groupée par intention.
+   * Navigation du travail quotidien.
    *
-   * Quatre groupes plutôt qu'une liste de quatorze liens : ce qu'on ouvre chaque
-   * matin, ce qu'on consulte, ce qu'on analyse, ce qu'on règle une fois par
-   * trimestre. Sans ce découpage, « Courriel entrant » a le même poids visuel
-   * que « Tickets », et l'œil doit relire toute la liste à chaque fois.
+   * Trois groupes, huit entrées : ce qu'on ouvre chaque matin, ce qu'on
+   * consulte, ce qu'on analyse. La configuration — douze écrans qu'on règle une
+   * fois par trimestre — a sa propre zone : la garder ici faisait dépasser la
+   * barre, et donnait à « Courriel entrant » le même poids visuel qu'à
+   * « Tickets ».
    */
   const sections: Groupe[] = simplifiee
     ? [
@@ -172,48 +162,6 @@ export function AppShell({
           entrees: [
             { to: '/search', label: t('recherche.titre'), icone: IconRecherche },
             { to: '/stats', label: t('navigation.statistiques'), icone: IconStatistiques },
-          ],
-        },
-        {
-          titre: t('navigation.groupes.configuration'),
-          entrees: [
-            { to: '/service-levels', label: t('engagements.titre'), icone: IconEngagement },
-            { to: '/rules', label: t('regles.titre'), icone: IconRegles },
-            { to: '/forms', label: t('formulaires.titre'), icone: IconFormulaire },
-            { to: '/notifications', label: t('notifications.titre'), icone: IconNotification },
-            { to: '/mail', label: t('courriel.titre'), icone: IconCourriel },
-            { to: '/surveys', label: t('enquetes.titre'), icone: IconEnquete },
-          ],
-        },
-        {
-          titre: t('navigation.groupes.administration'),
-          entrees: [
-            { to: '/entities', label: t('navigation.entites'), icone: IconEntites },
-            {
-              to: '/admin/users',
-              label: t('administration.utilisateurs.titre'),
-              icone: IconUtilisateurs,
-            },
-            {
-              to: '/admin/groups',
-              label: t('administration.groupes.titre'),
-              icone: IconGroupes,
-            },
-            {
-              to: '/admin/profiles',
-              label: t('administration.profils.titre'),
-              icone: IconDroits,
-            },
-            {
-              to: '/admin/directories',
-              label: t('administration.annuaires.titre'),
-              icone: IconAnnuaire,
-            },
-            {
-              to: '/admin/settings',
-              label: t('administration.reglages.titre'),
-              icone: IconReglages,
-            },
           ],
         },
       ];
@@ -289,7 +237,32 @@ export function AppShell({
           <PluginSlot name="app.sidebar" className="space-y-1" context={contexteSlot} />
         </nav>
 
-        <div className="border-t border-line p-3">
+        <div className="space-y-1 border-t border-line p-3">
+          {/* La configuration est en pied de barre, separee du travail
+              quotidien : on l'ouvre rarement, et jamais par erreur. */}
+          {!simplifiee && (
+            <NavLink
+              to="/settings"
+              className={({ isActive }) =>
+                cn(
+                  'flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-sm transition-colors',
+                  isActive
+                    ? 'bg-brand-soft font-medium text-brand-ink'
+                    : 'text-muted hover:bg-sunken hover:text-ink',
+                )
+              }
+            >
+              {({ isActive }) => (
+                <>
+                  <IconReglages
+                    className={cn('size-[18px] shrink-0', isActive ? 'text-brand' : 'text-faint')}
+                  />
+                  <span>{t('configuration.titre')}</span>
+                </>
+              )}
+            </NavLink>
+          )}
+
           <div className="flex items-center gap-2 rounded-lg px-2 py-1.5">
             <span className="grid size-8 shrink-0 place-items-center rounded-full bg-brand-soft text-xs font-semibold text-brand-ink">
               {initiales(session.user.displayName)}

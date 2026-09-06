@@ -892,6 +892,16 @@ export const en: Traductions = {
       all: 'Whole scope',
     },
   },
+  configuration: {
+    titre: 'Configuration',
+    description: 'What you set once, and that applies by itself afterwards.',
+    groupes: {
+      assistance: 'Service desk',
+      communication: 'Communication',
+      organisation: 'Organisation',
+      systeme: 'System',
+    },
+  },
   navigation: {
     accueil: 'Home',
     ouvrirMenu: 'Open menu',
@@ -900,8 +910,6 @@ export const en: Traductions = {
       travail: 'Work',
       services: 'Services',
       analyse: 'Analysis',
-      administration: 'Administration',
-      configuration: 'Configuration',
     },
     assistance: 'Helpdesk',
     tickets: 'Tickets',

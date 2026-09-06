@@ -894,6 +894,16 @@ export const fr = {
       all: 'Tout le périmètre',
     },
   },
+  configuration: {
+    titre: 'Configuration',
+    description: 'Ce qui se règle une fois, et s’applique ensuite tout seul.',
+    groupes: {
+      assistance: 'Assistance',
+      communication: 'Communication',
+      organisation: 'Organisation',
+      systeme: 'Système',
+    },
+  },
   navigation: {
     accueil: 'Accueil',
     ouvrirMenu: 'Ouvrir le menu',
@@ -902,8 +912,6 @@ export const fr = {
       travail: 'Travail',
       services: 'Services',
       analyse: 'Analyse',
-      administration: 'Administration',
-      configuration: 'Configuration',
     },
     assistance: 'Assistance',
     tickets: 'Tickets',

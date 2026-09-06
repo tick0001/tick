@@ -75,19 +75,41 @@ Quatorze liens en une barre horizontale donnaient le même poids visuel à
 « Tickets » et à « Courriel entrant ». L'œil devait relire toute la liste à
 chaque fois.
 
-La barre latérale les range en cinq groupes, par intention :
+La barre latérale les range en trois groupes, par intention :
 
 - **Travail** — ce qu'on ouvre chaque matin : tickets, problèmes, changements,
   planning.
 - **Services** — ce qu'on consulte : catalogue, base de connaissances.
 - **Analyse** — recherche, statistiques.
-- **Configuration** — ce qu'on règle une fois par trimestre : engagements,
-  règles, formulaires, notifications, courriel, enquêtes.
-- **Administration** — entités, comptes, groupes, profils et droits.
 
-L'interface simplifiée n'a qu'un groupe, avec trois entrées. Elle est portée par
-le **profil actif**, pas par l'utilisateur : la même personne peut être
-technicienne sur une branche et simple demandeuse sur une autre.
+Huit entrées : la barre tient dans la hauteur de l'écran, ce qui était le point.
+
+### La configuration a sa propre zone
+
+Une première version gardait deux groupes de plus — Configuration et
+Administration — soit dix-huit entrées et un défilement permanent. Deux
+conséquences : on ne voyait jamais la barre entière, et « Courriel entrant »
+occupait la même place que « Tickets » alors qu'on l'ouvre une fois par
+trimestre.
+
+Les douze écrans de réglage vivent donc sous `/settings`, atteints par une
+entrée unique posée **en pied de barre** — là où l'on met ce qu'on ouvre
+rarement, et jamais par erreur. Ils y disposent de leur propre colonne de
+navigation, groupée à leur tour en Assistance, Communication, Organisation et
+Système.
+
+Cette colonne est une liste et non des onglets : douze onglets ne tiennent pas
+sur une ligne, et les replier dans un menu déroulant coûterait un clic à chaque
+va-et-vient entre deux écrans de réglage — ce qu'on fait précisément quand on
+configure.
+
+Les anciennes adresses (`/rules`, `/admin/users`…) redirigent : un signet ne doit
+pas tomber sur une page d'accueil sans explication.
+
+L'interface simplifiée n'a qu'un groupe, avec trois entrées, et pas d'accès à la
+configuration. Elle est portée par le **profil actif**, pas par l'utilisateur :
+la même personne peut être technicienne sur une branche et simple demandeuse sur
+une autre.
 
 Sur petit écran, la barre devient un tiroir qui se referme à chaque navigation —
 le laisser ouvert masquerait la page qu'on vient de demander.
