@@ -211,7 +211,17 @@ export class MailCollectorService implements OnModuleInit, OnModuleDestroy {
 
           if (message === false || !message.source) continue;
 
-          const decision = await this.traiter(collecteur, await simpleParser(message.source));
+          const analyse = await simpleParser(message.source);
+
+          // Le journal sert aussi de garde-fou : si le classement du message a
+          // echoue au cycle precedent, il est revenu non lu, et le retraiter
+          // creerait un second ticket pour le meme courriel.
+          if (analyse.messageId && (await this.dejaTraite(collecteur.id, analyse.messageId))) {
+            await this.classer(client, collecteur, uid);
+            continue;
+          }
+
+          const decision = await this.traiter(collecteur, analyse);
 
           await this.journaliser(collecteur, decision);
           await this.classer(client, collecteur, uid);
@@ -307,7 +317,10 @@ export class MailCollectorService implements OnModuleInit, OnModuleDestroy {
             source: 'email',
           });
 
-          await this.attacher(mail, 'itil_followup', cible);
+          // Rattachee au ticket, et non au suivi : c'est la que l'interface
+          // les montre, et un fichier reste utile quand on relit le dossier
+          // sans se souvenir de quel message il venait.
+          await this.attacher(mail, 'ticket', cible);
 
           return { ...identite, action: 'followup' as const, ticketId: cible, detail: null };
         }
@@ -476,6 +489,21 @@ export class MailCollectorService implements OnModuleInit, OnModuleDestroy {
         this.logger.warn(`Piece jointe « ${piece.filename} » ignoree : ${String(erreur)}`);
       }
     }
+  }
+
+  /** Vrai si ce message a deja laisse une trace pour ce collecteur. */
+  private async dejaTraite(collectorId: number, messageId: string): Promise<boolean> {
+    const rows = await this.db.asOwner(async (tx) => {
+      const resultat = await tx.execute<{ id: number }>(sql`
+        SELECT id FROM mail_collector_logs
+         WHERE collector_id = ${collectorId} AND message_id = ${messageId}
+         LIMIT 1
+      `);
+
+      return resultat.rows;
+    });
+
+    return rows.length > 0;
   }
 
   private async journaliser(collecteur: Collecteur, decision: Decision): Promise<void> {

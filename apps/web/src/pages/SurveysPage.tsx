@@ -62,7 +62,7 @@ export function SurveysPage({ session }: { session: SessionContext }) {
           }
         : DEFAUT,
     );
-  }, [propre?.id, propre]);
+  }, [propre]);
 
   const enregistrer = useMutation({
     mutationFn: () => api.saveSatisfactionConfig(valeurs),

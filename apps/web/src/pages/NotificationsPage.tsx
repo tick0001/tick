@@ -187,8 +187,6 @@ export function NotificationsPage() {
         </ul>
       </div>
 
-      {!administrateur && null}
-
       {administrateur && (
         <>
           {/* ---- Modèles ---- */}
