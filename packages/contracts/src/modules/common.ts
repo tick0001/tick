@@ -22,3 +22,14 @@ export type RightScope = z.infer<typeof rightScopeSchema>;
 
 export const profileInterfaceSchema = z.enum(['standard', 'self_service']);
 export type ProfileInterface = z.infer<typeof profileInterfaceSchema>;
+
+/**
+ * Booleen venant d'une chaine de requete.
+ *
+ * `z.coerce.boolean()` ne convient pas : il applique la veracite JavaScript, ou
+ * la chaine `"false"` vaut vrai. Un filtre qui s'active quand on le desactive
+ * est le genre de bug qu'on met longtemps a croire.
+ */
+export const queryBoolean = z
+  .union([z.boolean(), z.enum(['true', 'false', '1', '0'])])
+  .transform((valeur) => valeur === true || valeur === 'true' || valeur === '1');

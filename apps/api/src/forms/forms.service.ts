@@ -1,0 +1,563 @@
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import type {
+  Form,
+  FormMapping,
+  FormQuestion,
+  FormSubmissionResult,
+  FormSummary,
+  SubmitForm,
+  TicketActorInput,
+  UpsertForm,
+} from '@tick/contracts';
+import {
+  formAccess,
+  formDestinations,
+  formQuestionConditions,
+  formQuestions,
+  formSections,
+  formSubmissions,
+  forms,
+  sql,
+  type SQL,
+} from '@tick/db';
+import { entityNames } from '../common/entity-names.js';
+import { requireContext } from '../common/request-context.js';
+import { DatabaseService } from '../database/database.service.js';
+import { matchesOperator } from '../rules/rule-engine.service.js';
+import { applyRuleOutput, borne, choix, reference, texte } from '../tickets/ticket-rules.js';
+import { TicketsService } from '../tickets/tickets.service.js';
+
+interface FormRow extends Record<string, unknown> {
+  id: number;
+  name: string;
+  description: string | null;
+  category: string | null;
+  isActive: boolean;
+  ranking: number;
+  entityId: number;
+  isRecursive: boolean;
+  sections: unknown;
+  access: unknown;
+  destinations: unknown;
+}
+
+const TYPES = ['incident', 'request'] as const;
+
+/**
+ * Formulaires du catalogue de services.
+ *
+ * Un formulaire est une **configuration** ; ce qu'il produit est une donnée. La
+ * soumission passe donc par `TicketsService`, et non par une écriture directe :
+ * un ticket né d'un formulaire doit recevoir ses règles, ses engagements et son
+ * historique comme n'importe quel autre.
+ */
+@Injectable()
+export class FormsService {
+  constructor(
+    private readonly db: DatabaseService,
+    private readonly tickets: TicketsService,
+  ) {}
+
+  async list(): Promise<Form[]> {
+    const rows = await this.db.asUser(async (tx) => {
+      const resultat = await tx.execute<FormRow>(sql`
+        ${this.selection()} WHERE f.deleted_at IS NULL ORDER BY f.ranking, f.name
+      `);
+
+      return resultat.rows;
+    });
+
+    return this.nommer(rows);
+  }
+
+  async findById(id: number): Promise<Form> {
+    const rows = await this.db.asUser(async (tx) => {
+      const resultat = await tx.execute<FormRow>(sql`
+        ${this.selection()} WHERE f.id = ${id} AND f.deleted_at IS NULL
+      `);
+
+      return resultat.rows;
+    });
+
+    const [formulaire] = await this.nommer(rows);
+
+    if (!formulaire) throw new NotFoundException('Formulaire introuvable dans ce perimetre.');
+
+    return formulaire;
+  }
+
+  /**
+   * Catalogue visible de la personne connectée.
+   *
+   * Un formulaire sans politique d'accès est ouvert à tout le périmètre ; sinon
+   * il faut correspondre à une cible. Le filtre est ici et non dans une
+   * politique SQL parce qu'il dépend des groupes, que la session ne porte pas.
+   */
+  async catalogue(): Promise<FormSummary[]> {
+    return this.db.asUser(async (tx) => {
+      const resultat = await tx.execute<FormSummary & Record<string, unknown>>(sql`
+        SELECT f.id, f.name, f.description, f.category
+          FROM forms f
+         WHERE f.deleted_at IS NULL AND f.is_active AND ${this.accessCondition()}
+         ORDER BY f.category NULLS FIRST, f.ranking, f.name
+      `);
+
+      return resultat.rows;
+    });
+  }
+
+  /** Formulaire à remplir, refusé si la politique d'accès l'exclut. */
+  async render(id: number): Promise<Form> {
+    const rows = await this.db.asUser(async (tx) => {
+      const resultat = await tx.execute<FormRow>(sql`
+        ${this.selection()}
+         WHERE f.id = ${id} AND f.deleted_at IS NULL AND f.is_active
+           AND ${this.accessCondition()}
+      `);
+
+      return resultat.rows;
+    });
+
+    const [formulaire] = await this.nommer(rows);
+
+    if (!formulaire) throw new NotFoundException('Formulaire introuvable ou non accessible.');
+
+    return formulaire;
+  }
+
+  async save(input: UpsertForm, id?: number): Promise<Form> {
+    const context = requireContext();
+
+    const formId = await this.db.asUser(async (tx) => {
+      let cible = id;
+
+      if (cible) {
+        const resultat = await tx.execute(sql`
+          UPDATE forms
+             SET name = ${input.name}, description = ${input.description ?? null},
+                 category = ${input.category ?? null}, is_active = ${input.isActive},
+                 ranking = ${input.ranking}, is_recursive = ${input.isRecursive},
+                 updated_at = now()
+           WHERE id = ${cible} AND deleted_at IS NULL
+        `);
+
+        if (resultat.rowCount === 0) {
+          throw new NotFoundException('Formulaire introuvable dans ce perimetre.');
+        }
+      } else {
+        const [ligne] = await tx
+          .insert(forms)
+          .values({
+            entityId: context.entityId,
+            entityPath: 'temporaire',
+            isRecursive: input.isRecursive,
+            name: input.name,
+            description: input.description ?? null,
+            category: input.category ?? null,
+            isActive: input.isActive,
+            ranking: input.ranking,
+          })
+          .returning({ id: forms.id });
+
+        if (!ligne) throw new BadRequestException('Creation impossible dans ce perimetre.');
+        cible = ligne.id;
+      }
+
+      // Sections et questions sont remplacees en bloc : la cascade emporte
+      // conditions et traductions, qui n'ont pas de sens sans leur question.
+      await tx.execute(sql`DELETE FROM form_sections WHERE form_id = ${cible}`);
+      await tx.execute(sql`DELETE FROM form_access WHERE form_id = ${cible}`);
+      await tx.execute(sql`DELETE FROM form_destinations WHERE form_id = ${cible}`);
+
+      // Les questions sont numerotees a plat, dans l'ordre du formulaire : c'est
+      // ce rang que les conditions et les correspondances designent, et non un
+      // identifiant de base que l'interface n'a pas a connaitre.
+      const parRang = new Map<number, number>();
+      let rang = 0;
+
+      for (const [indexSection, section] of input.sections.entries()) {
+        const [ligneSection] = await tx
+          .insert(formSections)
+          .values({
+            formId: cible,
+            name: section.name,
+            description: section.description ?? null,
+            ranking: indexSection,
+          })
+          .returning({ id: formSections.id });
+
+        if (!ligneSection) continue;
+
+        for (const [indexQuestion, question] of section.questions.entries()) {
+          const [ligneQuestion] = await tx
+            .insert(formQuestions)
+            .values({
+              sectionId: ligneSection.id,
+              kind: question.kind,
+              label: question.label,
+              description: question.description ?? null,
+              isRequired: question.isRequired,
+              ranking: indexQuestion,
+              options: question.options,
+              defaultValue: question.defaultValue ?? null,
+            })
+            .returning({ id: formQuestions.id });
+
+          if (ligneQuestion) parRang.set(rang, ligneQuestion.id);
+          rang += 1;
+        }
+      }
+
+      rang = 0;
+
+      for (const section of input.sections) {
+        for (const question of section.questions) {
+          const questionId = parRang.get(rang);
+
+          rang += 1;
+
+          if (!questionId || question.conditions.length === 0) continue;
+
+          for (const condition of question.conditions) {
+            const dependId = parRang.get(condition.dependsOn);
+
+            if (!dependId) {
+              throw new BadRequestException(
+                `Condition invalide : la question ${String(condition.dependsOn)} n'existe pas.`,
+              );
+            }
+
+            await tx.insert(formQuestionConditions).values({
+              questionId,
+              dependsOnId: dependId,
+              operator: condition.operator,
+              value: condition.value ?? null,
+            });
+          }
+        }
+      }
+
+      if (input.access.length > 0) {
+        await tx.insert(formAccess).values(
+          input.access.map((entree) => ({
+            formId: cible,
+            targetType: entree.targetType,
+            targetId: entree.targetId,
+          })),
+        );
+      }
+
+      if (input.destinations.length > 0) {
+        await tx.insert(formDestinations).values(
+          input.destinations.map((destination) => ({
+            formId: cible,
+            kind: destination.kind,
+            mappings: destination.mappings,
+          })),
+        );
+      }
+
+      return cible;
+    });
+
+    return this.findById(formId);
+  }
+
+  async remove(id: number): Promise<void> {
+    await this.db.asUser(async (tx) => {
+      const resultat = await tx.execute(
+        sql`UPDATE forms SET deleted_at = now() WHERE id = ${id} AND deleted_at IS NULL`,
+      );
+
+      if (resultat.rowCount === 0) {
+        throw new NotFoundException('Formulaire introuvable dans ce perimetre.');
+      }
+    });
+  }
+
+  /**
+   * Enregistre une soumission et crée l'objet demandé.
+   *
+   * Les réponses complètes sont conservées, même celles qu'aucune
+   * correspondance ne reprend : une question retirée du formulaire emporterait
+   * sinon avec elle ce que les demandeurs y avaient répondu.
+   */
+  async submit(id: number, input: SubmitForm): Promise<FormSubmissionResult> {
+    const context = requireContext();
+    const formulaire = await this.render(id);
+    const questions = aplatir(formulaire);
+    const reponses = input.answers;
+
+    for (const [rang, question] of questions.entries()) {
+      if (!estVisible(question, rang, questions, reponses)) continue;
+      if (!question.isRequired) continue;
+
+      const valeur = reponses[String(rang)];
+
+      if (
+        valeur === null ||
+        valeur === undefined ||
+        valeur === '' ||
+        (Array.isArray(valeur) && valeur.length === 0)
+      ) {
+        throw new BadRequestException(`La question « ${question.label} » est obligatoire.`);
+      }
+    }
+
+    const destination = formulaire.destinations[0];
+    const { champs, acteurs } = destination
+      ? this.appliquer(destination.mappings, questions, reponses)
+      : { champs: {}, acteurs: [] };
+
+    const ticket = await this.tickets.create({
+      // Sans correspondance sur le titre, le nom du formulaire fait l'affaire :
+      // « Demande de materiel » vaut mieux qu'un ticket sans objet.
+      name: texte(champs, 'name', formulaire.name),
+      content: texte(champs, 'content', resume(questions, reponses)),
+      type: choix(champs, 'type', TYPES, 'request'),
+      urgency: borne(champs['urgency'], 3),
+      impact: borne(champs['impact'], 3),
+      categoryId: reference(champs, 'categoryId') ?? undefined,
+      requestSourceId: reference(champs, 'requestSourceId') ?? undefined,
+      locationId: reference(champs, 'locationId') ?? undefined,
+      actors: [{ role: 'requester', actorType: 'user', actorId: context.userId }, ...acteurs],
+    });
+
+    const [soumission] = await this.db.asUser((tx) =>
+      tx
+        .insert(formSubmissions)
+        .values({
+          formId: id,
+          entityId: context.entityId,
+          entityPath: 'temporaire',
+          submittedById: context.userId,
+          ticketId: ticket.id,
+          answers: reponses,
+        })
+        .returning({ id: formSubmissions.id }),
+    );
+
+    return { submissionId: soumission?.id ?? 0, ticketId: ticket.id };
+  }
+
+  /**
+   * Traduit les correspondances en champs de ticket, et en acteurs.
+   *
+   * Les deux sortent ensemble parce qu'elles sortent du meme calcul : une
+   * correspondance vers « groupe attribue » ne designe pas une colonne du
+   * ticket mais un acteur, et les separer ferait perdre l'un des deux.
+   */
+  private appliquer(
+    mappings: readonly FormMapping[],
+    questions: readonly FormQuestion[],
+    reponses: SubmitForm['answers'],
+  ): { champs: Record<string, unknown>; acteurs: TicketActorInput[] } {
+    const sortie: Record<string, string | null> = {};
+
+    for (const mapping of mappings) {
+      if (mapping.source === 'literal') {
+        sortie[mapping.field] = mapping.value ?? null;
+        continue;
+      }
+
+      const rang = mapping.question;
+
+      if (rang === null || rang === undefined || !questions[rang]) continue;
+
+      sortie[mapping.field] = enTexte(reponses[String(rang)]);
+    }
+
+    const champs: Record<string, unknown> = {};
+
+    // Les memes conversions que pour les regles : une correspondance produit du
+    // texte, et c'est `applyRuleOutput` qui sait ce qu'un champ de ticket
+    // attend. Deux tables de conversion finiraient par diverger.
+    return { champs, acteurs: applyRuleOutput(champs, sortie) };
+  }
+
+  private selection() {
+    return sql`
+      SELECT f.id, f.name, f.description, f.category, f.is_active AS "isActive",
+             f.ranking, f.entity_id AS "entityId", f.is_recursive AS "isRecursive",
+             COALESCE(
+               (SELECT jsonb_agg(section ORDER BY section->>'ranking')
+                  FROM (
+                    SELECT jsonb_build_object(
+                             'id', s.id, 'name', s.name, 'description', s.description,
+                             'ranking', s.ranking,
+                             'questions', COALESCE(
+                               (SELECT jsonb_agg(jsonb_build_object(
+                                         'id', q.id, 'kind', q.kind::text, 'label', q.label,
+                                         'description', q.description,
+                                         'isRequired', q.is_required,
+                                         'options', COALESCE(q.options, '[]'::jsonb),
+                                         'defaultValue', q.default_value,
+                                         'conditions', COALESCE(
+                                           (SELECT jsonb_agg(jsonb_build_object(
+                                                     'dependsOn', d.depends_on_id,
+                                                     'operator', d.operator::text,
+                                                     'value', d.value))
+                                              FROM form_question_conditions d
+                                             WHERE d.question_id = q.id),
+                                           '[]'::jsonb))
+                                       ORDER BY q.ranking, q.id)
+                                  FROM form_questions q WHERE q.section_id = s.id),
+                               '[]'::jsonb)) AS section
+                      FROM form_sections s WHERE s.form_id = f.id
+                  ) sections),
+               '[]'::jsonb) AS sections,
+             COALESCE(
+               (SELECT jsonb_agg(jsonb_build_object(
+                         'targetType', x.target_type::text, 'targetId', x.target_id))
+                  FROM form_access x WHERE x.form_id = f.id),
+               '[]'::jsonb) AS access,
+             COALESCE(
+               (SELECT jsonb_agg(jsonb_build_object('kind', d.kind::text, 'mappings', d.mappings))
+                  FROM form_destinations d WHERE d.form_id = f.id),
+               '[]'::jsonb) AS destinations
+        FROM forms f
+    `;
+  }
+
+  private accessCondition(): SQL {
+    const context = requireContext();
+
+    return sql`
+      (
+        NOT EXISTS (SELECT 1 FROM form_access x WHERE x.form_id = f.id)
+        OR EXISTS (
+          SELECT 1 FROM form_access x
+           WHERE x.form_id = f.id
+             AND (
+               (x.target_type = 'profile' AND x.target_id = ${context.profileId})
+               OR (x.target_type = 'user' AND x.target_id = ${context.userId})
+               OR (x.target_type = 'group' AND EXISTS (
+                     SELECT 1 FROM group_members m
+                      WHERE m.group_id = x.target_id AND m.user_id = ${context.userId}))
+             )
+        )
+      )
+    `;
+  }
+
+  /** Le nom de l'entite est resolu a part : voir `entityNames`. */
+  private async nommer(rows: readonly FormRow[]): Promise<Form[]> {
+    const noms = await entityNames(
+      this.db,
+      rows.map((row) => row.entityId),
+    );
+
+    return rows.map((row) => ({
+      id: row.id,
+      name: row.name,
+      description: row.description,
+      category: row.category,
+      isActive: row.isActive,
+      ranking: row.ranking,
+      entityId: row.entityId,
+      entityName: noms.get(row.entityId) ?? '',
+      isRecursive: row.isRecursive,
+      sections: enRangs(Array.isArray(row.sections) ? (row.sections as Form['sections']) : []),
+      access: Array.isArray(row.access) ? (row.access as Form['access']) : [],
+      destinations: Array.isArray(row.destinations)
+        ? (row.destinations as Form['destinations'])
+        : [],
+    }));
+  }
+}
+
+/**
+ * Remplace l'identifiant de la question dont depend une condition par son rang.
+ *
+ * La base designe une question par sa cle ; le contrat, par sa position dans le
+ * formulaire. C'est la position que l'interface manipule — elle compose un
+ * formulaire avant que ses questions existent en base — et la traduction se
+ * fait donc ici, une fois pour toutes.
+ */
+function enRangs(sections: Form['sections']): Form['sections'] {
+  const rangParId = new Map<number, number>();
+  let rang = 0;
+
+  for (const section of sections) {
+    for (const question of section.questions) {
+      if (question.id !== undefined) rangParId.set(question.id, rang);
+      rang += 1;
+    }
+  }
+
+  return sections.map((section) => ({
+    ...section,
+    questions: section.questions.map((question) => ({
+      ...question,
+      conditions: question.conditions
+        .map((condition) => ({
+          ...condition,
+          dependsOn: rangParId.get(condition.dependsOn) ?? -1,
+        }))
+        // Une condition dont la question a disparu ne peut plus etre evaluee :
+        // la garder ferait disparaitre la question qui en depend, sans raison
+        // visible a l'ecran.
+        .filter((condition) => condition.dependsOn >= 0),
+    })),
+  }));
+}
+
+/** Questions du formulaire, à plat, dans l'ordre d'affichage. */
+export function aplatir(formulaire: Form): FormQuestion[] {
+  return formulaire.sections.flatMap((section) => section.questions);
+}
+
+/**
+ * Une question s'affiche si **toutes** ses conditions sont vraies.
+ *
+ * Une condition qui dépend d'une question elle-même masquée est fausse : sans
+ * cela, une branche entière ressurgirait dès que sa racine disparaît.
+ */
+export function estVisible(
+  question: FormQuestion,
+  rang: number,
+  questions: readonly FormQuestion[],
+  reponses: SubmitForm['answers'],
+): boolean {
+  if (question.conditions.length === 0) return true;
+
+  return question.conditions.every((condition) => {
+    const source = questions[condition.dependsOn];
+
+    if (!source) return false;
+    if (condition.dependsOn >= rang) return false;
+    if (!estVisible(source, condition.dependsOn, questions, reponses)) return false;
+    if (condition.operator === 'regex' || condition.operator === 'not_regex') return false;
+
+    return matchesOperator(
+      condition.operator,
+      enTexte(reponses[String(condition.dependsOn)]),
+      condition.value,
+    );
+  });
+}
+
+/** Réponse sous forme de texte, une réponse multiple étant jointe. */
+function enTexte(valeur: string | string[] | null | undefined): string | null {
+  if (valeur === null || valeur === undefined) return null;
+
+  return Array.isArray(valeur) ? valeur.join(', ') : valeur;
+}
+
+/**
+ * Description reprenant les questions et leurs réponses.
+ *
+ * Sans elle, un formulaire sans correspondance sur la description produirait un
+ * ticket vide : le technicien verrait un titre et rien d'autre, alors que le
+ * demandeur a rempli dix champs.
+ */
+function resume(questions: readonly FormQuestion[], reponses: SubmitForm['answers']): string {
+  return questions
+    .map((question, rang) => {
+      const valeur = enTexte(reponses[String(rang)]);
+
+      return valeur === null || valeur === '' ? null : `${question.label} : ${valeur}`;
+    })
+    .filter((ligne): ligne is string => ligne !== null)
+    .join('\n');
+}

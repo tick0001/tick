@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { queryBoolean } from './common.js';
 
 /** Un ticket est un incident ou une demande de service. */
 export const ticketTypeSchema = z.enum(['incident', 'request']);
@@ -247,17 +248,6 @@ export const answerValidationSchema = z.object({
 export type AnswerValidation = z.infer<typeof answerValidationSchema>;
 
 // --- Listes ------------------------------------------------------------------
-
-/**
- * Booléen venant d'une chaîne de requête.
- *
- * `z.coerce.boolean()` ne convient pas : il applique la véracité JavaScript, où
- * la chaîne `"false"` vaut vrai. Un filtre qui s'active quand on le désactive
- * est le genre de bug qu'on met longtemps à croire.
- */
-const queryBoolean = z
-  .union([z.boolean(), z.enum(['true', 'false', '1', '0'])])
-  .transform((valeur) => valeur === true || valeur === 'true' || valeur === '1');
 
 /** Liste venant d'une chaîne de requête : `a,b` ou répétition du paramètre. */
 function queryList<T extends z.ZodTypeAny>(element: T) {

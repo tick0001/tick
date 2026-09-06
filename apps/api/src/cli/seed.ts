@@ -13,6 +13,13 @@ import { Logger } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import {
   agreementLevelActions,
+  formDestinations,
+  formQuestionConditions,
+  formQuestions,
+  formSections,
+  forms,
+  kbArticles,
+  kbCategories,
   mailCollectors,
   satisfactionConfigs,
   agreementLevels,
@@ -86,6 +93,7 @@ const PROFILE_RIGHTS: Record<string, RightTriple[]> = {
     ['notification', 'read', 'recursive'],
     ['mailcollector', 'read', 'recursive'],
     ['satisfaction', 'read', 'recursive'],
+    ['form', 'read', 'recursive'],
     ['ticket', 'read', 'recursive'],
     ['ticket', 'create', 'recursive'],
     ['ticket', 'update', 'recursive'],
@@ -125,6 +133,9 @@ const PROFILE_RIGHTS: Record<string, RightTriple[]> = {
     ['mailcollector', 'update', 'all'],
     ['satisfaction', 'read', 'all'],
     ['satisfaction', 'update', 'all'],
+    ['kb', 'update', 'all'],
+    ['form', 'read', 'all'],
+    ['form', 'update', 'all'],
   ],
 };
 
@@ -166,6 +177,10 @@ async function main(): Promise<void> {
                itil_tasks, itil_followups, itil_actors, ticket_escalations, tickets,
                ticket_template_fields, ticket_templates, suppliers, locations,
                solution_types, task_categories, request_sources, itil_categories,
+               form_submissions, form_destinations, form_access,
+               form_question_conditions, form_questions, form_sections, forms,
+               kb_favorites, kb_article_targets, kb_article_revisions,
+               kb_articles, kb_categories,
                satisfactions, satisfaction_configs,
                mail_collector_logs, mail_collectors,
                rule_actions, rule_criteria, rules,
@@ -541,7 +556,7 @@ async function main(): Promise<void> {
     const messagerie = await creerCategorie('Messagerie', logiciel);
     await creerCategorie('Acces et comptes', null);
 
-    const [sourceTelephone, sourceCourriel] = await tx
+    const [sourceTelephone, sourceCourriel, sourceGuichet] = await tx
       .insert(requestSources)
       .values([
         { ...referentielRacine, name: 'Telephone', isDefault: true },
@@ -746,6 +761,167 @@ async function main(): Promise<void> {
         source: 'interface' as const,
       },
     ]);
+
+    // ---- Base de connaissances ---------------------------------------------
+    //
+    // Recursifs depuis la racine : un article ecrit une fois sert toute
+    // l'organisation. Le dernier est publie dans la FAQ, donc lisible sans
+    // compte — c'est une decision explicite, pas un effet de sa categorie.
+    const categorieConnaissance = async (nom: string): Promise<number> => {
+      const [ligne] = await tx
+        .insert(kbCategories)
+        .values({
+          entityId: racine,
+          entityPath: 'temporaire',
+          isRecursive: true,
+          parentId: null,
+          path: 'temporaire',
+          name: nom,
+          completeName: nom,
+        })
+        .returning({ id: kbCategories.id });
+
+      if (!ligne) throw new Error(`Categorie de connaissance ${nom} non creee.`);
+
+      return ligne.id;
+    };
+
+    const procedures = await categorieConnaissance('Procedures');
+    const pratique = await categorieConnaissance('Questions frequentes');
+
+    await tx.insert(kbArticles).values([
+      {
+        entityId: racine,
+        entityPath: 'temporaire',
+        isRecursive: true,
+        categoryId: procedures,
+        name: 'Reinitialiser un mot de passe de session',
+        content:
+          'Ouvrir la console d administration, rechercher le compte, puis « Reinitialiser ».\n\nLe compte doit changer son mot de passe a la prochaine ouverture de session.',
+        isFaq: false,
+        authorId: reference('sophie'),
+        updatedById: reference('sophie'),
+      },
+      {
+        entityId: racine,
+        entityPath: 'temporaire',
+        isRecursive: true,
+        categoryId: pratique,
+        name: 'Comment suivre l avancement de ma demande ?',
+        content:
+          'Chaque ticket recoit un numero. Vous le retrouvez dans le courriel de confirmation, et dans « Mes demandes ».\n\nRepondre au courriel ajoute un suivi au ticket, sans avoir a se connecter.',
+        isFaq: true,
+        authorId: reference('sophie'),
+        updatedById: reference('sophie'),
+      },
+      {
+        entityId: racine,
+        entityPath: 'temporaire',
+        isRecursive: true,
+        categoryId: pratique,
+        name: 'Que faire si mon imprimante ne repond plus ?',
+        content:
+          'Verifier le voyant, le bac a papier et le cable reseau.\n\nSi le probleme persiste, ouvrez une demande depuis le catalogue de services.',
+        isFaq: true,
+        authorId: reference('thomas'),
+        updatedById: reference('thomas'),
+      },
+    ]);
+
+    // ---- Formulaire du catalogue de services -------------------------------
+    //
+    // Deux sections, une question conditionnelle et une correspondance
+    // explicite vers les champs du ticket : c'est le formulaire qui montre
+    // chaque mecanisme a la fois.
+    const [formulaire] = await tx
+      .insert(forms)
+      .values({
+        entityId: racine,
+        entityPath: 'temporaire',
+        isRecursive: true,
+        name: 'Demande de materiel',
+        description: 'Ecran, clavier, souris ou station d accueil.',
+        category: 'Materiel',
+        ranking: 10,
+      })
+      .returning({ id: forms.id });
+
+    if (formulaire) {
+      const [sectionBesoin] = await tx
+        .insert(formSections)
+        .values({ formId: formulaire.id, name: 'Votre besoin', ranking: 0 })
+        .returning({ id: formSections.id });
+
+      const [sectionContexte] = await tx
+        .insert(formSections)
+        .values({ formId: formulaire.id, name: 'Contexte', ranking: 1 })
+        .returning({ id: formSections.id });
+
+      const [questionType] = await tx
+        .insert(formQuestions)
+        .values({
+          sectionId: sectionBesoin?.id as number,
+          kind: 'select',
+          label: 'Quel materiel demandez-vous ?',
+          isRequired: true,
+          ranking: 0,
+          options: ['Ecran', 'Clavier', 'Souris', 'Station d accueil', 'Autre'],
+        })
+        .returning({ id: formQuestions.id });
+
+      const [questionPrecision] = await tx
+        .insert(formQuestions)
+        .values({
+          sectionId: sectionBesoin?.id as number,
+          kind: 'text',
+          label: 'Precisez le materiel souhaite',
+          isRequired: true,
+          ranking: 1,
+        })
+        .returning({ id: formQuestions.id });
+
+      await tx.insert(formQuestions).values([
+        {
+          sectionId: sectionContexte?.id as number,
+          kind: 'textarea',
+          label: 'Pourquoi en avez-vous besoin ?',
+          ranking: 0,
+        },
+        {
+          sectionId: sectionContexte?.id as number,
+          kind: 'urgency',
+          label: 'Dans quel delai ?',
+          ranking: 1,
+          defaultValue: '3',
+        },
+      ]);
+
+      // La precision ne s'affiche que si « Autre » a ete choisi : sans cela, le
+      // formulaire demanderait deux fois la meme chose a tout le monde.
+      if (questionType && questionPrecision) {
+        await tx.insert(formQuestionConditions).values({
+          questionId: questionPrecision.id,
+          dependsOnId: questionType.id,
+          operator: 'is',
+          value: 'Autre',
+        });
+      }
+
+      await tx.insert(formDestinations).values({
+        formId: formulaire.id,
+        kind: 'ticket',
+        // Sans correspondance sur le titre, le ticket prend le nom du
+        // formulaire : « Demande de materiel » se lit mieux dans une file que
+        // la reponse a la premiere question, qui serait « Ecran ».
+        mappings: [
+          { field: 'type', source: 'literal', value: 'request' },
+          { field: 'urgency', source: 'question', question: 3 },
+          ...(sourceGuichet
+            ? [{ field: 'requestSourceId', source: 'literal', value: String(sourceGuichet.id) }]
+            : []),
+        ],
+      });
+    }
 
     // ---- Enquetes de satisfaction ------------------------------------------
     //

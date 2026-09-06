@@ -14,3 +14,5 @@ export * from './notifications.js';
 export * from './slm.js';
 export * from './mail.js';
 export * from './satisfaction.js';
+export * from './knowledge.js';
+export * from './forms.js';

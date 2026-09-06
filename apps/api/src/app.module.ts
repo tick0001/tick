@@ -6,7 +6,9 @@ import { loadEnv } from './config/env.js';
 import { DatabaseModule } from './database/database.module.js';
 import { DocumentsModule } from './documents/documents.module.js';
 import { EntitiesModule } from './entities/entities.module.js';
+import { FormsModule } from './forms/forms.module.js';
 import { HealthModule } from './health/health.module.js';
+import { KnowledgeModule } from './knowledge/knowledge.module.js';
 import { MailModule } from './mail/mail.module.js';
 import { NotificationsModule } from './notifications/notifications.module.js';
 import { PluginsModule } from './plugins/plugins.module.js';
@@ -36,6 +38,8 @@ import { TicketsModule } from './tickets/tickets.module.js';
     NotificationsModule,
     DocumentsModule,
     MailModule,
+    KnowledgeModule,
+    FormsModule,
     SatisfactionModule,
     HealthModule,
   ],

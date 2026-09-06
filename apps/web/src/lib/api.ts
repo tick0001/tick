@@ -5,6 +5,13 @@ import type {
   CreateTicket,
   EntitySummary,
   ItilStatus,
+  Form,
+  FormSubmissionResult,
+  FormSummary,
+  KbArticle,
+  KbArticleSummary,
+  KbCategory,
+  KbRevision,
   Login,
   MailCollector,
   MailCollectorLog,
@@ -13,6 +20,8 @@ import type {
   NotificationQueueEntry,
   NotificationState,
   NotificationTemplate,
+  PublicArticle,
+  PublicArticleSummary,
   PublicSurvey,
   AnswerSurvey,
   Rule,
@@ -32,8 +41,11 @@ import type {
   TicketPage,
   TicketTemplate,
   TimelineEntry,
+  SubmitForm,
   UpsertAgreement,
   UpsertCalendar,
+  UpsertForm,
+  UpsertKbArticle,
   UpsertMailCollector,
   UpsertNotificationTemplate,
   UpsertRule,
@@ -43,12 +55,21 @@ import {
   agreementSchema,
   calendarSchema,
   entitySummarySchema,
+  formSchema,
+  formSubmissionResultSchema,
+  formSummarySchema,
+  kbArticleSchema,
+  kbArticleSummarySchema,
+  kbCategorySchema,
+  kbRevisionSchema,
   mailCollectorLogSchema,
   mailCollectorSchema,
   notificationEventSchema,
   notificationPreferenceSchema,
   notificationQueueEntrySchema,
   notificationTemplateSchema,
+  publicArticleSchema,
+  publicArticleSummarySchema,
   publicSurveySchema,
   satisfactionConfigSchema,
   satisfactionStatsSchema,
@@ -373,6 +394,68 @@ export const api = {
   satisfactionStats: (): Promise<SatisfactionStats> =>
     request('/satisfaction/stats', satisfactionStatsSchema),
 
+  // --- Base de connaissances -------------------------------------------------
+
+  kbCategories: (): Promise<KbCategory[]> => request('/kb/categories', kbCategorySchema.array()),
+
+  kbArticles: (filtre: KbFilter = {}): Promise<KbArticleSummary[]> =>
+    request(`/kb${toKbQuery(filtre)}`, kbArticleSummarySchema.array()),
+
+  kbArticle: (id: number): Promise<KbArticle> => request(`/kb/${String(id)}`, kbArticleSchema),
+
+  kbRevisions: (id: number): Promise<KbRevision[]> =>
+    request(`/kb/${String(id)}/revisions`, kbRevisionSchema.array()),
+
+  toggleKbFavorite: (id: number): Promise<{ isFavorite: boolean }> =>
+    request(`/kb/${String(id)}/favorite`, z.object({ isFavorite: z.boolean() }), {
+      method: 'POST',
+    }),
+
+  saveKbArticle: (body: UpsertKbArticle, id?: number): Promise<KbArticle> =>
+    request(id ? `/kb/${String(id)}` : '/kb', kbArticleSchema, {
+      method: id ? 'PUT' : 'POST',
+      body: JSON.stringify(body),
+    }),
+
+  deleteKbArticle: async (id: number): Promise<void> => {
+    await fetch(`/api/kb/${String(id)}`, { method: 'DELETE', credentials: 'include' });
+  },
+
+  // --- FAQ publique, sans session --------------------------------------------
+
+  faq: (search?: string): Promise<PublicArticleSummary[]> =>
+    request(
+      `/public/faq${search ? `?search=${encodeURIComponent(search)}` : ''}`,
+      publicArticleSummarySchema.array(),
+    ),
+
+  faqArticle: (id: number): Promise<PublicArticle> =>
+    request(`/public/faq/${String(id)}`, publicArticleSchema),
+
+  // --- Catalogue de services --------------------------------------------------
+
+  catalogue: (): Promise<FormSummary[]> => request('/catalogue', formSummarySchema.array()),
+
+  catalogueForm: (id: number): Promise<Form> => request(`/catalogue/${String(id)}`, formSchema),
+
+  submitForm: (id: number, body: SubmitForm): Promise<FormSubmissionResult> =>
+    request(`/catalogue/${String(id)}`, formSubmissionResultSchema, {
+      method: 'POST',
+      body: JSON.stringify(body),
+    }),
+
+  forms: (): Promise<Form[]> => request('/forms', formSchema.array()),
+
+  saveForm: (body: UpsertForm, id?: number): Promise<Form> =>
+    request(id ? `/forms/${String(id)}` : '/forms', formSchema, {
+      method: id ? 'PUT' : 'POST',
+      body: JSON.stringify(body),
+    }),
+
+  deleteForm: async (id: number): Promise<void> => {
+    await fetch(`/api/forms/${String(id)}`, { method: 'DELETE', credentials: 'include' });
+  },
+
   // --- Enquete de satisfaction, sans session --------------------------------
 
   survey: (token: string): Promise<PublicSurvey> =>
@@ -397,6 +480,27 @@ export const api = {
     });
   },
 };
+
+export interface KbFilter {
+  search?: string | undefined;
+  categoryId?: number | undefined;
+  faqOnly?: boolean | undefined;
+  favoritesOnly?: boolean | undefined;
+}
+
+/** Meme forme que `toQuery` : listes jointes, booleens en toutes lettres. */
+function toKbQuery(filtre: KbFilter): string {
+  const params = new URLSearchParams();
+
+  if (filtre.search) params.set('search', filtre.search);
+  if (filtre.categoryId) params.set('categoryId', String(filtre.categoryId));
+  if (filtre.faqOnly) params.set('faqOnly', 'true');
+  if (filtre.favoritesOnly) params.set('favoritesOnly', 'true');
+
+  const chaine = params.toString();
+
+  return chaine ? `?${chaine}` : '';
+}
 
 export interface TicketQuery {
   status?: ItilStatus[];

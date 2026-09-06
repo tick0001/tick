@@ -174,37 +174,15 @@ export class RuleEngineService {
     actuel: string | null,
     captures: Map<string, RegExpExecArray>,
   ): boolean {
-    const attendu = critere.value ?? '';
-
-    switch (critere.operator) {
-      case 'is':
-        return normalise(actuel) === normalise(attendu);
-      case 'is_not':
-        return normalise(actuel) !== normalise(attendu);
-      case 'contains':
-        return actuel !== null && normalise(actuel).includes(normalise(attendu));
-      case 'not_contains':
-        return actuel === null || !normalise(actuel).includes(normalise(attendu));
-      case 'starts_with':
-        return actuel !== null && normalise(actuel).startsWith(normalise(attendu));
-      case 'ends_with':
-        return actuel !== null && normalise(actuel).endsWith(normalise(attendu));
-      case 'regex':
-        return this.matchRegex(critere.field, actuel, attendu, captures);
-      case 'not_regex':
-        return !this.matchRegex(critere.field, actuel, attendu, captures);
-      // Comparaison de chemins matérialisés : `e1.e3` est sous `e1`, et `e10`
-      // ne l'est pas — d'où le point exigé, qu'une simple comparaison de
-      // préfixe manquerait.
-      case 'under':
-        return actuel !== null && (actuel === attendu || actuel.startsWith(`${attendu}.`));
-      case 'not_under':
-        return actuel === null || (actuel !== attendu && !actuel.startsWith(`${attendu}.`));
-      case 'is_empty':
-        return actuel === null || actuel.trim() === '';
-      case 'is_not_empty':
-        return actuel !== null && actuel.trim() !== '';
+    if (critere.operator === 'regex') {
+      return this.matchRegex(critere.field, actuel, critere.value ?? '', captures);
     }
+
+    if (critere.operator === 'not_regex') {
+      return !this.matchRegex(critere.field, actuel, critere.value ?? '', captures);
+    }
+
+    return matchesOperator(critere.operator, actuel, critere.value);
   }
 
   /**
@@ -290,5 +268,47 @@ export class RuleEngineService {
     const rendu = gabarit.replace(/#(\d)/g, (_, index: string) => capture[Number(index)] ?? '');
 
     return rendu === '' ? null : rendu;
+  }
+}
+
+/**
+ * Comparaison d'un operateur, hors expressions regulieres.
+ *
+ * Extraite du moteur parce qu'elle sert ailleurs : les conditions d'affichage
+ * d'un formulaire posent les memes questions — « ce champ vaut-il ceci »,
+ * « est-il vide » — et deux implementations finiraient par ne plus repondre
+ * pareil au meme operateur.
+ */
+export function matchesOperator(
+  operator: Exclude<RuleOperator, 'regex' | 'not_regex'>,
+  actuel: string | null,
+  attenduBrut: string | null | undefined,
+): boolean {
+  const attendu = attenduBrut ?? '';
+
+  switch (operator) {
+    case 'is':
+      return normalise(actuel) === normalise(attendu);
+    case 'is_not':
+      return normalise(actuel) !== normalise(attendu);
+    case 'contains':
+      return actuel !== null && normalise(actuel).includes(normalise(attendu));
+    case 'not_contains':
+      return actuel === null || !normalise(actuel).includes(normalise(attendu));
+    case 'starts_with':
+      return actuel !== null && normalise(actuel).startsWith(normalise(attendu));
+    case 'ends_with':
+      return actuel !== null && normalise(actuel).endsWith(normalise(attendu));
+    // Comparaison de chemins materialises : `e1.e3` est sous `e1`, et `e10` ne
+    // l'est pas — d'ou le point exige, qu'une simple comparaison de prefixe
+    // manquerait.
+    case 'under':
+      return actuel !== null && (actuel === attendu || actuel.startsWith(`${attendu}.`));
+    case 'not_under':
+      return actuel === null || (actuel !== attendu && !actuel.startsWith(`${attendu}.`));
+    case 'is_empty':
+      return actuel === null || actuel.trim() === '';
+    case 'is_not_empty':
+      return actuel !== null && actuel.trim() !== '';
   }
 }

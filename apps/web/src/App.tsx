@@ -7,7 +7,11 @@ import { PluginSlot } from '@/components/PluginSlot';
 import { ApiError, api } from '@/lib/api';
 import { changeLocale } from '@/lib/i18n';
 import { loadPluginClients, resetPluginClients } from '@/lib/plugins';
+import { CataloguePage } from '@/pages/CataloguePage';
 import { EntitiesPage } from '@/pages/EntitiesPage';
+import { FaqPage } from '@/pages/FaqPage';
+import { FormsPage } from '@/pages/FormsPage';
+import { KnowledgePage } from '@/pages/KnowledgePage';
 import { LoginPage } from '@/pages/LoginPage';
 import { NewTicketPage } from '@/pages/NewTicketPage';
 import { MailPage } from '@/pages/MailPage';
@@ -23,14 +27,16 @@ import { TicketsPage } from '@/pages/TicketsPage';
 /**
  * Le routeur enveloppe l'ecran de connexion, et non l'inverse.
  *
- * L'enquete de satisfaction se remplit sans compte : la placer derriere le
- * controle de session la rendrait inaccessible a ceux a qui elle s'adresse.
+ * L'enquete de satisfaction et la FAQ publique se consultent sans compte : les
+ * placer derriere le controle de session les rendrait inaccessibles a ceux a
+ * qui elles s'adressent.
  */
 export function App() {
   return (
     <BrowserRouter>
       <Routes>
         <Route path="/satisfaction/:token" element={<SatisfactionPage />} />
+        <Route path="/faq" element={<FaqPage />} />
         <Route path="*" element={<Application />} />
       </Routes>
     </BrowserRouter>
@@ -77,6 +83,15 @@ function Application() {
     return <LoginPage />;
   }
 
+  /**
+   * Interface simplifiee.
+   *
+   * Portee par le profil actif, pas par l'utilisateur : la meme personne peut
+   * etre technicienne sur une branche et simple demandeuse sur une autre, et
+   * l'ecran doit suivre le contexte de travail.
+   */
+  const simplifiee = session.data.profile.interface === 'self_service';
+
   const contexteSlot = {
     locale: i18n.language,
     entity: session.data.entity,
@@ -97,30 +112,46 @@ function Application() {
           <span className="text-lg font-semibold tracking-tight">Tick&amp;</span>
 
           <nav className="flex items-center gap-1">
+            <NavLink to="/catalogue" className={lienClasses}>
+              {t('catalogue.titre')}
+            </NavLink>
             <NavLink to="/tickets" className={lienClasses}>
-              {t('navigation.tickets')}
+              {simplifiee ? t('navigation.mesDemandes') : t('navigation.tickets')}
             </NavLink>
-            <NavLink to="/search" className={lienClasses}>
-              {t('recherche.titre')}
+            <NavLink to="/knowledge" className={lienClasses}>
+              {t('connaissance.titre')}
             </NavLink>
-            <NavLink to="/entities" className={lienClasses}>
-              {t('navigation.entites')}
-            </NavLink>
-            <NavLink to="/service-levels" className={lienClasses}>
-              {t('engagements.titre')}
-            </NavLink>
-            <NavLink to="/rules" className={lienClasses}>
-              {t('regles.titre')}
-            </NavLink>
-            <NavLink to="/notifications" className={lienClasses}>
-              {t('notifications.titre')}
-            </NavLink>
-            <NavLink to="/mail" className={lienClasses}>
-              {t('courriel.titre')}
-            </NavLink>
-            <NavLink to="/surveys" className={lienClasses}>
-              {t('enquetes.titre')}
-            </NavLink>
+
+            {/* Un demandeur n'a que faire des ecrans de parametrage : les lui
+                montrer pour qu'ils refusent l'acces serait pire que les taire. */}
+            {!simplifiee && (
+              <>
+                <NavLink to="/search" className={lienClasses}>
+                  {t('recherche.titre')}
+                </NavLink>
+                <NavLink to="/entities" className={lienClasses}>
+                  {t('navigation.entites')}
+                </NavLink>
+                <NavLink to="/service-levels" className={lienClasses}>
+                  {t('engagements.titre')}
+                </NavLink>
+                <NavLink to="/rules" className={lienClasses}>
+                  {t('regles.titre')}
+                </NavLink>
+                <NavLink to="/forms" className={lienClasses}>
+                  {t('formulaires.titre')}
+                </NavLink>
+                <NavLink to="/notifications" className={lienClasses}>
+                  {t('notifications.titre')}
+                </NavLink>
+                <NavLink to="/mail" className={lienClasses}>
+                  {t('courriel.titre')}
+                </NavLink>
+                <NavLink to="/surveys" className={lienClasses}>
+                  {t('enquetes.titre')}
+                </NavLink>
+              </>
+            )}
           </nav>
 
           <ContextSwitcher session={session.data} />
@@ -162,7 +193,10 @@ function Application() {
 
       <main className="mx-auto max-w-7xl p-6">
         <Routes>
-          <Route path="/" element={<Navigate to="/tickets" replace />} />
+          <Route
+            path="/"
+            element={<Navigate to={simplifiee ? '/catalogue' : '/tickets'} replace />}
+          />
           <Route path="/tickets" element={<TicketsPage session={session.data} />} />
           <Route path="/tickets/new" element={<NewTicketPage />} />
           <Route path="/search" element={<SearchPage />} />
@@ -170,6 +204,9 @@ function Application() {
           <Route path="/entities" element={<EntitiesPage session={session.data} />} />
           <Route path="/service-levels" element={<ServiceLevelsPage />} />
           <Route path="/rules" element={<RulesPage />} />
+          <Route path="/knowledge" element={<KnowledgePage session={session.data} />} />
+          <Route path="/catalogue" element={<CataloguePage />} />
+          <Route path="/forms" element={<FormsPage />} />
           <Route path="/notifications" element={<NotificationsPage />} />
           <Route path="/mail" element={<MailPage />} />
           <Route path="/surveys" element={<SurveysPage session={session.data} />} />
