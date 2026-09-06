@@ -208,3 +208,27 @@ export const IconLien: Icone = (props) => (
     <path d="M13.5 10.5a4 4 0 0 0-5.7 0l-2.3 2.3a4 4 0 0 0 5.7 5.7l1.3-1.3" />
   </Trace>
 );
+
+export const IconUtilisateurs: Icone = (props) => (
+  <Trace {...props}>
+    <circle cx="9" cy="8" r="3.5" />
+    <path d="M3 20a6 6 0 0 1 12 0" />
+    <path d="M16.5 5.3a3.5 3.5 0 0 1 0 5.4M18 14.2a6 6 0 0 1 3 5.8" />
+  </Trace>
+);
+
+export const IconGroupes: Icone = (props) => (
+  <Trace {...props}>
+    <circle cx="12" cy="6" r="2.5" />
+    <circle cx="5.5" cy="17" r="2.5" />
+    <circle cx="18.5" cy="17" r="2.5" />
+    <path d="M12 8.5v3M12 11.5 6.8 14.8M12 11.5l5.2 3.3" />
+  </Trace>
+);
+
+export const IconDroits: Icone = (props) => (
+  <Trace {...props}>
+    <path d="M12 3 4.5 6v5.5c0 4.4 3 8.2 7.5 9.5 4.5-1.3 7.5-5.1 7.5-9.5V6Z" />
+    <path d="m9 12 2 2 4-4" />
+  </Trace>
+);

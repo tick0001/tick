@@ -25,13 +25,14 @@ import {
   type UpsertUnavailability,
 } from '@tick/contracts';
 import { AuthenticatedGuard } from '../auth/guards/authenticated.guard.js';
+import { RequireRight, RightsGuard } from '../auth/guards/rights.guard.js';
 import { ZodValidationPipe } from '../common/zod-validation.pipe.js';
 import { toIcalendar } from './ical.js';
 import { PlanningService } from './planning.service.js';
 import { RecurrenceService } from './recurrence.service.js';
 
 @Controller('planning')
-@UseGuards(AuthenticatedGuard)
+@UseGuards(AuthenticatedGuard, RightsGuard)
 export class PlanningController {
   constructor(
     private readonly planning: PlanningService,
@@ -39,6 +40,7 @@ export class PlanningController {
   ) {}
 
   @Get()
+  @RequireRight('planning', 'read')
   async list(
     @Query(new ZodValidationPipe(planningFilterSchema)) filter: PlanningFilter,
   ): Promise<PlanningEntry[]> {
@@ -53,6 +55,7 @@ export class PlanningController {
    * C'est un compromis assumé, et il est réversible.
    */
   @Get('ical')
+  @RequireRight('planning', 'read')
   @Header('Content-Type', 'text/calendar; charset=utf-8')
   @Header('Content-Disposition', 'attachment; filename="planning.ics"')
   async ical(
@@ -62,6 +65,7 @@ export class PlanningController {
   }
 
   @Post('unavailabilities')
+  @RequireRight('planning', 'update')
   @HttpCode(204)
   async createUnavailability(
     @Body(new ZodValidationPipe(upsertUnavailabilitySchema)) body: UpsertUnavailability,
@@ -70,6 +74,7 @@ export class PlanningController {
   }
 
   @Delete('unavailabilities/:id')
+  @RequireRight('planning', 'update')
   @HttpCode(204)
   async removeUnavailability(@Param('id', ParseIntPipe) id: number): Promise<void> {
     await this.planning.removeUnavailability(id);
@@ -78,6 +83,7 @@ export class PlanningController {
   // --- Tickets récurrents ---------------------------------------------------
 
   @Get('recurring')
+  @RequireRight('recurrence', 'read')
   async listRecurring(
     @Query(new ZodValidationPipe(recurringFilterSchema)) filter: RecurringFilter,
   ): Promise<RecurringTicket[]> {
@@ -85,6 +91,7 @@ export class PlanningController {
   }
 
   @Post('recurring')
+  @RequireRight('recurrence', 'update')
   async createRecurring(
     @Body(new ZodValidationPipe(upsertRecurringTicketSchema)) body: UpsertRecurringTicket,
   ): Promise<RecurringTicket> {
@@ -92,6 +99,7 @@ export class PlanningController {
   }
 
   @Put('recurring/:id')
+  @RequireRight('recurrence', 'update')
   async updateRecurring(
     @Param('id', ParseIntPipe) id: number,
     @Body(new ZodValidationPipe(upsertRecurringTicketSchema)) body: UpsertRecurringTicket,
@@ -100,6 +108,7 @@ export class PlanningController {
   }
 
   @Delete('recurring/:id')
+  @RequireRight('recurrence', 'update')
   @HttpCode(204)
   async removeRecurring(@Param('id', ParseIntPipe) id: number): Promise<void> {
     await this.recurrence.remove(id);
@@ -113,6 +122,7 @@ export class PlanningController {
    * plus que le balayage périodique — la trace anti-rejeu est la même.
    */
   @Post('recurring/run')
+  @RequireRight('recurrence', 'update')
   async run(): Promise<{ created: number }> {
     return { created: await this.recurrence.sweep() };
   }

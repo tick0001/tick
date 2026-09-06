@@ -5,7 +5,21 @@ import type {
   CreateTicket,
   EntitySummary,
   ItilStatus,
+  Authorization,
   BulkRequest,
+  CreateEntity,
+  Group,
+  Profile,
+  RightObject,
+  UpdateEntity,
+  UpsertAuthorization,
+  UpsertGroup,
+  UpsertMember,
+  UpsertProfile,
+  UpsertUser,
+  UserDetail,
+  UserFilter,
+  UserSummary,
   BulkResult,
   CreateLink,
   Dashboard,
@@ -81,8 +95,14 @@ import {
   formSchema,
   formSubmissionResultSchema,
   formSummarySchema,
+  authorizationSchema,
   bulkResultSchema,
   dashboardSchema,
+  groupSchema,
+  profileSchema,
+  rightObjectSchema,
+  userDetailSchema,
+  userSummarySchema,
   itilLinkSchema,
   itilObjectSchema,
   planningEntrySchema,
@@ -220,6 +240,84 @@ export const api = {
   },
 
   entities: (): Promise<EntitySummary[]> => request('/entities', entitySummarySchema.array()),
+
+  createEntity: (body: CreateEntity): Promise<EntitySummary> =>
+    request('/entities', entitySummarySchema, { method: 'POST', body: JSON.stringify(body) }),
+
+  updateEntity: (id: number, body: UpdateEntity): Promise<EntitySummary> =>
+    request(`/entities/${String(id)}`, entitySummarySchema, {
+      method: 'PATCH',
+      body: JSON.stringify(body),
+    }),
+
+  deleteEntity: async (id: number): Promise<void> => {
+    await send(`/entities/${String(id)}`, 'DELETE');
+  },
+
+  // --- Administration -------------------------------------------------------
+
+  rightCatalogue: (): Promise<RightObject[]> =>
+    request('/admin/rights', rightObjectSchema.array()),
+
+  users: (filtre: UserFilter): Promise<UserSummary[]> =>
+    request(`/admin/users${toUserQuery(filtre)}`, userSummarySchema.array()),
+
+  user: (id: number): Promise<UserDetail> =>
+    request(`/admin/users/${String(id)}`, userDetailSchema),
+
+  saveUser: (body: UpsertUser, id?: number): Promise<UserDetail> =>
+    request(id === undefined ? '/admin/users' : `/admin/users/${String(id)}`, userDetailSchema, {
+      method: id === undefined ? 'POST' : 'PUT',
+      body: JSON.stringify(body),
+    }),
+
+  grant: (userId: number, body: UpsertAuthorization): Promise<Authorization[]> =>
+    request(`/admin/users/${String(userId)}/authorizations`, authorizationSchema.array(), {
+      method: 'POST',
+      body: JSON.stringify(body),
+    }),
+
+  revoke: (userId: number, entityId: number, profileId: number): Promise<Authorization[]> =>
+    request(
+      `/admin/users/${String(userId)}/authorizations/${String(entityId)}/${String(profileId)}`,
+      authorizationSchema.array(),
+      { method: 'DELETE' },
+    ),
+
+  groups: (): Promise<Group[]> => request('/admin/groups', groupSchema.array()),
+
+  saveGroup: (body: UpsertGroup, id?: number): Promise<Group> =>
+    request(id === undefined ? '/admin/groups' : `/admin/groups/${String(id)}`, groupSchema, {
+      method: id === undefined ? 'POST' : 'PUT',
+      body: JSON.stringify(body),
+    }),
+
+  deleteGroup: async (id: number): Promise<void> => {
+    await send(`/admin/groups/${String(id)}`, 'DELETE');
+  },
+
+  addMember: (groupId: number, body: UpsertMember): Promise<Group> =>
+    request(`/admin/groups/${String(groupId)}/members`, groupSchema, {
+      method: 'POST',
+      body: JSON.stringify(body),
+    }),
+
+  removeMember: (groupId: number, userId: number): Promise<Group> =>
+    request(`/admin/groups/${String(groupId)}/members/${String(userId)}`, groupSchema, {
+      method: 'DELETE',
+    }),
+
+  profiles: (): Promise<Profile[]> => request('/admin/profiles', profileSchema.array()),
+
+  saveProfile: (body: UpsertProfile, id?: number): Promise<Profile> =>
+    request(id === undefined ? '/admin/profiles' : `/admin/profiles/${String(id)}`, profileSchema, {
+      method: id === undefined ? 'POST' : 'PUT',
+      body: JSON.stringify(body),
+    }),
+
+  deleteProfile: async (id: number): Promise<void> => {
+    await send(`/admin/profiles/${String(id)}`, 'DELETE');
+  },
 
   tickets: (filtre: TicketQuery): Promise<TicketPage> =>
     request(`/tickets${toQuery(filtre)}`, ticketPageSchema),
@@ -681,6 +779,17 @@ export const api = {
     });
   },
 };
+
+function toUserQuery(filtre: UserFilter): string {
+  const params = new URLSearchParams();
+
+  if (filtre.search) params.set('search', filtre.search);
+  if (filtre.inactive) params.set('inactive', 'true');
+
+  const chaine = params.toString();
+
+  return chaine ? `?${chaine}` : '';
+}
 
 function toPlanningQuery(filtre: PlanningFilter): string {
   const params = new URLSearchParams({ from: filtre.from, to: filtre.to });

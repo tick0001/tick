@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
+import { AdminModule } from './admin/admin.module.js';
 import { AuthModule } from './auth/auth.module.js';
 import { CommonModule } from './common/common.module.js';
 import { loadEnv } from './config/env.js';
@@ -32,6 +33,7 @@ import { TicketsModule } from './tickets/tickets.module.js';
     CommonModule,
     DatabaseModule,
     AuthModule,
+    AdminModule,
     PluginsModule,
     EntitiesModule,
     RulesModule,

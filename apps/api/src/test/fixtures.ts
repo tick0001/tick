@@ -97,6 +97,24 @@ export async function createFixture(prefix: string): Promise<Fixture> {
     cleanup: async () => {
       const racine = paths['racine'];
 
+      // Les profils et comptes crees par un test portent son prefixe. Sans ce
+      // menage, ils s'accumulent a chaque execution et finissent par polluer
+      // l'ecran d'administration du jeu de demonstration — ce qui s'est vu.
+      const marque = `${prefix} %`;
+
+      await owner.db.execute(sql`
+        DELETE FROM authorizations WHERE profile_id IN (
+          SELECT id FROM profiles WHERE name LIKE ${marque})
+      `);
+      await owner.db.execute(sql`DELETE FROM profiles WHERE name LIKE ${marque}`);
+      await owner.db.execute(
+        sql`DELETE FROM group_members WHERE user_id IN (
+              SELECT id FROM users WHERE username::text LIKE ${prefix.toLowerCase() + '-%'})`,
+      );
+      await owner.db.execute(
+        sql`DELETE FROM users WHERE username::text LIKE ${prefix.toLowerCase() + '-%'}`,
+      );
+
       await owner.db.execute(
         sql`DELETE FROM groups WHERE entity_id IN (SELECT id FROM entities WHERE path <@ ${racine}::ltree)`,
       );

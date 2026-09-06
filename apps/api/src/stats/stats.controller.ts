@@ -28,6 +28,7 @@ import {
 } from '@tick/contracts';
 import type { Response } from 'express';
 import { AuthenticatedGuard } from '../auth/guards/authenticated.guard.js';
+import { RequireRight, RightsGuard } from '../auth/guards/rights.guard.js';
 import { currentContext } from '../common/request-context.js';
 import { ZodValidationPipe } from '../common/zod-validation.pipe.js';
 import { SearchCompiler } from '../search/search-compiler.service.js';
@@ -61,7 +62,7 @@ const COLONNES: readonly Colonne[] = [
 const EXPORT_MAX = 2000;
 
 @Controller('stats')
-@UseGuards(AuthenticatedGuard)
+@UseGuards(AuthenticatedGuard, RightsGuard)
 export class StatsController {
   constructor(
     private readonly stats: StatsService,
@@ -72,6 +73,7 @@ export class StatsController {
   ) {}
 
   @Get()
+  @RequireRight('stats', 'read')
   async report(
     @Query(new ZodValidationPipe(statsFilterSchema)) filter: StatsFilter,
   ): Promise<StatsReport> {
@@ -79,6 +81,7 @@ export class StatsController {
   }
 
   @Get('trend')
+  @RequireRight('stats', 'read')
   async trend(
     @Query(new ZodValidationPipe(statsFilterSchema)) filter: StatsFilter,
   ): Promise<StatsTrendPoint[]> {
@@ -87,6 +90,7 @@ export class StatsController {
 
   /** Widgets disponibles, libellés déjà traduits — les plugins en déclarent. */
   @Get('widgets')
+  @RequireRight('stats', 'read')
   widgetCatalog(): WidgetCatalogEntry[] {
     const locale = currentContext()?.locale ?? 'fr';
 
@@ -99,11 +103,13 @@ export class StatsController {
   }
 
   @Get('dashboards')
+  @RequireRight('stats', 'read')
   async listDashboards(): Promise<Dashboard[]> {
     return this.dashboards.list();
   }
 
   @Post('dashboards')
+  @RequireRight('stats', 'read')
   async createDashboard(
     @Body(new ZodValidationPipe(upsertDashboardSchema)) body: UpsertDashboard,
   ): Promise<Dashboard> {
@@ -111,6 +117,7 @@ export class StatsController {
   }
 
   @Put('dashboards/:id')
+  @RequireRight('stats', 'read')
   async updateDashboard(
     @Param('id', ParseIntPipe) id: number,
     @Body(new ZodValidationPipe(upsertDashboardSchema)) body: UpsertDashboard,
@@ -119,6 +126,7 @@ export class StatsController {
   }
 
   @Delete('dashboards/:id')
+  @RequireRight('stats', 'read')
   @HttpCode(204)
   async removeDashboard(@Param('id', ParseIntPipe) id: number): Promise<void> {
     await this.dashboards.remove(id);
@@ -132,6 +140,7 @@ export class StatsController {
    * moyen le plus sûr de livrer autre chose que ce qui a été vérifié à l'écran.
    */
   @Post('export')
+  @RequireRight('stats', 'read')
   @HttpCode(200)
   @Header('Cache-Control', 'no-store')
   async exportTickets(

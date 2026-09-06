@@ -9,6 +9,7 @@ import { CataloguePage } from '@/pages/CataloguePage';
 import { EntitiesPage } from '@/pages/EntitiesPage';
 import { FaqPage } from '@/pages/FaqPage';
 import { FormsPage } from '@/pages/FormsPage';
+import { GroupsPage } from '@/pages/GroupsPage';
 import { ItilObjectPage } from '@/pages/ItilObjectPage';
 import { ItilObjectsPage } from '@/pages/ItilObjectsPage';
 import { KnowledgePage } from '@/pages/KnowledgePage';
@@ -17,6 +18,7 @@ import { NewTicketPage } from '@/pages/NewTicketPage';
 import { MailPage } from '@/pages/MailPage';
 import { NotificationsPage } from '@/pages/NotificationsPage';
 import { PlanningPage } from '@/pages/PlanningPage';
+import { ProfilesPage } from '@/pages/ProfilesPage';
 import { RulesPage } from '@/pages/RulesPage';
 import { SatisfactionPage } from '@/pages/SatisfactionPage';
 import { SearchPage } from '@/pages/SearchPage';
@@ -25,6 +27,7 @@ import { SurveysPage } from '@/pages/SurveysPage';
 import { ServiceLevelsPage } from '@/pages/ServiceLevelsPage';
 import { TicketPage } from '@/pages/TicketPage';
 import { TicketsPage } from '@/pages/TicketsPage';
+import { UsersPage } from '@/pages/UsersPage';
 
 /**
  * Le routeur enveloppe l'ecran de connexion, et non l'inverse.
@@ -117,6 +120,9 @@ function Application() {
         <Route path="/stats" element={<StatsPage />} />
         <Route path="/search" element={<SearchPage />} />
         <Route path="/entities" element={<EntitiesPage session={session.data} />} />
+        <Route path="/admin/users" element={<UsersPage />} />
+        <Route path="/admin/groups" element={<GroupsPage />} />
+        <Route path="/admin/profiles" element={<ProfilesPage />} />
         <Route path="/service-levels" element={<ServiceLevelsPage />} />
         <Route path="/rules" element={<RulesPage />} />
         <Route path="/knowledge" element={<KnowledgePage session={session.data} />} />

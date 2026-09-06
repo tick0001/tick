@@ -12,7 +12,9 @@ import {
   IconEcran,
   IconEngagement,
   IconEnquete,
+  IconDroits,
   IconEntites,
+  IconGroupes,
   IconFermer,
   IconFormulaire,
   IconLune,
@@ -26,6 +28,7 @@ import {
   IconSortie,
   IconStatistiques,
   IconTicket,
+  IconUtilisateurs,
   type Icone,
 } from '@/components/ui/icons';
 import { changeLocale } from '@/lib/i18n';
@@ -172,13 +175,33 @@ export function AppShell({
         {
           titre: t('navigation.groupes.configuration'),
           entrees: [
-            { to: '/entities', label: t('navigation.entites'), icone: IconEntites },
             { to: '/service-levels', label: t('engagements.titre'), icone: IconEngagement },
             { to: '/rules', label: t('regles.titre'), icone: IconRegles },
             { to: '/forms', label: t('formulaires.titre'), icone: IconFormulaire },
             { to: '/notifications', label: t('notifications.titre'), icone: IconNotification },
             { to: '/mail', label: t('courriel.titre'), icone: IconCourriel },
             { to: '/surveys', label: t('enquetes.titre'), icone: IconEnquete },
+          ],
+        },
+        {
+          titre: t('navigation.groupes.administration'),
+          entrees: [
+            { to: '/entities', label: t('navigation.entites'), icone: IconEntites },
+            {
+              to: '/admin/users',
+              label: t('administration.utilisateurs.titre'),
+              icone: IconUtilisateurs,
+            },
+            {
+              to: '/admin/groups',
+              label: t('administration.groupes.titre'),
+              icone: IconGroupes,
+            },
+            {
+              to: '/admin/profiles',
+              label: t('administration.profils.titre'),
+              icone: IconDroits,
+            },
           ],
         },
       ];
