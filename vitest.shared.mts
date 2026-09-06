@@ -1,4 +1,4 @@
-import type { ViteUserConfig } from 'vitest/config';
+import type { CoverageOptions } from 'vitest/node';
 
 /**
  * Reglages de couverture partages par tous les paquets.
@@ -12,14 +12,15 @@ import type { ViteUserConfig } from 'vitest/config';
  * chemin de build et donne des chiffres qui correspondent au code reellement
  * execute.
  */
-export const couverture: NonNullable<NonNullable<ViteUserConfig['test']>['coverage']> = {
+export const couverture: CoverageOptions = {
   provider: 'v8',
   reporter: ['text-summary', 'json-summary', 'html'],
   reportsDirectory: './coverage',
-  // `all` compte aussi les fichiers qu'aucun test n'importe. Sans lui, un
-  // module entierement non teste disparait du rapport, et le pourcentage monte
-  // a mesure qu'on teste moins de choses.
-  all: true,
+  // `include` decide de ce qui compte. Vitest 5 rapporte d'office les fichiers
+  // qu'aucun test n'importe -- l'option `all` d'autrefois n'existe plus, et son
+  // comportement est devenu la regle. Sans cette liste, un module entierement
+  // non teste disparaitrait du rapport, et le pourcentage monterait a mesure
+  // qu'on teste moins de choses.
   include: ['src/**/*.{ts,tsx}'],
   exclude: [
     // Les tests eux-memes.
