@@ -16,9 +16,11 @@ export default definePluginClient({
         const badge = document.createElement('span');
 
         badge.textContent = `Bonjour — ${context.entity.name}`;
+        // Les jetons semantiques de l'hote, et non des teintes brutes : ils
+        // portent deja leur variante sombre, et un plugin qui ecrit
+        // `bg-emerald-100` devient illisible des que l'utilisateur bascule.
         badge.className =
-          'rounded bg-emerald-100 px-2 py-0.5 text-xs text-emerald-800 ' +
-          'dark:bg-emerald-900 dark:text-emerald-200';
+          'rounded-md bg-positive-soft px-2 py-0.5 text-xs font-medium text-positive-ink';
         element.append(badge);
 
         // Rien à nettoyer ici : l'hôte vide l'élément au démontage. La fonction
@@ -37,8 +39,8 @@ export default definePluginClient({
         bouton.type = 'button';
         bouton.textContent = 'Plugin : compter';
         bouton.className =
-          'rounded-md border border-neutral-300 px-2.5 py-1 text-xs ' +
-          'hover:bg-neutral-100 dark:border-neutral-700 dark:hover:bg-neutral-800';
+          'inline-flex h-9 items-center rounded-lg border border-line bg-surface ' +
+          'px-3 text-sm font-medium text-ink transition-colors hover:bg-sunken';
 
         bouton.addEventListener('click', () => {
           const lignes = document.querySelectorAll('tbody tr').length;

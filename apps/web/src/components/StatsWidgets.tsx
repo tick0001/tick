@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import {
   statDimensionSchema,
+  type StatDimension,
   type StatsBucket,
   type StatsFilter,
   type StatsReport,
@@ -30,9 +31,9 @@ export function duree(secondes: number | null, aucune: string): string {
 
 function Carte({ libelle, valeur }: { libelle: string; valeur: string }) {
   return (
-    <div className="rounded-lg border border-neutral-200 p-3 dark:border-neutral-800">
-      <div className="text-xs uppercase tracking-wide text-neutral-500">{libelle}</div>
-      <div className="text-2xl font-semibold tabular-nums">{valeur}</div>
+    <div className="rounded-card border border-line bg-surface p-3.5 shadow-card">
+      <div className="text-xs font-medium text-faint">{libelle}</div>
+      <div className="mt-1 text-2xl font-semibold tabular-nums text-ink">{valeur}</div>
     </div>
   );
 }
@@ -79,12 +80,36 @@ export function Compteurs({ rapport }: { rapport: StatsReport }) {
  * horizontale est une div dont on fixe la largeur, et un graphique importé
  * pèserait plus lourd que tout le reste de la page.
  */
-export function Repartition({ seaux }: { seaux: readonly StatsBucket[] }) {
+export function Repartition({
+  seaux,
+  dimension,
+}: {
+  seaux: readonly StatsBucket[];
+  dimension?: StatDimension;
+}) {
   const { t } = useTranslation();
   const maximum = Math.max(1, ...seaux.map((seau) => seau.opened));
 
+  /**
+   * Libellé d'un segment.
+   *
+   * Le serveur renvoie le nom quand il en existe un — une catégorie, un
+   * technicien — et la valeur brute pour une énumération, qu'il ne sait pas
+   * traduire. « assigned » n'est pas un libellé : les trois dimensions
+   * énumérées sont donc traduites ici, où les clés existent.
+   */
+  const libelle = (seau: StatsBucket): string => {
+    if (dimension === 'status') return t(`tickets.statuts.${seau.key}` as 'tickets.statuts.new');
+    if (dimension === 'type') return t(`tickets.types.${seau.key}` as 'tickets.types.incident');
+    if (dimension === 'priority') {
+      return t(`tickets.priorites.p${seau.key}` as 'tickets.priorites.p1');
+    }
+
+    return seau.label;
+  };
+
   if (seaux.length === 0) {
-    return <p className="text-sm text-neutral-500">{t('statistiques.aucuneDonnee')}</p>;
+    return <p className="text-sm text-muted">{t('statistiques.aucuneDonnee')}</p>;
   }
 
   return (
@@ -92,14 +117,14 @@ export function Repartition({ seaux }: { seaux: readonly StatsBucket[] }) {
       {seaux.map((seau) => (
         <li key={seau.key} className="space-y-0.5">
           <div className="flex items-baseline justify-between gap-2 text-sm">
-            <span>{seau.label}</span>
-            <span className="tabular-nums text-neutral-500">
+            <span>{libelle(seau)}</span>
+            <span className="tabular-nums text-muted">
               {seau.opened} · {duree(seau.averageSolve, '—')}
             </span>
           </div>
-          <div className="h-2 overflow-hidden rounded bg-neutral-100 dark:bg-neutral-800">
+          <div className="h-2 overflow-hidden rounded bg-sunken">
             <div
-              className="h-full rounded bg-neutral-900 dark:bg-neutral-100"
+              className="h-full rounded bg-brand"
               style={{ width: `${String((seau.opened / maximum) * 100)}%` }}
             />
           </div>
@@ -120,7 +145,7 @@ export function Tendance({ points }: { points: readonly StatsTrendPoint[] }) {
   const { t } = useTranslation();
 
   if (points.length === 0) {
-    return <p className="text-sm text-neutral-500">{t('statistiques.aucuneDonnee')}</p>;
+    return <p className="text-sm text-muted">{t('statistiques.aucuneDonnee')}</p>;
   }
 
   const maximum = Math.max(1, ...points.flatMap((point) => [point.opened, point.closed]));
@@ -150,7 +175,7 @@ export function Tendance({ points }: { points: readonly StatsTrendPoint[] }) {
           fill="none"
           stroke="currentColor"
           strokeWidth={0.6}
-          className="text-neutral-900 dark:text-neutral-100"
+          className="text-ink"
           vectorEffect="non-scaling-stroke"
         />
         <polyline
@@ -159,12 +184,12 @@ export function Tendance({ points }: { points: readonly StatsTrendPoint[] }) {
           stroke="currentColor"
           strokeWidth={0.6}
           strokeDasharray="2 2"
-          className="text-neutral-400"
+          className="text-faint"
           vectorEffect="non-scaling-stroke"
         />
       </svg>
 
-      <div className="flex justify-between text-xs text-neutral-500">
+      <div className="flex justify-between text-xs text-muted">
         <span>{points[0]?.day}</span>
         <span>
           — {t('statistiques.ouverts')} · ┄ {t('statistiques.clos')}
@@ -218,11 +243,11 @@ export function WidgetView({
     return tendance.data ? (
       <Tendance points={tendance.data} />
     ) : (
-      <p className="text-sm text-neutral-500">{t('commun.chargement')}</p>
+      <p className="text-sm text-muted">{t('commun.chargement')}</p>
     );
   }
 
-  if (!rapport.data) return <p className="text-sm text-neutral-500">{t('commun.chargement')}</p>;
+  if (!rapport.data) return <p className="text-sm text-muted">{t('commun.chargement')}</p>;
 
   const { summary } = rapport.data;
 
@@ -231,7 +256,7 @@ export function WidgetView({
       return <Compteurs rapport={rapport.data} />;
 
     case 'core.breakdown':
-      return <Repartition seaux={rapport.data.buckets} />;
+      return <Repartition seaux={rapport.data.buckets} dimension={propre.dimension} />;
 
     case 'core.sla':
       return (
@@ -246,13 +271,13 @@ export function WidgetView({
       return (
         <p className="text-2xl font-semibold tabular-nums">
           {summary.satisfaction === null ? '—' : `${summary.satisfaction.toFixed(1)} / 5`}
-          <span className="ml-2 text-xs font-normal text-neutral-500">
+          <span className="ml-2 text-xs font-normal text-muted">
             {summary.satisfactionCount} {t('statistiques.reponses')}
           </span>
         </p>
       );
 
     default:
-      return <p className="text-sm text-neutral-500">{kind}</p>;
+      return <p className="text-sm text-muted">{kind}</p>;
   }
 }

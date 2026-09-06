@@ -63,7 +63,7 @@ export function ItilObjectsPage({ kind }: { kind: ItilKind }) {
       <header className="flex flex-wrap items-start justify-between gap-3">
         <div className="space-y-1">
           <h2 className="text-xl font-semibold tracking-tight">{t(`itil.${section}.titre`)}</h2>
-          <p className="text-sm text-neutral-500 dark:text-neutral-400">
+          <p className="text-sm text-muted">
             {t(`itil.${section}.description`)}
           </p>
         </div>
@@ -73,7 +73,7 @@ export function ItilObjectsPage({ kind }: { kind: ItilKind }) {
           onClick={() => {
             setOuvert((valeur) => !valeur);
           }}
-          className="rounded-md bg-neutral-900 px-3 py-1.5 text-sm font-medium text-white transition hover:bg-neutral-700 dark:bg-neutral-100 dark:text-neutral-900 dark:hover:bg-neutral-300"
+          className="rounded-md bg-brand px-3 py-1.5 text-sm font-medium text-on-brand shadow-card transition hover:bg-brand-hover"
         >
           {t(`itil.${section}.nouveau`)}
         </button>
@@ -82,10 +82,10 @@ export function ItilObjectsPage({ kind }: { kind: ItilKind }) {
       {ouvert && (
         <form
           onSubmit={soumettre}
-          className="space-y-2 rounded-lg border border-neutral-200 p-4 dark:border-neutral-800"
+          className="space-y-2 rounded-card border border-line bg-surface p-4 shadow-card"
         >
           <label className="block space-y-1">
-            <span className="text-xs uppercase tracking-wide text-neutral-500">
+            <span className="text-xs uppercase tracking-wide text-muted">
               {t('itil.formulaire.nom')}
             </span>
             <input
@@ -93,12 +93,12 @@ export function ItilObjectsPage({ kind }: { kind: ItilKind }) {
               onChange={(event) => {
                 setTitre(event.target.value);
               }}
-              className="w-full rounded-md border border-neutral-300 bg-white px-3 py-2 text-sm outline-none focus:border-neutral-900 dark:border-neutral-700 dark:bg-neutral-950 dark:focus:border-neutral-300"
+              className="w-full rounded-lg border border-line bg-surface px-3 py-2 text-sm focus:border-brand"
             />
           </label>
 
           <label className="block space-y-1">
-            <span className="text-xs uppercase tracking-wide text-neutral-500">
+            <span className="text-xs uppercase tracking-wide text-muted">
               {t('itil.formulaire.contenu')}
             </span>
             <textarea
@@ -107,7 +107,7 @@ export function ItilObjectsPage({ kind }: { kind: ItilKind }) {
               onChange={(event) => {
                 setContenu(event.target.value);
               }}
-              className="w-full rounded-md border border-neutral-300 bg-white px-3 py-2 text-sm outline-none focus:border-neutral-900 dark:border-neutral-700 dark:bg-neutral-950 dark:focus:border-neutral-300"
+              className="w-full rounded-lg border border-line bg-surface px-3 py-2 text-sm focus:border-brand"
             />
           </label>
 
@@ -115,7 +115,7 @@ export function ItilObjectsPage({ kind }: { kind: ItilKind }) {
             <button
               type="submit"
               disabled={creer.isPending || titre.trim().length === 0}
-              className="rounded-md bg-neutral-900 px-3 py-1.5 text-sm font-medium text-white transition hover:bg-neutral-700 disabled:opacity-60 dark:bg-neutral-100 dark:text-neutral-900"
+              className="rounded-md bg-brand px-3 py-1.5 text-sm font-medium text-on-brand shadow-card transition hover:bg-brand-hover disabled:opacity-50"
             >
               {t('itil.formulaire.enregistrer')}
             </button>
@@ -124,14 +124,14 @@ export function ItilObjectsPage({ kind }: { kind: ItilKind }) {
               onClick={() => {
                 setOuvert(false);
               }}
-              className="rounded-md border border-neutral-300 px-3 py-1.5 text-sm transition hover:bg-neutral-100 dark:border-neutral-700 dark:hover:bg-neutral-800"
+              className="rounded-lg border border-line px-3 py-1.5 text-sm transition hover:bg-sunken"
             >
               {t('itil.formulaire.annuler')}
             </button>
           </div>
 
           {creer.error && (
-            <p className="text-xs text-red-600 dark:text-red-400">{creer.error.message}</p>
+            <p className="text-xs text-critical">{creer.error.message}</p>
           )}
         </form>
       )}
@@ -142,25 +142,25 @@ export function ItilObjectsPage({ kind }: { kind: ItilKind }) {
           setRecherche(event.target.value);
         }}
         placeholder={t('tickets.filtres.recherche')}
-        className="w-56 rounded-md border border-neutral-300 bg-white px-2.5 py-1.5 text-sm outline-none focus:border-neutral-900 dark:border-neutral-700 dark:bg-neutral-950 dark:focus:border-neutral-300"
+        className="w-56 rounded-lg border border-line bg-surface px-2.5 py-1.5 text-sm focus:border-brand"
       />
 
       {liste.error instanceof ApiError && liste.error.status === 403 && (
-        <p className="rounded-md border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-200">
+        <p className="rounded-md border border-caution/30 bg-caution-soft p-3 text-sm text-caution-ink">
           {t('tickets.interdit')}
         </p>
       )}
 
-      {liste.isPending && <p className="text-sm text-neutral-500">{t('commun.chargement')}</p>}
+      {liste.isPending && <p className="text-sm text-muted">{t('commun.chargement')}</p>}
 
       {liste.data && liste.data.length === 0 && (
-        <p className="text-sm text-neutral-500">{t(`itil.${section}.aucun`)}</p>
+        <p className="text-sm text-muted">{t(`itil.${section}.aucun`)}</p>
       )}
 
       {liste.data && liste.data.length > 0 && (
-        <div className="overflow-x-auto rounded-lg border border-neutral-200 dark:border-neutral-800">
+        <div className="overflow-x-auto rounded-card border border-line">
           <table className="w-full text-left text-sm">
-            <thead className="border-b border-neutral-200 bg-neutral-50 text-xs uppercase tracking-wide text-neutral-500 dark:border-neutral-800 dark:bg-neutral-900">
+            <thead className="border-b border-line bg-sunken text-xs uppercase tracking-wide text-muted bg-surface">
               <tr>
                 <th className="px-3 py-2 font-medium">{t('tickets.numero')}</th>
                 <th className="px-3 py-2 font-medium">{t('tickets.statut')}</th>
@@ -176,9 +176,9 @@ export function ItilObjectsPage({ kind }: { kind: ItilKind }) {
               {liste.data.map((objet) => (
                 <tr
                   key={objet.id}
-                  className="border-b border-neutral-100 transition last:border-0 hover:bg-neutral-50 dark:border-neutral-900 dark:hover:bg-neutral-900"
+                  className="border-b border-line transition last:border-0 hover:bg-sunken"
                 >
-                  <td className="px-3 py-2 tabular-nums text-neutral-500">#{objet.id}</td>
+                  <td className="px-3 py-2 tabular-nums text-muted">#{objet.id}</td>
                   <td className="px-3 py-2">
                     <StatusBadge status={objet.status} />
                   </td>
@@ -193,17 +193,17 @@ export function ItilObjectsPage({ kind }: { kind: ItilKind }) {
                       {objet.name}
                     </Link>
                     {objet.categoryName && (
-                      <div className="text-xs text-neutral-500">{objet.categoryName}</div>
+                      <div className="text-xs text-muted">{objet.categoryName}</div>
                     )}
                   </td>
-                  <td className="px-3 py-2 text-neutral-600 dark:text-neutral-300">
+                  <td className="px-3 py-2 text-muted">
                     {objet.requesters.join(', ') || '—'}
                   </td>
-                  <td className="px-3 py-2 text-neutral-600 dark:text-neutral-300">
+                  <td className="px-3 py-2 text-muted">
                     {objet.assignees.join(', ') || '—'}
                   </td>
-                  <td className="px-3 py-2 text-neutral-500">{objet.entityName}</td>
-                  <td className="px-3 py-2 whitespace-nowrap text-neutral-500">
+                  <td className="px-3 py-2 text-muted">{objet.entityName}</td>
+                  <td className="px-3 py-2 whitespace-nowrap text-muted">
                     {dates.format(new Date(objet.dateOpened))}
                   </td>
                 </tr>

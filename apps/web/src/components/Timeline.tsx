@@ -1,11 +1,23 @@
 import type { TimelineEntry } from '@tick/contracts';
 import { useTranslation } from 'react-i18next';
+import { EmptyState } from '@/components/ui/primitives';
+import { cn } from '@/lib/utils';
+
+/** Teinte de la pastille de chronologie, par nature d'entrée. */
+const NATURES: Record<string, string> = {
+  followup: 'bg-brand',
+  task: 'bg-info',
+  solution: 'bg-positive',
+  validation: 'bg-caution',
+};
 
 /**
  * Une entrée de chronologie.
  *
- * L'historique est rendu en retrait et en gris : il documente, il ne se lit pas
- * au même rythme qu'un suivi rédigé par un humain.
+ * Toutes les entrées pendent au même filet vertical, marquées d'une pastille :
+ * l'ordre se lit alors sans compter les cartes. L'historique reste en retrait et
+ * en gris — il documente, il ne se lit pas au même rythme qu'un suivi rédigé par
+ * un humain.
  */
 function Entree({ entree, locale }: { entree: TimelineEntry; locale: string }) {
   const { t } = useTranslation();
@@ -16,43 +28,54 @@ function Entree({ entree, locale }: { entree: TimelineEntry; locale: string }) {
 
   if (entree.kind === 'log') {
     return (
-      <li className="flex flex-wrap items-baseline gap-x-2 py-1 text-xs text-neutral-500">
-        <span className="tabular-nums">{horodatage}</span>
-        <span className="font-medium">{entree.field}</span>
-        {entree.oldValue !== null && (
-          <span>
-            <span className="line-through">{entree.oldValue}</span> → {entree.newValue ?? '—'}
-          </span>
-        )}
-        {entree.oldValue === null && entree.newValue !== null && <span>{entree.newValue}</span>}
-        {entree.author && <span className="text-neutral-400">· {entree.author.name}</span>}
+      <li className="relative pl-6">
+        <span className="absolute top-2 left-[0.3125rem] size-1.5 rounded-full bg-line-strong" />
+        <div className="flex flex-wrap items-baseline gap-x-2 py-0.5 text-xs text-faint">
+          <span className="tabular-nums">{horodatage}</span>
+          <span className="font-medium text-muted">{entree.field}</span>
+          {entree.oldValue !== null && (
+            <span>
+              <span className="line-through">{entree.oldValue}</span> → {entree.newValue ?? '—'}
+            </span>
+          )}
+          {entree.oldValue === null && entree.newValue !== null && <span>{entree.newValue}</span>}
+          {entree.author && <span>· {entree.author.name}</span>}
+        </div>
       </li>
     );
   }
 
   return (
-    <li className="rounded-lg border border-neutral-200 p-3 dark:border-neutral-800">
-      <div className="mb-1 flex flex-wrap items-baseline gap-2 text-xs text-neutral-500">
-        <span className="rounded bg-neutral-100 px-1.5 py-0.5 font-medium text-neutral-700 dark:bg-neutral-800 dark:text-neutral-200">
-          {t(`tickets.chronologie.${entree.kind}`)}
-        </span>
-        <span className="tabular-nums">{horodatage}</span>
-        {entree.author && <span>· {entree.author.name}</span>}
-        {'isPrivate' in entree && entree.isPrivate && (
-          <span className="rounded bg-amber-100 px-1.5 py-0.5 text-amber-900 dark:bg-amber-950 dark:text-amber-200">
-            {t('tickets.detail.prive')}
-          </span>
+    <li className="relative pl-6">
+      <span
+        className={cn(
+          'absolute top-3 left-1 size-2.5 rounded-full ring-4 ring-canvas',
+          NATURES[entree.kind] ?? 'bg-line-strong',
+        )}
+      />
+      <div className="rounded-card border border-line bg-surface p-3 shadow-card">
+        <div className="mb-1.5 flex flex-wrap items-baseline gap-2 text-xs">
+          <span className="font-semibold text-ink">{t(`tickets.chronologie.${entree.kind}`)}</span>
+          <span className="tabular-nums text-faint">{horodatage}</span>
+          {entree.author && <span className="text-muted">· {entree.author.name}</span>}
+          {'isPrivate' in entree && entree.isPrivate && (
+            <span className="rounded-md bg-caution-soft px-1.5 py-0.5 font-medium text-caution-ink">
+              {t('tickets.detail.prive')}
+            </span>
+          )}
+        </div>
+
+        {'content' in entree && (
+          <p className="whitespace-pre-wrap text-sm leading-relaxed">{entree.content}</p>
+        )}
+
+        {entree.kind === 'validation' && (
+          <p className="text-sm">
+            {entree.validator?.name ?? '—'} · {entree.status}
+            {entree.responseComment && ` — ${entree.responseComment}`}
+          </p>
         )}
       </div>
-
-      {'content' in entree && <p className="whitespace-pre-wrap text-sm">{entree.content}</p>}
-
-      {entree.kind === 'validation' && (
-        <p className="text-sm">
-          {entree.validator?.name ?? '—'} · {entree.status}
-          {entree.responseComment && ` — ${entree.responseComment}`}
-        </p>
-      )}
     </li>
   );
 }
@@ -74,11 +97,11 @@ export function Timeline({
   const { t } = useTranslation();
 
   if (entrees && entrees.length === 0) {
-    return <p className="text-sm text-neutral-500">{t('tickets.detail.aucuneEntree')}</p>;
+    return <EmptyState title={t('tickets.detail.aucuneEntree')} />;
   }
 
   return (
-    <ul className="space-y-2">
+    <ul className="relative space-y-3 before:absolute before:top-2 before:bottom-2 before:left-[0.5625rem] before:w-px before:bg-line">
       {(entrees ?? []).map((entree) => (
         <Entree key={`${entree.kind}-${String(entree.id)}`} entree={entree} locale={locale} />
       ))}

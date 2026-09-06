@@ -6,6 +6,20 @@ import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router';
 import { PluginSlot } from '@/components/PluginSlot';
 import { PriorityBadge, StatusBadge, TypeBadge } from '@/components/TicketBadges';
+import { IconPlus, IconRecherche } from '@/components/ui/icons';
+import {
+  Button,
+  Checkbox,
+  EmptyState,
+  Input,
+  Notice,
+  PageHeader,
+  TableWrap,
+  Tabs,
+  Td,
+  Th,
+  Tr,
+} from '@/components/ui/primitives';
 import { ApiError, api } from '@/lib/api';
 
 type Vue = 'ouverts' | 'tous' | 'corbeille';
@@ -36,162 +50,134 @@ export function TicketsPage({ session }: { session: SessionContext }) {
 
   const tickets = liste.data?.pages.flatMap((page) => page.items) ?? [];
   const dates = new Intl.DateTimeFormat(i18n.language, { dateStyle: 'short', timeStyle: 'short' });
+  const interdit = liste.error instanceof ApiError && liste.error.status === 403;
 
   return (
-    <section className="space-y-4">
-      <header className="flex flex-wrap items-start justify-between gap-3">
-        <div className="space-y-1">
-          <h2 className="text-xl font-semibold tracking-tight">{t('tickets.titre')}</h2>
-          <p className="text-sm text-neutral-500 dark:text-neutral-400">
-            {t('tickets.description')}
-          </p>
-        </div>
-
-        <div className="flex items-center gap-2">
-          <PluginSlot
-            name="entity.list.actions"
-            className="flex items-center gap-2"
-            context={{ locale: i18n.language, entity: session.entity, profile: session.profile }}
-          />
-          <Link
-            to="/tickets/new"
-            className="rounded-md bg-neutral-900 px-3 py-1.5 text-sm font-medium text-white transition hover:bg-neutral-700 dark:bg-neutral-100 dark:text-neutral-900 dark:hover:bg-neutral-300"
-          >
-            {t('creation.nouveau')}
-          </Link>
-        </div>
-      </header>
-
-      <div className="flex flex-wrap items-center gap-2">
-        <div className="flex overflow-hidden rounded-md border border-neutral-300 dark:border-neutral-700">
-          {(['ouverts', 'tous', 'corbeille'] as const).map((valeur) => (
-            <button
-              key={valeur}
-              type="button"
-              onClick={() => {
-                setVue(valeur);
-              }}
-              className={`px-3 py-1.5 text-xs transition ${
-                vue === valeur
-                  ? 'bg-neutral-900 text-white dark:bg-neutral-100 dark:text-neutral-900'
-                  : 'hover:bg-neutral-100 dark:hover:bg-neutral-800'
-              }`}
+    <section className="space-y-5">
+      <PageHeader
+        title={t('tickets.titre')}
+        description={t('tickets.description')}
+        action={
+          <>
+            <PluginSlot
+              name="entity.list.actions"
+              className="flex items-center gap-2"
+              context={{ locale: i18n.language, entity: session.entity, profile: session.profile }}
+            />
+            <Link
+              to="/tickets/new"
+              className="inline-flex h-9 items-center gap-2 rounded-lg bg-brand px-3.5 text-sm font-medium text-on-brand shadow-card transition-colors hover:bg-brand-hover"
             >
-              {t(`tickets.filtres.${valeur}`)}
-            </button>
-          ))}
-        </div>
+              <IconPlus className="size-4" />
+              {t('creation.nouveau')}
+            </Link>
+          </>
+        }
+      />
 
-        <label className="flex items-center gap-1.5 text-xs">
-          <input
-            type="checkbox"
-            checked={mine}
-            onChange={(event) => {
-              setMine(event.target.checked);
-            }}
-          />
-          {t('tickets.filtres.mesTickets')}
-        </label>
-
-        <input
-          value={recherche}
-          onChange={(event) => {
-            setRecherche(event.target.value);
-          }}
-          placeholder={t('tickets.filtres.recherche')}
-          className="ml-auto w-56 rounded-md border border-neutral-300 bg-white px-2.5 py-1.5 text-sm outline-none focus:border-neutral-900 dark:border-neutral-700 dark:bg-neutral-950 dark:focus:border-neutral-300"
+      <div className="flex flex-wrap items-center gap-3">
+        <Tabs
+          value={vue}
+          onChange={setVue}
+          options={[
+            { value: 'ouverts', label: t('tickets.filtres.ouverts') },
+            { value: 'tous', label: t('tickets.filtres.tous') },
+            { value: 'corbeille', label: t('tickets.filtres.corbeille') },
+          ]}
         />
+
+        <Checkbox
+          checked={mine}
+          onChange={(event) => {
+            setMine(event.target.checked);
+          }}
+          label={<span className="text-xs text-muted">{t('tickets.filtres.mesTickets')}</span>}
+        />
+
+        <div className="relative ml-auto w-full sm:w-64">
+          <IconRecherche className="pointer-events-none absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-faint" />
+          <Input
+            value={recherche}
+            onChange={(event) => {
+              setRecherche(event.target.value);
+            }}
+            placeholder={t('tickets.filtres.recherche')}
+            className="pl-8"
+          />
+        </div>
       </div>
 
-      {liste.error instanceof ApiError && liste.error.status === 403 && (
-        <p className="rounded-md border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-200">
-          {t('tickets.interdit')}
-        </p>
-      )}
+      {interdit && <Notice ton="attention">{t('tickets.interdit')}</Notice>}
 
-      {liste.error && !(liste.error instanceof ApiError && liste.error.status === 403) && (
-        <p className="text-sm text-red-600 dark:text-red-400">{liste.error.message}</p>
-      )}
+      {liste.error && !interdit && <Notice ton="critique">{liste.error.message}</Notice>}
 
-      {liste.isPending && <p className="text-sm text-neutral-500">{t('commun.chargement')}</p>}
+      {liste.isPending && <p className="text-sm text-muted">{t('commun.chargement')}</p>}
 
       {!liste.error && liste.data && tickets.length === 0 && (
-        <p className="text-sm text-neutral-500">{t('tickets.aucun')}</p>
+        <EmptyState title={t('tickets.aucun')} />
       )}
 
       {!liste.error && tickets.length > 0 && (
-        <div className="overflow-x-auto rounded-lg border border-neutral-200 dark:border-neutral-800">
-          <table className="w-full text-left text-sm">
-            <thead className="border-b border-neutral-200 bg-neutral-50 text-xs uppercase tracking-wide text-neutral-500 dark:border-neutral-800 dark:bg-neutral-900">
-              <tr>
-                <th className="px-3 py-2 font-medium">{t('tickets.numero')}</th>
-                <th className="px-3 py-2 font-medium">{t('tickets.statut')}</th>
-                <th className="px-3 py-2 font-medium">{t('tickets.priorite')}</th>
-                <th className="px-3 py-2 font-medium">{t('tickets.sujet')}</th>
-                <th className="px-3 py-2 font-medium">{t('tickets.demandeurs')}</th>
-                <th className="px-3 py-2 font-medium">{t('tickets.attribue')}</th>
-                <th className="px-3 py-2 font-medium">{t('tickets.entite')}</th>
-                <th className="px-3 py-2 font-medium">{t('tickets.ouvertLe')}</th>
-              </tr>
-            </thead>
-            <tbody>
-              {tickets.map((ticket) => (
-                <tr
-                  key={ticket.id}
-                  className="border-b border-neutral-100 transition last:border-0 hover:bg-neutral-50 dark:border-neutral-900 dark:hover:bg-neutral-900"
-                >
-                  <td className="px-3 py-2 tabular-nums text-neutral-500">#{ticket.id}</td>
-                  <td className="px-3 py-2">
-                    <StatusBadge status={ticket.status} />
-                  </td>
-                  <td className="px-3 py-2">
-                    <PriorityBadge value={ticket.priority} />
-                  </td>
-                  <td className="px-3 py-2">
-                    <Link
-                      to={`/tickets/${String(ticket.id)}`}
-                      className="font-medium underline-offset-2 hover:underline"
-                    >
-                      {ticket.name}
-                    </Link>
-                    <div className="flex items-center gap-2">
-                      <TypeBadge type={ticket.type} />
-                      {ticket.category && (
-                        <span className="text-xs text-neutral-500">{ticket.category.name}</span>
-                      )}
-                      {ticket.followupCount > 0 && (
-                        <span className="text-xs text-neutral-400">
-                          {ticket.followupCount} {t('tickets.suivis')}
-                        </span>
-                      )}
-                    </div>
-                  </td>
-                  <td className="px-3 py-2 text-neutral-600 dark:text-neutral-300">
-                    {ticket.requesters.join(', ') || '—'}
-                  </td>
-                  <td className="px-3 py-2 text-neutral-600 dark:text-neutral-300">
-                    {ticket.assignees.join(', ') || '—'}
-                  </td>
-                  <td className="px-3 py-2 text-neutral-500">{ticket.entity.name}</td>
-                  <td className="px-3 py-2 whitespace-nowrap text-neutral-500">
-                    {dates.format(new Date(ticket.dateOpened))}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+        <TableWrap>
+          <thead>
+            <tr>
+              <Th className="w-16">{t('tickets.numero')}</Th>
+              <Th className="w-40">{t('tickets.statut')}</Th>
+              <Th className="w-24">{t('tickets.priorite')}</Th>
+              <Th>{t('tickets.sujet')}</Th>
+              <Th>{t('tickets.demandeurs')}</Th>
+              <Th>{t('tickets.attribue')}</Th>
+              <Th>{t('tickets.entite')}</Th>
+              <Th className="whitespace-nowrap">{t('tickets.ouvertLe')}</Th>
+            </tr>
+          </thead>
+          <tbody>
+            {tickets.map((ticket) => (
+              <Tr key={ticket.id}>
+                <Td className="tabular-nums text-faint">#{ticket.id}</Td>
+                <Td>
+                  <StatusBadge status={ticket.status} />
+                </Td>
+                <Td>
+                  <PriorityBadge value={ticket.priority} />
+                </Td>
+                <Td>
+                  <Link
+                    to={`/tickets/${String(ticket.id)}`}
+                    className="font-medium text-ink underline-offset-2 hover:text-brand hover:underline"
+                  >
+                    {ticket.name}
+                  </Link>
+                  <div className="mt-0.5 flex items-center gap-2 text-xs text-faint">
+                    <TypeBadge type={ticket.type} />
+                    {ticket.category && <span>· {ticket.category.name}</span>}
+                    {ticket.followupCount > 0 && (
+                      <span>
+                        · {ticket.followupCount} {t('tickets.suivis')}
+                      </span>
+                    )}
+                  </div>
+                </Td>
+                <Td className="text-muted">{ticket.requesters.join(', ') || '—'}</Td>
+                <Td className="text-muted">{ticket.assignees.join(', ') || '—'}</Td>
+                <Td className="text-muted">{ticket.entity.name}</Td>
+                <Td className="whitespace-nowrap text-muted">
+                  {dates.format(new Date(ticket.dateOpened))}
+                </Td>
+              </Tr>
+            ))}
+          </tbody>
+        </TableWrap>
       )}
 
       {liste.hasNextPage && (
-        <button
-          type="button"
+        <Button
           onClick={() => void liste.fetchNextPage()}
           disabled={liste.isFetchingNextPage}
-          className="rounded-md border border-neutral-300 px-3 py-1.5 text-sm transition hover:bg-neutral-100 disabled:opacity-60 dark:border-neutral-700 dark:hover:bg-neutral-800"
+          className="mx-auto flex"
         >
           {liste.isFetchingNextPage ? t('commun.chargement') : t('tickets.plus')}
-        </button>
+        </Button>
       )}
     </section>
   );

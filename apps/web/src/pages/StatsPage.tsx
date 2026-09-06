@@ -3,6 +3,7 @@ import { statDimensionSchema, type StatDimension, type UpsertDashboardWidget } f
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Compteurs, Repartition, Tendance, WidgetView } from '@/components/StatsWidgets';
+import { CONTROLE, PageHeader, Tabs } from '@/components/ui/primitives';
 import { ApiError, api } from '@/lib/api';
 
 /** Bornes par défaut : les trente derniers jours, ce que la courbe couvre. */
@@ -75,42 +76,26 @@ export function StatsPage() {
     },
   });
 
-  const controle =
-    'rounded-md border border-neutral-300 bg-white px-2 py-1.5 text-sm dark:border-neutral-700 dark:bg-neutral-950';
+  const controle = CONTROLE;
 
   return (
-    <section className="space-y-4">
-      <header className="space-y-1">
-        <h2 className="text-xl font-semibold tracking-tight">{t('statistiques.titre')}</h2>
-        <p className="text-sm text-neutral-500 dark:text-neutral-400">
-          {t('statistiques.description')}
-        </p>
-      </header>
+    <section className="space-y-5">
+      <PageHeader title={t('statistiques.titre')} description={t('statistiques.description')} />
 
-      <div className="flex overflow-hidden rounded-md border border-neutral-300 dark:border-neutral-700">
-        {(['indicateurs', 'tableaux'] as const).map((valeur) => (
-          <button
-            key={valeur}
-            type="button"
-            onClick={() => {
-              setOnglet(valeur);
-            }}
-            className={`px-3 py-1.5 text-xs transition ${
-              onglet === valeur
-                ? 'bg-neutral-900 text-white dark:bg-neutral-100 dark:text-neutral-900'
-                : 'hover:bg-neutral-100 dark:hover:bg-neutral-800'
-            }`}
-          >
-            {valeur === 'indicateurs' ? t('statistiques.titre') : t('tableaux.titre')}
-          </button>
-        ))}
-      </div>
+      <Tabs
+        value={onglet}
+        onChange={setOnglet}
+        options={[
+          { value: 'indicateurs', label: t('statistiques.titre') },
+          { value: 'tableaux', label: t('tableaux.titre') },
+        ]}
+      />
 
       {onglet === 'indicateurs' && (
         <>
           <div className="flex flex-wrap items-end gap-2">
             <label className="space-y-0.5">
-              <span className="block text-xs uppercase tracking-wide text-neutral-500">
+              <span className="block text-xs uppercase tracking-wide text-muted">
                 {t('statistiques.du')}
               </span>
               <input
@@ -123,7 +108,7 @@ export function StatsPage() {
               />
             </label>
             <label className="space-y-0.5">
-              <span className="block text-xs uppercase tracking-wide text-neutral-500">
+              <span className="block text-xs uppercase tracking-wide text-muted">
                 {t('statistiques.au')}
               </span>
               <input
@@ -136,7 +121,7 @@ export function StatsPage() {
               />
             </label>
             <label className="space-y-0.5">
-              <span className="block text-xs uppercase tracking-wide text-neutral-500">
+              <span className="block text-xs uppercase tracking-wide text-muted">
                 {t('statistiques.repartition')}
               </span>
               <select
@@ -156,27 +141,27 @@ export function StatsPage() {
           </div>
 
           {rapport.error instanceof ApiError && (
-            <p className="rounded-md border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-200">
+            <p className="rounded-md border border-caution/30 bg-caution-soft p-3 text-sm text-caution-ink">
               {rapport.error.status === 403 ? t('tickets.interdit') : rapport.error.message}
             </p>
           )}
 
-          {rapport.isPending && <p className="text-sm text-neutral-500">{t('commun.chargement')}</p>}
+          {rapport.isPending && <p className="text-sm text-muted">{t('commun.chargement')}</p>}
 
           {rapport.data && (
             <>
               <Compteurs rapport={rapport.data} />
 
-              <section className="space-y-2 rounded-lg border border-neutral-200 p-4 dark:border-neutral-800">
+              <section className="space-y-2 rounded-card border border-line bg-surface p-4 shadow-card">
                 <h3 className="text-sm font-semibold">{t('statistiques.tendance')}</h3>
                 <Tendance points={tendance.data ?? []} />
               </section>
 
-              <section className="space-y-2 rounded-lg border border-neutral-200 p-4 dark:border-neutral-800">
+              <section className="space-y-2 rounded-card border border-line bg-surface p-4 shadow-card">
                 <h3 className="text-sm font-semibold">
                   {t('statistiques.repartition')} {t(`statistiques.dimensions.${dimension}`)}
                 </h3>
-                <Repartition seaux={rapport.data.buckets} />
+                <Repartition seaux={rapport.data.buckets} dimension={dimension} />
               </section>
             </>
           )}
@@ -198,7 +183,7 @@ export function StatsPage() {
             className="flex flex-wrap items-end gap-2"
           >
             <label className="space-y-0.5">
-              <span className="block text-xs uppercase tracking-wide text-neutral-500">
+              <span className="block text-xs uppercase tracking-wide text-muted">
                 {t('tableaux.nom')}
               </span>
               <input
@@ -212,31 +197,31 @@ export function StatsPage() {
             <button
               type="submit"
               disabled={creer.isPending || nouveau.trim().length === 0}
-              className="rounded-md bg-neutral-900 px-3 py-1.5 text-sm font-medium text-white transition hover:bg-neutral-700 disabled:opacity-60 dark:bg-neutral-100 dark:text-neutral-900"
+              className="rounded-md bg-brand px-3 py-1.5 text-sm font-medium text-on-brand shadow-card transition hover:bg-brand-hover disabled:opacity-50"
             >
               {t('tableaux.nouveau')}
             </button>
           </form>
 
           {creer.error && (
-            <p className="text-xs text-red-600 dark:text-red-400">{creer.error.message}</p>
+            <p className="text-xs text-critical">{creer.error.message}</p>
           )}
 
           {tableaux.data && tableaux.data.length === 0 && (
-            <p className="text-sm text-neutral-500">{t('tableaux.aucun')}</p>
+            <p className="text-sm text-muted">{t('tableaux.aucun')}</p>
           )}
 
           {(tableaux.data ?? []).map((tableau) => (
             <section
               key={tableau.id}
-              className="space-y-3 rounded-lg border border-neutral-200 p-4 dark:border-neutral-800"
+              className="space-y-3 rounded-card border border-line bg-surface p-4 shadow-card"
             >
               <header className="flex flex-wrap items-center gap-2">
                 <h3 className="text-sm font-semibold">{tableau.name}</h3>
-                <span className="rounded bg-neutral-100 px-1.5 py-0.5 text-xs dark:bg-neutral-800">
+                <span className="rounded bg-sunken px-1.5 py-0.5 text-xs">
                   {tableau.isPublic ? t('tableaux.public') : t('tableaux.personnel')}
                 </span>
-                <span className="text-xs text-neutral-500">{tableau.entityName}</span>
+                <span className="text-xs text-muted">{tableau.entityName}</span>
 
                 {tableau.isMine && (
                   <button
@@ -244,7 +229,7 @@ export function StatsPage() {
                     onClick={() => {
                       supprimer.mutate(tableau.id);
                     }}
-                    className="ml-auto text-xs text-neutral-500 underline-offset-2 hover:underline"
+                    className="ml-auto text-xs text-muted underline-offset-2 hover:underline"
                   >
                     {t('tableaux.supprimer')}
                   </button>
@@ -261,9 +246,9 @@ export function StatsPage() {
                     <div
                       key={widget.id}
                       style={{ gridColumn: `span ${String(widget.width)} / span ${String(widget.width)}` }}
-                      className="space-y-2 rounded-lg border border-neutral-200 p-3 dark:border-neutral-800"
+                      className="space-y-2 rounded-card border border-line bg-surface p-3 shadow-card"
                     >
-                      <h4 className="text-xs font-semibold uppercase tracking-wide text-neutral-500">
+                      <h4 className="text-xs font-semibold uppercase tracking-wide text-muted">
                         {widget.title || declaration?.label || widget.kind}
                       </h4>
                       <WidgetView kind={widget.kind} config={widget.config} filtre={filtre} />

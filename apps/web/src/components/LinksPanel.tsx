@@ -62,18 +62,18 @@ export function LinksPanel({ type, id }: { type: ItilType; id: number }) {
   });
 
   return (
-    <section className="space-y-3 rounded-lg border border-neutral-200 p-4 dark:border-neutral-800">
+    <section className="space-y-3 rounded-card border border-line bg-surface p-4 shadow-card">
       <h3 className="text-sm font-semibold">{t('itil.liens.titre')}</h3>
 
       {liens.data && liens.data.length === 0 && (
-        <p className="text-sm text-neutral-500">{t('itil.liens.aucun')}</p>
+        <p className="text-sm text-muted">{t('itil.liens.aucun')}</p>
       )}
 
       <ul className="space-y-1 text-sm">
         {(liens.data ?? []).map((lien) => (
           <li key={lien.id} className="flex flex-wrap items-baseline gap-x-2">
-            <span className="text-xs text-neutral-500">{t(`itil.natures.${lien.linkType}`)}</span>
-            <span className="rounded bg-neutral-100 px-1.5 py-0.5 text-xs dark:bg-neutral-800">
+            <span className="text-xs text-muted">{t(`itil.natures.${lien.linkType}`)}</span>
+            <span className="rounded bg-sunken px-1.5 py-0.5 text-xs">
               {t(`itil.objets.${lien.targetType}`)}
             </span>
             <Link
@@ -82,7 +82,7 @@ export function LinksPanel({ type, id }: { type: ItilType; id: number }) {
             >
               #{lien.targetId} {lien.targetName}
             </Link>
-            <span className="text-xs text-neutral-500">
+            <span className="text-xs text-muted">
               {t(`tickets.statuts.${lien.targetStatus}`)}
             </span>
             <button
@@ -90,7 +90,7 @@ export function LinksPanel({ type, id }: { type: ItilType; id: number }) {
               onClick={() => {
                 delier.mutate(lien.id);
               }}
-              className="ml-auto text-xs text-neutral-500 underline-offset-2 hover:underline"
+              className="ml-auto text-xs text-muted underline-offset-2 hover:underline"
             >
               {t('itil.liens.retirer')}
             </button>
@@ -103,10 +103,10 @@ export function LinksPanel({ type, id }: { type: ItilType; id: number }) {
           event.preventDefault();
           if (Number(cibleId) > 0) lier.mutate();
         }}
-        className="flex flex-wrap items-end gap-2 border-t border-neutral-100 pt-3 dark:border-neutral-900"
+        className="flex flex-wrap items-end gap-2 border-t border-line pt-3"
       >
         <label className="space-y-0.5">
-          <span className="block text-xs uppercase tracking-wide text-neutral-500">
+          <span className="block text-xs uppercase tracking-wide text-muted">
             {t('itil.liens.type')}
           </span>
           <select
@@ -114,7 +114,7 @@ export function LinksPanel({ type, id }: { type: ItilType; id: number }) {
             onChange={(event) => {
               setNature(itilLinkTypeSchema.parse(event.target.value));
             }}
-            className="rounded-md border border-neutral-300 bg-white px-2 py-1.5 text-sm dark:border-neutral-700 dark:bg-neutral-950"
+            className="rounded-lg border border-line bg-surface px-2 py-1.5 text-sm"
           >
             {itilLinkTypeSchema.options.map((valeur) => (
               <option key={valeur} value={valeur}>
@@ -125,7 +125,7 @@ export function LinksPanel({ type, id }: { type: ItilType; id: number }) {
         </label>
 
         <label className="space-y-0.5">
-          <span className="block text-xs uppercase tracking-wide text-neutral-500">
+          <span className="block text-xs uppercase tracking-wide text-muted">
             {t('itil.liens.cible')}
           </span>
           <select
@@ -133,7 +133,7 @@ export function LinksPanel({ type, id }: { type: ItilType; id: number }) {
             onChange={(event) => {
               setCibleType(itilTypeSchema.parse(event.target.value));
             }}
-            className="rounded-md border border-neutral-300 bg-white px-2 py-1.5 text-sm dark:border-neutral-700 dark:bg-neutral-950"
+            className="rounded-lg border border-line bg-surface px-2 py-1.5 text-sm"
           >
             {itilTypeSchema.options.map((valeur) => (
               <option key={valeur} value={valeur}>
@@ -144,7 +144,7 @@ export function LinksPanel({ type, id }: { type: ItilType; id: number }) {
         </label>
 
         <label className="space-y-0.5">
-          <span className="block text-xs uppercase tracking-wide text-neutral-500">
+          <span className="block text-xs uppercase tracking-wide text-muted">
             {t('itil.liens.identifiant')}
           </span>
           <input
@@ -153,29 +153,29 @@ export function LinksPanel({ type, id }: { type: ItilType; id: number }) {
               setCibleId(event.target.value.replaceAll(/\D/g, ''));
             }}
             inputMode="numeric"
-            className="w-24 rounded-md border border-neutral-300 bg-white px-2 py-1.5 text-sm dark:border-neutral-700 dark:bg-neutral-950"
+            className="w-24 rounded-lg border border-line bg-surface px-2 py-1.5 text-sm"
           />
         </label>
 
         <button
           type="submit"
           disabled={lier.isPending || Number(cibleId) <= 0}
-          className="rounded-md border border-neutral-300 px-3 py-1.5 text-sm transition hover:bg-neutral-100 disabled:opacity-60 dark:border-neutral-700 dark:hover:bg-neutral-800"
+          className="rounded-lg border border-line px-3 py-1.5 text-sm transition hover:bg-sunken disabled:opacity-60"
         >
           {t('itil.liens.ajouter')}
         </button>
       </form>
 
-      {lier.error && <p className="text-xs text-red-600 dark:text-red-400">{lier.error.message}</p>}
+      {lier.error && <p className="text-xs text-critical">{lier.error.message}</p>}
       {delier.error && (
-        <p className="text-xs text-red-600 dark:text-red-400">{delier.error.message}</p>
+        <p className="text-xs text-critical">{delier.error.message}</p>
       )}
 
-      <div className="space-y-2 border-t border-neutral-100 pt-3 dark:border-neutral-900">
-        <h4 className="text-xs uppercase tracking-wide text-neutral-500">
+      <div className="space-y-2 border-t border-line pt-3">
+        <h4 className="text-xs uppercase tracking-wide text-muted">
           {t('itil.promotion.titre')}
         </h4>
-        <p className="text-xs text-neutral-500">{t('itil.promotion.explication')}</p>
+        <p className="text-xs text-muted">{t('itil.promotion.explication')}</p>
 
         <div className="flex flex-wrap gap-2">
           {type !== 'problem' && (
@@ -185,7 +185,7 @@ export function LinksPanel({ type, id }: { type: ItilType; id: number }) {
               onClick={() => {
                 promouvoir.mutate('problem');
               }}
-              className="rounded-md border border-neutral-300 px-3 py-1.5 text-sm transition hover:bg-neutral-100 disabled:opacity-60 dark:border-neutral-700 dark:hover:bg-neutral-800"
+              className="rounded-lg border border-line px-3 py-1.5 text-sm transition hover:bg-sunken disabled:opacity-60"
             >
               {t('itil.promotion.versProbleme')}
             </button>
@@ -197,7 +197,7 @@ export function LinksPanel({ type, id }: { type: ItilType; id: number }) {
               onClick={() => {
                 promouvoir.mutate('change');
               }}
-              className="rounded-md border border-neutral-300 px-3 py-1.5 text-sm transition hover:bg-neutral-100 disabled:opacity-60 dark:border-neutral-700 dark:hover:bg-neutral-800"
+              className="rounded-lg border border-line px-3 py-1.5 text-sm transition hover:bg-sunken disabled:opacity-60"
             >
               {t('itil.promotion.versChangement')}
             </button>
@@ -205,7 +205,7 @@ export function LinksPanel({ type, id }: { type: ItilType; id: number }) {
         </div>
 
         {promouvoir.error && (
-          <p className="text-xs text-red-600 dark:text-red-400">{promouvoir.error.message}</p>
+          <p className="text-xs text-critical">{promouvoir.error.message}</p>
         )}
       </div>
     </section>

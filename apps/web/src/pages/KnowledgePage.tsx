@@ -3,12 +3,11 @@ import type { KbArticle, SessionContext, UpsertKbArticle } from '@tick/contracts
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ApiError, api } from '@/lib/api';
+import { BOUTON, BOUTON_PRIMAIRE } from '@/components/ui/primitives';
 
 const champ =
-  'w-full rounded-md border border-neutral-300 bg-white px-2 py-1 text-sm dark:border-neutral-700 dark:bg-neutral-950';
-const bouton =
-  'rounded-md border border-neutral-300 px-2.5 py-1 text-sm transition hover:bg-neutral-100 dark:border-neutral-700 dark:hover:bg-neutral-800';
-const carte = 'rounded-lg border border-neutral-200 p-4 dark:border-neutral-800';
+  'w-full rounded-lg border border-line bg-surface px-2 py-1 text-sm';
+const carte = 'rounded-card border border-line bg-surface p-4 shadow-card';
 
 function articleVide(): UpsertKbArticle {
   return {
@@ -116,7 +115,7 @@ export function KnowledgePage({ session }: { session: SessionContext }) {
 
   if (articles.error instanceof ApiError && articles.error.status === 403) {
     return (
-      <p className="rounded-md border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-200">
+      <p className="rounded-md border border-caution/30 bg-caution-soft p-3 text-sm text-caution-ink">
         {t('entites.interdit')}
       </p>
     );
@@ -143,7 +142,7 @@ export function KnowledgePage({ session }: { session: SessionContext }) {
         {peutEcrire && (
           <button
             type="button"
-            className={bouton}
+            className={BOUTON_PRIMAIRE}
             onClick={() => {
               setEdite({ valeurs: articleVide() });
               setOuvert(null);
@@ -154,7 +153,7 @@ export function KnowledgePage({ session }: { session: SessionContext }) {
         )}
       </header>
 
-      {erreur && <p className="text-sm text-red-600 dark:text-red-400">{erreur}</p>}
+      {erreur && <p className="text-sm text-critical">{erreur}</p>}
 
       <div className="flex flex-wrap items-center gap-2">
         <input
@@ -196,7 +195,7 @@ export function KnowledgePage({ session }: { session: SessionContext }) {
       <div className="grid gap-4 lg:grid-cols-[22rem_1fr]">
         <ul className="space-y-2">
           {articles.data?.length === 0 && (
-            <li className="text-sm text-neutral-500">{t('connaissance.aucun')}</li>
+            <li className="text-sm text-muted">{t('connaissance.aucun')}</li>
           )}
 
           {articles.data?.map((resume) => (
@@ -207,16 +206,16 @@ export function KnowledgePage({ session }: { session: SessionContext }) {
                   setOuvert(resume.id);
                   setEdite(null);
                 }}
-                className={`${carte} w-full text-left transition hover:bg-neutral-50 dark:hover:bg-neutral-900 ${
-                  ouvert === resume.id ? 'border-neutral-900 dark:border-neutral-100' : ''
+                className={`${carte} w-full text-left transition hover:bg-sunken ${
+                  ouvert === resume.id ? 'border-brand' : ''
                 }`}
               >
                 <p className="font-medium">
                   {resume.isFavorite && <span className="mr-1">★</span>}
                   {resume.name}
                 </p>
-                <p className="mt-1 text-xs text-neutral-500">{resume.excerpt}</p>
-                <p className="mt-1 text-xs text-neutral-500">
+                <p className="mt-1 text-xs text-muted">{resume.excerpt}</p>
+                <p className="mt-1 text-xs text-muted">
                   {resume.categoryName ?? '—'}
                   {resume.isFaq ? ` · ${t('connaissance.faq')}` : ''}
                   {!resume.isPublished ? ` · ${t('connaissance.brouillon')}` : ''} ·{' '}
@@ -309,18 +308,18 @@ export function KnowledgePage({ session }: { session: SessionContext }) {
               </div>
 
               {edite.valeurs.isFaq && (
-                <p className="rounded-md border border-amber-300 bg-amber-50 p-2 text-xs text-amber-900 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-200">
+                <p className="rounded-md border border-caution/30 bg-caution-soft p-2 text-xs text-caution-ink">
                   {t('connaissance.faqAide')}
                 </p>
               )}
 
               <div className="flex gap-2">
-                <button type="submit" className={bouton}>
+                <button type="submit" className={BOUTON}>
                   {t('commun.enregistrer')}
                 </button>
                 <button
                   type="button"
-                  className={bouton}
+                  className={BOUTON}
                   onClick={() => {
                     setEdite(null);
                   }}
@@ -336,7 +335,7 @@ export function KnowledgePage({ session }: { session: SessionContext }) {
               <header className="flex flex-wrap items-start justify-between gap-2">
                 <div>
                   <h3 className="text-lg font-semibold tracking-tight">{article.data.name}</h3>
-                  <p className="text-xs text-neutral-500">
+                  <p className="text-xs text-muted">
                     {article.data.categoryName ?? '—'} · {t('connaissance.version')}{' '}
                     {String(article.data.version)} · {article.data.author ?? '—'} ·{' '}
                     {String(article.data.viewCount)} {t('connaissance.vues')}
@@ -346,7 +345,7 @@ export function KnowledgePage({ session }: { session: SessionContext }) {
                 <div className="flex gap-1">
                   <button
                     type="button"
-                    className={bouton}
+                    className={BOUTON}
                     onClick={() => {
                       basculerFavori.mutate(article.data.id);
                     }}
@@ -359,7 +358,7 @@ export function KnowledgePage({ session }: { session: SessionContext }) {
                     <>
                       <button
                         type="button"
-                        className={bouton}
+                        className={BOUTON}
                         onClick={() => {
                           setEdite({ id: article.data.id, valeurs: versFormulaire(article.data) });
                         }}
@@ -368,7 +367,7 @@ export function KnowledgePage({ session }: { session: SessionContext }) {
                       </button>
                       <button
                         type="button"
-                        className={bouton}
+                        className={BOUTON}
                         onClick={() => {
                           supprimer.mutate(article.data.id);
                         }}
@@ -383,7 +382,7 @@ export function KnowledgePage({ session }: { session: SessionContext }) {
               <div className="whitespace-pre-wrap text-sm">{article.data.content}</div>
 
               {revisions.data && revisions.data.length > 0 && (
-                <details className="text-xs text-neutral-500">
+                <details className="text-xs text-muted">
                   <summary className="cursor-pointer">
                     {t('connaissance.historique')} ({String(revisions.data.length)})
                   </summary>
@@ -401,7 +400,7 @@ export function KnowledgePage({ session }: { session: SessionContext }) {
           )}
 
           {!edite && !article.data && (
-            <p className="text-sm text-neutral-500">{t('connaissance.choisir')}</p>
+            <p className="text-sm text-muted">{t('connaissance.choisir')}</p>
           )}
         </div>
       </div>

@@ -45,11 +45,11 @@ export function Attachments({ itemType, itemId }: { itemType: string; itemId: nu
   });
 
   return (
-    <section className="space-y-2 rounded-lg border border-neutral-200 p-4 dark:border-neutral-800">
+    <section className="space-y-2 rounded-card border border-line bg-surface p-4 shadow-card">
       <h3 className="text-sm font-semibold">{t('pieces.titre')}</h3>
 
       {pieces.data && pieces.data.length === 0 && (
-        <p className="text-sm text-neutral-500">{t('pieces.aucune')}</p>
+        <p className="text-sm text-muted">{t('pieces.aucune')}</p>
       )}
 
       <ul className="space-y-1">
@@ -61,7 +61,7 @@ export function Attachments({ itemType, itemId }: { itemType: string; itemId: nu
             >
               {piece.name}
             </a>
-            <span className="text-xs text-neutral-500">
+            <span className="text-xs text-muted">
               {taille(piece.size)}
               {piece.uploadedBy ? ` · ${piece.uploadedBy}` : ''}
             </span>
@@ -70,7 +70,7 @@ export function Attachments({ itemType, itemId }: { itemType: string; itemId: nu
               onClick={() => {
                 retirer.mutate(piece.id);
               }}
-              className="ml-auto text-xs text-neutral-400 hover:text-red-600"
+              className="ml-auto text-xs text-faint hover:text-critical"
               title={t('pieces.supprimer')}
             >
               ×
@@ -88,15 +88,15 @@ export function Attachments({ itemType, itemId }: { itemType: string; itemId: nu
 
             if (fichier) envoyer.mutate(fichier);
           }}
-          className="text-xs file:mr-2 file:rounded-md file:border file:border-neutral-300 file:bg-transparent file:px-2 file:py-1 file:text-xs dark:file:border-neutral-700"
+          className="text-xs file:mr-2 file:rounded-md file:border file:border-line file:bg-transparent file:px-2 file:py-1 file:text-xs"
         />
         {envoyer.isPending && (
-          <span className="text-xs text-neutral-500">{t('commun.chargement')}</span>
+          <span className="text-xs text-muted">{t('commun.chargement')}</span>
         )}
       </div>
 
       {envoyer.error && (
-        <p className="text-xs text-red-600 dark:text-red-400">{envoyer.error.message}</p>
+        <p className="text-xs text-critical">{envoyer.error.message}</p>
       )}
     </section>
   );

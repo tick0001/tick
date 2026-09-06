@@ -32,7 +32,7 @@ const CHAMPS: Record<ItilKind, readonly ChampExtra[]> = {
 function Champ({ libelle, children }: { libelle: string; children: React.ReactNode }) {
   return (
     <div className="space-y-0.5">
-      <dt className="text-xs uppercase tracking-wide text-neutral-500">{libelle}</dt>
+      <dt className="text-xs uppercase tracking-wide text-muted">{libelle}</dt>
       <dd className="text-sm">{children}</dd>
     </div>
   );
@@ -78,13 +78,13 @@ export function ItilObjectPage({ kind }: { kind: ItilKind }) {
 
   if (objet.error instanceof ApiError) {
     return (
-      <p className="rounded-md border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-200">
+      <p className="rounded-md border border-caution/30 bg-caution-soft p-3 text-sm text-caution-ink">
         {objet.error.status === 403 ? t('tickets.interdit') : objet.error.message}
       </p>
     );
   }
 
-  if (!objet.data) return <p className="text-sm text-neutral-500">{t('commun.chargement')}</p>;
+  if (!objet.data) return <p className="text-sm text-muted">{t('commun.chargement')}</p>;
 
   const detail = objet.data;
   const section = kind === 'problem' ? 'problemes' : 'changements';
@@ -100,7 +100,7 @@ export function ItilObjectPage({ kind }: { kind: ItilKind }) {
       <div>
         <Link
           to={`/itil/${kind === 'problem' ? 'problems' : 'changes'}`}
-          className="text-xs text-neutral-500 underline-offset-2 hover:underline"
+          className="text-xs text-muted underline-offset-2 hover:underline"
         >
           ← {t(`itil.${section}.titre`)}
         </Link>
@@ -108,10 +108,10 @@ export function ItilObjectPage({ kind }: { kind: ItilKind }) {
 
       <header className="space-y-2">
         <div className="flex flex-wrap items-center gap-2">
-          <span className="text-sm tabular-nums text-neutral-500">#{detail.id}</span>
+          <span className="text-sm tabular-nums text-muted">#{detail.id}</span>
           <StatusBadge status={detail.status} />
           <PriorityBadge value={detail.priority} />
-          <span className="rounded bg-neutral-100 px-1.5 py-0.5 text-xs dark:bg-neutral-800">
+          <span className="rounded bg-sunken px-1.5 py-0.5 text-xs">
             {t(`itil.objets.${kind}`)}
           </span>
         </div>
@@ -120,30 +120,30 @@ export function ItilObjectPage({ kind }: { kind: ItilKind }) {
 
       <div className="grid gap-5 lg:grid-cols-[1fr_20rem]">
         <div className="space-y-5">
-          <article className="whitespace-pre-wrap rounded-lg border border-neutral-200 p-4 text-sm dark:border-neutral-800">
+          <article className="whitespace-pre-wrap rounded-card border border-line bg-surface p-4 shadow-card text-sm">
             {detail.content || '—'}
           </article>
 
           {CHAMPS[kind].map((champ) => (
             <section
               key={champ}
-              className="space-y-1 rounded-lg border border-neutral-200 p-4 dark:border-neutral-800"
+              className="space-y-1 rounded-card border border-line bg-surface p-4 shadow-card"
             >
               <h3 className="text-sm font-semibold">{t(`itil.champs.${champ}`)}</h3>
-              <p className="whitespace-pre-wrap text-sm text-neutral-600 dark:text-neutral-300">
+              <p className="whitespace-pre-wrap text-sm text-muted">
                 {detail[champ] || '—'}
               </p>
             </section>
           ))}
 
           {kind === 'change' && detail.checklist.length > 0 && (
-            <section className="space-y-1 rounded-lg border border-neutral-200 p-4 dark:border-neutral-800">
+            <section className="space-y-1 rounded-card border border-line bg-surface p-4 shadow-card">
               <h3 className="text-sm font-semibold">{t('itil.champs.checklist')}</h3>
               <ul className="space-y-1 text-sm">
                 {detail.checklist.map((ligne) => (
                   <li key={ligne.label} className="flex items-center gap-2">
                     <input type="checkbox" checked={ligne.done} readOnly />
-                    <span className={ligne.done ? 'text-neutral-400 line-through' : ''}>
+                    <span className={ligne.done ? 'text-faint line-through' : ''}>
                       {ligne.label}
                     </span>
                   </li>
@@ -161,7 +161,7 @@ export function ItilObjectPage({ kind }: { kind: ItilKind }) {
 
           <form
             onSubmit={soumettre}
-            className="space-y-2 rounded-lg border border-neutral-200 p-4 dark:border-neutral-800"
+            className="space-y-2 rounded-card border border-line bg-surface p-4 shadow-card"
           >
             <h3 className="text-sm font-semibold">{t('tickets.detail.ajouterSuivi')}</h3>
             <textarea
@@ -171,7 +171,7 @@ export function ItilObjectPage({ kind }: { kind: ItilKind }) {
               }}
               rows={3}
               placeholder={t('tickets.detail.suiviPlaceholder')}
-              className="w-full rounded-md border border-neutral-300 bg-white px-3 py-2 text-sm outline-none focus:border-neutral-900 dark:border-neutral-700 dark:bg-neutral-950 dark:focus:border-neutral-300"
+              className="w-full rounded-lg border border-line bg-surface px-3 py-2 text-sm focus:border-brand"
             />
             <div className="flex flex-wrap items-center gap-3">
               <label className="flex items-center gap-1.5 text-xs">
@@ -187,18 +187,18 @@ export function ItilObjectPage({ kind }: { kind: ItilKind }) {
               <button
                 type="submit"
                 disabled={publier.isPending || suivi.trim().length === 0}
-                className="ml-auto rounded-md bg-neutral-900 px-3 py-1.5 text-sm font-medium text-white transition hover:bg-neutral-700 disabled:opacity-60 dark:bg-neutral-100 dark:text-neutral-900 dark:hover:bg-neutral-300"
+                className="ml-auto rounded-md bg-brand px-3 py-1.5 text-sm font-medium text-on-brand shadow-card transition hover:bg-brand-hover disabled:opacity-50"
               >
                 {t('tickets.detail.envoyer')}
               </button>
             </div>
             {publier.error && (
-              <p className="text-xs text-red-600 dark:text-red-400">{publier.error.message}</p>
+              <p className="text-xs text-critical">{publier.error.message}</p>
             )}
           </form>
         </div>
 
-        <aside className="space-y-4 rounded-lg border border-neutral-200 p-4 dark:border-neutral-800">
+        <aside className="space-y-4 rounded-card border border-line bg-surface p-4 shadow-card">
           <dl className="space-y-3">
             <Champ libelle={t('tickets.entite')}>{detail.entityName}</Champ>
             <Champ libelle={t('tickets.categorie')}>{detail.categoryName ?? '—'}</Champ>
@@ -219,16 +219,16 @@ export function ItilObjectPage({ kind }: { kind: ItilKind }) {
           </dl>
 
           <div className="space-y-1">
-            <h3 className="text-xs uppercase tracking-wide text-neutral-500">
+            <h3 className="text-xs uppercase tracking-wide text-muted">
               {t('tickets.detail.acteurs')}
             </h3>
             <ul className="space-y-1 text-sm">
               <li>
-                <span className="text-neutral-500">{t('tickets.roles.requester')} : </span>
+                <span className="text-muted">{t('tickets.roles.requester')} : </span>
                 {detail.requesters.join(', ') || '—'}
               </li>
               <li>
-                <span className="text-neutral-500">{t('tickets.roles.assigned')} : </span>
+                <span className="text-muted">{t('tickets.roles.assigned')} : </span>
                 {detail.assignees.join(', ') || '—'}
               </li>
             </ul>

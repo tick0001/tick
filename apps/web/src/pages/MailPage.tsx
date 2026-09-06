@@ -3,14 +3,13 @@ import type { MailAfterRead, MailCollector, UpsertMailCollector } from '@tick/co
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ApiError, api } from '@/lib/api';
+import { BOUTON, BOUTON_PRIMAIRE } from '@/components/ui/primitives';
 
 const APRES_LECTURE: MailAfterRead[] = ['flag', 'move', 'delete'];
 
 const champ =
-  'w-full rounded-md border border-neutral-300 bg-white px-2 py-1 text-sm dark:border-neutral-700 dark:bg-neutral-950';
-const bouton =
-  'rounded-md border border-neutral-300 px-2.5 py-1 text-sm transition hover:bg-neutral-100 dark:border-neutral-700 dark:hover:bg-neutral-800';
-const carte = 'rounded-lg border border-neutral-200 p-4 dark:border-neutral-800';
+  'w-full rounded-lg border border-line bg-surface px-2 py-1 text-sm';
+const carte = 'rounded-card border border-line bg-surface p-4 shadow-card';
 
 function collecteurVide(profileId: number): UpsertMailCollector {
   return {
@@ -115,7 +114,7 @@ export function MailPage() {
 
   if (collecteurs.error instanceof ApiError && collecteurs.error.status === 403) {
     return (
-      <p className="rounded-md border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-200">
+      <p className="rounded-md border border-caution/30 bg-caution-soft p-3 text-sm text-caution-ink">
         {t('entites.interdit')}
       </p>
     );
@@ -133,7 +132,7 @@ export function MailPage() {
         <h2 className="text-xl font-semibold tracking-tight">{t('courriel.titre')}</h2>
         <button
           type="button"
-          className={bouton}
+          className={BOUTON_PRIMAIRE}
           onClick={() => {
             setEdite({ valeurs: collecteurVide(collecteurs.data?.[0]?.profileId ?? 1) });
           }}
@@ -142,10 +141,10 @@ export function MailPage() {
         </button>
       </header>
 
-      {erreur && <p className="text-sm text-red-600 dark:text-red-400">{erreur}</p>}
+      {erreur && <p className="text-sm text-critical">{erreur}</p>}
 
       {collecteurs.data?.length === 0 && (
-        <p className="text-sm text-neutral-500">{t('courriel.aucun')}</p>
+        <p className="text-sm text-muted">{t('courriel.aucun')}</p>
       )}
 
       <div className="grid gap-2 md:grid-cols-2">
@@ -156,30 +155,30 @@ export function MailPage() {
                 <p className="font-medium">
                   {collecteur.name}
                   {!collecteur.isActive && (
-                    <span className="ml-2 text-xs text-neutral-500">
+                    <span className="ml-2 text-xs text-muted">
                       ({t('notifications.etats.cancelled')})
                     </span>
                   )}
                 </p>
-                <p className="text-xs text-neutral-500">
+                <p className="text-xs text-muted">
                   {collecteur.login} · {collecteur.host}:{String(collecteur.port)} ·{' '}
                   {collecteur.folder} · {collecteur.entityName}
                 </p>
                 {collecteur.lastRunAt && (
-                  <p className="text-xs text-neutral-500">
+                  <p className="text-xs text-muted">
                     {t('courriel.derniereReleve')} :{' '}
                     {new Date(collecteur.lastRunAt).toLocaleString()}
                   </p>
                 )}
                 {collecteur.lastError && (
-                  <p className="text-xs text-red-600 dark:text-red-400">{collecteur.lastError}</p>
+                  <p className="text-xs text-critical">{collecteur.lastError}</p>
                 )}
               </div>
 
               <div className="flex flex-wrap justify-end gap-1">
                 <button
                   type="button"
-                  className={bouton}
+                  className={BOUTON}
                   onClick={() => {
                     relever.mutate(collecteur.id);
                   }}
@@ -191,7 +190,7 @@ export function MailPage() {
                 </button>
                 <button
                   type="button"
-                  className={bouton}
+                  className={BOUTON}
                   onClick={() => {
                     setJournal(journal === collecteur.id ? null : collecteur.id);
                   }}
@@ -200,7 +199,7 @@ export function MailPage() {
                 </button>
                 <button
                   type="button"
-                  className={bouton}
+                  className={BOUTON}
                   onClick={() => {
                     setEdite({ id: collecteur.id, valeurs: versFormulaire(collecteur) });
                   }}
@@ -209,7 +208,7 @@ export function MailPage() {
                 </button>
                 <button
                   type="button"
-                  className={bouton}
+                  className={BOUTON}
                   onClick={() => {
                     supprimer.mutate(collecteur.id);
                   }}
@@ -232,7 +231,7 @@ export function MailPage() {
         >
           <div className="grid gap-3 md:grid-cols-4">
             <label className="space-y-1 md:col-span-2">
-              <span className="text-xs text-neutral-500">{t('courriel.nom')}</span>
+              <span className="text-xs text-muted">{t('courriel.nom')}</span>
               <input
                 className={champ}
                 required
@@ -244,7 +243,7 @@ export function MailPage() {
             </label>
 
             <label className="space-y-1">
-              <span className="text-xs text-neutral-500">{t('courriel.hote')}</span>
+              <span className="text-xs text-muted">{t('courriel.hote')}</span>
               <input
                 className={champ}
                 required
@@ -256,7 +255,7 @@ export function MailPage() {
             </label>
 
             <label className="space-y-1">
-              <span className="text-xs text-neutral-500">{t('courriel.port')}</span>
+              <span className="text-xs text-muted">{t('courriel.port')}</span>
               <input
                 type="number"
                 className={champ}
@@ -268,7 +267,7 @@ export function MailPage() {
             </label>
 
             <label className="space-y-1 md:col-span-2">
-              <span className="text-xs text-neutral-500">{t('courriel.identifiant')}</span>
+              <span className="text-xs text-muted">{t('courriel.identifiant')}</span>
               <input
                 className={champ}
                 required
@@ -280,7 +279,7 @@ export function MailPage() {
             </label>
 
             <label className="space-y-1 md:col-span-2">
-              <span className="text-xs text-neutral-500">{t('courriel.motDePasse')}</span>
+              <span className="text-xs text-muted">{t('courriel.motDePasse')}</span>
               <input
                 type="password"
                 className={champ}
@@ -293,7 +292,7 @@ export function MailPage() {
             </label>
 
             <label className="space-y-1">
-              <span className="text-xs text-neutral-500">{t('courriel.dossier')}</span>
+              <span className="text-xs text-muted">{t('courriel.dossier')}</span>
               <input
                 className={champ}
                 required
@@ -305,7 +304,7 @@ export function MailPage() {
             </label>
 
             <label className="space-y-1">
-              <span className="text-xs text-neutral-500">{t('courriel.apresLecture')}</span>
+              <span className="text-xs text-muted">{t('courriel.apresLecture')}</span>
               <select
                 className={champ}
                 value={edite.valeurs.afterRead}
@@ -323,7 +322,7 @@ export function MailPage() {
 
             {edite.valeurs.afterRead === 'move' && (
               <label className="space-y-1">
-                <span className="text-xs text-neutral-500">{t('courriel.dossierCible')}</span>
+                <span className="text-xs text-muted">{t('courriel.dossierCible')}</span>
                 <input
                   className={champ}
                   required
@@ -336,7 +335,7 @@ export function MailPage() {
             )}
 
             <label className="space-y-1">
-              <span className="text-xs text-neutral-500">{t('courriel.profil')}</span>
+              <span className="text-xs text-muted">{t('courriel.profil')}</span>
               <input
                 type="number"
                 className={champ}
@@ -383,12 +382,12 @@ export function MailPage() {
           </div>
 
           <div className="flex gap-2">
-            <button type="submit" className={bouton}>
+            <button type="submit" className={BOUTON}>
               {t('commun.enregistrer')}
             </button>
             <button
               type="button"
-              className={bouton}
+              className={BOUTON}
               onClick={() => {
                 setEdite(null);
               }}
@@ -404,13 +403,13 @@ export function MailPage() {
           <h3 className="text-sm font-semibold">{t('courriel.journal')}</h3>
 
           {logs.data?.length === 0 && (
-            <p className="text-sm text-neutral-500">{t('courriel.journalVide')}</p>
+            <p className="text-sm text-muted">{t('courriel.journalVide')}</p>
           )}
 
           {logs.data && logs.data.length > 0 && (
-            <div className="overflow-x-auto rounded-lg border border-neutral-200 dark:border-neutral-800">
+            <div className="overflow-x-auto rounded-card border border-line">
               <table className="w-full text-left text-sm">
-                <thead className="border-b border-neutral-200 bg-neutral-50 dark:border-neutral-800 dark:bg-neutral-900">
+                <thead className="border-b border-line bg-sunken bg-surface">
                   <tr>
                     <th className="px-3 py-2 font-medium">{t('courriel.action')}</th>
                     <th className="px-3 py-2 font-medium">{t('courriel.expediteur')}</th>
@@ -423,20 +422,20 @@ export function MailPage() {
                   {logs.data.map((ligne) => (
                     <tr
                       key={ligne.id}
-                      className="border-b border-neutral-100 last:border-0 dark:border-neutral-900"
+                      className="border-b border-line last:border-0"
                     >
                       <td className="px-3 py-2">{t(`courriel.resultats.${ligne.action}`)}</td>
                       <td className="px-3 py-2">{ligne.sender ?? '—'}</td>
                       <td className="px-3 py-2">
                         {ligne.subject ?? '—'}
                         {ligne.detail && (
-                          <span className="block text-xs text-neutral-500">{ligne.detail}</span>
+                          <span className="block text-xs text-muted">{ligne.detail}</span>
                         )}
                       </td>
                       <td className="px-3 py-2 tabular-nums">
                         {ligne.ticketId ? `#${String(ligne.ticketId)}` : '—'}
                       </td>
-                      <td className="px-3 py-2 text-xs text-neutral-500">
+                      <td className="px-3 py-2 text-xs text-muted">
                         {new Date(ligne.createdAt).toLocaleString()}
                       </td>
                     </tr>

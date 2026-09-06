@@ -20,6 +20,9 @@ export const en: Traductions = {
   },
   connexion: {
     titre: 'Sign in',
+    accroche: 'Run your service desk — don’t just react to it.',
+    accrocheDetail:
+      'Incidents, problems, changes and service targets in a single tool, across your whole organisation.',
     sousTitre: 'ITSM ticketing tool',
     identifiant: 'Username',
     motDePasse: 'Password',
@@ -721,8 +724,22 @@ export const en: Traductions = {
       delete: 'Move to trash',
     },
   },
+  apparence: {
+    clair: 'Light theme',
+    sombre: 'Dark theme',
+    systeme: 'Follow system',
+    langue: 'Interface language',
+  },
   navigation: {
     accueil: 'Home',
+    ouvrirMenu: 'Open menu',
+    fermerMenu: 'Close menu',
+    groupes: {
+      travail: 'Work',
+      services: 'Services',
+      analyse: 'Analysis',
+      configuration: 'Configuration',
+    },
     assistance: 'Helpdesk',
     tickets: 'Tickets',
     problemes: 'Problems',

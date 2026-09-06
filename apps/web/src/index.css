@@ -1,6 +1,15 @@
 @import 'tailwindcss';
 
 /**
+ * Sources supplementaires a scanner.
+ *
+ * Les plugins ecrivent leurs classes dans leur propre paquet, que Tailwind
+ * n'inspecte pas : sans cette declaration, un badge de plugin sortirait sans
+ * aucun style, et l'auteur du plugin chercherait longtemps pourquoi.
+ */
+@source '../../../plugins';
+
+/**
  * Variante sombre a deux entrees.
  *
  * `data-theme` sur la racine, quand l'utilisateur a choisi explicitement, et la
@@ -20,15 +29,218 @@
   }
 }
 
-@theme {
-  --font-sans: 'Inter', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+/**
+ * Jetons semantiques.
+ *
+ * `inline` fait pointer l'utilitaire directement sur la propriete personnalisee
+ * — `.bg-surface` devient `background-color: var(--tick-surface)`. Le theme
+ * sombre n'a alors qu'a redefinir ces proprietes : aucune page n'ecrit plus
+ * `dark:`, et une couleur ne peut plus diverger entre deux ecrans parce qu'on
+ * a oublie sa variante.
+ *
+ * Les noms disent le role, pas la teinte. `surface` reste `surface` le jour ou
+ * le fond passe du blanc au gris ; `bg-white` aurait menti des la premiere
+ * retouche.
+ */
+@theme inline {
+  --font-sans: 'Inter var', 'Inter', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
   --font-mono: ui-monospace, 'JetBrains Mono', 'Cascadia Code', monospace;
+
+  /* Fonds, du plus recule au plus avance. */
+  --color-canvas: var(--tick-canvas);
+  --color-surface: var(--tick-surface);
+  --color-sunken: var(--tick-sunken);
+  --color-raised: var(--tick-raised);
+
+  /* Traits. */
+  --color-line: var(--tick-line);
+  --color-line-strong: var(--tick-line-strong);
+
+  /* Textes, du plus lisible au plus discret. */
+  --color-ink: var(--tick-ink);
+  --color-muted: var(--tick-muted);
+  --color-faint: var(--tick-faint);
+
+  /* Couleur de marque. */
+  --color-brand: var(--tick-brand);
+  --color-brand-hover: var(--tick-brand-hover);
+  --color-brand-soft: var(--tick-brand-soft);
+  --color-brand-ink: var(--tick-brand-ink);
+  --color-on-brand: var(--tick-on-brand);
+
+  /* Couleurs de sens. */
+  --color-positive: var(--tick-positive);
+  --color-positive-soft: var(--tick-positive-soft);
+  --color-positive-ink: var(--tick-positive-ink);
+  --color-caution: var(--tick-caution);
+  --color-caution-soft: var(--tick-caution-soft);
+  --color-caution-ink: var(--tick-caution-ink);
+  --color-critical: var(--tick-critical);
+  --color-critical-soft: var(--tick-critical-soft);
+  --color-critical-ink: var(--tick-critical-ink);
+  --color-info: var(--tick-info);
+  --color-info-soft: var(--tick-info-soft);
+  --color-info-ink: var(--tick-info-ink);
+
+  --radius-card: 0.75rem;
+
+  --shadow-card: 0 1px 2px 0 rgb(15 23 42 / 0.04), 0 1px 3px 0 rgb(15 23 42 / 0.06);
+  --shadow-raised: 0 4px 6px -1px rgb(15 23 42 / 0.07), 0 2px 4px -2px rgb(15 23 42 / 0.05);
+  --shadow-overlay: 0 10px 15px -3px rgb(15 23 42 / 0.1), 0 4px 6px -4px rgb(15 23 42 / 0.1);
 }
 
+/**
+ * Palette claire.
+ *
+ * Neutres froids plutot que gris purs : associes a l'indigo de la marque, ils
+ * evitent le rendu delave qu'un gris neutre donne des qu'une couleur saturee
+ * apparait a cote.
+ */
 :root {
   color-scheme: light dark;
+
+  --tick-canvas: #f6f7f9;
+  --tick-surface: #ffffff;
+  --tick-sunken: #f1f3f6;
+  --tick-raised: #ffffff;
+
+  --tick-line: #e3e6eb;
+  --tick-line-strong: #cbd1da;
+
+  --tick-ink: #10151f;
+  --tick-muted: #5b6572;
+  --tick-faint: #8b95a3;
+
+  --tick-brand: #4f46e5;
+  --tick-brand-hover: #4338ca;
+  --tick-brand-soft: #eef0fe;
+  --tick-brand-ink: #3730a3;
+  --tick-on-brand: #ffffff;
+
+  --tick-positive: #059669;
+  --tick-positive-soft: #e7f6ef;
+  --tick-positive-ink: #05613f;
+
+  --tick-caution: #d97706;
+  --tick-caution-soft: #fdf2e2;
+  --tick-caution-ink: #92500a;
+
+  --tick-critical: #e11d48;
+  --tick-critical-soft: #fdeaef;
+  --tick-critical-ink: #9f1239;
+
+  --tick-info: #0284c7;
+  --tick-info-soft: #e5f3fb;
+  --tick-info-ink: #075985;
+}
+
+/**
+ * Palette sombre.
+ *
+ * Le fond n'est pas noir : un noir pur fait vibrer le texte clair et fatigue
+ * plus vite que l'ardoise tres foncee retenue ici. Les teintes de sens sont
+ * remontees en luminosite, sans quoi elles disparaitraient sur ce fond.
+ */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    --tick-canvas: #0b0f17;
+    --tick-surface: #131926;
+    --tick-sunken: #0f1420;
+    --tick-raised: #1a2231;
+
+    --tick-line: #232c3d;
+    --tick-line-strong: #33405a;
+
+    --tick-ink: #e9edf5;
+    --tick-muted: #97a2b6;
+    --tick-faint: #6b7688;
+
+    --tick-brand: #7c74f0;
+    --tick-brand-hover: #918bf4;
+    --tick-brand-soft: #1e2140;
+    --tick-brand-ink: #b7b2f8;
+    --tick-on-brand: #0b0f17;
+
+    --tick-positive: #34d399;
+    --tick-positive-soft: #10291f;
+    --tick-positive-ink: #6ee7b7;
+
+    --tick-caution: #fbbf24;
+    --tick-caution-soft: #2b2110;
+    --tick-caution-ink: #fcd34d;
+
+    --tick-critical: #fb7185;
+    --tick-critical-soft: #2d1420;
+    --tick-critical-ink: #fda4af;
+
+    --tick-info: #38bdf8;
+    --tick-info-soft: #0e2434;
+    --tick-info-ink: #7dd3fc;
+  }
+}
+
+[data-theme='dark'] {
+  --tick-canvas: #0b0f17;
+  --tick-surface: #131926;
+  --tick-sunken: #0f1420;
+  --tick-raised: #1a2231;
+
+  --tick-line: #232c3d;
+  --tick-line-strong: #33405a;
+
+  --tick-ink: #e9edf5;
+  --tick-muted: #97a2b6;
+  --tick-faint: #6b7688;
+
+  --tick-brand: #7c74f0;
+  --tick-brand-hover: #918bf4;
+  --tick-brand-soft: #1e2140;
+  --tick-brand-ink: #b7b2f8;
+  --tick-on-brand: #0b0f17;
+
+  --tick-positive: #34d399;
+  --tick-positive-soft: #10291f;
+  --tick-positive-ink: #6ee7b7;
+
+  --tick-caution: #fbbf24;
+  --tick-caution-soft: #2b2110;
+  --tick-caution-ink: #fcd34d;
+
+  --tick-critical: #fb7185;
+  --tick-critical-soft: #2d1420;
+  --tick-critical-ink: #fda4af;
+
+  --tick-info: #38bdf8;
+  --tick-info-soft: #0e2434;
+  --tick-info-ink: #7dd3fc;
 }
 
 body {
-  @apply bg-white text-neutral-900 antialiased dark:bg-neutral-950 dark:text-neutral-100;
+  @apply bg-canvas text-ink antialiased;
+  font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
+}
+
+/**
+ * Anneau de focus unique, pose sur le document.
+ *
+ * Le poser ici plutot que sur chaque composant garantit qu'aucun controle
+ * n'echappe au clavier : un champ ajoute demain le recevra sans que personne
+ * n'y pense. `:focus-visible` et non `:focus`, pour ne pas cerner ce que la
+ * souris vient de cliquer.
+ */
+@layer base {
+  :focus-visible {
+    @apply outline-2 outline-offset-2 outline-brand;
+  }
+
+  ::selection {
+    background-color: var(--tick-brand-soft);
+    color: var(--tick-brand-ink);
+  }
+
+  /* Barres de defilement discretes, accordees au theme. */
+  * {
+    scrollbar-color: var(--tick-line-strong) transparent;
+    scrollbar-width: thin;
+  }
 }

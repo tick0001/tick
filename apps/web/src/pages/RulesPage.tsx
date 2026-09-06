@@ -11,6 +11,7 @@ import type {
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ApiError, api } from '@/lib/api';
+import { BOUTON, BOUTON_PRIMAIRE } from '@/components/ui/primitives';
 
 const COLLECTIONS: RuleCollection[] = [
   'ticket.create',
@@ -39,10 +40,8 @@ const LIBELLE_COLLECTION: Record<RuleCollection, string> = {
 const SANS_VALEUR: readonly RuleOperator[] = ['is_empty', 'is_not_empty'];
 
 const champ =
-  'w-full rounded-md border border-neutral-300 bg-white px-2 py-1 text-sm dark:border-neutral-700 dark:bg-neutral-950';
-const bouton =
-  'rounded-md border border-neutral-300 px-2.5 py-1 text-sm transition hover:bg-neutral-100 dark:border-neutral-700 dark:hover:bg-neutral-800';
-const carte = 'rounded-lg border border-neutral-200 p-4 dark:border-neutral-800';
+  'w-full rounded-lg border border-line bg-surface px-2 py-1 text-sm';
+const carte = 'rounded-card border border-line bg-surface p-4 shadow-card';
 
 function regleVide(collection: RuleCollection): UpsertRule {
   return {
@@ -89,7 +88,7 @@ export function RulesPage() {
   const [edite, setEdite] = useState<{ id?: number; valeurs: UpsertRule } | null>(null);
   const [erreur, setErreur] = useState<string | null>(null);
   const [entree, setEntree] = useState(
-    '{\n  "name": "Incident bloquant",\n  "type": "incident"\n}',
+    '{\n"name":"Incident bloquant",\n"type":"incident"\n}',
   );
   const [simulation, setSimulation] = useState<SimulationResult | null>(null);
 
@@ -141,7 +140,7 @@ export function RulesPage() {
 
   if (regles.error instanceof ApiError && regles.error.status === 403) {
     return (
-      <p className="rounded-md border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-200">
+      <p className="rounded-md border border-caution/30 bg-caution-soft p-3 text-sm text-caution-ink">
         {t('entites.interdit')}
       </p>
     );
@@ -197,7 +196,7 @@ export function RulesPage() {
 
         <button
           type="button"
-          className={bouton}
+          className={BOUTON_PRIMAIRE}
           onClick={() => {
             setEdite({ valeurs: regleVide(collection) });
           }}
@@ -206,10 +205,10 @@ export function RulesPage() {
         </button>
       </header>
 
-      {erreur && <p className="text-sm text-red-600 dark:text-red-400">{erreur}</p>}
+      {erreur && <p className="text-sm text-critical">{erreur}</p>}
 
       {regles.data?.length === 0 && (
-        <p className="text-sm text-neutral-500">{t('regles.aucune')}</p>
+        <p className="text-sm text-muted">{t('regles.aucune')}</p>
       )}
 
       <ol className="space-y-2">
@@ -218,20 +217,20 @@ export function RulesPage() {
             <div className="flex flex-wrap items-start justify-between gap-2">
               <div className="space-y-1">
                 <p className="font-medium">
-                  <span className="mr-2 tabular-nums text-neutral-400">{regle.ranking}</span>
+                  <span className="mr-2 tabular-nums text-faint">{regle.ranking}</span>
                   {regle.name}
                   {!regle.isActive && (
-                    <span className="ml-2 text-xs text-neutral-500">({t('regles.ignoree')})</span>
+                    <span className="ml-2 text-xs text-muted">({t('regles.ignoree')})</span>
                   )}
                 </p>
-                <p className="text-xs text-neutral-500">
+                <p className="text-xs text-muted">
                   {regle.entityName}
                   {regle.isRecursive ? ' ↓' : ''} ·{' '}
                   {regle.matchAll ? t('regles.toutes') : t('regles.aumoins')}
                   {regle.stopAfter ? ` · ${t('regles.arreter')}` : ''}
                 </p>
 
-                <ul className="text-xs text-neutral-500">
+                <ul className="text-xs text-muted">
                   {regle.criteria.map((critere, position) => (
                     <li key={position}>
                       {definitionDe(critere.field)?.label ?? critere.field}{' '}
@@ -242,7 +241,7 @@ export function RulesPage() {
                   {regle.actions.map((action, position) => (
                     <li
                       key={`a${String(position)}`}
-                      className="text-neutral-700 dark:text-neutral-300"
+                      className="text-ink text-muted"
                     >
                       → {t(`regles.typesAction.${action.action}`)}{' '}
                       {definitionDe(action.field)?.label ?? action.field}{' '}
@@ -255,7 +254,7 @@ export function RulesPage() {
               <div className="flex gap-1">
                 <button
                   type="button"
-                  className={bouton}
+                  className={BOUTON}
                   disabled={index === 0}
                   onClick={() => {
                     deplacer(index, -1);
@@ -265,7 +264,7 @@ export function RulesPage() {
                 </button>
                 <button
                   type="button"
-                  className={bouton}
+                  className={BOUTON}
                   disabled={index === (regles.data?.length ?? 1) - 1}
                   onClick={() => {
                     deplacer(index, 1);
@@ -275,7 +274,7 @@ export function RulesPage() {
                 </button>
                 <button
                   type="button"
-                  className={bouton}
+                  className={BOUTON}
                   onClick={() => {
                     setEdite({ id: regle.id, valeurs: versFormulaire(regle) });
                   }}
@@ -284,7 +283,7 @@ export function RulesPage() {
                 </button>
                 <button
                   type="button"
-                  className={bouton}
+                  className={BOUTON}
                   onClick={() => {
                     supprimer.mutate(regle.id);
                   }}
@@ -307,7 +306,7 @@ export function RulesPage() {
         >
           <div className="grid gap-3 md:grid-cols-4">
             <label className="space-y-1 md:col-span-2">
-              <span className="text-xs text-neutral-500">{t('regles.nom')}</span>
+              <span className="text-xs text-muted">{t('regles.nom')}</span>
               <input
                 className={champ}
                 required
@@ -319,7 +318,7 @@ export function RulesPage() {
             </label>
 
             <label className="space-y-1">
-              <span className="text-xs text-neutral-500">{t('regles.rang')}</span>
+              <span className="text-xs text-muted">{t('regles.rang')}</span>
               <input
                 type="number"
                 className={champ}
@@ -401,7 +400,7 @@ export function RulesPage() {
 
           {/* ---- Critères ---- */}
           <div className="space-y-2">
-            <p className="text-xs font-medium text-neutral-500">{t('regles.criteres')}</p>
+            <p className="text-xs font-medium text-muted">{t('regles.criteres')}</p>
 
             {edite.valeurs.criteria.map((critere, index) => {
               const definition = definitionDe(critere.field);
@@ -516,7 +515,7 @@ export function RulesPage() {
 
                   <button
                     type="button"
-                    className={bouton}
+                    className={BOUTON}
                     onClick={() => {
                       setEdite({
                         ...edite,
@@ -537,7 +536,7 @@ export function RulesPage() {
 
             <button
               type="button"
-              className={bouton}
+              className={BOUTON}
               disabled={criteres.length === 0}
               onClick={() => {
                 const premier = criteres[0];
@@ -566,7 +565,7 @@ export function RulesPage() {
 
           {/* ---- Actions ---- */}
           <div className="space-y-2">
-            <p className="text-xs font-medium text-neutral-500">{t('regles.actions')}</p>
+            <p className="text-xs font-medium text-muted">{t('regles.actions')}</p>
 
             {edite.valeurs.actions.map((action, index) => {
               const definition = definitionDe(action.field);
@@ -651,7 +650,7 @@ export function RulesPage() {
 
                   <button
                     type="button"
-                    className={bouton}
+                    className={BOUTON}
                     onClick={() => {
                       setEdite({
                         ...edite,
@@ -672,7 +671,7 @@ export function RulesPage() {
 
             <button
               type="button"
-              className={bouton}
+              className={BOUTON}
               disabled={effets.length === 0}
               onClick={() => {
                 const premier = effets[0];
@@ -700,12 +699,12 @@ export function RulesPage() {
           </div>
 
           <div className="flex gap-2">
-            <button type="submit" className={bouton}>
+            <button type="submit" className={BOUTON}>
               {t('regles.enregistrer')}
             </button>
             <button
               type="button"
-              className={bouton}
+              className={BOUTON}
               onClick={() => {
                 setEdite(null);
               }}
@@ -721,7 +720,7 @@ export function RulesPage() {
         <h3 className="font-medium">{t('regles.simulation')}</h3>
 
         <label className="space-y-1 block">
-          <span className="text-xs text-neutral-500">{t('regles.donneesEntree')}</span>
+          <span className="text-xs text-muted">{t('regles.donneesEntree')}</span>
           <textarea
             className={`${champ} h-32 font-mono`}
             value={entree}
@@ -733,7 +732,7 @@ export function RulesPage() {
 
         <button
           type="button"
-          className={bouton}
+          className={BOUTON}
           onClick={() => {
             try {
               simuler.mutate(JSON.parse(entree) as Record<string, unknown>);
@@ -747,8 +746,8 @@ export function RulesPage() {
 
         {simulation && (
           <div className="space-y-2 text-sm">
-            <p className="text-xs font-medium text-neutral-500">{t('regles.resultat')}</p>
-            <pre className="overflow-x-auto rounded-md bg-neutral-100 p-3 text-xs dark:bg-neutral-900">
+            <p className="text-xs font-medium text-muted">{t('regles.resultat')}</p>
+            <pre className="overflow-x-auto rounded-md bg-sunken p-3 text-xs bg-surface">
               {JSON.stringify(simulation.output, null, 2)}
             </pre>
 
@@ -758,8 +757,8 @@ export function RulesPage() {
                   key={trace.ruleId}
                   className={`rounded-md border p-2 text-xs ${
                     trace.matched
-                      ? 'border-emerald-300 dark:border-emerald-800'
-                      : 'border-neutral-200 dark:border-neutral-800'
+                      ? 'border-positive/40'
+                      : 'border-line'
                   }`}
                 >
                   <p className="font-medium">
@@ -772,8 +771,8 @@ export function RulesPage() {
                       key={position}
                       className={
                         critere.matched
-                          ? 'text-emerald-700 dark:text-emerald-400'
-                          : 'text-neutral-500'
+                          ? 'text-positive'
+                          : 'text-muted'
                       }
                     >
                       {definitionDe(critere.field)?.label ?? critere.field}{' '}

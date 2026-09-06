@@ -74,7 +74,7 @@ export function RecurringPanel() {
 
   const dates = new Intl.DateTimeFormat(i18n.language, { dateStyle: 'short', timeStyle: 'short' });
   const controle =
-    'rounded-md border border-neutral-300 bg-white px-2 py-1.5 text-sm dark:border-neutral-700 dark:bg-neutral-950';
+    'rounded-lg border border-line bg-surface px-2 py-1.5 text-sm';
 
   const soumettre = (event: FormEvent): void => {
     event.preventDefault();
@@ -84,7 +84,7 @@ export function RecurringPanel() {
   return (
     <section className="space-y-3">
       <div className="flex flex-wrap items-start justify-between gap-2">
-        <p className="text-sm text-neutral-500 dark:text-neutral-400">
+        <p className="text-sm text-muted">
           {t('recurrence.description')}
         </p>
 
@@ -95,7 +95,7 @@ export function RecurringPanel() {
             onClick={() => {
               executer.mutate();
             }}
-            className="rounded-md border border-neutral-300 px-3 py-1.5 text-sm transition hover:bg-neutral-100 disabled:opacity-60 dark:border-neutral-700 dark:hover:bg-neutral-800"
+            className="rounded-lg border border-line px-3 py-1.5 text-sm transition hover:bg-sunken disabled:opacity-60"
           >
             {t('recurrence.executer')}
           </button>
@@ -104,22 +104,22 @@ export function RecurringPanel() {
             onClick={() => {
               setOuvert((valeur) => !valeur);
             }}
-            className="rounded-md bg-neutral-900 px-3 py-1.5 text-sm font-medium text-white transition hover:bg-neutral-700 dark:bg-neutral-100 dark:text-neutral-900"
+            className="rounded-md bg-brand px-3 py-1.5 text-sm font-medium text-on-brand shadow-card transition hover:bg-brand-hover"
           >
             {t('recurrence.nouveau')}
           </button>
         </div>
       </div>
 
-      {message && <p className="text-sm text-neutral-500">{message}</p>}
+      {message && <p className="text-sm text-muted">{message}</p>}
 
       {ouvert && (
         <form
           onSubmit={soumettre}
-          className="grid gap-2 rounded-lg border border-neutral-200 p-4 sm:grid-cols-2 dark:border-neutral-800"
+          className="grid gap-2 rounded-card border border-line bg-surface p-4 shadow-card sm:grid-cols-2"
         >
           <label className="space-y-0.5 sm:col-span-2">
-            <span className="block text-xs uppercase tracking-wide text-neutral-500">
+            <span className="block text-xs uppercase tracking-wide text-muted">
               {t('recurrence.nom')}
             </span>
             <input
@@ -132,7 +132,7 @@ export function RecurringPanel() {
           </label>
 
           <label className="space-y-0.5 sm:col-span-2">
-            <span className="block text-xs uppercase tracking-wide text-neutral-500">
+            <span className="block text-xs uppercase tracking-wide text-muted">
               {t('itil.formulaire.contenu')}
             </span>
             <textarea
@@ -146,7 +146,7 @@ export function RecurringPanel() {
           </label>
 
           <label className="space-y-0.5">
-            <span className="block text-xs uppercase tracking-wide text-neutral-500">
+            <span className="block text-xs uppercase tracking-wide text-muted">
               {t('recurrence.gabarit')}
             </span>
             <select
@@ -167,7 +167,7 @@ export function RecurringPanel() {
 
           <div className="flex items-end gap-2">
             <label className="space-y-0.5">
-              <span className="block text-xs uppercase tracking-wide text-neutral-500">
+              <span className="block text-xs uppercase tracking-wide text-muted">
                 {t('recurrence.intervalle')}
               </span>
               <input
@@ -199,7 +199,7 @@ export function RecurringPanel() {
           </div>
 
           <label className="space-y-0.5">
-            <span className="block text-xs uppercase tracking-wide text-neutral-500">
+            <span className="block text-xs uppercase tracking-wide text-muted">
               {t('recurrence.debut')}
             </span>
             <input
@@ -213,7 +213,7 @@ export function RecurringPanel() {
           </label>
 
           <label className="space-y-0.5">
-            <span className="block text-xs uppercase tracking-wide text-neutral-500">
+            <span className="block text-xs uppercase tracking-wide text-muted">
               {t('recurrence.fin')}
             </span>
             <input
@@ -227,7 +227,7 @@ export function RecurringPanel() {
           </label>
 
           <label className="space-y-0.5">
-            <span className="block text-xs uppercase tracking-wide text-neutral-500">
+            <span className="block text-xs uppercase tracking-wide text-muted">
               {t('recurrence.avance')}
             </span>
             <input
@@ -259,14 +259,14 @@ export function RecurringPanel() {
             <button
               type="submit"
               disabled={enregistrer.isPending}
-              className="ml-auto rounded-md bg-neutral-900 px-3 py-1.5 text-sm font-medium text-white transition hover:bg-neutral-700 disabled:opacity-60 dark:bg-neutral-100 dark:text-neutral-900"
+              className="ml-auto rounded-md bg-brand px-3 py-1.5 text-sm font-medium text-on-brand shadow-card transition hover:bg-brand-hover disabled:opacity-50"
             >
               {t('planning.enregistrer')}
             </button>
           </div>
 
           {enregistrer.error && (
-            <p className="text-xs text-red-600 sm:col-span-2 dark:text-red-400">
+            <p className="text-xs text-critical sm:col-span-2">
               {enregistrer.error.message}
             </p>
           )}
@@ -274,19 +274,19 @@ export function RecurringPanel() {
       )}
 
       {liste.error instanceof ApiError && (
-        <p className="rounded-md border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-200">
+        <p className="rounded-md border border-caution/30 bg-caution-soft p-3 text-sm text-caution-ink">
           {liste.error.message}
         </p>
       )}
 
       {liste.data && liste.data.length === 0 && (
-        <p className="text-sm text-neutral-500">{t('recurrence.aucun')}</p>
+        <p className="text-sm text-muted">{t('recurrence.aucun')}</p>
       )}
 
       {liste.data && liste.data.length > 0 && (
-        <div className="overflow-x-auto rounded-lg border border-neutral-200 dark:border-neutral-800">
+        <div className="overflow-x-auto rounded-card border border-line">
           <table className="w-full text-left text-sm">
-            <thead className="border-b border-neutral-200 bg-neutral-50 text-xs uppercase tracking-wide text-neutral-500 dark:border-neutral-800 dark:bg-neutral-900">
+            <thead className="border-b border-line bg-sunken text-xs uppercase tracking-wide text-muted bg-surface">
               <tr>
                 <th className="px-3 py-2 font-medium">{t('recurrence.nom')}</th>
                 <th className="px-3 py-2 font-medium">{t('recurrence.gabarit')}</th>
@@ -301,34 +301,34 @@ export function RecurringPanel() {
               {liste.data.map((recurrence) => (
                 <tr
                   key={recurrence.id}
-                  className="border-b border-neutral-100 last:border-0 dark:border-neutral-900"
+                  className="border-b border-line last:border-0"
                 >
                   <td className="px-3 py-2">
                     <span className="font-medium">{recurrence.name}</span>
                     {!recurrence.isActive && (
-                      <span className="ml-2 rounded bg-neutral-200 px-1.5 py-0.5 text-xs dark:bg-neutral-700">
+                      <span className="ml-2 rounded bg-sunken px-1.5 py-0.5 text-xs">
                         ⏸
                       </span>
                     )}
                   </td>
-                  <td className="px-3 py-2 text-neutral-500">{recurrence.templateName}</td>
-                  <td className="px-3 py-2 text-neutral-500">
+                  <td className="px-3 py-2 text-muted">{recurrence.templateName}</td>
+                  <td className="px-3 py-2 text-muted">
                     {recurrence.interval} {t(`recurrence.pas.${recurrence.step}`)}
                   </td>
-                  <td className="px-3 py-2 whitespace-nowrap text-neutral-500">
+                  <td className="px-3 py-2 whitespace-nowrap text-muted">
                     {recurrence.nextOccurrenceAt
                       ? dates.format(new Date(recurrence.nextOccurrenceAt))
                       : '—'}
                   </td>
-                  <td className="px-3 py-2 tabular-nums text-neutral-500">{recurrence.runCount}</td>
-                  <td className="px-3 py-2 text-neutral-500">{recurrence.entityName}</td>
+                  <td className="px-3 py-2 tabular-nums text-muted">{recurrence.runCount}</td>
+                  <td className="px-3 py-2 text-muted">{recurrence.entityName}</td>
                   <td className="px-3 py-2 text-right">
                     <button
                       type="button"
                       onClick={() => {
                         supprimer.mutate(recurrence.id);
                       }}
-                      className="text-xs text-neutral-500 underline-offset-2 hover:underline"
+                      className="text-xs text-muted underline-offset-2 hover:underline"
                     >
                       {t('planning.supprimer')}
                     </button>

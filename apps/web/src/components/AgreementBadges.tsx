@@ -43,11 +43,11 @@ export function AgreementBadges({ ticketId }: { ticketId: number }) {
           title={`${engagement.name} — ${new Date(engagement.dueAt).toLocaleString()}`}
           className={`inline-flex items-center gap-1.5 rounded-md border px-2 py-1 text-xs ${
             engagement.isBreached
-              ? 'border-red-300 bg-red-50 text-red-900 dark:border-red-800 dark:bg-red-950 dark:text-red-200'
-              : 'border-neutral-300 bg-neutral-50 text-neutral-700 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-300'
+              ? 'border-critical/30 bg-critical-soft text-critical-ink'
+              : 'border-line bg-surface text-muted'
           }`}
         >
-          <span className="font-medium uppercase">{engagement.kind}</span>
+          <span className="font-semibold tracking-wide uppercase">{engagement.kind}</span>
           <span>{t(`engagements.axes.${engagement.axis}`)}</span>
           <span className="tabular-nums">
             {engagement.isBreached

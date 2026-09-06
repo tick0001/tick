@@ -4,6 +4,7 @@ import { useMemo, useState, type FormEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router';
 import { RecurringPanel } from '@/components/RecurringPanel';
+import { CONTROLE, PageHeader, Tabs } from '@/components/ui/primitives';
 import { ApiError, api } from '@/lib/api';
 
 type Vue = 'jour' | 'semaine' | 'mois';
@@ -137,58 +138,35 @@ export function PlanningPage() {
     if (technicien && absence.beginAt && absence.endAt) declarer.mutate();
   };
 
-  const controle =
-    'rounded-md border border-neutral-300 bg-white px-2 py-1.5 text-sm dark:border-neutral-700 dark:bg-neutral-950';
+  const controle = CONTROLE;
 
   return (
-    <section className="space-y-4">
-      <header className="space-y-1">
-        <h2 className="text-xl font-semibold tracking-tight">{t('planning.titre')}</h2>
-        <p className="text-sm text-neutral-500 dark:text-neutral-400">{t('planning.description')}</p>
-      </header>
+    <section className="space-y-5">
+      <PageHeader title={t('planning.titre')} description={t('planning.description')} />
 
-      <div className="flex overflow-hidden rounded-md border border-neutral-300 dark:border-neutral-700">
-        {(['calendrier', 'recurrence'] as const).map((valeur) => (
-          <button
-            key={valeur}
-            type="button"
-            onClick={() => {
-              setOnglet(valeur);
-            }}
-            className={`px-3 py-1.5 text-xs transition ${
-              onglet === valeur
-                ? 'bg-neutral-900 text-white dark:bg-neutral-100 dark:text-neutral-900'
-                : 'hover:bg-neutral-100 dark:hover:bg-neutral-800'
-            }`}
-          >
-            {valeur === 'calendrier' ? t('planning.titre') : t('recurrence.titre')}
-          </button>
-        ))}
-      </div>
+      <Tabs
+        value={onglet}
+        onChange={setOnglet}
+        options={[
+          { value: 'calendrier', label: t('planning.titre') },
+          { value: 'recurrence', label: t('recurrence.titre') },
+        ]}
+      />
 
       {onglet === 'recurrence' && <RecurringPanel />}
 
       {onglet === 'calendrier' && (
         <>
           <div className="flex flex-wrap items-center gap-2">
-            <div className="flex overflow-hidden rounded-md border border-neutral-300 dark:border-neutral-700">
-              {(['jour', 'semaine', 'mois'] as const).map((valeur) => (
-                <button
-                  key={valeur}
-                  type="button"
-                  onClick={() => {
-                    setVue(valeur);
-                  }}
-                  className={`px-3 py-1.5 text-xs transition ${
-                    vue === valeur
-                      ? 'bg-neutral-900 text-white dark:bg-neutral-100 dark:text-neutral-900'
-                      : 'hover:bg-neutral-100 dark:hover:bg-neutral-800'
-                  }`}
-                >
-                  {t(`planning.vues.${valeur}`)}
-                </button>
-              ))}
-            </div>
+            <Tabs
+              value={vue}
+              onChange={setVue}
+              options={[
+                { value: 'jour', label: t('planning.vues.jour') },
+                { value: 'semaine', label: t('planning.vues.semaine') },
+                { value: 'mois', label: t('planning.vues.mois') },
+              ]}
+            />
 
             <div className="flex items-center gap-1">
               <button
@@ -196,7 +174,7 @@ export function PlanningPage() {
                 onClick={() => {
                   setAncre((precedent) => minuit(precedent, -DUREE[vue]));
                 }}
-                className="rounded-md border border-neutral-300 px-2 py-1 text-xs transition hover:bg-neutral-100 dark:border-neutral-700 dark:hover:bg-neutral-800"
+                className="rounded-lg border border-line px-2 py-1 text-xs transition hover:bg-sunken"
               >
                 ←
               </button>
@@ -205,7 +183,7 @@ export function PlanningPage() {
                 onClick={() => {
                   setAncre(minuit(new Date()));
                 }}
-                className="rounded-md border border-neutral-300 px-2 py-1 text-xs transition hover:bg-neutral-100 dark:border-neutral-700 dark:hover:bg-neutral-800"
+                className="rounded-lg border border-line px-2 py-1 text-xs transition hover:bg-sunken"
               >
                 {jourLong.format(ancre)}
               </button>
@@ -214,7 +192,7 @@ export function PlanningPage() {
                 onClick={() => {
                   setAncre((precedent) => minuit(precedent, DUREE[vue]));
                 }}
-                className="rounded-md border border-neutral-300 px-2 py-1 text-xs transition hover:bg-neutral-100 dark:border-neutral-700 dark:hover:bg-neutral-800"
+                className="rounded-lg border border-line px-2 py-1 text-xs transition hover:bg-sunken"
               >
                 →
               </button>
@@ -237,7 +215,7 @@ export function PlanningPage() {
 
             <a
               href={api.planningIcalUrl(filtre)}
-              className="ml-auto rounded-md border border-neutral-300 px-3 py-1.5 text-xs transition hover:bg-neutral-100 dark:border-neutral-700 dark:hover:bg-neutral-800"
+              className="ml-auto rounded-lg border border-line px-3 py-1.5 text-xs transition hover:bg-sunken"
             >
               {t('planning.exporterIcal')}
             </a>
@@ -249,7 +227,7 @@ export function PlanningPage() {
               onClick={() => {
                 setOuvertAbsence((valeur) => !valeur);
               }}
-              className="rounded-md border border-neutral-300 px-3 py-1.5 text-xs transition hover:bg-neutral-100 disabled:opacity-50 dark:border-neutral-700 dark:hover:bg-neutral-800"
+              className="rounded-lg border border-line px-3 py-1.5 text-xs transition hover:bg-sunken disabled:opacity-50"
             >
               {t('planning.ajouterIndisponibilite')}
             </button>
@@ -258,10 +236,10 @@ export function PlanningPage() {
           {ouvertAbsence && (
             <form
               onSubmit={soumettreAbsence}
-              className="flex flex-wrap items-end gap-2 rounded-lg border border-neutral-200 p-3 dark:border-neutral-800"
+              className="flex flex-wrap items-end gap-2 rounded-card border border-line bg-surface p-3 shadow-card"
             >
               <label className="space-y-0.5">
-                <span className="block text-xs uppercase tracking-wide text-neutral-500">
+                <span className="block text-xs uppercase tracking-wide text-muted">
                   {t('planning.debut')}
                 </span>
                 <input
@@ -274,7 +252,7 @@ export function PlanningPage() {
                 />
               </label>
               <label className="space-y-0.5">
-                <span className="block text-xs uppercase tracking-wide text-neutral-500">
+                <span className="block text-xs uppercase tracking-wide text-muted">
                   {t('planning.fin')}
                 </span>
                 <input
@@ -287,7 +265,7 @@ export function PlanningPage() {
                 />
               </label>
               <label className="flex-1 space-y-0.5">
-                <span className="block text-xs uppercase tracking-wide text-neutral-500">
+                <span className="block text-xs uppercase tracking-wide text-muted">
                   {t('planning.motif')}
                 </span>
                 <input
@@ -301,12 +279,12 @@ export function PlanningPage() {
               <button
                 type="submit"
                 disabled={declarer.isPending}
-                className="rounded-md bg-neutral-900 px-3 py-1.5 text-sm font-medium text-white transition hover:bg-neutral-700 disabled:opacity-60 dark:bg-neutral-100 dark:text-neutral-900"
+                className="rounded-md bg-brand px-3 py-1.5 text-sm font-medium text-on-brand shadow-card transition hover:bg-brand-hover disabled:opacity-50"
               >
                 {t('planning.enregistrer')}
               </button>
               {declarer.error && (
-                <p className="w-full text-xs text-red-600 dark:text-red-400">
+                <p className="w-full text-xs text-critical">
                   {declarer.error.message}
                 </p>
               )}
@@ -314,29 +292,29 @@ export function PlanningPage() {
           )}
 
           {conflits > 0 && (
-            <p className="rounded-md border border-amber-300 bg-amber-50 p-2 text-sm text-amber-900 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-200">
+            <p className="rounded-md border border-caution/30 bg-caution-soft p-2 text-sm text-caution-ink">
               {conflits} {t('planning.conflits')}
             </p>
           )}
 
           {planning.error instanceof ApiError && (
-            <p className="rounded-md border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-200">
+            <p className="rounded-md border border-caution/30 bg-caution-soft p-3 text-sm text-caution-ink">
               {planning.error.message}
             </p>
           )}
 
           {planning.isPending && (
-            <p className="text-sm text-neutral-500">{t('commun.chargement')}</p>
+            <p className="text-sm text-muted">{t('commun.chargement')}</p>
           )}
 
           {planning.data && entrees.length === 0 && (
-            <p className="text-sm text-neutral-500">{t('planning.aucune')}</p>
+            <p className="text-sm text-muted">{t('planning.aucune')}</p>
           )}
 
           <div className="space-y-4">
             {parJour.map(([cle, liste]) => (
               <div key={cle} className="space-y-1">
-                <h3 className="text-xs font-semibold uppercase tracking-wide text-neutral-500">
+                <h3 className="text-xs font-semibold uppercase tracking-wide text-muted">
                   {jourLong.format(new Date(`${cle}T00:00:00`))}
                 </h3>
 
@@ -349,17 +327,17 @@ export function PlanningPage() {
                         key={`${entree.kind}-${String(entree.id)}`}
                         className={`flex flex-wrap items-baseline gap-x-2 rounded-lg border p-2 text-sm ${
                           entree.conflicts.length > 0
-                            ? 'border-amber-300 bg-amber-50 dark:border-amber-800 dark:bg-amber-950'
-                            : 'border-neutral-200 dark:border-neutral-800'
+                            ? 'border-caution/30 bg-caution-soft'
+                            : 'border-line'
                         }`}
                       >
-                        <span className="tabular-nums text-neutral-500">
+                        <span className="tabular-nums text-muted">
                           {heures.format(new Date(entree.beginAt))} –{' '}
                           {heures.format(new Date(entree.endAt))}
                         </span>
 
                         {entree.kind === 'unavailability' && (
-                          <span className="rounded bg-neutral-200 px-1.5 py-0.5 text-xs dark:bg-neutral-700">
+                          <span className="rounded bg-sunken px-1.5 py-0.5 text-xs">
                             {t('planning.indisponibilite')}
                           </span>
                         )}
@@ -369,16 +347,16 @@ export function PlanningPage() {
                         {lien && (
                           <Link
                             to={lien}
-                            className="text-xs text-neutral-500 underline-offset-2 hover:underline"
+                            className="text-xs text-muted underline-offset-2 hover:underline"
                           >
                             #{entree.itilId}
                           </Link>
                         )}
 
-                        <span className="text-xs text-neutral-500">{entree.userName ?? '—'}</span>
+                        <span className="text-xs text-muted">{entree.userName ?? '—'}</span>
 
                         {entree.conflicts.length > 0 && (
-                          <span className="rounded bg-amber-200 px-1.5 py-0.5 text-xs text-amber-900 dark:bg-amber-900 dark:text-amber-100">
+                          <span className="rounded bg-caution-soft px-1.5 py-0.5 text-xs font-medium text-caution-ink">
                             {t('planning.conflit')}
                           </span>
                         )}
@@ -389,7 +367,7 @@ export function PlanningPage() {
                             onClick={() => {
                               retirer.mutate(entree.id);
                             }}
-                            className="ml-auto text-xs text-neutral-500 underline-offset-2 hover:underline"
+                            className="ml-auto text-xs text-muted underline-offset-2 hover:underline"
                           >
                             {t('planning.supprimer')}
                           </button>

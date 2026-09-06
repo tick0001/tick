@@ -13,7 +13,7 @@ export function EntitiesPage({ session }: { session: SessionContext }) {
       <header className="flex flex-wrap items-start justify-between gap-3">
         <div className="space-y-1">
           <h2 className="text-xl font-semibold tracking-tight">{t('entites.titre')}</h2>
-          <p className="text-sm text-neutral-500 dark:text-neutral-400">
+          <p className="text-sm text-muted">
             {t('entites.description')}
           </p>
         </div>
@@ -29,28 +29,28 @@ export function EntitiesPage({ session }: { session: SessionContext }) {
         />
       </header>
 
-      {entites.isPending && <p className="text-sm text-neutral-500">{t('commun.chargement')}</p>}
+      {entites.isPending && <p className="text-sm text-muted">{t('commun.chargement')}</p>}
 
       {/* Un refus de droit n'est pas une panne : le dire clairement évite de
           faire chercher une erreur là où il n'y en a pas. */}
       {entites.error instanceof ApiError && entites.error.status === 403 && (
-        <p className="rounded-md border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-200">
+        <p className="rounded-md border border-caution/30 bg-caution-soft p-3 text-sm text-caution-ink">
           {t('entites.interdit')}
         </p>
       )}
 
       {entites.error && !(entites.error instanceof ApiError && entites.error.status === 403) && (
-        <p className="text-sm text-red-600 dark:text-red-400">{entites.error.message}</p>
+        <p className="text-sm text-critical">{entites.error.message}</p>
       )}
 
       {entites.data && !entites.error && entites.data.length === 0 && (
-        <p className="text-sm text-neutral-500">{t('entites.aucune')}</p>
+        <p className="text-sm text-muted">{t('entites.aucune')}</p>
       )}
 
       {entites.data && !entites.error && entites.data.length > 0 && (
-        <div className="overflow-x-auto rounded-lg border border-neutral-200 dark:border-neutral-800">
+        <div className="overflow-x-auto rounded-card border border-line">
           <table className="w-full text-left text-sm">
-            <thead className="border-b border-neutral-200 bg-neutral-50 dark:border-neutral-800 dark:bg-neutral-900">
+            <thead className="border-b border-line bg-sunken bg-surface">
               <tr>
                 <th className="px-4 py-2 font-medium">{t('entites.nom')}</th>
                 <th className="px-4 py-2 font-medium">{t('entites.chemin')}</th>
@@ -61,7 +61,7 @@ export function EntitiesPage({ session }: { session: SessionContext }) {
               {entites.data.map((entite) => (
                 <tr
                   key={entite.id}
-                  className="border-b border-neutral-100 last:border-0 dark:border-neutral-900"
+                  className="border-b border-line last:border-0"
                 >
                   <td className="px-4 py-2">
                     {/* L'indentation rend la profondeur lisible sans construire
@@ -70,8 +70,8 @@ export function EntitiesPage({ session }: { session: SessionContext }) {
                       {entite.name}
                     </span>
                   </td>
-                  <td className="px-4 py-2 font-mono text-xs text-neutral-500">{entite.path}</td>
-                  <td className="px-4 py-2 tabular-nums text-neutral-500">{entite.level}</td>
+                  <td className="px-4 py-2 font-mono text-xs text-muted">{entite.path}</td>
+                  <td className="px-4 py-2 tabular-nums text-muted">{entite.level}</td>
                 </tr>
               ))}
             </tbody>

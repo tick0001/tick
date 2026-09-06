@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { ItilStatus } from '@tick/contracts';
 import { itilStatusSchema } from '@tick/contracts';
-import { useState, type FormEvent } from 'react';
+import { useState, type FormEvent, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, useParams } from 'react-router';
 import { AgreementBadges } from '@/components/AgreementBadges';
@@ -9,13 +9,27 @@ import { Attachments } from '@/components/Attachments';
 import { LinksPanel } from '@/components/LinksPanel';
 import { PriorityBadge, StatusBadge, TypeBadge } from '@/components/TicketBadges';
 import { Timeline } from '@/components/Timeline';
+import { IconRetour } from '@/components/ui/icons';
+import {
+  Button,
+  Card,
+  CardBody,
+  CardHeader,
+  Checkbox,
+  Field,
+  FieldError,
+  Notice,
+  Select,
+  Textarea,
+} from '@/components/ui/primitives';
 import { ApiError, api } from '@/lib/api';
 
-function Champ({ libelle, children }: { libelle: string; children: React.ReactNode }) {
+/** Une ligne de la fiche latérale : libellé au-dessus, valeur en dessous. */
+function Champ({ libelle, children }: { libelle: string; children: ReactNode }) {
   return (
     <div className="space-y-0.5">
-      <dt className="text-xs uppercase tracking-wide text-neutral-500">{libelle}</dt>
-      <dd className="text-sm">{children}</dd>
+      <dt className="text-xs font-medium text-faint">{libelle}</dt>
+      <dd className="text-sm text-ink">{children}</dd>
     </div>
   );
 }
@@ -65,13 +79,13 @@ export function TicketPage() {
 
   if (ticket.error instanceof ApiError) {
     return (
-      <p className="rounded-md border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-200">
+      <Notice ton={ticket.error.status === 403 ? 'attention' : 'critique'}>
         {ticket.error.status === 403 ? t('tickets.interdit') : ticket.error.message}
-      </p>
+      </Notice>
     );
   }
 
-  if (!ticket.data) return <p className="text-sm text-neutral-500">{t('commun.chargement')}</p>;
+  if (!ticket.data) return <p className="text-sm text-muted">{t('commun.chargement')}</p>;
 
   const detail = ticket.data;
   const dates = new Intl.DateTimeFormat(i18n.language, { dateStyle: 'short', timeStyle: 'short' });
@@ -83,139 +97,152 @@ export function TicketPage() {
 
   return (
     <div className="space-y-5">
-      <div>
-        <Link to="/tickets" className="text-xs text-neutral-500 underline-offset-2 hover:underline">
-          ← {t('tickets.detail.retour')}
-        </Link>
-      </div>
+      <Link
+        to="/tickets"
+        className="inline-flex items-center gap-1.5 text-xs text-muted underline-offset-2 hover:text-ink hover:underline"
+      >
+        <IconRetour className="size-3.5" />
+        {t('tickets.detail.retour')}
+      </Link>
 
-      <header className="space-y-2">
-        <div className="flex flex-wrap items-center gap-2">
-          <span className="text-sm tabular-nums text-neutral-500">#{detail.id}</span>
+      <header className="space-y-3">
+        <div className="flex flex-wrap items-center gap-2.5">
+          <span className="rounded-md bg-sunken px-2 py-0.5 text-sm font-medium tabular-nums text-muted">
+            #{detail.id}
+          </span>
           <StatusBadge status={detail.status} />
           <PriorityBadge value={detail.priority} />
           <TypeBadge type={detail.type} />
         </div>
-        <h2 className="text-xl font-semibold tracking-tight">{detail.name}</h2>
+
+        <h2 className="text-2xl font-semibold tracking-tight text-balance">{detail.name}</h2>
+
         <AgreementBadges ticketId={id} />
       </header>
 
-      <div className="grid gap-5 lg:grid-cols-[1fr_20rem]">
-        <div className="space-y-5">
-          <article className="whitespace-pre-wrap rounded-lg border border-neutral-200 p-4 text-sm dark:border-neutral-800">
-            {detail.content || '—'}
-          </article>
+      <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_20rem]">
+        <div className="min-w-0 space-y-5">
+          <Card>
+            <CardBody className="whitespace-pre-wrap text-sm leading-relaxed">
+              {detail.content || '—'}
+            </CardBody>
+          </Card>
 
           <Attachments itemType="ticket" itemId={id} />
 
           <section className="space-y-3">
             <h3 className="text-sm font-semibold">{t('tickets.detail.chronologie')}</h3>
-
             <Timeline entrees={timeline.data} locale={i18n.language} />
           </section>
 
-          <form
-            onSubmit={soumettre}
-            className="space-y-2 rounded-lg border border-neutral-200 p-4 dark:border-neutral-800"
-          >
-            <h3 className="text-sm font-semibold">{t('tickets.detail.ajouterSuivi')}</h3>
-            <textarea
-              value={suivi}
-              onChange={(event) => {
-                setSuivi(event.target.value);
-              }}
-              rows={3}
-              placeholder={t('tickets.detail.suiviPlaceholder')}
-              className="w-full rounded-md border border-neutral-300 bg-white px-3 py-2 text-sm outline-none focus:border-neutral-900 dark:border-neutral-700 dark:bg-neutral-950 dark:focus:border-neutral-300"
-            />
-            <div className="flex flex-wrap items-center gap-3">
-              <label className="flex items-center gap-1.5 text-xs">
-                <input
-                  type="checkbox"
-                  checked={prive}
+          <Card>
+            <CardHeader title={t('tickets.detail.ajouterSuivi')} />
+            <CardBody>
+              <form onSubmit={soumettre} className="space-y-3">
+                <Textarea
+                  value={suivi}
                   onChange={(event) => {
-                    setPrive(event.target.checked);
+                    setSuivi(event.target.value);
                   }}
+                  rows={3}
+                  placeholder={t('tickets.detail.suiviPlaceholder')}
                 />
-                {t('tickets.detail.suiviPrive')}
-              </label>
-              <button
-                type="submit"
-                disabled={publier.isPending || suivi.trim().length === 0}
-                className="ml-auto rounded-md bg-neutral-900 px-3 py-1.5 text-sm font-medium text-white transition hover:bg-neutral-700 disabled:opacity-60 dark:bg-neutral-100 dark:text-neutral-900 dark:hover:bg-neutral-300"
-              >
-                {t('tickets.detail.envoyer')}
-              </button>
-            </div>
-            {publier.error && (
-              <p className="text-xs text-red-600 dark:text-red-400">{publier.error.message}</p>
-            )}
-          </form>
+                <div className="flex flex-wrap items-center gap-3">
+                  <Checkbox
+                    checked={prive}
+                    onChange={(event) => {
+                      setPrive(event.target.checked);
+                    }}
+                    label={<span className="text-xs text-muted">{t('tickets.detail.suiviPrive')}</span>}
+                  />
+                  <Button
+                    type="submit"
+                    variante="primaire"
+                    disabled={publier.isPending || suivi.trim().length === 0}
+                    className="ml-auto"
+                  >
+                    {t('tickets.detail.envoyer')}
+                  </Button>
+                </div>
+                <FieldError>{publier.error?.message}</FieldError>
+              </form>
+            </CardBody>
+          </Card>
         </div>
 
-        <aside className="space-y-4 rounded-lg border border-neutral-200 p-4 dark:border-neutral-800">
-          <label className="block space-y-1">
-            <span className="text-xs uppercase tracking-wide text-neutral-500">
-              {t('tickets.detail.changerStatut')}
-            </span>
-            <select
-              value={detail.status}
-              disabled={changerStatut.isPending}
-              onChange={(event) => {
-                changerStatut.mutate(itilStatusSchema.parse(event.target.value));
-              }}
-              className="w-full rounded-md border border-neutral-300 bg-white px-2 py-1.5 text-sm dark:border-neutral-700 dark:bg-neutral-950"
-            >
-              {itilStatusSchema.options.map((statut) => (
-                <option key={statut} value={statut}>
-                  {t(`tickets.statuts.${statut}`)}
-                </option>
-              ))}
-            </select>
-          </label>
+        <aside className="space-y-4">
+          <Card>
+            <CardBody className="space-y-4">
+              <Field label={t('tickets.detail.changerStatut')}>
+                <Select
+                  value={detail.status}
+                  disabled={changerStatut.isPending}
+                  onChange={(event) => {
+                    changerStatut.mutate(itilStatusSchema.parse(event.target.value));
+                  }}
+                >
+                  {itilStatusSchema.options.map((statut) => (
+                    <option key={statut} value={statut}>
+                      {t(`tickets.statuts.${statut}`)}
+                    </option>
+                  ))}
+                </Select>
+              </Field>
 
-          {changerStatut.error && (
-            <p className="text-xs text-red-600 dark:text-red-400">{changerStatut.error.message}</p>
-          )}
+              <FieldError>{changerStatut.error?.message}</FieldError>
 
-          <dl className="space-y-3">
-            <Champ libelle={t('tickets.entite')}>{detail.entity.name}</Champ>
-            <Champ libelle={t('tickets.categorie')}>{detail.category?.name ?? '—'}</Champ>
-            <Champ libelle={t('tickets.detail.urgence')}>{detail.urgency} / 5</Champ>
-            <Champ libelle={t('tickets.detail.impact')}>{detail.impact} / 5</Champ>
-            <Champ libelle={t('tickets.detail.source')}>{detail.requestSource?.name ?? '—'}</Champ>
-            <Champ libelle={t('tickets.detail.lieu')}>{detail.location?.name ?? '—'}</Champ>
-            <Champ libelle={t('tickets.ouvertLe')}>
-              {dates.format(new Date(detail.dateOpened))}
-            </Champ>
-            {detail.dateTakenIntoAccount && (
-              <Champ libelle={t('tickets.detail.priseEnCompte')}>
-                {dates.format(new Date(detail.dateTakenIntoAccount))}
-              </Champ>
-            )}
-            {detail.dateSolved && (
-              <Champ libelle={t('tickets.detail.resolu')}>
-                {dates.format(new Date(detail.dateSolved))}
-              </Champ>
-            )}
-            <Champ libelle={t('tickets.detail.tempsInterne')}>
-              {detail.internalTime} {t('tickets.detail.minutes')}
-            </Champ>
-          </dl>
+              <dl className="grid grid-cols-2 gap-x-3 gap-y-3.5 border-t border-line pt-4">
+                <Champ libelle={t('tickets.entite')}>{detail.entity.name}</Champ>
+                <Champ libelle={t('tickets.categorie')}>{detail.category?.name ?? '—'}</Champ>
+                <Champ libelle={t('tickets.detail.urgence')}>{detail.urgency} / 5</Champ>
+                <Champ libelle={t('tickets.detail.impact')}>{detail.impact} / 5</Champ>
+                <Champ libelle={t('tickets.detail.source')}>
+                  {detail.requestSource?.name ?? '—'}
+                </Champ>
+                <Champ libelle={t('tickets.detail.lieu')}>{detail.location?.name ?? '—'}</Champ>
+                <Champ libelle={t('tickets.ouvertLe')}>
+                  {dates.format(new Date(detail.dateOpened))}
+                </Champ>
+                <Champ libelle={t('tickets.detail.tempsInterne')}>
+                  {detail.internalTime} {t('tickets.detail.minutes')}
+                </Champ>
+                {detail.dateTakenIntoAccount && (
+                  <Champ libelle={t('tickets.detail.priseEnCompte')}>
+                    {dates.format(new Date(detail.dateTakenIntoAccount))}
+                  </Champ>
+                )}
+                {detail.dateSolved && (
+                  <Champ libelle={t('tickets.detail.resolu')}>
+                    {dates.format(new Date(detail.dateSolved))}
+                  </Champ>
+                )}
+              </dl>
+            </CardBody>
+          </Card>
 
-          <div className="space-y-1">
-            <h3 className="text-xs uppercase tracking-wide text-neutral-500">
-              {t('tickets.detail.acteurs')}
-            </h3>
-            <ul className="space-y-1 text-sm">
-              {detail.actors.map((acteur) => (
-                <li key={`${acteur.role}-${acteur.actorType}-${String(acteur.actorId)}`}>
-                  <span className="text-neutral-500">{t(`tickets.roles.${acteur.role}`)} : </span>
-                  {acteur.label}
-                </li>
-              ))}
-            </ul>
-          </div>
+          <Card>
+            <CardHeader title={t('tickets.detail.acteurs')} />
+            <CardBody>
+              <ul className="space-y-2 text-sm">
+                {detail.actors.map((acteur) => (
+                  <li
+                    key={`${acteur.role}-${acteur.actorType}-${String(acteur.actorId)}`}
+                    className="flex items-center gap-2"
+                  >
+                    <span className="grid size-7 shrink-0 place-items-center rounded-full bg-sunken text-[10px] font-semibold text-muted">
+                      {acteur.label.slice(0, 2).toUpperCase()}
+                    </span>
+                    <span className="min-w-0">
+                      <span className="block truncate">{acteur.label}</span>
+                      <span className="block text-xs text-faint">
+                        {t(`tickets.roles.${acteur.role}`)}
+                      </span>
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </CardBody>
+          </Card>
         </aside>
       </div>
 

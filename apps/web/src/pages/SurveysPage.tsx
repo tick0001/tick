@@ -3,12 +3,11 @@ import type { SessionContext, UpsertSatisfactionConfig } from '@tick/contracts';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ApiError, api } from '@/lib/api';
+import { BOUTON } from '@/components/ui/primitives';
 
 const champ =
-  'w-full rounded-md border border-neutral-300 bg-white px-2 py-1 text-sm dark:border-neutral-700 dark:bg-neutral-950';
-const bouton =
-  'rounded-md border border-neutral-300 px-2.5 py-1 text-sm transition hover:bg-neutral-100 dark:border-neutral-700 dark:hover:bg-neutral-800';
-const carte = 'rounded-lg border border-neutral-200 p-4 dark:border-neutral-800';
+  'w-full rounded-lg border border-line bg-surface px-2 py-1 text-sm';
+const carte = 'rounded-card border border-line bg-surface p-4 shadow-card';
 
 const DEFAUT: UpsertSatisfactionConfig = {
   isRecursive: true,
@@ -77,7 +76,7 @@ export function SurveysPage({ session }: { session: SessionContext }) {
 
   if (configs.error instanceof ApiError && configs.error.status === 403) {
     return (
-      <p className="rounded-md border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-200">
+      <p className="rounded-md border border-caution/30 bg-caution-soft p-3 text-sm text-caution-ink">
         {t('entites.interdit')}
       </p>
     );
@@ -91,12 +90,12 @@ export function SurveysPage({ session }: { session: SessionContext }) {
     <section className="space-y-6">
       <header className="space-y-1">
         <h2 className="text-xl font-semibold tracking-tight">{t('enquetes.titre')}</h2>
-        <p className="text-sm text-neutral-500 dark:text-neutral-400">
+        <p className="text-sm text-muted">
           {t('enquetes.description', { entite: session.entity.name })}
         </p>
       </header>
 
-      {erreur && <p className="text-sm text-red-600 dark:text-red-400">{erreur}</p>}
+      {erreur && <p className="text-sm text-critical">{erreur}</p>}
 
       <form
         className={`${carte} space-y-3`}
@@ -107,7 +106,7 @@ export function SurveysPage({ session }: { session: SessionContext }) {
       >
         <div className="grid gap-3 md:grid-cols-4">
           <label className="space-y-1">
-            <span className="text-xs text-neutral-500">{t('enquetes.taux')}</span>
+            <span className="text-xs text-muted">{t('enquetes.taux')}</span>
             <input
               type="number"
               min={0}
@@ -121,7 +120,7 @@ export function SurveysPage({ session }: { session: SessionContext }) {
           </label>
 
           <label className="space-y-1">
-            <span className="text-xs text-neutral-500">{t('enquetes.delai')}</span>
+            <span className="text-xs text-muted">{t('enquetes.delai')}</span>
             <input
               type="number"
               min={0}
@@ -134,7 +133,7 @@ export function SurveysPage({ session }: { session: SessionContext }) {
           </label>
 
           <label className="space-y-1">
-            <span className="text-xs text-neutral-500">{t('enquetes.duree')}</span>
+            <span className="text-xs text-muted">{t('enquetes.duree')}</span>
             <input
               type="number"
               min={1}
@@ -147,7 +146,7 @@ export function SurveysPage({ session }: { session: SessionContext }) {
           </label>
 
           <label className="space-y-1">
-            <span className="text-xs text-neutral-500">{t('enquetes.relance')}</span>
+            <span className="text-xs text-muted">{t('enquetes.relance')}</span>
             <input
               type="number"
               min={1}
@@ -185,7 +184,7 @@ export function SurveysPage({ session }: { session: SessionContext }) {
           </label>
         </div>
 
-        <button type="submit" className={bouton}>
+        <button type="submit" className={BOUTON}>
           {t('commun.enregistrer')}
         </button>
       </form>
@@ -196,15 +195,15 @@ export function SurveysPage({ session }: { session: SessionContext }) {
 
           <div className="flex flex-wrap gap-6 text-sm">
             <p>
-              <span className="text-neutral-500">{t('enquetes.envoyees')} : </span>
+              <span className="text-muted">{t('enquetes.envoyees')} : </span>
               <span className="tabular-nums">{stats.data.requested}</span>
             </p>
             <p>
-              <span className="text-neutral-500">{t('enquetes.repondues')} : </span>
+              <span className="text-muted">{t('enquetes.repondues')} : </span>
               <span className="tabular-nums">{stats.data.answered}</span>
             </p>
             <p>
-              <span className="text-neutral-500">{t('enquetes.moyenne')} : </span>
+              <span className="text-muted">{t('enquetes.moyenne')} : </span>
               <span className="tabular-nums">{stats.data.averageRating ?? '—'}</span>
             </p>
           </div>
@@ -215,7 +214,7 @@ export function SurveysPage({ session }: { session: SessionContext }) {
                 <li key={ligne.rating} className="flex items-center gap-2">
                   <span className="w-4 tabular-nums">{ligne.rating}</span>
                   <span
-                    className="inline-block h-2 rounded bg-neutral-900 dark:bg-neutral-100"
+                    className="inline-block h-2 rounded bg-brand"
                     style={{
                       width: `${String(
                         Math.max(
@@ -225,7 +224,7 @@ export function SurveysPage({ session }: { session: SessionContext }) {
                       )}px`,
                     }}
                   />
-                  <span className="tabular-nums text-neutral-500">{ligne.count}</span>
+                  <span className="tabular-nums text-muted">{ligne.count}</span>
                 </li>
               ))}
             </ul>

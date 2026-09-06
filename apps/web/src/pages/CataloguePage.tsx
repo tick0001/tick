@@ -4,14 +4,13 @@ import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router';
 import { api } from '@/lib/api';
+import { BOUTON } from '@/components/ui/primitives';
 
 type Reponses = Record<string, string | string[] | null>;
 
 const champ =
-  'w-full rounded-md border border-neutral-300 bg-white px-2 py-1 text-sm dark:border-neutral-700 dark:bg-neutral-950';
-const bouton =
-  'rounded-md border border-neutral-300 px-2.5 py-1 text-sm transition hover:bg-neutral-100 dark:border-neutral-700 dark:hover:bg-neutral-800';
-const carte = 'rounded-lg border border-neutral-200 p-4 dark:border-neutral-800';
+  'w-full rounded-lg border border-line bg-surface px-2 py-1 text-sm';
+const carte = 'rounded-card border border-line bg-surface p-4 shadow-card';
 
 /** Réponse sous forme de texte, une réponse multiple étant jointe. */
 function enTexte(valeur: string | string[] | null | undefined): string | null {
@@ -145,17 +144,17 @@ export function CataloguePage() {
     <section className="space-y-5">
       <header className="space-y-1">
         <h2 className="text-xl font-semibold tracking-tight">{t('catalogue.titre')}</h2>
-        <p className="text-sm text-neutral-500 dark:text-neutral-400">
+        <p className="text-sm text-muted">
           {t('catalogue.description')}
         </p>
       </header>
 
-      {erreur && <p className="text-sm text-red-600 dark:text-red-400">{erreur}</p>}
+      {erreur && <p className="text-sm text-critical">{erreur}</p>}
 
       {choisi === null && (
         <>
           {catalogue.data?.length === 0 && (
-            <p className="text-sm text-neutral-500">{t('catalogue.aucun')}</p>
+            <p className="text-sm text-muted">{t('catalogue.aucun')}</p>
           )}
 
           <div className="grid gap-2 md:grid-cols-2 lg:grid-cols-3">
@@ -163,7 +162,7 @@ export function CataloguePage() {
               <button
                 key={service.id}
                 type="button"
-                className={`${carte} text-left transition hover:bg-neutral-50 dark:hover:bg-neutral-900`}
+                className={`${carte} text-left transition hover:bg-sunken`}
                 onClick={() => {
                   setChoisi(service.id);
                   setErreur(null);
@@ -171,10 +170,10 @@ export function CataloguePage() {
               >
                 <p className="font-medium">{service.name}</p>
                 {service.description && (
-                  <p className="mt-1 text-xs text-neutral-500">{service.description}</p>
+                  <p className="mt-1 text-xs text-muted">{service.description}</p>
                 )}
                 {service.category && (
-                  <p className="mt-2 text-xs text-neutral-400">{service.category}</p>
+                  <p className="mt-2 text-xs text-faint">{service.category}</p>
                 )}
               </button>
             ))}
@@ -193,7 +192,7 @@ export function CataloguePage() {
           <header className="space-y-1">
             <button
               type="button"
-              className="text-xs text-neutral-500 underline-offset-2 hover:underline"
+              className="text-xs text-muted underline-offset-2 hover:underline"
               onClick={() => {
                 setChoisi(null);
               }}
@@ -202,7 +201,7 @@ export function CataloguePage() {
             </button>
             <h3 className="text-lg font-semibold tracking-tight">{formulaire.data.name}</h3>
             {formulaire.data.description && (
-              <p className="text-sm text-neutral-500">{formulaire.data.description}</p>
+              <p className="text-sm text-muted">{formulaire.data.description}</p>
             )}
           </header>
 
@@ -210,7 +209,7 @@ export function CataloguePage() {
             <fieldset key={indexSection} className="space-y-3">
               <legend className="text-sm font-semibold">{section.name}</legend>
               {section.description && (
-                <p className="text-xs text-neutral-500">{section.description}</p>
+                <p className="text-xs text-muted">{section.description}</p>
               )}
 
               {section.questions.map((question, indexQuestion) => {
@@ -230,7 +229,7 @@ export function CataloguePage() {
                       {question.isRequired && <span className="ml-1 text-red-600">*</span>}
                     </span>
                     {question.description && (
-                      <span className="block text-xs text-neutral-500">{question.description}</span>
+                      <span className="block text-xs text-muted">{question.description}</span>
                     )}
 
                     {question.kind === 'textarea' && (
@@ -297,7 +296,7 @@ export function CataloguePage() {
             </fieldset>
           ))}
 
-          <button type="submit" className={bouton}>
+          <button type="submit" className={BOUTON}>
             {t('catalogue.envoyer')}
           </button>
         </form>

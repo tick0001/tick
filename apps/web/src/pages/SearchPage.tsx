@@ -194,15 +194,15 @@ export function SearchPage() {
 
   const champDe = (cle: string) => champs.data?.find((element) => element.key === cle);
   const controle =
-    'rounded-md border border-neutral-300 bg-white px-2 py-1.5 text-sm dark:border-neutral-700 dark:bg-neutral-950';
+    'rounded-lg border border-line bg-surface px-2 py-1.5 text-sm';
 
   return (
     <div className="grid gap-6 lg:grid-cols-[1fr_18rem]">
       <section className="space-y-4">
         <h2 className="text-xl font-semibold tracking-tight">{t('recherche.titre')}</h2>
 
-        <div className="space-y-2 rounded-lg border border-neutral-200 p-4 dark:border-neutral-800">
-          <div className="flex overflow-hidden rounded-md border border-neutral-300 text-xs dark:border-neutral-700">
+        <div className="space-y-2 rounded-card border border-line bg-surface p-4 shadow-card">
+          <div className="flex overflow-hidden rounded-lg border border-line text-xs">
             {(['and', 'or'] as const).map((valeur) => (
               <button
                 key={valeur}
@@ -212,8 +212,8 @@ export function SearchPage() {
                 }}
                 className={`px-3 py-1 transition ${
                   link === valeur
-                    ? 'bg-neutral-900 text-white dark:bg-neutral-100 dark:text-neutral-900'
-                    : 'hover:bg-neutral-100 dark:hover:bg-neutral-800'
+                    ? 'bg-brand text-on-brand'
+                    : 'hover:bg-sunken'
                 }`}
               >
                 {valeur === 'and' ? t('recherche.toutes') : t('recherche.aumoins')}
@@ -319,7 +319,7 @@ export function SearchPage() {
                   onClick={() => {
                     setLignes((precedent) => precedent.filter((_, position) => position !== index));
                   }}
-                  className="text-xs text-neutral-500 underline-offset-2 hover:underline"
+                  className="text-xs text-muted underline-offset-2 hover:underline"
                 >
                   {t('recherche.retirer')}
                 </button>
@@ -344,7 +344,7 @@ export function SearchPage() {
                 recherche.mutate();
               }}
               disabled={recherche.isPending}
-              className="ml-auto rounded-md bg-neutral-900 px-3 py-1.5 text-sm font-medium text-white transition hover:bg-neutral-700 disabled:opacity-60 dark:bg-neutral-100 dark:text-neutral-900 dark:hover:bg-neutral-300"
+              className="ml-auto rounded-md bg-brand px-3 py-1.5 text-sm font-medium text-on-brand shadow-card transition hover:bg-brand-hover disabled:opacity-50"
             >
               {t('recherche.executer')}
             </button>
@@ -352,7 +352,7 @@ export function SearchPage() {
         </div>
 
         {recherche.error && (
-          <p className="rounded-md border border-red-300 bg-red-50 p-3 text-sm text-red-800 dark:border-red-800 dark:bg-red-950 dark:text-red-200">
+          <p className="rounded-md border border-critical/30 bg-critical-soft p-3 text-sm text-critical-ink">
             {recherche.error instanceof ApiError
               ? recherche.error.message
               : String(recherche.error)}
@@ -361,7 +361,7 @@ export function SearchPage() {
 
         {recherche.data && (
           <div className="flex flex-wrap items-end gap-2">
-            <span className="text-xs text-neutral-500">
+            <span className="text-xs text-muted">
               {selection.length} {t('actionsMassives.selection')}
             </span>
 
@@ -406,13 +406,13 @@ export function SearchPage() {
               onClick={() => {
                 massive.mutate();
               }}
-              className="rounded-md border border-neutral-300 px-3 py-1.5 text-xs transition hover:bg-neutral-100 disabled:opacity-50 dark:border-neutral-700 dark:hover:bg-neutral-800"
+              className="rounded-lg border border-line px-3 py-1.5 text-xs transition hover:bg-sunken disabled:opacity-50"
             >
               {t('actionsMassives.appliquer')}
             </button>
 
             <div className="ml-auto flex items-center gap-2">
-              <span className="text-xs uppercase tracking-wide text-neutral-500">
+              <span className="text-xs uppercase tracking-wide text-muted">
                 {t('exports.titre')}
               </span>
               {(['csv', 'pdf'] as const).map((format) => (
@@ -423,7 +423,7 @@ export function SearchPage() {
                   onClick={() => {
                     exporter.mutate(format);
                   }}
-                  className="rounded-md border border-neutral-300 px-3 py-1.5 text-xs transition hover:bg-neutral-100 disabled:opacity-60 dark:border-neutral-700 dark:hover:bg-neutral-800"
+                  className="rounded-lg border border-line px-3 py-1.5 text-xs transition hover:bg-sunken disabled:opacity-60"
                 >
                   {t(`exports.${format}`)}
                 </button>
@@ -432,20 +432,20 @@ export function SearchPage() {
           </div>
         )}
 
-        {bilan && <p className="text-xs text-neutral-500">{bilan}</p>}
+        {bilan && <p className="text-xs text-muted">{bilan}</p>}
 
         {massive.error && (
-          <p className="text-xs text-red-600 dark:text-red-400">{massive.error.message}</p>
+          <p className="text-xs text-critical">{massive.error.message}</p>
         )}
 
         {exporter.error && (
-          <p className="text-xs text-red-600 dark:text-red-400">{exporter.error.message}</p>
+          <p className="text-xs text-critical">{exporter.error.message}</p>
         )}
 
         {recherche.data && (
-          <div className="overflow-x-auto rounded-lg border border-neutral-200 dark:border-neutral-800">
+          <div className="overflow-x-auto rounded-card border border-line">
             <table className="w-full text-left text-sm">
-              <thead className="border-b border-neutral-200 bg-neutral-50 text-xs uppercase text-neutral-500 dark:border-neutral-800 dark:bg-neutral-900">
+              <thead className="border-b border-line bg-sunken text-xs uppercase text-muted bg-surface">
                 <tr>
                   <th className="px-3 py-2">
                     <input
@@ -474,7 +474,7 @@ export function SearchPage() {
                 {recherche.data.items.map((ticket) => (
                   <tr
                     key={ticket.id}
-                    className="border-b border-neutral-100 last:border-0 dark:border-neutral-900"
+                    className="border-b border-line last:border-0"
                   >
                     <td className="px-3 py-2">
                       <input
@@ -490,7 +490,7 @@ export function SearchPage() {
                         }}
                       />
                     </td>
-                    <td className="px-3 py-2 tabular-nums text-neutral-500">#{ticket.id}</td>
+                    <td className="px-3 py-2 tabular-nums text-muted">#{ticket.id}</td>
                     <td className="px-3 py-2">
                       <StatusBadge status={ticket.status} />
                     </td>
@@ -510,7 +510,7 @@ export function SearchPage() {
               </tbody>
             </table>
             {recherche.data.items.length === 0 && (
-              <p className="p-3 text-sm text-neutral-500">{t('tickets.aucun')}</p>
+              <p className="p-3 text-sm text-muted">{t('tickets.aucun')}</p>
             )}
           </div>
         )}
@@ -519,7 +519,7 @@ export function SearchPage() {
       <aside className="space-y-3">
         <h3 className="text-sm font-semibold">{t('recherche.mesRecherches')}</h3>
 
-        <div className="space-y-2 rounded-lg border border-neutral-200 p-3 dark:border-neutral-800">
+        <div className="space-y-2 rounded-card border border-line bg-surface p-3 shadow-card">
           <input
             value={nom}
             onChange={(event) => {
@@ -544,21 +544,21 @@ export function SearchPage() {
             onClick={() => {
               enregistrer.mutate();
             }}
-            className="w-full rounded-md border border-neutral-300 px-2 py-1.5 text-xs transition hover:bg-neutral-100 disabled:opacity-60 dark:border-neutral-700 dark:hover:bg-neutral-800"
+            className="w-full rounded-lg border border-line px-2 py-1.5 text-xs transition hover:bg-sunken disabled:opacity-60"
           >
             {t('recherche.enregistrer')}
           </button>
         </div>
 
         {enregistrees.data && enregistrees.data.length === 0 && (
-          <p className="text-xs text-neutral-500">{t('recherche.aucuneEnregistree')}</p>
+          <p className="text-xs text-muted">{t('recherche.aucuneEnregistree')}</p>
         )}
 
         <ul className="space-y-1">
           {(enregistrees.data ?? []).map((element) => (
             <li
               key={element.id}
-              className="flex items-center gap-2 rounded-md border border-neutral-200 px-2 py-1.5 text-sm dark:border-neutral-800"
+              className="flex items-center gap-2 rounded-lg border border-line px-2 py-1.5 text-sm"
             >
               <button
                 type="button"
@@ -572,7 +572,7 @@ export function SearchPage() {
               >
                 {element.name}
                 {element.isPublic && (
-                  <span className="ml-1 text-xs text-neutral-400">· {element.owner}</span>
+                  <span className="ml-1 text-xs text-faint">· {element.owner}</span>
                 )}
               </button>
               {element.isMine && (
@@ -581,7 +581,7 @@ export function SearchPage() {
                   onClick={() => {
                     supprimer.mutate(element.id);
                   }}
-                  className="text-xs text-neutral-400 hover:text-red-600"
+                  className="text-xs text-faint hover:text-critical"
                   title={t('recherche.supprimer')}
                 >
                   ×

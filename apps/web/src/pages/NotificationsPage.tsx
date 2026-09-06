@@ -9,6 +9,7 @@ import type {
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ApiError, api } from '@/lib/api';
+import { BOUTON, BOUTON_PRIMAIRE } from '@/components/ui/primitives';
 
 const CIBLES: NotificationTarget[] = [
   'requester',
@@ -28,10 +29,8 @@ const LANGUES: Locale[] = ['fr', 'en'];
 const ETATS: NotificationState[] = ['pending', 'sent', 'failed', 'cancelled'];
 
 const champ =
-  'w-full rounded-md border border-neutral-300 bg-white px-2 py-1 text-sm dark:border-neutral-700 dark:bg-neutral-950';
-const bouton =
-  'rounded-md border border-neutral-300 px-2.5 py-1 text-sm transition hover:bg-neutral-100 dark:border-neutral-700 dark:hover:bg-neutral-800';
-const carte = 'rounded-lg border border-neutral-200 p-4 dark:border-neutral-800';
+  'w-full rounded-lg border border-line bg-surface px-2 py-1 text-sm';
+const carte = 'rounded-card border border-line bg-surface p-4 shadow-card';
 
 function modeleVide(event: string): UpsertNotificationTemplate {
   return {
@@ -153,7 +152,7 @@ export function NotificationsPage() {
 
   return (
     <section className="space-y-8">
-      {erreur && <p className="text-sm text-red-600 dark:text-red-400">{erreur}</p>}
+      {erreur && <p className="text-sm text-critical">{erreur}</p>}
 
       {/* ---- Préférences, accessibles à tous ---- */}
       <div className="space-y-3">
@@ -161,7 +160,7 @@ export function NotificationsPage() {
           <h2 className="text-xl font-semibold tracking-tight">
             {t('notifications.preferences.titre')}
           </h2>
-          <p className="text-sm text-neutral-500 dark:text-neutral-400">
+          <p className="text-sm text-muted">
             {t('notifications.preferences.description')}
           </p>
         </header>
@@ -195,7 +194,7 @@ export function NotificationsPage() {
               <h2 className="text-xl font-semibold tracking-tight">{t('notifications.modeles')}</h2>
               <button
                 type="button"
-                className={bouton}
+                className={BOUTON_PRIMAIRE}
                 onClick={() => {
                   setEdite({
                     valeurs: modeleVide(evenements.data?.[0]?.name ?? 'ticket.created'),
@@ -207,7 +206,7 @@ export function NotificationsPage() {
             </header>
 
             {modeles.data?.length === 0 && (
-              <p className="text-sm text-neutral-500">{t('notifications.aucun')}</p>
+              <p className="text-sm text-muted">{t('notifications.aucun')}</p>
             )}
 
             <div className="grid gap-2 md:grid-cols-2">
@@ -218,16 +217,16 @@ export function NotificationsPage() {
                       <p className="font-medium">
                         {modele.name}
                         {!modele.isActive && (
-                          <span className="ml-2 text-xs text-neutral-500">
+                          <span className="ml-2 text-xs text-muted">
                             ({t('notifications.etats.cancelled')})
                           </span>
                         )}
                       </p>
-                      <p className="text-xs text-neutral-500">
+                      <p className="text-xs text-muted">
                         {libelleEvenement(modele.event)} · {modele.entityName}
                         {modele.isRecursive ? ' ↓' : ''}
                       </p>
-                      <p className="text-xs text-neutral-500">
+                      <p className="text-xs text-muted">
                         {modele.targets
                           .map((cible) =>
                             cible.target === 'fixed'
@@ -236,7 +235,7 @@ export function NotificationsPage() {
                           )
                           .join(', ')}
                       </p>
-                      <p className="text-xs text-neutral-500">
+                      <p className="text-xs text-muted">
                         {modele.translations.map((traduction) => traduction.locale).join(' · ')}
                       </p>
                     </div>
@@ -244,7 +243,7 @@ export function NotificationsPage() {
                     <div className="flex gap-1">
                       <button
                         type="button"
-                        className={bouton}
+                        className={BOUTON}
                         onClick={() => {
                           setEdite({ id: modele.id, valeurs: versFormulaire(modele) });
                         }}
@@ -253,7 +252,7 @@ export function NotificationsPage() {
                       </button>
                       <button
                         type="button"
-                        className={bouton}
+                        className={BOUTON}
                         onClick={() => {
                           supprimer.mutate(modele.id);
                         }}
@@ -276,7 +275,7 @@ export function NotificationsPage() {
               >
                 <div className="grid gap-3 md:grid-cols-4">
                   <label className="space-y-1 md:col-span-2">
-                    <span className="text-xs text-neutral-500">{t('notifications.nom')}</span>
+                    <span className="text-xs text-muted">{t('notifications.nom')}</span>
                     <input
                       className={champ}
                       required
@@ -291,7 +290,7 @@ export function NotificationsPage() {
                   </label>
 
                   <label className="space-y-1">
-                    <span className="text-xs text-neutral-500">{t('notifications.evenement')}</span>
+                    <span className="text-xs text-muted">{t('notifications.evenement')}</span>
                     <select
                       className={champ}
                       value={edite.valeurs.event}
@@ -342,7 +341,7 @@ export function NotificationsPage() {
 
                 {/* ---- Destinataires ---- */}
                 <div className="space-y-2">
-                  <p className="text-xs font-medium text-neutral-500">
+                  <p className="text-xs font-medium text-muted">
                     {t('notifications.destinataires')}
                   </p>
 
@@ -397,7 +396,7 @@ export function NotificationsPage() {
 
                       <button
                         type="button"
-                        className={bouton}
+                        className={BOUTON}
                         onClick={() => {
                           setEdite({
                             ...edite,
@@ -417,7 +416,7 @@ export function NotificationsPage() {
 
                   <button
                     type="button"
-                    className={bouton}
+                    className={BOUTON}
                     onClick={() => {
                       setEdite({
                         ...edite,
@@ -437,14 +436,14 @@ export function NotificationsPage() {
 
                 {/* ---- Traductions ---- */}
                 <div className="space-y-3">
-                  <p className="text-xs font-medium text-neutral-500">
+                  <p className="text-xs font-medium text-muted">
                     {t('notifications.traductions')}
                   </p>
 
                   {edite.valeurs.translations.map((traduction, index) => (
                     <div
                       key={index}
-                      className="space-y-2 rounded-md border border-neutral-200 p-3 dark:border-neutral-800"
+                      className="space-y-2 rounded-lg border border-line p-3"
                     >
                       <div className="flex flex-wrap items-center gap-2">
                         <select
@@ -483,7 +482,7 @@ export function NotificationsPage() {
 
                         <button
                           type="button"
-                          className={bouton}
+                          className={BOUTON}
                           onClick={() => {
                             setEdite({
                               ...edite,
@@ -519,7 +518,7 @@ export function NotificationsPage() {
 
                   <button
                     type="button"
-                    className={bouton}
+                    className={BOUTON}
                     onClick={() => {
                       setEdite({
                         ...edite,
@@ -537,17 +536,17 @@ export function NotificationsPage() {
                   </button>
                 </div>
 
-                <p className="text-xs text-neutral-500">
+                <p className="text-xs text-muted">
                   {t('notifications.variables')} : <code>{variables.data?.join('  ') ?? ''}</code>
                 </p>
 
                 <div className="flex gap-2">
-                  <button type="submit" className={bouton}>
+                  <button type="submit" className={BOUTON}>
                     {t('commun.enregistrer')}
                   </button>
                   <button
                     type="button"
-                    className={bouton}
+                    className={BOUTON}
                     onClick={() => {
                       setEdite(null);
                     }}
@@ -582,7 +581,7 @@ export function NotificationsPage() {
 
               <button
                 type="button"
-                className={bouton}
+                className={BOUTON}
                 onClick={() => {
                   purger.mutate();
                 }}
@@ -593,13 +592,13 @@ export function NotificationsPage() {
             </header>
 
             {file.data?.length === 0 && (
-              <p className="text-sm text-neutral-500">{t('notifications.fileVide')}</p>
+              <p className="text-sm text-muted">{t('notifications.fileVide')}</p>
             )}
 
             {file.data && file.data.length > 0 && (
-              <div className="overflow-x-auto rounded-lg border border-neutral-200 dark:border-neutral-800">
+              <div className="overflow-x-auto rounded-card border border-line">
                 <table className="w-full text-left text-sm">
-                  <thead className="border-b border-neutral-200 bg-neutral-50 dark:border-neutral-800 dark:bg-neutral-900">
+                  <thead className="border-b border-line bg-sunken bg-surface">
                     <tr>
                       <th className="px-3 py-2 font-medium">{t('notifications.etat')}</th>
                       <th className="px-3 py-2 font-medium">{t('notifications.destinataire')}</th>
@@ -613,14 +612,14 @@ export function NotificationsPage() {
                     {file.data.map((message) => (
                       <tr
                         key={message.id}
-                        className="border-b border-neutral-100 last:border-0 dark:border-neutral-900"
+                        className="border-b border-line last:border-0"
                       >
                         <td className="px-3 py-2">
                           <span
                             className={
                               message.state === 'failed'
-                                ? 'text-red-600 dark:text-red-400'
-                                : 'text-neutral-500'
+                                ? 'text-critical'
+                                : 'text-muted'
                             }
                           >
                             {t(`notifications.etats.${message.state}`)}
@@ -630,20 +629,20 @@ export function NotificationsPage() {
                         <td className="px-3 py-2">
                           {message.subject}
                           {message.lastError && (
-                            <span className="block text-xs text-red-600 dark:text-red-400">
+                            <span className="block text-xs text-critical">
                               {message.lastError}
                             </span>
                           )}
                         </td>
                         <td className="px-3 py-2 tabular-nums">{message.attempts}</td>
-                        <td className="px-3 py-2 text-xs text-neutral-500">
+                        <td className="px-3 py-2 text-xs text-muted">
                           {new Date(message.createdAt).toLocaleString()}
                         </td>
                         <td className="px-3 py-2 text-right">
                           {message.state !== 'sent' && (
                             <button
                               type="button"
-                              className={bouton}
+                              className={BOUTON}
                               onClick={() => {
                                 rejouer.mutate(message.id);
                               }}

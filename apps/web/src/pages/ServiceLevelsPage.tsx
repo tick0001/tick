@@ -12,6 +12,7 @@ import type {
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ApiError, api } from '@/lib/api';
+import { BOUTON, BOUTON_PRIMAIRE } from '@/components/ui/primitives';
 
 const JOURS = [1, 2, 3, 4, 5, 6, 0];
 
@@ -25,10 +26,8 @@ const ACTIONS_ESCALADE: EscalationAction[] = [
 ];
 
 const champ =
-  'w-full rounded-md border border-neutral-300 bg-white px-2 py-1 text-sm dark:border-neutral-700 dark:bg-neutral-950';
-const bouton =
-  'rounded-md border border-neutral-300 px-2.5 py-1 text-sm transition hover:bg-neutral-100 dark:border-neutral-700 dark:hover:bg-neutral-800';
-const carte = 'rounded-lg border border-neutral-200 p-4 dark:border-neutral-800';
+  'w-full rounded-lg border border-line bg-surface px-2 py-1 text-sm';
+const carte = 'rounded-card border border-line bg-surface p-4 shadow-card';
 
 function calendrierVide(): UpsertCalendar {
   return {
@@ -162,7 +161,7 @@ export function ServiceLevelsPage() {
 
   if (interdit) {
     return (
-      <p className="rounded-md border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-200">
+      <p className="rounded-md border border-caution/30 bg-caution-soft p-3 text-sm text-caution-ink">
         {t('entites.interdit')}
       </p>
     );
@@ -203,7 +202,7 @@ export function ServiceLevelsPage() {
 
   return (
     <section className="space-y-8">
-      {erreur && <p className="text-sm text-red-600 dark:text-red-400">{erreur}</p>}
+      {erreur && <p className="text-sm text-critical">{erreur}</p>}
 
       {/* ---- Calendriers ---- */}
       <div className="space-y-3">
@@ -211,7 +210,7 @@ export function ServiceLevelsPage() {
           <h2 className="text-xl font-semibold tracking-tight">{t('calendriers.titre')}</h2>
           <button
             type="button"
-            className={bouton}
+            className={BOUTON_PRIMAIRE}
             onClick={() => {
               setCalendrierEdite({ valeurs: calendrierVide() });
             }}
@@ -221,7 +220,7 @@ export function ServiceLevelsPage() {
         </header>
 
         {calendriers.data?.length === 0 && (
-          <p className="text-sm text-neutral-500">{t('calendriers.aucun')}</p>
+          <p className="text-sm text-muted">{t('calendriers.aucun')}</p>
         )}
 
         <div className="grid gap-2 md:grid-cols-2">
@@ -230,7 +229,7 @@ export function ServiceLevelsPage() {
               <div className="flex items-start justify-between gap-2">
                 <div>
                   <p className="font-medium">{calendrier.name}</p>
-                  <p className="text-xs text-neutral-500">
+                  <p className="text-xs text-muted">
                     {calendrier.timezone} · {calendrier.entityName}
                     {calendrier.isRecursive ? ' · ↓' : ''}
                   </p>
@@ -238,7 +237,7 @@ export function ServiceLevelsPage() {
                 <div className="flex gap-1">
                   <button
                     type="button"
-                    className={bouton}
+                    className={BOUTON}
                     onClick={() => {
                       setCalendrierEdite({
                         id: calendrier.id,
@@ -250,7 +249,7 @@ export function ServiceLevelsPage() {
                   </button>
                   <button
                     type="button"
-                    className={bouton}
+                    className={BOUTON}
                     onClick={() => {
                       supprimerCalendrier.mutate(calendrier.id);
                     }}
@@ -260,7 +259,7 @@ export function ServiceLevelsPage() {
                 </div>
               </div>
 
-              <p className="mt-2 text-xs text-neutral-500">
+              <p className="mt-2 text-xs text-muted">
                 {calendrier.segments.length} {t('calendriers.plages').toLowerCase()} ·{' '}
                 {calendrier.holidays.length} {t('calendriers.feries').toLowerCase()}
               </p>
@@ -278,7 +277,7 @@ export function ServiceLevelsPage() {
           >
             <div className="grid gap-3 md:grid-cols-3">
               <label className="space-y-1">
-                <span className="text-xs text-neutral-500">{t('calendriers.nom')}</span>
+                <span className="text-xs text-muted">{t('calendriers.nom')}</span>
                 <input
                   className={champ}
                   required
@@ -293,7 +292,7 @@ export function ServiceLevelsPage() {
               </label>
 
               <label className="space-y-1">
-                <span className="text-xs text-neutral-500">{t('calendriers.fuseau')}</span>
+                <span className="text-xs text-muted">{t('calendriers.fuseau')}</span>
                 <input
                   className={champ}
                   required
@@ -326,7 +325,7 @@ export function ServiceLevelsPage() {
             </div>
 
             <div className="space-y-2">
-              <p className="text-xs font-medium text-neutral-500">{t('calendriers.plages')}</p>
+              <p className="text-xs font-medium text-muted">{t('calendriers.plages')}</p>
               {calendrierEdite.valeurs.segments.map((segment, index) => (
                 <div key={index} className="flex flex-wrap items-center gap-2">
                   <select
@@ -377,7 +376,7 @@ export function ServiceLevelsPage() {
 
                   <button
                     type="button"
-                    className={bouton}
+                    className={BOUTON}
                     onClick={() => {
                       setCalendrierEdite({
                         ...calendrierEdite,
@@ -397,7 +396,7 @@ export function ServiceLevelsPage() {
 
               <button
                 type="button"
-                className={bouton}
+                className={BOUTON}
                 onClick={() => {
                   setCalendrierEdite({
                     ...calendrierEdite,
@@ -416,7 +415,7 @@ export function ServiceLevelsPage() {
             </div>
 
             <div className="space-y-2">
-              <p className="text-xs font-medium text-neutral-500">{t('calendriers.feries')}</p>
+              <p className="text-xs font-medium text-muted">{t('calendriers.feries')}</p>
               {calendrierEdite.valeurs.holidays.map((ferie, index) => (
                 <div key={index} className="flex flex-wrap items-center gap-2">
                   <input
@@ -464,7 +463,7 @@ export function ServiceLevelsPage() {
 
               <button
                 type="button"
-                className={bouton}
+                className={BOUTON}
                 onClick={() => {
                   setCalendrierEdite({
                     ...calendrierEdite,
@@ -483,12 +482,12 @@ export function ServiceLevelsPage() {
             </div>
 
             <div className="flex gap-2">
-              <button type="submit" className={bouton}>
+              <button type="submit" className={BOUTON}>
                 {t('calendriers.enregistrer')}
               </button>
               <button
                 type="button"
-                className={bouton}
+                className={BOUTON}
                 onClick={() => {
                   setCalendrierEdite(null);
                 }}
@@ -506,7 +505,7 @@ export function ServiceLevelsPage() {
           <h2 className="text-xl font-semibold tracking-tight">{t('engagements.titre')}</h2>
           <button
             type="button"
-            className={bouton}
+            className={BOUTON_PRIMAIRE}
             onClick={() => {
               setEngagementEdite({ valeurs: engagementVide() });
             }}
@@ -516,7 +515,7 @@ export function ServiceLevelsPage() {
         </header>
 
         {engagements.data?.length === 0 && (
-          <p className="text-sm text-neutral-500">{t('engagements.aucun')}</p>
+          <p className="text-sm text-muted">{t('engagements.aucun')}</p>
         )}
 
         <div className="grid gap-2 md:grid-cols-2">
@@ -525,7 +524,7 @@ export function ServiceLevelsPage() {
               <div className="flex items-start justify-between gap-2">
                 <div>
                   <p className="font-medium">{engagement.name}</p>
-                  <p className="text-xs text-neutral-500">
+                  <p className="text-xs text-muted">
                     {t(`engagements.natures.${engagement.kind}`)} ·{' '}
                     {t(`engagements.axes.${engagement.axis}`)} ·{' '}
                     {String(Math.round(engagement.duration / 3600))} h ·{' '}
@@ -535,7 +534,7 @@ export function ServiceLevelsPage() {
                 <div className="flex gap-1">
                   <button
                     type="button"
-                    className={bouton}
+                    className={BOUTON}
                     onClick={() => {
                       setEngagementEdite({
                         id: engagement.id,
@@ -547,7 +546,7 @@ export function ServiceLevelsPage() {
                   </button>
                   <button
                     type="button"
-                    className={bouton}
+                    className={BOUTON}
                     onClick={() => {
                       supprimerEngagement.mutate(engagement.id);
                     }}
@@ -558,7 +557,7 @@ export function ServiceLevelsPage() {
               </div>
 
               {engagement.levels.length > 0 && (
-                <ul className="mt-2 space-y-1 text-xs text-neutral-500">
+                <ul className="mt-2 space-y-1 text-xs text-muted">
                   {engagement.levels.map((niveau, index) => (
                     <li key={index}>
                       {niveau.name} — {String(Math.abs(Math.round(niveau.offsetSeconds / 3600)))} h{' '}
@@ -583,7 +582,7 @@ export function ServiceLevelsPage() {
           >
             <div className="grid gap-3 md:grid-cols-4">
               <label className="space-y-1 md:col-span-2">
-                <span className="text-xs text-neutral-500">{t('engagements.nom')}</span>
+                <span className="text-xs text-muted">{t('engagements.nom')}</span>
                 <input
                   className={champ}
                   required
@@ -598,7 +597,7 @@ export function ServiceLevelsPage() {
               </label>
 
               <label className="space-y-1">
-                <span className="text-xs text-neutral-500">{t('engagements.nature')}</span>
+                <span className="text-xs text-muted">{t('engagements.nature')}</span>
                 <select
                   className={champ}
                   value={engagementEdite.valeurs.kind}
@@ -618,7 +617,7 @@ export function ServiceLevelsPage() {
               </label>
 
               <label className="space-y-1">
-                <span className="text-xs text-neutral-500">{t('engagements.axe')}</span>
+                <span className="text-xs text-muted">{t('engagements.axe')}</span>
                 <select
                   className={champ}
                   value={engagementEdite.valeurs.axis}
@@ -638,7 +637,7 @@ export function ServiceLevelsPage() {
               </label>
 
               <label className="space-y-1">
-                <span className="text-xs text-neutral-500">{t('engagements.duree')} (h)</span>
+                <span className="text-xs text-muted">{t('engagements.duree')} (h)</span>
                 <input
                   type="number"
                   min={1}
@@ -657,7 +656,7 @@ export function ServiceLevelsPage() {
               </label>
 
               <label className="space-y-1 md:col-span-2">
-                <span className="text-xs text-neutral-500">{t('engagements.calendrier')}</span>
+                <span className="text-xs text-muted">{t('engagements.calendrier')}</span>
                 <select
                   className={champ}
                   value={engagementEdite.valeurs.calendarId ?? ''}
@@ -699,7 +698,7 @@ export function ServiceLevelsPage() {
             </div>
 
             <div className="space-y-2">
-              <p className="text-xs font-medium text-neutral-500">{t('engagements.niveaux')}</p>
+              <p className="text-xs font-medium text-muted">{t('engagements.niveaux')}</p>
 
               {engagementEdite.valeurs.levels.map((niveau, index) => (
                 <div key={index} className="flex flex-wrap items-center gap-2">
@@ -730,7 +729,7 @@ export function ServiceLevelsPage() {
                       });
                     }}
                   />
-                  <span className="text-xs text-neutral-500">
+                  <span className="text-xs text-muted">
                     h{' '}
                     {niveau.offsetSeconds < 0
                       ? t('engagements.avantEcheance')
@@ -782,7 +781,7 @@ export function ServiceLevelsPage() {
 
                   <button
                     type="button"
-                    className={bouton}
+                    className={BOUTON}
                     onClick={() => {
                       setEngagementEdite({
                         ...engagementEdite,
@@ -802,7 +801,7 @@ export function ServiceLevelsPage() {
 
               <button
                 type="button"
-                className={bouton}
+                className={BOUTON}
                 onClick={() => {
                   setEngagementEdite({
                     ...engagementEdite,
@@ -826,12 +825,12 @@ export function ServiceLevelsPage() {
             </div>
 
             <div className="flex gap-2">
-              <button type="submit" className={bouton}>
+              <button type="submit" className={BOUTON}>
                 {t('calendriers.enregistrer')}
               </button>
               <button
                 type="button"
-                className={bouton}
+                className={BOUTON}
                 onClick={() => {
                   setEngagementEdite(null);
                 }}

@@ -16,8 +16,18 @@
  * demandent vraiment.
  */
 
-/** Emplacements que les plugins peuvent remplir. */
-export type SlotName = 'app.header' | 'entity.list.actions' | 'dashboard.widgets';
+/**
+ * Emplacements que les plugins peuvent remplir.
+ *
+ * `app.sidebar` s'ajoute avec la navigation groupee : une extension qui apporte
+ * un ecran a besoin d'y conduire, et l'en-tete n'a pas la place d'accueillir une
+ * entree de navigation de plus.
+ */
+export type SlotName =
+  | 'app.header'
+  | 'app.sidebar'
+  | 'entity.list.actions'
+  | 'dashboard.widgets';
 
 export interface SlotContext {
   /** Langue active de l'interface. */

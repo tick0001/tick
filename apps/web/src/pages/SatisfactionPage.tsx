@@ -31,7 +31,7 @@ export function SatisfactionPage() {
   });
 
   const encadre =
-    'mx-auto max-w-lg space-y-4 rounded-lg border border-neutral-200 p-6 dark:border-neutral-800';
+    'mx-auto max-w-lg space-y-4 rounded-card border border-line p-6';
 
   if (enquete.error) {
     return (
@@ -44,7 +44,7 @@ export function SatisfactionPage() {
   if (!enquete.data) {
     return (
       <main className="flex min-h-dvh items-center justify-center p-6">
-        <p className="text-sm text-neutral-500">{t('commun.chargement')}</p>
+        <p className="text-sm text-muted">{t('commun.chargement')}</p>
       </main>
     );
   }
@@ -57,7 +57,7 @@ export function SatisfactionPage() {
       <section className={encadre}>
         <header className="space-y-1">
           <h1 className="text-lg font-semibold tracking-tight">{t('satisfaction.titre')}</h1>
-          <p className="text-sm text-neutral-500 dark:text-neutral-400">
+          <p className="text-sm text-muted">
             #{detail.ticketId} — {detail.ticketName}
           </p>
         </header>
@@ -85,8 +85,8 @@ export function SatisfactionPage() {
                     }}
                     className={`h-10 w-10 rounded-md border text-sm transition ${
                       note === valeur
-                        ? 'border-neutral-900 bg-neutral-900 text-white dark:border-neutral-100 dark:bg-neutral-100 dark:text-neutral-900'
-                        : 'border-neutral-300 hover:bg-neutral-100 dark:border-neutral-700 dark:hover:bg-neutral-800'
+                        ? 'border-brand bg-brand text-on-brand'
+                        : 'border-line hover:bg-sunken'
                     }`}
                   >
                     {valeur}
@@ -98,7 +98,7 @@ export function SatisfactionPage() {
             <label className="block space-y-1">
               <span className="text-sm font-medium">{t('satisfaction.commentaire')}</span>
               <textarea
-                className="h-28 w-full rounded-md border border-neutral-300 bg-white px-2 py-1 text-sm dark:border-neutral-700 dark:bg-neutral-950"
+                className="h-28 w-full rounded-lg border border-line bg-surface px-2 py-1 text-sm"
                 value={commentaire}
                 onChange={(event) => {
                   setCommentaire(event.target.value);
@@ -107,7 +107,7 @@ export function SatisfactionPage() {
             </label>
 
             {repondre.error && (
-              <p className="text-sm text-red-600 dark:text-red-400">
+              <p className="text-sm text-critical">
                 {repondre.error instanceof Error ? repondre.error.message : ''}
               </p>
             )}
@@ -115,7 +115,7 @@ export function SatisfactionPage() {
             <button
               type="submit"
               disabled={note === null}
-              className="w-full rounded-md bg-neutral-900 px-3 py-2 text-sm text-white transition disabled:opacity-50 dark:bg-neutral-100 dark:text-neutral-900"
+              className="w-full rounded-md bg-brand px-3 py-2 text-sm font-medium text-on-brand transition hover:bg-brand-hover disabled:opacity-50"
             >
               {t('satisfaction.envoyer')}
             </button>

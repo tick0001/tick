@@ -75,7 +75,7 @@ export function NewTicketPage() {
   };
 
   const champ =
-    'w-full rounded-md border border-neutral-300 bg-white px-3 py-2 text-sm outline-none focus:border-neutral-900 dark:border-neutral-700 dark:bg-neutral-950 dark:focus:border-neutral-300';
+    'w-full rounded-lg border border-line bg-surface px-3 py-2 text-sm focus:border-brand';
 
   return (
     <form onSubmit={soumettre} className="mx-auto max-w-2xl space-y-4">
@@ -175,7 +175,7 @@ export function NewTicketPage() {
       </div>
 
       {creation.error && (
-        <p className="rounded-md border border-red-300 bg-red-50 p-3 text-sm text-red-800 dark:border-red-800 dark:bg-red-950 dark:text-red-200">
+        <p className="rounded-md border border-critical/30 bg-critical-soft p-3 text-sm text-critical-ink">
           {creation.error.message}
         </p>
       )}
@@ -184,14 +184,14 @@ export function NewTicketPage() {
         <button
           type="submit"
           disabled={creation.isPending}
-          className="rounded-md bg-neutral-900 px-3 py-2 text-sm font-medium text-white transition hover:bg-neutral-700 disabled:opacity-60 dark:bg-neutral-100 dark:text-neutral-900 dark:hover:bg-neutral-300"
+          className="rounded-md bg-brand px-3 py-2 text-sm font-medium text-on-brand shadow-card transition hover:bg-brand-hover disabled:opacity-50"
         >
           {t('creation.creer')}
         </button>
         <button
           type="button"
           onClick={() => void navigate('/tickets')}
-          className="rounded-md border border-neutral-300 px-3 py-2 text-sm transition hover:bg-neutral-100 dark:border-neutral-700 dark:hover:bg-neutral-800"
+          className="rounded-lg border border-line px-3 py-2 text-sm transition hover:bg-sunken"
         >
           {t('creation.annuler')}
         </button>

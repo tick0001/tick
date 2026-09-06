@@ -19,6 +19,9 @@ export const fr = {
   },
   connexion: {
     titre: 'Connexion',
+    accroche: 'Le service se pilote, il ne se subit pas.',
+    accrocheDetail:
+      'Incidents, problèmes, changements et engagements de service, dans un seul outil, à l’échelle de votre organisation.',
     sousTitre: 'Outil de ticketing ITSM',
     identifiant: 'Identifiant',
     motDePasse: 'Mot de passe',
@@ -722,8 +725,22 @@ export const fr = {
       delete: 'Mettre à la corbeille',
     },
   },
+  apparence: {
+    clair: 'Thème clair',
+    sombre: 'Thème sombre',
+    systeme: 'Suivre le système',
+    langue: 'Langue de l’interface',
+  },
   navigation: {
     accueil: 'Accueil',
+    ouvrirMenu: 'Ouvrir le menu',
+    fermerMenu: 'Fermer le menu',
+    groupes: {
+      travail: 'Travail',
+      services: 'Services',
+      analyse: 'Analyse',
+      configuration: 'Configuration',
+    },
     assistance: 'Assistance',
     tickets: 'Tickets',
     problemes: 'Problèmes',

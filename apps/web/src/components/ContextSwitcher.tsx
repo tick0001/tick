@@ -43,7 +43,7 @@ export function ContextSwitcher({ session }: Props) {
   const courant = `${String(session.entity.id)}:${String(session.profile.id)}`;
 
   return (
-    <label className="flex items-center gap-2 text-sm">
+    <label className="flex min-w-0 items-center gap-2 text-sm">
       <span className="sr-only">{t('session.changerContexte')}</span>
       <select
         value={courant}
@@ -51,7 +51,7 @@ export function ContextSwitcher({ session }: Props) {
         onChange={(event) => {
           bascule.mutate(event.target.value);
         }}
-        className="max-w-xs rounded-md border border-neutral-300 bg-white px-2 py-1.5 text-sm dark:border-neutral-700 dark:bg-neutral-950"
+        className="h-8 max-w-[18rem] min-w-0 truncate rounded-lg border border-line bg-surface px-2.5 text-sm font-medium text-ink transition-colors hover:border-line-strong disabled:opacity-70"
       >
         {session.available.map((habilitation) => (
           <option
@@ -65,7 +65,7 @@ export function ContextSwitcher({ session }: Props) {
       {session.includeSubEntities && (
         <span
           title={t('session.sousEntites')}
-          className="rounded bg-neutral-100 px-1.5 py-0.5 text-xs text-neutral-600 dark:bg-neutral-800 dark:text-neutral-300"
+          className="hidden shrink-0 rounded-md bg-brand-soft px-1.5 py-0.5 text-xs font-medium text-brand-ink sm:inline"
         >
           {t('session.badgeSousEntites')}
         </span>

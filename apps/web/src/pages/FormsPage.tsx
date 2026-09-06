@@ -10,6 +10,7 @@ import type {
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ApiError, api } from '@/lib/api';
+import { BOUTON, BOUTON_PRIMAIRE } from '@/components/ui/primitives';
 
 const NATURES: FormQuestionKind[] = [
   'text',
@@ -51,10 +52,8 @@ const CHAMPS = [
 ];
 
 const champ =
-  'w-full rounded-md border border-neutral-300 bg-white px-2 py-1 text-sm dark:border-neutral-700 dark:bg-neutral-950';
-const bouton =
-  'rounded-md border border-neutral-300 px-2.5 py-1 text-sm transition hover:bg-neutral-100 dark:border-neutral-700 dark:hover:bg-neutral-800';
-const carte = 'rounded-lg border border-neutral-200 p-4 dark:border-neutral-800';
+  'w-full rounded-lg border border-line bg-surface px-2 py-1 text-sm';
+const carte = 'rounded-card border border-line bg-surface p-4 shadow-card';
 
 function formulaireVide(): UpsertForm {
   return {
@@ -139,7 +138,7 @@ export function FormsPage() {
 
   if (formulaires.error instanceof ApiError && formulaires.error.status === 403) {
     return (
-      <p className="rounded-md border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-200">
+      <p className="rounded-md border border-caution/30 bg-caution-soft p-3 text-sm text-caution-ink">
         {t('entites.interdit')}
       </p>
     );
@@ -187,7 +186,7 @@ export function FormsPage() {
         <h2 className="text-xl font-semibold tracking-tight">{t('formulaires.titre')}</h2>
         <button
           type="button"
-          className={bouton}
+          className={BOUTON_PRIMAIRE}
           onClick={() => {
             setEdite({ valeurs: formulaireVide() });
           }}
@@ -196,10 +195,10 @@ export function FormsPage() {
         </button>
       </header>
 
-      {erreur && <p className="text-sm text-red-600 dark:text-red-400">{erreur}</p>}
+      {erreur && <p className="text-sm text-critical">{erreur}</p>}
 
       {formulaires.data?.length === 0 && (
-        <p className="text-sm text-neutral-500">{t('formulaires.aucun')}</p>
+        <p className="text-sm text-muted">{t('formulaires.aucun')}</p>
       )}
 
       <div className="grid gap-2 md:grid-cols-2">
@@ -208,7 +207,7 @@ export function FormsPage() {
             <div className="flex items-start justify-between gap-2">
               <div>
                 <p className="font-medium">{forme.name}</p>
-                <p className="text-xs text-neutral-500">
+                <p className="text-xs text-muted">
                   {forme.category ?? '—'} · {forme.entityName}
                   {forme.isRecursive ? ' ↓' : ''} ·{' '}
                   {String(forme.sections.reduce((total, s) => total + s.questions.length, 0))}{' '}
@@ -220,7 +219,7 @@ export function FormsPage() {
               <div className="flex gap-1">
                 <button
                   type="button"
-                  className={bouton}
+                  className={BOUTON}
                   onClick={() => {
                     setEdite({ id: forme.id, valeurs: versFormulaire(forme) });
                   }}
@@ -229,7 +228,7 @@ export function FormsPage() {
                 </button>
                 <button
                   type="button"
-                  className={bouton}
+                  className={BOUTON}
                   onClick={() => {
                     supprimer.mutate(forme.id);
                   }}
@@ -252,7 +251,7 @@ export function FormsPage() {
         >
           <div className="grid gap-3 md:grid-cols-4">
             <label className="space-y-1 md:col-span-2">
-              <span className="text-xs text-neutral-500">{t('formulaires.nom')}</span>
+              <span className="text-xs text-muted">{t('formulaires.nom')}</span>
               <input
                 className={champ}
                 required
@@ -264,7 +263,7 @@ export function FormsPage() {
             </label>
 
             <label className="space-y-1">
-              <span className="text-xs text-neutral-500">{t('formulaires.rubrique')}</span>
+              <span className="text-xs text-muted">{t('formulaires.rubrique')}</span>
               <input
                 className={champ}
                 value={edite.valeurs.category ?? ''}
@@ -275,7 +274,7 @@ export function FormsPage() {
             </label>
 
             <label className="space-y-1">
-              <span className="text-xs text-neutral-500">{t('formulaires.rang')}</span>
+              <span className="text-xs text-muted">{t('formulaires.rang')}</span>
               <input
                 type="number"
                 className={champ}
@@ -287,7 +286,7 @@ export function FormsPage() {
             </label>
 
             <label className="space-y-1 md:col-span-3">
-              <span className="text-xs text-neutral-500">{t('formulaires.description')}</span>
+              <span className="text-xs text-muted">{t('formulaires.description')}</span>
               <input
                 className={champ}
                 value={edite.valeurs.description ?? ''}
@@ -325,7 +324,7 @@ export function FormsPage() {
           {edite.valeurs.sections.map((section, indexSection) => (
             <div
               key={indexSection}
-              className="space-y-3 rounded-md border border-neutral-200 p-3 dark:border-neutral-800"
+              className="space-y-3 rounded-lg border border-line p-3"
             >
               <div className="flex items-center gap-2">
                 <input
@@ -342,7 +341,7 @@ export function FormsPage() {
                 />
                 <button
                   type="button"
-                  className={bouton}
+                  className={BOUTON}
                   onClick={() => {
                     maj({
                       sections: edite.valeurs.sections.filter(
@@ -362,10 +361,10 @@ export function FormsPage() {
                 return (
                   <div
                     key={indexQuestion}
-                    className="space-y-2 rounded-md bg-neutral-50 p-2 dark:bg-neutral-900"
+                    className="space-y-2 rounded-md bg-sunken p-2 bg-surface"
                   >
                     <div className="flex flex-wrap items-center gap-2">
-                      <span className="w-6 text-xs tabular-nums text-neutral-400">
+                      <span className="w-6 text-xs tabular-nums text-faint">
                         {String(rang)}
                       </span>
 
@@ -410,7 +409,7 @@ export function FormsPage() {
 
                       <button
                         type="button"
-                        className={bouton}
+                        className={BOUTON}
                         onClick={() => {
                           maj({
                             sections: edite.valeurs.sections.map((autre, position) =>
@@ -445,7 +444,7 @@ export function FormsPage() {
 
                     {question.conditions.map((condition, indexCondition) => (
                       <div key={indexCondition} className="flex flex-wrap items-center gap-2">
-                        <span className="text-xs text-neutral-500">
+                        <span className="text-xs text-muted">
                           {t('formulaires.conditions')}
                         </span>
 
@@ -507,7 +506,7 @@ export function FormsPage() {
 
                         <button
                           type="button"
-                          className={bouton}
+                          className={BOUTON}
                           onClick={() => {
                             majQuestion(indexSection, indexQuestion, {
                               conditions: question.conditions.filter(
@@ -524,7 +523,7 @@ export function FormsPage() {
                     {rang > 0 && (
                       <button
                         type="button"
-                        className={bouton}
+                        className={BOUTON}
                         onClick={() => {
                           majQuestion(indexSection, indexQuestion, {
                             conditions: [
@@ -543,7 +542,7 @@ export function FormsPage() {
 
               <button
                 type="button"
-                className={bouton}
+                className={BOUTON}
                 onClick={() => {
                   maj({
                     sections: edite.valeurs.sections.map((autre, position) =>
@@ -575,7 +574,7 @@ export function FormsPage() {
 
           <button
             type="button"
-            className={bouton}
+            className={BOUTON}
             onClick={() => {
               maj({
                 sections: [
@@ -591,7 +590,7 @@ export function FormsPage() {
           {/* ---- Correspondances ---- */}
           {destination && (
             <div className="space-y-2">
-              <p className="text-xs font-medium text-neutral-500">
+              <p className="text-xs font-medium text-muted">
                 {t('formulaires.correspondances')}
               </p>
 
@@ -672,7 +671,7 @@ export function FormsPage() {
 
                   <button
                     type="button"
-                    className={bouton}
+                    className={BOUTON}
                     onClick={() => {
                       majMappings(
                         destination.mappings.filter((_, position) => position !== indexMapping),
@@ -686,7 +685,7 @@ export function FormsPage() {
 
               <button
                 type="button"
-                className={bouton}
+                className={BOUTON}
                 onClick={() => {
                   majMappings([
                     ...destination.mappings,
@@ -700,12 +699,12 @@ export function FormsPage() {
           )}
 
           <div className="flex gap-2">
-            <button type="submit" className={bouton}>
+            <button type="submit" className={BOUTON}>
               {t('commun.enregistrer')}
             </button>
             <button
               type="button"
-              className={bouton}
+              className={BOUTON}
               onClick={() => {
                 setEdite(null);
               }}
