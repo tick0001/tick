@@ -314,6 +314,7 @@ export const itilValidations = pgTable(
   (t) => [
     index('itil_validations_object_idx').on(t.itilType, t.itilId),
     index('itil_validations_validator_idx').on(t.validatorType, t.validatorId, t.status),
+    index('itil_validations_entity_path_gist').using('gist', t.entityPath),
   ],
 );
 
@@ -335,7 +336,10 @@ export const itilCosts = pgTable(
     costMaterial: numeric('cost_material', { precision: 12, scale: 2 }).notNull().default('0'),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   },
-  (t) => [index('itil_costs_object_idx').on(t.itilType, t.itilId)],
+  (t) => [
+    index('itil_costs_object_idx').on(t.itilType, t.itilId),
+    index('itil_costs_entity_path_gist').using('gist', t.entityPath),
+  ],
 );
 
 /**

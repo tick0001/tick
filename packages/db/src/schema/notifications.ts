@@ -151,6 +151,7 @@ export const notificationQueue = pgTable(
     index('notification_queue_state_idx').on(t.state, t.createdAt),
     index('notification_queue_item_idx').on(t.itemType, t.itemId),
     index('notification_queue_message_idx').on(t.messageId),
+    index('notification_queue_entity_path_gist').using('gist', t.entityPath),
   ],
 );
 

@@ -9,6 +9,7 @@
     "lint": "eslint src",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
+    "coverage": "vitest run --coverage",
     "db:seed": "tsc -p tsconfig.build.json && node dist/cli/seed.js"
   },
   "dependencies": {
