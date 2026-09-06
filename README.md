@@ -101,6 +101,7 @@ ne laisse rien derrière lui.
 | [Self-service](docs/09-self-service.md)                                 | Base de connaissances, formulaires, interface demandeur       |
 | [Problèmes et changements](docs/10-problemes-et-changements.md)         | Socle ITIL commun, liens entre objets, promotion              |
 | [Pilotage](docs/11-pilotage.md)                                         | Planning, statistiques, tableaux de bord, exports             |
+| [Interface](docs/12-interface.md)                                       | Jetons de couleur, navigation, briques communes               |
 | [Feuille de route](docs/06-feuille-de-route.md)                         | Dix jalons, du socle à l'ouverture publique                   |
 
 ## Conventions
