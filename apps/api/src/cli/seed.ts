@@ -14,6 +14,10 @@ import { NestFactory } from '@nestjs/core';
 import {
   agreementLevelActions,
   changes,
+  dashboards,
+  dashboardWidgets,
+  recurringTickets,
+  unavailabilities,
   itilLinks,
   problems,
   formDestinations,
@@ -43,6 +47,7 @@ import {
   itilActors,
   itilCategories,
   itilFollowups,
+  itilTasks,
   ldapDirectories,
   locations,
   profileRights,
@@ -89,6 +94,10 @@ const PROFILE_RIGHTS: Record<string, RightTriple[]> = {
     // auquel son incident est rattache, il ne decide pas de son analyse.
     ['problem', 'read', 'entity'],
     ['change', 'read', 'entity'],
+    // Le planning et les indicateurs se lisent, ils ne se configurent pas :
+    // un technicien consulte son agenda, il ne cree pas de recurrence.
+    ['planning', 'read', 'entity'],
+    ['stats', 'read', 'entity'],
     ['entity', 'read', 'entity'],
     ['group', 'read', 'entity'],
     ['kb', 'read', 'entity'],
@@ -113,6 +122,11 @@ const PROFILE_RIGHTS: Record<string, RightTriple[]> = {
     ['change', 'create', 'recursive'],
     ['change', 'update', 'recursive'],
     ['change', 'delete', 'recursive'],
+    ['planning', 'read', 'recursive'],
+    ['planning', 'update', 'recursive'],
+    ['stats', 'read', 'recursive'],
+    ['recurrence', 'read', 'recursive'],
+    ['recurrence', 'update', 'recursive'],
     ['entity', 'read', 'recursive'],
     ['group', 'read', 'recursive'],
     ['kb', 'read', 'recursive'],
@@ -130,6 +144,11 @@ const PROFILE_RIGHTS: Record<string, RightTriple[]> = {
     ['change', 'create', 'all'],
     ['change', 'update', 'all'],
     ['change', 'delete', 'all'],
+    ['planning', 'read', 'all'],
+    ['planning', 'update', 'all'],
+    ['stats', 'read', 'all'],
+    ['recurrence', 'read', 'all'],
+    ['recurrence', 'update', 'all'],
     ['entity', 'read', 'all'],
     ['entity', 'create', 'all'],
     ['entity', 'update', 'all'],
@@ -198,7 +217,8 @@ async function main(): Promise<void> {
                notification_templates, notification_preferences, saved_searches,
                logs, itil_links, itil_costs, itil_validations, itil_solutions,
                itil_tasks, itil_followups, itil_actors, ticket_escalations,
-               problems, changes, tickets,
+               dashboard_widgets, dashboards, recurrence_runs, recurring_tickets,
+               unavailabilities, problems, changes, tickets,
                ticket_template_fields, ticket_templates, suppliers, locations,
                solution_types, task_categories, request_sources, itil_categories,
                form_submissions, form_destinations, form_access,
@@ -620,6 +640,35 @@ async function main(): Promise<void> {
     // technicien de Site A ne voit pas les tickets de Site B, et qu'une portee
     // `own` ne montre que les siens.
     // ------------------------------------------------------------------
+    /**
+     * Dates et delais coherents avec le statut.
+     *
+     * Les delais sont en secondes, comme en production : ce sont eux que les
+     * moyennes exploitent, et les inventer proportionnels au statut donne un
+     * jeu lisible sans avoir a rejouer un historique complet.
+     */
+    const cycleDeVie = (statut: string): Record<string, unknown> => {
+      if (statut === 'new') return { dateTakenIntoAccount: null };
+
+      const maintenant = new Date();
+      const base: Record<string, unknown> = {
+        dateTakenIntoAccount: new Date(maintenant.getTime() - 3 * 3600_000),
+        takeIntoAccountDelay: 3 * 3600,
+      };
+
+      if (statut === 'solved' || statut === 'closed') {
+        base['dateSolved'] = new Date(maintenant.getTime() - 3600_000);
+        base['solveDelay'] = 11 * 3600;
+      }
+
+      if (statut === 'closed') {
+        base['dateClosed'] = maintenant;
+        base['closeDelay'] = 12 * 3600;
+      }
+
+      return base;
+    };
+
     const creerTicket = async (options: {
       entite: number;
       titre: string;
@@ -650,7 +699,10 @@ async function main(): Promise<void> {
           locationId: siteNord?.id ?? null,
           createdById: options.demandeur,
           updatedById: options.demandeur,
-          dateTakenIntoAccount: options.statut === 'new' ? null : new Date(),
+          // Les dates et delais de sortie accompagnent le statut : un ticket
+          // « resolu » sans date de resolution laisserait les statistiques de
+          // demonstration vides, ce qui les rendrait invisibles a l'examen.
+          ...cycleDeVie(options.statut),
         })
         .returning({ id: tickets.id });
 
@@ -880,6 +932,123 @@ async function main(): Promise<void> {
         linkType: 'linked' as const,
       },
     ]);
+
+    // ---- Planning, recurrence et tableau de bord ----------------------------
+    //
+    // Les dates sont relatives a l'amorcage : un jeu de demonstration dont le
+    // planning est vide parce qu'il date de six mois ne demontre rien.
+    const jour = 86_400_000;
+    const aujourdhui = new Date();
+    const a = (joursApres: number, heure: number): Date => {
+      const date = new Date(aujourdhui.getTime() + joursApres * jour);
+
+      date.setHours(heure, 0, 0, 0);
+
+      return date;
+    };
+
+    await tx.insert(itilTasks).values([
+      {
+        itilType: 'ticket' as const,
+        itilId: premier,
+        entityId: siteA,
+        entityPath: 'temporaire',
+        content: 'Diagnostic sur site, 2e etage',
+        state: 'todo' as const,
+        actionTime: 60,
+        beginAt: a(1, 9),
+        endAt: a(1, 11),
+        technicianId: reference('thomas'),
+        authorId: reference('thomas'),
+      },
+      // Chevauche volontairement la precedente : c'est ce que la detection de
+      // conflits doit faire remonter, et sans exemple elle ne se voit jamais.
+      {
+        itilType: 'ticket' as const,
+        itilId: premier,
+        entityId: siteA,
+        entityPath: 'temporaire',
+        content: 'Commande du tambour de remplacement',
+        state: 'todo' as const,
+        actionTime: 15,
+        beginAt: a(1, 10),
+        endAt: a(1, 12),
+        technicianId: reference('thomas'),
+        authorId: reference('sophie'),
+      },
+      {
+        itilType: 'ticket' as const,
+        itilId: premier,
+        entityId: siteA,
+        entityPath: 'temporaire',
+        content: 'Point hebdomadaire sur les incidents ouverts',
+        state: 'information' as const,
+        beginAt: a(2, 14),
+        endAt: a(2, 15),
+        technicianId: reference('sophie'),
+        authorId: reference('sophie'),
+      },
+    ]);
+
+    await tx.insert(unavailabilities).values({
+      entityId: siteA,
+      entityPath: 'temporaire',
+      userId: reference('thomas'),
+      beginAt: a(3, 0),
+      endAt: a(5, 0),
+      reason: 'Conges',
+      createdById: reference('sophie'),
+    });
+
+    if (gabarit) {
+      await tx.insert(recurringTickets).values({
+        entityId: dsi,
+        entityPath: 'temporaire',
+        name: 'Verification hebdomadaire des sauvegardes',
+        content:
+          'Controler que les sauvegardes de la semaine se sont terminees, et relancer celles en echec.',
+        isActive: true,
+        templateId: gabarit.id,
+        step: 'weekly' as const,
+        interval: 1,
+        beginAt: a(1, 8),
+        endAt: null,
+        // Deux jours d'avance : le ticket existe avant le week-end, ce qui est
+        // la seule raison pour laquelle ce champ existe.
+        createAheadMinutes: 2 * 24 * 60,
+        nextOccurrenceAt: a(1, 8),
+        createdById: reference('admin'),
+      });
+    }
+
+    const [tableau] = await tx
+      .insert(dashboards)
+      .values({
+        entityId: racine,
+        entityPath: 'temporaire',
+        isRecursive: true,
+        name: 'Pilotage du service',
+        isPublic: true,
+        ownerId: reference('admin'),
+      })
+      .returning({ id: dashboards.id });
+
+    if (tableau) {
+      await tx.insert(dashboardWidgets).values([
+        { dashboardId: tableau.id, kind: 'core.counts', title: '', position: 0, width: 12 },
+        { dashboardId: tableau.id, kind: 'core.trend', title: '', position: 1, width: 12 },
+        {
+          dashboardId: tableau.id,
+          kind: 'core.breakdown',
+          title: '',
+          position: 2,
+          width: 6,
+          config: { dimension: 'category' },
+        },
+        { dashboardId: tableau.id, kind: 'core.sla', title: '', position: 3, width: 3 },
+        { dashboardId: tableau.id, kind: 'core.satisfaction', title: '', position: 4, width: 3 },
+      ]);
+    }
 
     // ---- Base de connaissances ---------------------------------------------
     //

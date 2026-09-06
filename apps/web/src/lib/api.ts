@@ -5,7 +5,21 @@ import type {
   CreateTicket,
   EntitySummary,
   ItilStatus,
+  BulkRequest,
+  BulkResult,
   CreateLink,
+  Dashboard,
+  ExportFormat,
+  PlanningEntry,
+  PlanningFilter,
+  RecurringTicket,
+  StatsFilter,
+  StatsReport,
+  StatsTrendPoint,
+  UpsertDashboard,
+  UpsertRecurringTicket,
+  UpsertUnavailability,
+  WidgetCatalogEntry,
   ItilKind,
   ItilLink,
   ItilObject,
@@ -67,8 +81,15 @@ import {
   formSchema,
   formSubmissionResultSchema,
   formSummarySchema,
+  bulkResultSchema,
+  dashboardSchema,
   itilLinkSchema,
   itilObjectSchema,
+  planningEntrySchema,
+  recurringTicketSchema,
+  statsReportSchema,
+  statsTrendPointSchema,
+  widgetCatalogEntrySchema,
   itilObjectSummarySchema,
   promotionResultSchema,
   kbArticleSchema,
@@ -257,6 +278,95 @@ export const api = {
       method: 'POST',
       body: JSON.stringify(body),
     }),
+
+  // --- Pilotage -------------------------------------------------------------
+
+  planning: (filtre: PlanningFilter): Promise<PlanningEntry[]> =>
+    request(`/planning${toPlanningQuery(filtre)}`, planningEntrySchema.array()),
+
+  /** URL de l'export iCal, ouverte par le navigateur pour qu'il gère le fichier. */
+  planningIcalUrl: (filtre: PlanningFilter): string =>
+    `/api/planning/ical${toPlanningQuery(filtre)}`,
+
+  createUnavailability: async (body: UpsertUnavailability): Promise<void> => {
+    await send('/planning/unavailabilities', 'POST', body);
+  },
+
+  deleteUnavailability: async (id: number): Promise<void> => {
+    await send(`/planning/unavailabilities/${String(id)}`, 'DELETE');
+  },
+
+  recurring: (): Promise<RecurringTicket[]> =>
+    request('/planning/recurring', recurringTicketSchema.array()),
+
+  saveRecurring: (body: UpsertRecurringTicket, id?: number): Promise<RecurringTicket> =>
+    request(
+      id === undefined ? '/planning/recurring' : `/planning/recurring/${String(id)}`,
+      recurringTicketSchema,
+      { method: id === undefined ? 'POST' : 'PUT', body: JSON.stringify(body) },
+    ),
+
+  deleteRecurring: async (id: number): Promise<void> => {
+    await send(`/planning/recurring/${String(id)}`, 'DELETE');
+  },
+
+  runRecurring: (): Promise<{ created: number }> =>
+    request('/planning/recurring/run', z.object({ created: z.number() }), { method: 'POST' }),
+
+  stats: (filtre: StatsFilter): Promise<StatsReport> =>
+    request(`/stats${toStatsQuery(filtre)}`, statsReportSchema),
+
+  statsTrend: (filtre: StatsFilter): Promise<StatsTrendPoint[]> =>
+    request(`/stats/trend${toStatsQuery(filtre)}`, statsTrendPointSchema.array()),
+
+  widgetCatalog: (): Promise<WidgetCatalogEntry[]> =>
+    request('/stats/widgets', widgetCatalogEntrySchema.array()),
+
+  dashboards: (): Promise<Dashboard[]> => request('/stats/dashboards', dashboardSchema.array()),
+
+  saveDashboard: (body: UpsertDashboard, id?: number): Promise<Dashboard> =>
+    request(
+      id === undefined ? '/stats/dashboards' : `/stats/dashboards/${String(id)}`,
+      dashboardSchema,
+      { method: id === undefined ? 'POST' : 'PUT', body: JSON.stringify(body) },
+    ),
+
+  deleteDashboard: async (id: number): Promise<void> => {
+    await send(`/stats/dashboards/${String(id)}`, 'DELETE');
+  },
+
+  bulk: (body: BulkRequest): Promise<BulkResult> =>
+    request('/tickets/bulk', bulkResultSchema, { method: 'POST', body: JSON.stringify(body) }),
+
+  /**
+   * Export de la recherche courante.
+   *
+   * Le fichier passe par un objet de type `Blob` et une ancre temporaire : le
+   * point d'entrée est en `POST`, parce qu'il porte l'arbre de critères, et un
+   * `POST` ne se déclenche pas par un simple lien.
+   */
+  exportSearch: async (format: ExportFormat, body: SearchRequest): Promise<void> => {
+    const response = await fetch(`/api/stats/export?format=${format}`, {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+
+    if (!response.ok) {
+      const detail = (await response.json().catch(() => null)) as { message?: string } | null;
+
+      throw new ApiError(response.status, detail?.message ?? `HTTP ${String(response.status)}`);
+    }
+
+    const lien = document.createElement('a');
+    const url = URL.createObjectURL(await response.blob());
+
+    lien.href = url;
+    lien.download = `tickets.${format}`;
+    lien.click();
+    URL.revokeObjectURL(url);
+  },
 
   addFollowup: async (id: number, body: AddFollowup): Promise<void> => {
     const response = await fetch(`/api/tickets/${String(id)}/followups`, {
@@ -571,6 +681,24 @@ export const api = {
     });
   },
 };
+
+function toPlanningQuery(filtre: PlanningFilter): string {
+  const params = new URLSearchParams({ from: filtre.from, to: filtre.to });
+
+  if (filtre.technicianId) params.set('technicianId', String(filtre.technicianId));
+  if (filtre.groupId) params.set('groupId', String(filtre.groupId));
+
+  return `?${params.toString()}`;
+}
+
+function toStatsQuery(filtre: StatsFilter): string {
+  const params = new URLSearchParams({ dimension: filtre.dimension });
+
+  if (filtre.from) params.set('from', filtre.from);
+  if (filtre.to) params.set('to', filtre.to);
+
+  return `?${params.toString()}`;
+}
 
 export interface ItilQuery {
   status?: string | undefined;

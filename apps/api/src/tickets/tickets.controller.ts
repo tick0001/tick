@@ -13,6 +13,7 @@ import {
 } from '@nestjs/common';
 import {
   addFollowupSchema,
+  bulkRequestSchema,
   addSolutionSchema,
   addTaskSchema,
   answerSolutionSchema,
@@ -28,6 +29,8 @@ import {
   type AddTask,
   type AnswerSolution,
   type AnswerValidation,
+  type BulkRequest,
+  type BulkResult,
   type CreateTicket,
   type RequestValidation,
   type TicketActor,
@@ -44,6 +47,7 @@ import { z } from 'zod';
 import { AuthenticatedGuard } from '../auth/guards/authenticated.guard.js';
 import { ZodValidationPipe } from '../common/zod-validation.pipe.js';
 import { SlaService } from '../slm/sla.service.js';
+import { BulkService } from './bulk.service.js';
 import { TicketsService } from './tickets.service.js';
 import { TimelineService } from './timeline.service.js';
 
@@ -62,7 +66,22 @@ export class TicketsController {
     private readonly tickets: TicketsService,
     private readonly timeline: TimelineService,
     private readonly sla: SlaService,
+    private readonly bulk: BulkService,
   ) {}
+
+  /**
+   * Action massive sur une sélection.
+   *
+   * Déclarée avant les routes à paramètre : `bulk` serait sinon capté par
+   * `:id`, et l'erreur ne se verrait qu'à l'exécution.
+   */
+  @Post('bulk')
+  @HttpCode(200)
+  async applyBulk(
+    @Body(new ZodValidationPipe(bulkRequestSchema)) body: BulkRequest,
+  ): Promise<BulkResult> {
+    return this.bulk.apply(body);
+  }
 
   @Get()
   async list(

@@ -29,7 +29,7 @@ export interface WorkingCalendar {
   holidays: readonly WorkingHoliday[];
 }
 
-interface ZonedParts {
+export interface ZonedParts {
   year: number;
   month: number;
   day: number;
@@ -82,8 +82,15 @@ export function isKnownTimezone(timezone: string): boolean {
   }
 }
 
-/** Heure murale d'un instant, dans un fuseau donné. */
-function zonedParts(instant: Date, timezone: string): ZonedParts {
+/**
+ * Heure murale d'un instant, dans un fuseau donné.
+ *
+ * Exportée pour la récurrence, qui a le même besoin : une occurrence
+ * hebdomadaire doit rester à la même heure murale de part et d'autre d'un
+ * changement d'heure. Deux implémentations du même calcul divergeraient
+ * exactement le week-end où l'écart se voit.
+ */
+export function zonedParts(instant: Date, timezone: string): ZonedParts {
   const parts = formatter(timezone).formatToParts(instant);
   const lu = (type: Intl.DateTimeFormatPartTypes): number => {
     const trouve = parts.find((part) => part.type === type);
@@ -124,7 +131,7 @@ function offsetAt(timezone: string, instantMs: number): number {
  * C'est la méthode de convergence habituelle, et elle suffit parce qu'aucun
  * fuseau ne change d'heure deux fois dans la même journée.
  */
-function instantFromZoned(timezone: string, parts: ZonedParts): Date {
+export function instantFromZoned(timezone: string, parts: ZonedParts): Date {
   const naif = Date.UTC(
     parts.year,
     parts.month - 1,

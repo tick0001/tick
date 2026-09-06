@@ -17,3 +17,4 @@ export * from './mail.js';
 export * from './satisfaction.js';
 export * from './knowledge.js';
 export * from './forms.js';
+export * from './planning.js';

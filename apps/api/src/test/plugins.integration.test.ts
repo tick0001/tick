@@ -12,6 +12,7 @@ import { PluginMigrator } from '../plugins/plugin-migrator.service.js';
 import { PluginRegistry, SDK_VERSION } from '../plugins/plugin-registry.service.js';
 import { PluginsService } from '../plugins/plugins.service.js';
 import { SearchRegistry } from '../search/search-registry.service.js';
+import { WidgetRegistry } from '../stats/widget-registry.service.js';
 
 const PLUGIN_ID = 'essai-substrat';
 const SCHEMA = 'plugin_essai_substrat';
@@ -126,6 +127,7 @@ describe("Substrat d'extension", () => {
       hooks,
       events,
       new SearchRegistry(),
+      new WidgetRegistry(),
     );
     entites = new EntitiesService(db, hooks);
 

@@ -24,6 +24,21 @@ import { RightsService, type RightScope } from '../auth/rights.service.js';
  * règle métier — un technicien de niveau 1 ne modifie que les tickets de ses
  * groupes, même s'il voit ceux de son entité.
  */
+/**
+ * Identifiant SQL sur, pour un alias de table.
+ *
+ * Reduit a des lettres, chiffres et soulignes. Un alias n'a jamais besoin
+ * d'autre chose, et tout le reste serait au mieux une erreur, au pire une
+ * injection.
+ */
+function identifiant(valeur: string): string {
+  const propre = valeur.replaceAll(/[^A-Za-z0-9_]/g, '');
+
+  if (propre.length === 0) throw new ForbiddenException('Alias de table invalide.');
+
+  return propre;
+}
+
 @Injectable()
 export class TicketScopeService {
   constructor(
@@ -54,11 +69,16 @@ export class TicketScopeService {
    * `kind` choisit la table visée. Les trois objets partagent exactement la
    * même règle de portée : elle porte sur les acteurs et l'entité, que rien ne
    * distingue d'un type à l'autre.
+   *
+   * `alias` sert aux agrégations, qui joignent la table sous un autre nom. Le
+   * passer ici plutôt que de réécrire la condition ensuite garde une seule
+   * implémentation de la portée — la dupliquer serait la vraie faute.
    */
   async conditionFor(
     object: string,
     action: string,
     kind: ItilType = 'ticket',
+    alias?: string,
   ): Promise<SQL | undefined> {
     const context = requireContext();
     const scope: RightScope | undefined = await this.rights.scopeFor(
@@ -72,8 +92,10 @@ export class TicketScopeService {
     }
 
     // Nom de table interpole en SQL brut : c'est une constante du code,
-    // choisie par une cle du type `ItilType`, jamais une saisie.
-    const table = sql.raw(ITIL_KINDS[kind].table);
+    // choisie par une cle du type `ItilType`, jamais une saisie. L'alias, lui,
+    // est filtre : il vient de l'appelant, donc du code, mais rien n'empeche
+    // une faute de frappe d'y glisser autre chose qu'un identifiant.
+    const table = sql.raw(alias === undefined ? ITIL_KINDS[kind].table : identifiant(alias));
 
     const estActeur = (roles: string[], types: string[], ids: number[]): SQL => sql`EXISTS (
       SELECT 1 FROM itil_actors a

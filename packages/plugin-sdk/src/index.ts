@@ -202,6 +202,14 @@ export interface EventPayloads {
 
   'satisfaction.requested': { id: number; entityId: number; token: string; url: string };
   'satisfaction.answered': { id: number; entityId: number; rating: number };
+
+  /** Une occurrence de ticket recurrent vient d'etre produite. */
+  'recurrence.generated': {
+    recurringId: number;
+    ticketId: number;
+    entityId: number;
+    occurrenceAt: string;
+  };
 }
 
 export type HookName = keyof HookPayloads;
@@ -257,6 +265,22 @@ export interface PluginSearchField {
   options?: string[];
 }
 
+/**
+ * Widget de tableau de bord declare par un plugin.
+ *
+ * La cle est prefixee par l'identifiant du plugin, comme pour les champs de
+ * recherche : deux extensions ne peuvent alors pas se disputer un nom, et un
+ * tableau de bord enregistre survit a la desactivation temporaire de celui qui
+ * fournit le widget.
+ */
+export interface PluginDashboardWidget {
+  /** Cle du widget, sans prefixe : le noyau prefixe avec l'identifiant. */
+  key: string;
+  /** Libelle deja traduit, ou cle de traduction du coeur. */
+  label: string;
+  description: string;
+}
+
 export interface PluginApi {
   readonly context: PluginContext;
 
@@ -271,6 +295,11 @@ export interface PluginApi {
   search: {
     /** Rend un champ interrogeable depuis la recherche multi-critères. */
     registerField(field: PluginSearchField): void;
+  };
+
+  dashboards: {
+    /** Propose un widget à la composition des tableaux de bord. */
+    registerWidget(widget: PluginDashboardWidget): void;
   };
 }
 

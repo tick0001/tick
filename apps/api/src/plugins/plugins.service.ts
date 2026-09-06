@@ -16,9 +16,11 @@ import type {
   PluginApi,
   PluginContext,
   PluginDefinition,
+  PluginDashboardWidget,
   PluginSearchField,
 } from '@tick/plugin-sdk';
 import { SearchRegistry } from '../search/search-registry.service.js';
+import { WidgetRegistry } from '../stats/widget-registry.service.js';
 import { DatabaseService } from '../database/database.service.js';
 import { EventBus } from './event-bus.service.js';
 import { emitEvent } from './event-buffer.js';
@@ -55,6 +57,7 @@ export class PluginsService implements OnApplicationBootstrap {
     private readonly hooks: HookBus,
     private readonly events: EventBus,
     private readonly search: SearchRegistry,
+    private readonly widgets: WidgetRegistry,
   ) {}
 
   async onApplicationBootstrap(): Promise<void> {
@@ -160,6 +163,7 @@ export class PluginsService implements OnApplicationBootstrap {
     this.hooks.unregisterPlugin(id);
     this.events.unregisterPlugin(id);
     this.search.unregisterPlugin(id);
+    this.widgets.unregisterPlugin(id);
 
     await definition.register(this.createApi(plugin, context));
 
@@ -173,6 +177,7 @@ export class PluginsService implements OnApplicationBootstrap {
     this.hooks.unregisterPlugin(id);
     this.events.unregisterPlugin(id);
     this.search.unregisterPlugin(id);
+    this.widgets.unregisterPlugin(id);
     this.loaded.delete(id);
 
     await this.setState(id, 'inactif', {});
@@ -370,6 +375,17 @@ export class PluginsService implements OnApplicationBootstrap {
             operators: field.operators,
             column: sql.raw(field.sql),
             ...(field.options ? { options: field.options } : {}),
+            pluginId: plugin.manifest.id,
+          });
+        },
+      },
+      dashboards: {
+        registerWidget: (widget: PluginDashboardWidget) => {
+          exiger('search');
+          this.widgets.register({
+            kind: `plugin:${plugin.manifest.id}:${widget.key}`,
+            labelKey: widget.label,
+            descriptionKey: widget.description,
             pluginId: plugin.manifest.id,
           });
         },

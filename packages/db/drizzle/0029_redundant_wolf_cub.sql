@@ -1,0 +1,1 @@
+ALTER TABLE "recurring_tickets" ADD COLUMN "content" text DEFAULT '' NOT NULL;

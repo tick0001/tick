@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import type { SearchNode, SearchOperator } from '@tick/contracts';
+import type { BulkAction, SearchNode, SearchOperator, SearchRequest } from '@tick/contracts';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router';
@@ -72,6 +72,33 @@ function versLignes(noeud: SearchNode): { lignes: Ligne[]; link: 'and' | 'or' } 
 }
 
 /**
+ * Compose l'opération à partir du choix et de sa valeur.
+ *
+ * Le discriminant est reconstruit ici plutôt que porté par l'état : le contrat
+ * associe à chaque action le type de sa valeur, et un état générique aurait
+ * perdu cette garantie au premier `as`.
+ */
+function operation(action: BulkAction['action'], valeur: string): BulkAction {
+  switch (action) {
+    case 'setStatus':
+      return { action, value: valeur };
+
+    case 'setUrgency':
+      return { action, value: Number(valeur) };
+
+    case 'setCategory':
+      return { action, value: valeur ? Number(valeur) : null };
+
+    case 'assignGroup':
+    case 'assignUser':
+      return { action, value: Number(valeur) };
+
+    case 'delete':
+      return { action };
+  }
+}
+
+/**
  * Recherche multi-critères.
  *
  * Volontairement plate à ce stade : une liste de conditions reliées par « et »
@@ -96,15 +123,53 @@ export function SearchPage() {
   const [nom, setNom] = useState('');
   const [publique, setPublique] = useState(false);
 
+  const [selection, setSelection] = useState<number[]>([]);
+  const [action, setAction] = useState<BulkAction['action']>('setStatus');
+  const [valeur, setValeur] = useState('');
+  const [bilan, setBilan] = useState('');
+
+  const requete = (): SearchRequest => ({
+    criteria: versArbre(lignes, link),
+    sort: 'dateOpened',
+    direction: 'desc',
+    limit: 50,
+    deleted: false,
+  });
+
   const recherche = useMutation({
-    mutationFn: () =>
-      api.searchTickets({
-        criteria: versArbre(lignes, link),
-        sort: 'dateOpened',
-        direction: 'desc',
-        limit: 50,
-        deleted: false,
-      }),
+    mutationFn: () => api.searchTickets(requete()),
+    onSuccess: () => {
+      // La sélection ne survit pas à une nouvelle recherche : garder des
+      // identifiants qui ne sont plus à l'écran ferait agir sur des tickets
+      // que l'on ne voit pas. Le bilan, lui, reste : l'action massive relance
+      // la recherche, et l'effacer ici ferait disparaître son compte rendu au
+      // moment même où il vient de s'afficher.
+      setSelection([]);
+    },
+  });
+
+  const exporter = useMutation({
+    mutationFn: (format: 'csv' | 'pdf') => api.exportSearch(format, requete()),
+  });
+
+  const massive = useMutation({
+    mutationFn: () => api.bulk({ ids: selection, operation: operation(action, valeur) }),
+    onMutate: () => {
+      setBilan('');
+    },
+    onSuccess: async (resultat) => {
+      setBilan(
+        `${String(resultat.applied)} ${t('actionsMassives.applique')}` +
+          (resultat.failures.length > 0
+            ? ` ${String(resultat.failures.length)} ${t('actionsMassives.echecs')} : ${resultat.failures
+                .map((echec) => `#${String(echec.id)}`)
+                .join(', ')}`
+            : ''),
+      );
+      setSelection([]);
+      recherche.mutate();
+      await queryClient.invalidateQueries({ queryKey: ['tickets'] });
+    },
   });
 
   const enregistrer = useMutation({
@@ -295,10 +360,110 @@ export function SearchPage() {
         )}
 
         {recherche.data && (
+          <div className="flex flex-wrap items-end gap-2">
+            <span className="text-xs text-neutral-500">
+              {selection.length} {t('actionsMassives.selection')}
+            </span>
+
+            <select
+              value={action}
+              onChange={(event) => {
+                setAction(event.target.value as BulkAction['action']);
+                setValeur('');
+              }}
+              className={controle}
+            >
+              {(
+                [
+                  'setStatus',
+                  'setUrgency',
+                  'setCategory',
+                  'assignGroup',
+                  'assignUser',
+                  'delete',
+                ] as const
+              ).map((valeurAction) => (
+                <option key={valeurAction} value={valeurAction}>
+                  {t(`actionsMassives.actions.${valeurAction}`)}
+                </option>
+              ))}
+            </select>
+
+            {action !== 'delete' && (
+              <input
+                value={valeur}
+                onChange={(event) => {
+                  setValeur(event.target.value);
+                }}
+                placeholder={action === 'setStatus' ? 'assigned' : '1'}
+                className={`${controle} w-28`}
+              />
+            )}
+
+            <button
+              type="button"
+              disabled={selection.length === 0 || massive.isPending}
+              onClick={() => {
+                massive.mutate();
+              }}
+              className="rounded-md border border-neutral-300 px-3 py-1.5 text-xs transition hover:bg-neutral-100 disabled:opacity-50 dark:border-neutral-700 dark:hover:bg-neutral-800"
+            >
+              {t('actionsMassives.appliquer')}
+            </button>
+
+            <div className="ml-auto flex items-center gap-2">
+              <span className="text-xs uppercase tracking-wide text-neutral-500">
+                {t('exports.titre')}
+              </span>
+              {(['csv', 'pdf'] as const).map((format) => (
+                <button
+                  key={format}
+                  type="button"
+                  disabled={exporter.isPending}
+                  onClick={() => {
+                    exporter.mutate(format);
+                  }}
+                  className="rounded-md border border-neutral-300 px-3 py-1.5 text-xs transition hover:bg-neutral-100 disabled:opacity-60 dark:border-neutral-700 dark:hover:bg-neutral-800"
+                >
+                  {t(`exports.${format}`)}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {bilan && <p className="text-xs text-neutral-500">{bilan}</p>}
+
+        {massive.error && (
+          <p className="text-xs text-red-600 dark:text-red-400">{massive.error.message}</p>
+        )}
+
+        {exporter.error && (
+          <p className="text-xs text-red-600 dark:text-red-400">{exporter.error.message}</p>
+        )}
+
+        {recherche.data && (
           <div className="overflow-x-auto rounded-lg border border-neutral-200 dark:border-neutral-800">
             <table className="w-full text-left text-sm">
               <thead className="border-b border-neutral-200 bg-neutral-50 text-xs uppercase text-neutral-500 dark:border-neutral-800 dark:bg-neutral-900">
                 <tr>
+                  <th className="px-3 py-2">
+                    <input
+                      type="checkbox"
+                      aria-label={t('actionsMassives.toutSelectionner')}
+                      checked={
+                        recherche.data.items.length > 0 &&
+                        selection.length === recherche.data.items.length
+                      }
+                      onChange={(event) => {
+                        setSelection(
+                          event.target.checked
+                            ? (recherche.data?.items.map((ticket) => ticket.id) ?? [])
+                            : [],
+                        );
+                      }}
+                    />
+                  </th>
                   <th className="px-3 py-2 font-medium">{t('tickets.numero')}</th>
                   <th className="px-3 py-2 font-medium">{t('tickets.statut')}</th>
                   <th className="px-3 py-2 font-medium">{t('tickets.priorite')}</th>
@@ -311,6 +476,20 @@ export function SearchPage() {
                     key={ticket.id}
                     className="border-b border-neutral-100 last:border-0 dark:border-neutral-900"
                   >
+                    <td className="px-3 py-2">
+                      <input
+                        type="checkbox"
+                        aria-label={`#${String(ticket.id)}`}
+                        checked={selection.includes(ticket.id)}
+                        onChange={(event) => {
+                          setSelection((precedent) =>
+                            event.target.checked
+                              ? [...precedent, ticket.id]
+                              : precedent.filter((valeur) => valeur !== ticket.id),
+                          );
+                        }}
+                      />
+                    </td>
                     <td className="px-3 py-2 tabular-nums text-neutral-500">#{ticket.id}</td>
                     <td className="px-3 py-2">
                       <StatusBadge status={ticket.status} />

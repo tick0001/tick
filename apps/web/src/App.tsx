@@ -18,9 +18,11 @@ import { LoginPage } from '@/pages/LoginPage';
 import { NewTicketPage } from '@/pages/NewTicketPage';
 import { MailPage } from '@/pages/MailPage';
 import { NotificationsPage } from '@/pages/NotificationsPage';
+import { PlanningPage } from '@/pages/PlanningPage';
 import { RulesPage } from '@/pages/RulesPage';
 import { SatisfactionPage } from '@/pages/SatisfactionPage';
 import { SearchPage } from '@/pages/SearchPage';
+import { StatsPage } from '@/pages/StatsPage';
 import { SurveysPage } from '@/pages/SurveysPage';
 import { ServiceLevelsPage } from '@/pages/ServiceLevelsPage';
 import { TicketPage } from '@/pages/TicketPage';
@@ -134,6 +136,12 @@ function Application() {
                 <NavLink to="/itil/changes" className={lienClasses}>
                   {t('navigation.changements')}
                 </NavLink>
+                <NavLink to="/planning" className={lienClasses}>
+                  {t('navigation.planning')}
+                </NavLink>
+                <NavLink to="/stats" className={lienClasses}>
+                  {t('navigation.statistiques')}
+                </NavLink>
                 <NavLink to="/search" className={lienClasses}>
                   {t('recherche.titre')}
                 </NavLink>
@@ -209,6 +217,8 @@ function Application() {
           <Route path="/tickets/new" element={<NewTicketPage />} />
           <Route path="/search" element={<SearchPage />} />
           <Route path="/tickets/:id" element={<TicketPage />} />
+          <Route path="/planning" element={<PlanningPage />} />
+          <Route path="/stats" element={<StatsPage />} />
           <Route path="/itil/problems" element={<ItilObjectsPage kind="problem" />} />
           <Route path="/itil/problems/:id" element={<ItilObjectPage kind="problem" />} />
           <Route path="/itil/changes" element={<ItilObjectsPage kind="change" />} />
