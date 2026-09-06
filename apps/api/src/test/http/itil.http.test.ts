@@ -466,12 +466,23 @@ describe('HTTP — objets ITIL', () => {
         .post('/api/ticket-templates')
         .send({
           name: PREFIXE + 'modele',
-          predefined: { urgency: 4 },
-          mandatory: ['content'],
-          hidden: [],
+          fields: [
+            { field: 'urgency', kind: 'predefined', value: 4 },
+            { field: 'content', kind: 'mandatory' },
+            { field: 'requestSourceId', kind: 'hidden' },
+          ],
         });
 
       expect(reponse.status).toBe(201);
+
+      // La requete liste les champs a plat, la reponse les groupe par nature :
+      // c'est la forme dont le formulaire a besoin pour decider quoi masquer.
+      expect(reponse.body).toMatchObject({
+        predefined: { urgency: 4 },
+        mandatory: ['content'],
+        hidden: ['requestSourceId'],
+      });
+
       modele = reponse.body.id;
     });
 
@@ -481,10 +492,25 @@ describe('HTTP — objets ITIL', () => {
       const reponse = await harnais
         .admin()
         .put('/api/ticket-templates/' + modele)
-        .send({ name: PREFIXE + 'modele-2', predefined: {}, mandatory: [], hidden: [] });
+        .send({ name: PREFIXE + 'modele-2', fields: [] });
 
       expect(reponse.status).toBe(200);
       expect(reponse.body.name).toBe(PREFIXE + 'modele-2');
+      expect(reponse.body.mandatory).toHaveLength(0);
+    });
+
+    it('refuse un champ absent de la liste modelable', async () => {
+      // Un champ inconnu produirait un gabarit qui bloque un formulaire sur une
+      // saisie impossible, ou qui prerempli une colonne qui n'existe pas.
+      const reponse = await harnais
+        .admin()
+        .post('/api/ticket-templates')
+        .send({
+          name: PREFIXE + 'champ-inconnu',
+          fields: [{ field: 'champ_qui_n_existe_pas', kind: 'mandatory' }],
+        });
+
+      expect(reponse.status).toBe(400);
     });
 
     it('le supprime', async () => {

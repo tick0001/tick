@@ -89,10 +89,18 @@ export const notificationQueueEntrySchema = z.object({
 });
 export type NotificationQueueEntry = z.infer<typeof notificationQueueEntrySchema>;
 
+/**
+ * Filtre de la file d'envoi.
+ *
+ * Il vient d'une chaîne de requête, où tout arrive en texte : `z.number()` y
+ * refuserait `?limit=10` avec une 400, et l'écran ne pourrait jamais dépasser
+ * la première page. Le défaut est silencieux tant que personne n'envoie ces
+ * paramètres — la pagination existe alors sans fonctionner.
+ */
 export const notificationQueueFilterSchema = z.object({
   state: notificationStateSchema.optional(),
-  limit: z.number().int().min(1).max(200).default(50),
-  offset: z.number().int().nonnegative().default(0),
+  limit: z.coerce.number().int().min(1).max(200).default(50),
+  offset: z.coerce.number().int().nonnegative().default(0),
 });
 export type NotificationQueueFilter = z.infer<typeof notificationQueueFilterSchema>;
 
