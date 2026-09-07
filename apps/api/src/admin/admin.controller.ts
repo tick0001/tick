@@ -274,9 +274,7 @@ export class AdminController {
 
   @Get('settings/:entityId')
   @RequireRight('entity', 'read')
-  async readSettings(
-    @Param('entityId', ParseIntPipe) entityId: number,
-  ): Promise<EntitySettings> {
+  async readSettings(@Param('entityId', ParseIntPipe) entityId: number): Promise<EntitySettings> {
     return this.settings.read(entityId);
   }
 

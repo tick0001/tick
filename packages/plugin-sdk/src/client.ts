@@ -23,11 +23,7 @@
  * un ecran a besoin d'y conduire, et l'en-tete n'a pas la place d'accueillir une
  * entree de navigation de plus.
  */
-export type SlotName =
-  | 'app.header'
-  | 'app.sidebar'
-  | 'entity.list.actions'
-  | 'dashboard.widgets';
+export type SlotName = 'app.header' | 'app.sidebar' | 'entity.list.actions' | 'dashboard.widgets';
 
 export interface SlotContext {
   /** Langue active de l'interface. */

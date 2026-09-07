@@ -312,18 +312,13 @@ export class ItilObjectsService {
          WHERE id = ${id}
       `);
 
-      await this.history.recordChanges(
-        tx,
-        { type: kind, id, entityId: avant.entityId },
-        avant,
-        {
-          name: input.name,
-          content: input.content,
-          status: input.status ?? avant.status,
-          urgency: input.urgency,
-          impact: input.impact,
-        },
-      );
+      await this.history.recordChanges(tx, { type: kind, id, entityId: avant.entityId }, avant, {
+        name: input.name,
+        content: input.content,
+        status: input.status ?? avant.status,
+        urgency: input.urgency,
+        impact: input.impact,
+      });
     });
 
     emitEvent(`${kind}.updated`, { id, entityId: avant.entityId });

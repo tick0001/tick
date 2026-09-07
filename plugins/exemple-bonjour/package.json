@@ -1,5 +1,6 @@
 {
   "name": "@tick/plugin-exemple-bonjour",
+  "license": "AGPL-3.0-or-later",
   "version": "1.3.0",
   "private": true,
   "type": "module",

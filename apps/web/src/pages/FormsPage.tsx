@@ -1000,8 +1000,7 @@ export function FormsPage() {
                   <div key={famille.cle} className="space-y-2">
                     <SectionTitle>
                       {t(
-                        `formulaires.famillesChamps.${famille.cle}` as
-                          'formulaires.famillesChamps.contenu',
+                        `formulaires.famillesChamps.${famille.cle}` as 'formulaires.famillesChamps.contenu',
                       )}
                     </SectionTitle>
 

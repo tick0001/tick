@@ -135,12 +135,8 @@
           "name": "entities_parent_fk",
           "tableFrom": "entities",
           "tableTo": "entities",
-          "columnsFrom": [
-            "parent_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["parent_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -217,12 +213,8 @@
           "name": "entity_settings_entity_id_entities_id_fk",
           "tableFrom": "entity_settings",
           "tableTo": "entities",
-          "columnsFrom": [
-            "entity_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["entity_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -293,12 +285,8 @@
           "name": "group_members_user_id_users_id_fk",
           "tableFrom": "group_members",
           "tableTo": "users",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -306,12 +294,8 @@
           "name": "group_members_group_id_groups_id_fk",
           "tableFrom": "group_members",
           "tableTo": "groups",
-          "columnsFrom": [
-            "group_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["group_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -319,10 +303,7 @@
       "compositePrimaryKeys": {
         "group_members_user_id_group_id_pk": {
           "name": "group_members_user_id_group_id_pk",
-          "columns": [
-            "user_id",
-            "group_id"
-          ]
+          "columns": ["user_id", "group_id"]
         }
       },
       "uniqueConstraints": {},
@@ -466,12 +447,8 @@
           "name": "groups_entity_id_entities_id_fk",
           "tableFrom": "groups",
           "tableTo": "entities",
-          "columnsFrom": [
-            "entity_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["entity_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -479,12 +456,8 @@
           "name": "groups_parent_fk",
           "tableFrom": "groups",
           "tableTo": "groups",
-          "columnsFrom": [
-            "parent_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["parent_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -643,12 +616,8 @@
           "name": "users_default_entity_id_entities_id_fk",
           "tableFrom": "users",
           "tableTo": "entities",
-          "columnsFrom": [
-            "default_entity_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["default_entity_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -740,12 +709,8 @@
           "name": "authorizations_user_id_users_id_fk",
           "tableFrom": "authorizations",
           "tableTo": "users",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -753,12 +718,8 @@
           "name": "authorizations_profile_id_profiles_id_fk",
           "tableFrom": "authorizations",
           "tableTo": "profiles",
-          "columnsFrom": [
-            "profile_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["profile_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -766,12 +727,8 @@
           "name": "authorizations_entity_id_entities_id_fk",
           "tableFrom": "authorizations",
           "tableTo": "entities",
-          "columnsFrom": [
-            "entity_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["entity_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -779,11 +736,7 @@
       "compositePrimaryKeys": {
         "authorizations_user_id_profile_id_entity_id_pk": {
           "name": "authorizations_user_id_profile_id_entity_id_pk",
-          "columns": [
-            "user_id",
-            "profile_id",
-            "entity_id"
-          ]
+          "columns": ["user_id", "profile_id", "entity_id"]
         }
       },
       "uniqueConstraints": {},
@@ -827,12 +780,8 @@
           "name": "profile_rights_profile_id_profiles_id_fk",
           "tableFrom": "profile_rights",
           "tableTo": "profiles",
-          "columnsFrom": [
-            "profile_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["profile_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -840,11 +789,7 @@
       "compositePrimaryKeys": {
         "profile_rights_profile_id_object_action_pk": {
           "name": "profile_rights_profile_id_object_action_pk",
-          "columns": [
-            "profile_id",
-            "object",
-            "action"
-          ]
+          "columns": ["profile_id", "object", "action"]
         }
       },
       "uniqueConstraints": {},
@@ -1057,12 +1002,8 @@
           "name": "sessions_user_id_users_id_fk",
           "tableFrom": "sessions",
           "tableTo": "users",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -1070,12 +1011,8 @@
           "name": "sessions_profile_id_profiles_id_fk",
           "tableFrom": "sessions",
           "tableTo": "profiles",
-          "columnsFrom": [
-            "profile_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["profile_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -1083,12 +1020,8 @@
           "name": "sessions_entity_id_entities_id_fk",
           "tableFrom": "sessions",
           "tableTo": "entities",
-          "columnsFrom": [
-            "entity_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["entity_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -1336,12 +1269,8 @@
           "name": "plugin_migrations_plugin_id_plugins_id_fk",
           "tableFrom": "plugin_migrations",
           "tableTo": "plugins",
-          "columnsFrom": [
-            "plugin_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["plugin_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -1349,10 +1278,7 @@
       "compositePrimaryKeys": {
         "plugin_migrations_plugin_id_filename_pk": {
           "name": "plugin_migrations_plugin_id_filename_pk",
-          "columns": [
-            "plugin_id",
-            "filename"
-          ]
+          "columns": ["plugin_id", "filename"]
         }
       },
       "uniqueConstraints": {},
@@ -1625,12 +1551,8 @@
           "name": "itil_categories_entity_id_entities_id_fk",
           "tableFrom": "itil_categories",
           "tableTo": "entities",
-          "columnsFrom": [
-            "entity_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["entity_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -1638,12 +1560,8 @@
           "name": "itil_categories_default_technician_id_users_id_fk",
           "tableFrom": "itil_categories",
           "tableTo": "users",
-          "columnsFrom": [
-            "default_technician_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["default_technician_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -1651,12 +1569,8 @@
           "name": "itil_categories_default_group_id_groups_id_fk",
           "tableFrom": "itil_categories",
           "tableTo": "groups",
-          "columnsFrom": [
-            "default_group_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["default_group_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -1664,12 +1578,8 @@
           "name": "itil_categories_parent_fk",
           "tableFrom": "itil_categories",
           "tableTo": "itil_categories",
-          "columnsFrom": [
-            "parent_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["parent_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -1793,12 +1703,8 @@
           "name": "locations_entity_id_entities_id_fk",
           "tableFrom": "locations",
           "tableTo": "entities",
-          "columnsFrom": [
-            "entity_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["entity_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -1806,12 +1712,8 @@
           "name": "locations_parent_fk",
           "tableFrom": "locations",
           "tableTo": "locations",
-          "columnsFrom": [
-            "parent_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["parent_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -1931,12 +1833,8 @@
           "name": "request_sources_entity_id_entities_id_fk",
           "tableFrom": "request_sources",
           "tableTo": "entities",
-          "columnsFrom": [
-            "entity_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["entity_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -2042,12 +1940,8 @@
           "name": "solution_types_entity_id_entities_id_fk",
           "tableFrom": "solution_types",
           "tableTo": "entities",
-          "columnsFrom": [
-            "entity_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["entity_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -2172,12 +2066,8 @@
           "name": "suppliers_entity_id_entities_id_fk",
           "tableFrom": "suppliers",
           "tableTo": "entities",
-          "columnsFrom": [
-            "entity_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["entity_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -2301,12 +2191,8 @@
           "name": "task_categories_entity_id_entities_id_fk",
           "tableFrom": "task_categories",
           "tableTo": "entities",
-          "columnsFrom": [
-            "entity_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["entity_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -2314,12 +2200,8 @@
           "name": "task_categories_parent_fk",
           "tableFrom": "task_categories",
           "tableTo": "task_categories",
-          "columnsFrom": [
-            "parent_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["parent_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -2435,13 +2317,7 @@
       "compositePrimaryKeys": {
         "itil_actors_itil_type_itil_id_role_actor_type_actor_id_pk": {
           "name": "itil_actors_itil_type_itil_id_role_actor_type_actor_id_pk",
-          "columns": [
-            "itil_type",
-            "itil_id",
-            "role",
-            "actor_type",
-            "actor_id"
-          ]
+          "columns": ["itil_type", "itil_id", "role", "actor_type", "actor_id"]
         }
       },
       "uniqueConstraints": {},
@@ -2577,12 +2453,8 @@
           "name": "itil_costs_entity_id_entities_id_fk",
           "tableFrom": "itil_costs",
           "tableTo": "entities",
-          "columnsFrom": [
-            "entity_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["entity_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -2736,12 +2608,8 @@
           "name": "itil_followups_entity_id_entities_id_fk",
           "tableFrom": "itil_followups",
           "tableTo": "entities",
-          "columnsFrom": [
-            "entity_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["entity_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -2749,12 +2617,8 @@
           "name": "itil_followups_author_id_users_id_fk",
           "tableFrom": "itil_followups",
           "tableTo": "users",
-          "columnsFrom": [
-            "author_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["author_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -3044,12 +2908,8 @@
           "name": "itil_solutions_entity_id_entities_id_fk",
           "tableFrom": "itil_solutions",
           "tableTo": "entities",
-          "columnsFrom": [
-            "entity_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["entity_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -3057,12 +2917,8 @@
           "name": "itil_solutions_solution_type_id_solution_types_id_fk",
           "tableFrom": "itil_solutions",
           "tableTo": "solution_types",
-          "columnsFrom": [
-            "solution_type_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["solution_type_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -3070,12 +2926,8 @@
           "name": "itil_solutions_author_id_users_id_fk",
           "tableFrom": "itil_solutions",
           "tableTo": "users",
-          "columnsFrom": [
-            "author_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["author_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -3083,12 +2935,8 @@
           "name": "itil_solutions_approver_id_users_id_fk",
           "tableFrom": "itil_solutions",
           "tableTo": "users",
-          "columnsFrom": [
-            "approver_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["approver_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -3294,12 +3142,8 @@
           "name": "itil_tasks_entity_id_entities_id_fk",
           "tableFrom": "itil_tasks",
           "tableTo": "entities",
-          "columnsFrom": [
-            "entity_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["entity_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -3307,12 +3151,8 @@
           "name": "itil_tasks_category_id_task_categories_id_fk",
           "tableFrom": "itil_tasks",
           "tableTo": "task_categories",
-          "columnsFrom": [
-            "category_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["category_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -3320,12 +3160,8 @@
           "name": "itil_tasks_technician_id_users_id_fk",
           "tableFrom": "itil_tasks",
           "tableTo": "users",
-          "columnsFrom": [
-            "technician_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["technician_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -3333,12 +3169,8 @@
           "name": "itil_tasks_group_id_groups_id_fk",
           "tableFrom": "itil_tasks",
           "tableTo": "groups",
-          "columnsFrom": [
-            "group_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["group_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -3346,12 +3178,8 @@
           "name": "itil_tasks_author_id_users_id_fk",
           "tableFrom": "itil_tasks",
           "tableTo": "users",
-          "columnsFrom": [
-            "author_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["author_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -3523,12 +3351,8 @@
           "name": "itil_validations_entity_id_entities_id_fk",
           "tableFrom": "itil_validations",
           "tableTo": "entities",
-          "columnsFrom": [
-            "entity_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["entity_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -3536,12 +3360,8 @@
           "name": "itil_validations_requester_id_users_id_fk",
           "tableFrom": "itil_validations",
           "tableTo": "users",
-          "columnsFrom": [
-            "requester_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["requester_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -3549,12 +3369,8 @@
           "name": "itil_validations_answered_by_id_users_id_fk",
           "tableFrom": "itil_validations",
           "tableTo": "users",
-          "columnsFrom": [
-            "answered_by_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["answered_by_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -3601,12 +3417,8 @@
           "name": "ticket_template_fields_template_id_ticket_templates_id_fk",
           "tableFrom": "ticket_template_fields",
           "tableTo": "ticket_templates",
-          "columnsFrom": [
-            "template_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["template_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -3614,11 +3426,7 @@
       "compositePrimaryKeys": {
         "ticket_template_fields_template_id_field_kind_pk": {
           "name": "ticket_template_fields_template_id_field_kind_pk",
-          "columns": [
-            "template_id",
-            "field",
-            "kind"
-          ]
+          "columns": ["template_id", "field", "kind"]
         }
       },
       "uniqueConstraints": {},
@@ -3721,12 +3529,8 @@
           "name": "ticket_templates_entity_id_entities_id_fk",
           "tableFrom": "ticket_templates",
           "tableTo": "entities",
-          "columnsFrom": [
-            "entity_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["entity_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -4116,12 +3920,8 @@
           "name": "tickets_entity_id_entities_id_fk",
           "tableFrom": "tickets",
           "tableTo": "entities",
-          "columnsFrom": [
-            "entity_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["entity_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -4129,12 +3929,8 @@
           "name": "tickets_category_id_itil_categories_id_fk",
           "tableFrom": "tickets",
           "tableTo": "itil_categories",
-          "columnsFrom": [
-            "category_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["category_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -4142,12 +3938,8 @@
           "name": "tickets_request_source_id_request_sources_id_fk",
           "tableFrom": "tickets",
           "tableTo": "request_sources",
-          "columnsFrom": [
-            "request_source_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["request_source_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -4155,12 +3947,8 @@
           "name": "tickets_location_id_locations_id_fk",
           "tableFrom": "tickets",
           "tableTo": "locations",
-          "columnsFrom": [
-            "location_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["location_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -4168,12 +3956,8 @@
           "name": "tickets_template_id_ticket_templates_id_fk",
           "tableFrom": "tickets",
           "tableTo": "ticket_templates",
-          "columnsFrom": [
-            "template_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["template_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -4181,12 +3965,8 @@
           "name": "tickets_created_by_id_users_id_fk",
           "tableFrom": "tickets",
           "tableTo": "users",
-          "columnsFrom": [
-            "created_by_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["created_by_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -4194,12 +3974,8 @@
           "name": "tickets_updated_by_id_users_id_fk",
           "tableFrom": "tickets",
           "tableTo": "users",
-          "columnsFrom": [
-            "updated_by_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["updated_by_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -4489,12 +4265,8 @@
           "name": "changes_entity_id_entities_id_fk",
           "tableFrom": "changes",
           "tableTo": "entities",
-          "columnsFrom": [
-            "entity_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["entity_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -4502,12 +4274,8 @@
           "name": "changes_category_id_itil_categories_id_fk",
           "tableFrom": "changes",
           "tableTo": "itil_categories",
-          "columnsFrom": [
-            "category_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["category_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -4515,12 +4283,8 @@
           "name": "changes_location_id_locations_id_fk",
           "tableFrom": "changes",
           "tableTo": "locations",
-          "columnsFrom": [
-            "location_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["location_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -4528,12 +4292,8 @@
           "name": "changes_created_by_id_users_id_fk",
           "tableFrom": "changes",
           "tableTo": "users",
-          "columnsFrom": [
-            "created_by_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["created_by_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -4541,12 +4301,8 @@
           "name": "changes_updated_by_id_users_id_fk",
           "tableFrom": "changes",
           "tableTo": "users",
-          "columnsFrom": [
-            "updated_by_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["updated_by_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -4829,12 +4585,8 @@
           "name": "problems_entity_id_entities_id_fk",
           "tableFrom": "problems",
           "tableTo": "entities",
-          "columnsFrom": [
-            "entity_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["entity_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -4842,12 +4594,8 @@
           "name": "problems_category_id_itil_categories_id_fk",
           "tableFrom": "problems",
           "tableTo": "itil_categories",
-          "columnsFrom": [
-            "category_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["category_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -4855,12 +4603,8 @@
           "name": "problems_location_id_locations_id_fk",
           "tableFrom": "problems",
           "tableTo": "locations",
-          "columnsFrom": [
-            "location_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["location_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -4868,12 +4612,8 @@
           "name": "problems_created_by_id_users_id_fk",
           "tableFrom": "problems",
           "tableTo": "users",
-          "columnsFrom": [
-            "created_by_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["created_by_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -4881,12 +4621,8 @@
           "name": "problems_updated_by_id_users_id_fk",
           "tableFrom": "problems",
           "tableTo": "users",
-          "columnsFrom": [
-            "updated_by_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["updated_by_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -5038,12 +4774,8 @@
           "name": "logs_entity_id_entities_id_fk",
           "tableFrom": "logs",
           "tableTo": "entities",
-          "columnsFrom": [
-            "entity_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["entity_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -5051,12 +4783,8 @@
           "name": "logs_user_id_users_id_fk",
           "tableFrom": "logs",
           "tableTo": "users",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -5203,12 +4931,8 @@
           "name": "saved_searches_entity_id_entities_id_fk",
           "tableFrom": "saved_searches",
           "tableTo": "entities",
-          "columnsFrom": [
-            "entity_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["entity_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -5216,12 +4940,8 @@
           "name": "saved_searches_user_id_users_id_fk",
           "tableFrom": "saved_searches",
           "tableTo": "users",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -5296,12 +5016,8 @@
           "name": "document_items_document_id_documents_id_fk",
           "tableFrom": "document_items",
           "tableTo": "documents",
-          "columnsFrom": [
-            "document_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["document_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -5309,11 +5025,7 @@
       "compositePrimaryKeys": {
         "document_items_document_id_item_type_item_id_pk": {
           "name": "document_items_document_id_item_type_item_id_pk",
-          "columns": [
-            "document_id",
-            "item_type",
-            "item_id"
-          ]
+          "columns": ["document_id", "item_type", "item_id"]
         }
       },
       "uniqueConstraints": {},
@@ -5435,12 +5147,8 @@
           "name": "documents_entity_id_entities_id_fk",
           "tableFrom": "documents",
           "tableTo": "entities",
-          "columnsFrom": [
-            "entity_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["entity_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -5448,12 +5156,8 @@
           "name": "documents_uploaded_by_id_users_id_fk",
           "tableFrom": "documents",
           "tableTo": "users",
-          "columnsFrom": [
-            "uploaded_by_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["uploaded_by_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -5494,12 +5198,8 @@
           "name": "notification_preferences_user_id_users_id_fk",
           "tableFrom": "notification_preferences",
           "tableTo": "users",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -5507,10 +5207,7 @@
       "compositePrimaryKeys": {
         "notification_preferences_user_id_event_pk": {
           "name": "notification_preferences_user_id_event_pk",
-          "columns": [
-            "user_id",
-            "event"
-          ]
+          "columns": ["user_id", "event"]
         }
       },
       "uniqueConstraints": {},
@@ -5711,12 +5408,8 @@
           "name": "notification_queue_entity_id_entities_id_fk",
           "tableFrom": "notification_queue",
           "tableTo": "entities",
-          "columnsFrom": [
-            "entity_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["entity_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -5724,12 +5417,8 @@
           "name": "notification_queue_recipient_user_id_users_id_fk",
           "tableFrom": "notification_queue",
           "tableTo": "users",
-          "columnsFrom": [
-            "recipient_user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["recipient_user_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -5770,12 +5459,8 @@
           "name": "notification_template_targets_template_id_notification_templates_id_fk",
           "tableFrom": "notification_template_targets",
           "tableTo": "notification_templates",
-          "columnsFrom": [
-            "template_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["template_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -5783,10 +5468,7 @@
       "compositePrimaryKeys": {
         "notification_template_targets_template_id_target_pk": {
           "name": "notification_template_targets_template_id_target_pk",
-          "columns": [
-            "template_id",
-            "target"
-          ]
+          "columns": ["template_id", "target"]
         }
       },
       "uniqueConstraints": {},
@@ -5835,12 +5517,8 @@
           "name": "notification_template_translations_template_id_notification_templates_id_fk",
           "tableFrom": "notification_template_translations",
           "tableTo": "notification_templates",
-          "columnsFrom": [
-            "template_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["template_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -5848,10 +5526,7 @@
       "compositePrimaryKeys": {
         "notification_template_translations_template_id_locale_pk": {
           "name": "notification_template_translations_template_id_locale_pk",
-          "columns": [
-            "template_id",
-            "locale"
-          ]
+          "columns": ["template_id", "locale"]
         }
       },
       "uniqueConstraints": {},
@@ -5976,12 +5651,8 @@
           "name": "notification_templates_entity_id_entities_id_fk",
           "tableFrom": "notification_templates",
           "tableTo": "entities",
-          "columnsFrom": [
-            "entity_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["entity_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -6055,12 +5726,8 @@
           "name": "agreement_level_actions_level_id_agreement_levels_id_fk",
           "tableFrom": "agreement_level_actions",
           "tableTo": "agreement_levels",
-          "columnsFrom": [
-            "level_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["level_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -6146,12 +5813,8 @@
           "name": "agreement_levels_agreement_id_agreements_id_fk",
           "tableFrom": "agreement_levels",
           "tableTo": "agreements",
-          "columnsFrom": [
-            "agreement_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["agreement_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -6285,12 +5948,8 @@
           "name": "agreements_entity_id_entities_id_fk",
           "tableFrom": "agreements",
           "tableTo": "entities",
-          "columnsFrom": [
-            "entity_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["entity_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -6298,12 +5957,8 @@
           "name": "agreements_calendar_id_calendars_id_fk",
           "tableFrom": "agreements",
           "tableTo": "calendars",
-          "columnsFrom": [
-            "calendar_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["calendar_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -6388,12 +6043,8 @@
           "name": "calendar_segments_calendar_id_calendars_id_fk",
           "tableFrom": "calendar_segments",
           "tableTo": "calendars",
-          "columnsFrom": [
-            "calendar_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["calendar_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -6506,12 +6157,8 @@
           "name": "calendars_entity_id_entities_id_fk",
           "tableFrom": "calendars",
           "tableTo": "entities",
-          "columnsFrom": [
-            "entity_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["entity_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -6597,12 +6244,8 @@
           "name": "holidays_calendar_id_calendars_id_fk",
           "tableFrom": "holidays",
           "tableTo": "calendars",
-          "columnsFrom": [
-            "calendar_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["calendar_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -6689,12 +6332,8 @@
           "name": "rule_actions_rule_id_rules_id_fk",
           "tableFrom": "rule_actions",
           "tableTo": "rules",
-          "columnsFrom": [
-            "rule_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["rule_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -6774,12 +6413,8 @@
           "name": "rule_criteria_rule_id_rules_id_fk",
           "tableFrom": "rule_criteria",
           "tableTo": "rules",
-          "columnsFrom": [
-            "rule_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["rule_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -6947,12 +6582,8 @@
           "name": "rules_entity_id_entities_id_fk",
           "tableFrom": "rules",
           "tableTo": "entities",
-          "columnsFrom": [
-            "entity_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["entity_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -6993,12 +6624,8 @@
           "name": "ticket_escalations_level_id_agreement_levels_id_fk",
           "tableFrom": "ticket_escalations",
           "tableTo": "agreement_levels",
-          "columnsFrom": [
-            "level_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["level_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -7006,10 +6633,7 @@
       "compositePrimaryKeys": {
         "ticket_escalations_ticket_id_level_id_pk": {
           "name": "ticket_escalations_ticket_id_level_id_pk",
-          "columns": [
-            "ticket_id",
-            "level_id"
-          ]
+          "columns": ["ticket_id", "level_id"]
         }
       },
       "uniqueConstraints": {},
@@ -7144,12 +6768,8 @@
           "name": "mail_collector_logs_collector_id_mail_collectors_id_fk",
           "tableFrom": "mail_collector_logs",
           "tableTo": "mail_collectors",
-          "columnsFrom": [
-            "collector_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["collector_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -7157,12 +6777,8 @@
           "name": "mail_collector_logs_entity_id_entities_id_fk",
           "tableFrom": "mail_collector_logs",
           "tableTo": "entities",
-          "columnsFrom": [
-            "entity_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["entity_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -7347,12 +6963,8 @@
           "name": "mail_collectors_entity_id_entities_id_fk",
           "tableFrom": "mail_collectors",
           "tableTo": "entities",
-          "columnsFrom": [
-            "entity_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["entity_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -7360,12 +6972,8 @@
           "name": "mail_collectors_profile_id_profiles_id_fk",
           "tableFrom": "mail_collectors",
           "tableTo": "profiles",
-          "columnsFrom": [
-            "profile_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["profile_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -7373,12 +6981,8 @@
           "name": "mail_collectors_request_source_id_request_sources_id_fk",
           "tableFrom": "mail_collectors",
           "tableTo": "request_sources",
-          "columnsFrom": [
-            "request_source_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["request_source_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -7500,12 +7104,8 @@
           "name": "satisfaction_configs_entity_id_entities_id_fk",
           "tableFrom": "satisfaction_configs",
           "tableTo": "entities",
-          "columnsFrom": [
-            "entity_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["entity_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -7684,12 +7284,8 @@
           "name": "satisfactions_ticket_id_tickets_id_fk",
           "tableFrom": "satisfactions",
           "tableTo": "tickets",
-          "columnsFrom": [
-            "ticket_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["ticket_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -7697,12 +7293,8 @@
           "name": "satisfactions_entity_id_entities_id_fk",
           "tableFrom": "satisfactions",
           "tableTo": "entities",
-          "columnsFrom": [
-            "entity_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["entity_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -7800,12 +7392,8 @@
           "name": "kb_article_revisions_article_id_kb_articles_id_fk",
           "tableFrom": "kb_article_revisions",
           "tableTo": "kb_articles",
-          "columnsFrom": [
-            "article_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["article_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -7813,12 +7401,8 @@
           "name": "kb_article_revisions_author_id_users_id_fk",
           "tableFrom": "kb_article_revisions",
           "tableTo": "users",
-          "columnsFrom": [
-            "author_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["author_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -7859,12 +7443,8 @@
           "name": "kb_article_targets_article_id_kb_articles_id_fk",
           "tableFrom": "kb_article_targets",
           "tableTo": "kb_articles",
-          "columnsFrom": [
-            "article_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["article_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -7872,11 +7452,7 @@
       "compositePrimaryKeys": {
         "kb_article_targets_article_id_target_type_target_id_pk": {
           "name": "kb_article_targets_article_id_target_type_target_id_pk",
-          "columns": [
-            "article_id",
-            "target_type",
-            "target_id"
-          ]
+          "columns": ["article_id", "target_type", "target_id"]
         }
       },
       "uniqueConstraints": {},
@@ -8062,12 +7638,8 @@
           "name": "kb_articles_entity_id_entities_id_fk",
           "tableFrom": "kb_articles",
           "tableTo": "entities",
-          "columnsFrom": [
-            "entity_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["entity_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -8075,12 +7647,8 @@
           "name": "kb_articles_category_id_kb_categories_id_fk",
           "tableFrom": "kb_articles",
           "tableTo": "kb_categories",
-          "columnsFrom": [
-            "category_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["category_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -8088,12 +7656,8 @@
           "name": "kb_articles_author_id_users_id_fk",
           "tableFrom": "kb_articles",
           "tableTo": "users",
-          "columnsFrom": [
-            "author_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["author_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -8101,12 +7665,8 @@
           "name": "kb_articles_updated_by_id_users_id_fk",
           "tableFrom": "kb_articles",
           "tableTo": "users",
-          "columnsFrom": [
-            "updated_by_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["updated_by_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -8245,12 +7805,8 @@
           "name": "kb_categories_entity_id_entities_id_fk",
           "tableFrom": "kb_categories",
           "tableTo": "entities",
-          "columnsFrom": [
-            "entity_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["entity_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -8258,12 +7814,8 @@
           "name": "kb_categories_parent_fk",
           "tableFrom": "kb_categories",
           "tableTo": "kb_categories",
-          "columnsFrom": [
-            "parent_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["parent_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -8304,12 +7856,8 @@
           "name": "kb_favorites_user_id_users_id_fk",
           "tableFrom": "kb_favorites",
           "tableTo": "users",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -8317,12 +7865,8 @@
           "name": "kb_favorites_article_id_kb_articles_id_fk",
           "tableFrom": "kb_favorites",
           "tableTo": "kb_articles",
-          "columnsFrom": [
-            "article_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["article_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -8330,10 +7874,7 @@
       "compositePrimaryKeys": {
         "kb_favorites_user_id_article_id_pk": {
           "name": "kb_favorites_user_id_article_id_pk",
-          "columns": [
-            "user_id",
-            "article_id"
-          ]
+          "columns": ["user_id", "article_id"]
         }
       },
       "uniqueConstraints": {},
@@ -8371,12 +7912,8 @@
           "name": "form_access_form_id_forms_id_fk",
           "tableFrom": "form_access",
           "tableTo": "forms",
-          "columnsFrom": [
-            "form_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["form_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -8384,11 +7921,7 @@
       "compositePrimaryKeys": {
         "form_access_form_id_target_type_target_id_pk": {
           "name": "form_access_form_id_target_type_target_id_pk",
-          "columns": [
-            "form_id",
-            "target_type",
-            "target_id"
-          ]
+          "columns": ["form_id", "target_type", "target_id"]
         }
       },
       "uniqueConstraints": {},
@@ -8474,12 +8007,8 @@
           "name": "form_destinations_form_id_forms_id_fk",
           "tableFrom": "form_destinations",
           "tableTo": "forms",
-          "columnsFrom": [
-            "form_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["form_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -8559,12 +8088,8 @@
           "name": "form_question_conditions_question_id_form_questions_id_fk",
           "tableFrom": "form_question_conditions",
           "tableTo": "form_questions",
-          "columnsFrom": [
-            "question_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["question_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -8572,12 +8097,8 @@
           "name": "form_question_conditions_depends_on_id_form_questions_id_fk",
           "tableFrom": "form_question_conditions",
           "tableTo": "form_questions",
-          "columnsFrom": [
-            "depends_on_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["depends_on_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -8689,12 +8210,8 @@
           "name": "form_questions_section_id_form_sections_id_fk",
           "tableFrom": "form_questions",
           "tableTo": "form_sections",
-          "columnsFrom": [
-            "section_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["section_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -8780,12 +8297,8 @@
           "name": "form_sections_form_id_forms_id_fk",
           "tableFrom": "form_sections",
           "tableTo": "forms",
-          "columnsFrom": [
-            "form_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["form_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -8904,12 +8417,8 @@
           "name": "form_submissions_form_id_forms_id_fk",
           "tableFrom": "form_submissions",
           "tableTo": "forms",
-          "columnsFrom": [
-            "form_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["form_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -8917,12 +8426,8 @@
           "name": "form_submissions_entity_id_entities_id_fk",
           "tableFrom": "form_submissions",
           "tableTo": "entities",
-          "columnsFrom": [
-            "entity_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["entity_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -8930,12 +8435,8 @@
           "name": "form_submissions_submitted_by_id_users_id_fk",
           "tableFrom": "form_submissions",
           "tableTo": "users",
-          "columnsFrom": [
-            "submitted_by_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["submitted_by_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -8943,12 +8444,8 @@
           "name": "form_submissions_ticket_id_tickets_id_fk",
           "tableFrom": "form_submissions",
           "tableTo": "tickets",
-          "columnsFrom": [
-            "ticket_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["ticket_id"],
+          "columnsTo": ["id"],
           "onDelete": "set null",
           "onUpdate": "no action"
         }
@@ -8999,11 +8496,7 @@
       "compositePrimaryKeys": {
         "form_translations_item_type_item_id_locale_pk": {
           "name": "form_translations_item_type_item_id_locale_pk",
-          "columns": [
-            "item_type",
-            "item_id",
-            "locale"
-          ]
+          "columns": ["item_type", "item_id", "locale"]
         }
       },
       "uniqueConstraints": {},
@@ -9126,12 +8619,8 @@
           "name": "forms_entity_id_entities_id_fk",
           "tableFrom": "forms",
           "tableTo": "entities",
-          "columnsFrom": [
-            "entity_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["entity_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -9232,12 +8721,8 @@
           "name": "dashboard_widgets_dashboard_id_dashboards_id_fk",
           "tableFrom": "dashboard_widgets",
           "tableTo": "dashboards",
-          "columnsFrom": [
-            "dashboard_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["dashboard_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -9344,12 +8829,8 @@
           "name": "dashboards_entity_id_entities_id_fk",
           "tableFrom": "dashboards",
           "tableTo": "entities",
-          "columnsFrom": [
-            "entity_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["entity_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -9357,12 +8838,8 @@
           "name": "dashboards_owner_id_users_id_fk",
           "tableFrom": "dashboards",
           "tableTo": "users",
-          "columnsFrom": [
-            "owner_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["owner_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -9448,12 +8925,8 @@
           "name": "recurrence_runs_recurring_id_recurring_tickets_id_fk",
           "tableFrom": "recurrence_runs",
           "tableTo": "recurring_tickets",
-          "columnsFrom": [
-            "recurring_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["recurring_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -9633,12 +9106,8 @@
           "name": "recurring_tickets_entity_id_entities_id_fk",
           "tableFrom": "recurring_tickets",
           "tableTo": "entities",
-          "columnsFrom": [
-            "entity_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["entity_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -9646,12 +9115,8 @@
           "name": "recurring_tickets_template_id_ticket_templates_id_fk",
           "tableFrom": "recurring_tickets",
           "tableTo": "ticket_templates",
-          "columnsFrom": [
-            "template_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["template_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -9659,12 +9124,8 @@
           "name": "recurring_tickets_created_by_id_users_id_fk",
           "tableFrom": "recurring_tickets",
           "tableTo": "users",
-          "columnsFrom": [
-            "created_by_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["created_by_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -9790,12 +9251,8 @@
           "name": "unavailabilities_entity_id_entities_id_fk",
           "tableFrom": "unavailabilities",
           "tableTo": "entities",
-          "columnsFrom": [
-            "entity_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["entity_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -9803,12 +9260,8 @@
           "name": "unavailabilities_user_id_users_id_fk",
           "tableFrom": "unavailabilities",
           "tableTo": "users",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -9816,12 +9269,8 @@
           "name": "unavailabilities_created_by_id_users_id_fk",
           "tableFrom": "unavailabilities",
           "tableTo": "users",
-          "columnsFrom": [
-            "created_by_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["created_by_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -9837,160 +9286,87 @@
     "public.auth_source": {
       "name": "auth_source",
       "schema": "public",
-      "values": [
-        "local",
-        "ldap"
-      ]
+      "values": ["local", "ldap"]
     },
     "public.ldap_group_search_mode": {
       "name": "ldap_group_search_mode",
       "schema": "public",
-      "values": [
-        "attribute",
-        "search"
-      ]
+      "values": ["attribute", "search"]
     },
     "public.profile_interface": {
       "name": "profile_interface",
       "schema": "public",
-      "values": [
-        "standard",
-        "self_service"
-      ]
+      "values": ["standard", "self_service"]
     },
     "public.right_scope": {
       "name": "right_scope",
       "schema": "public",
-      "values": [
-        "own",
-        "group",
-        "entity",
-        "recursive",
-        "all"
-      ]
+      "values": ["own", "group", "entity", "recursive", "all"]
     },
     "public.plugin_state": {
       "name": "plugin_state",
       "schema": "public",
-      "values": [
-        "decouvert",
-        "installe",
-        "actif",
-        "inactif",
-        "erreur"
-      ]
+      "values": ["decouvert", "installe", "actif", "inactif", "erreur"]
     },
     "public.actor_role": {
       "name": "actor_role",
       "schema": "public",
-      "values": [
-        "requester",
-        "observer",
-        "assigned"
-      ]
+      "values": ["requester", "observer", "assigned"]
     },
     "public.actor_type": {
       "name": "actor_type",
       "schema": "public",
-      "values": [
-        "user",
-        "group",
-        "supplier"
-      ]
+      "values": ["user", "group", "supplier"]
     },
     "public.followup_source": {
       "name": "followup_source",
       "schema": "public",
-      "values": [
-        "interface",
-        "email",
-        "phone",
-        "other"
-      ]
+      "values": ["interface", "email", "phone", "other"]
     },
     "public.itil_link_type": {
       "name": "itil_link_type",
       "schema": "public",
-      "values": [
-        "linked",
-        "duplicate",
-        "child"
-      ]
+      "values": ["linked", "duplicate", "child"]
     },
     "public.itil_status": {
       "name": "itil_status",
       "schema": "public",
-      "values": [
-        "new",
-        "assigned",
-        "planned",
-        "waiting",
-        "solved",
-        "closed"
-      ]
+      "values": ["new", "assigned", "planned", "waiting", "solved", "closed"]
     },
     "public.itil_type": {
       "name": "itil_type",
       "schema": "public",
-      "values": [
-        "ticket",
-        "problem",
-        "change"
-      ]
+      "values": ["ticket", "problem", "change"]
     },
     "public.solution_state": {
       "name": "solution_state",
       "schema": "public",
-      "values": [
-        "proposed",
-        "accepted",
-        "refused"
-      ]
+      "values": ["proposed", "accepted", "refused"]
     },
     "public.task_state": {
       "name": "task_state",
       "schema": "public",
-      "values": [
-        "information",
-        "todo",
-        "done"
-      ]
+      "values": ["information", "todo", "done"]
     },
     "public.template_field_kind": {
       "name": "template_field_kind",
       "schema": "public",
-      "values": [
-        "predefined",
-        "mandatory",
-        "hidden"
-      ]
+      "values": ["predefined", "mandatory", "hidden"]
     },
     "public.ticket_type": {
       "name": "ticket_type",
       "schema": "public",
-      "values": [
-        "incident",
-        "request"
-      ]
+      "values": ["incident", "request"]
     },
     "public.validation_state": {
       "name": "validation_state",
       "schema": "public",
-      "values": [
-        "waiting",
-        "granted",
-        "refused"
-      ]
+      "values": ["waiting", "granted", "refused"]
     },
     "public.notification_state": {
       "name": "notification_state",
       "schema": "public",
-      "values": [
-        "pending",
-        "sent",
-        "failed",
-        "cancelled"
-      ]
+      "values": ["pending", "sent", "failed", "cancelled"]
     },
     "public.notification_target": {
       "name": "notification_target",
@@ -10011,18 +9387,12 @@
     "public.agreement_axis": {
       "name": "agreement_axis",
       "schema": "public",
-      "values": [
-        "tto",
-        "ttr"
-      ]
+      "values": ["tto", "ttr"]
     },
     "public.agreement_kind": {
       "name": "agreement_kind",
       "schema": "public",
-      "values": [
-        "sla",
-        "ola"
-      ]
+      "values": ["sla", "ola"]
     },
     "public.escalation_action": {
       "name": "escalation_action",
@@ -10039,12 +9409,7 @@
     "public.rule_action_type": {
       "name": "rule_action_type",
       "schema": "public",
-      "values": [
-        "assign",
-        "append",
-        "regex_result",
-        "clear"
-      ]
+      "values": ["assign", "append", "regex_result", "clear"]
     },
     "public.rule_collection": {
       "name": "rule_collection",
@@ -10078,40 +9443,22 @@
     "public.mail_action": {
       "name": "mail_action",
       "schema": "public",
-      "values": [
-        "ticket",
-        "followup",
-        "ignored",
-        "refused",
-        "error"
-      ]
+      "values": ["ticket", "followup", "ignored", "refused", "error"]
     },
     "public.mail_after_read": {
       "name": "mail_after_read",
       "schema": "public",
-      "values": [
-        "delete",
-        "flag",
-        "move"
-      ]
+      "values": ["delete", "flag", "move"]
     },
     "public.kb_target_type": {
       "name": "kb_target_type",
       "schema": "public",
-      "values": [
-        "profile",
-        "group",
-        "user"
-      ]
+      "values": ["profile", "group", "user"]
     },
     "public.form_destination_kind": {
       "name": "form_destination_kind",
       "schema": "public",
-      "values": [
-        "ticket",
-        "problem",
-        "change"
-      ]
+      "values": ["ticket", "problem", "change"]
     },
     "public.form_question_kind": {
       "name": "form_question_kind",
@@ -10134,20 +9481,12 @@
     "public.form_target_type": {
       "name": "form_target_type",
       "schema": "public",
-      "values": [
-        "profile",
-        "group",
-        "user"
-      ]
+      "values": ["profile", "group", "user"]
     },
     "public.recurrence_step": {
       "name": "recurrence_step",
       "schema": "public",
-      "values": [
-        "daily",
-        "weekly",
-        "monthly"
-      ]
+      "values": ["daily", "weekly", "monthly"]
     }
   },
   "schemas": {},

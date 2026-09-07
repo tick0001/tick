@@ -136,7 +136,9 @@ export function NewTicketPage() {
 
         <aside className="space-y-4">
           <label className="block space-y-1">
-            <span className="block text-[11px] font-semibold tracking-wider text-faint uppercase">{t('gabarits.titre')}</span>
+            <span className="block text-[11px] font-semibold tracking-wider text-faint uppercase">
+              {t('gabarits.titre')}
+            </span>
             <select
               value={gabaritId ?? ''}
               onChange={(event) => {
@@ -192,7 +194,9 @@ export function NewTicketPage() {
 
             {!masque('type') && (
               <label className="block space-y-1">
-                <span className="block text-[11px] font-semibold tracking-wider text-faint uppercase">{t('creation.type')}</span>
+                <span className="block text-[11px] font-semibold tracking-wider text-faint uppercase">
+                  {t('creation.type')}
+                </span>
                 <select
                   value={saisie.type}
                   onChange={(event) => {

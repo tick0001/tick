@@ -103,7 +103,31 @@ ne laisse rien derrière lui.
 | [Pilotage](docs/11-pilotage.md)                                         | Planning, statistiques, tableaux de bord, exports             |
 | [Interface](docs/12-interface.md)                                       | Jetons de couleur, navigation, briques communes               |
 | [Administration](docs/13-administration.md)                             | Comptes, groupes, profils et matrice de droits                |
+| [Installation et exploitation](docs/14-installation.md)                 | Déploiement Docker, sauvegardes, mises à jour, diagnostic     |
+| [SDK de plugins](docs/15-sdk-plugins.md)                                | Référence d'écriture d'un plugin, avec exemples               |
 | [Feuille de route](docs/06-feuille-de-route.md)                         | Dix jalons, du socle à l'ouverture publique                   |
+
+## Déploiement
+
+Voir le [guide d'installation](docs/14-installation.md). En résumé :
+
+```bash
+pnpm images                                   # construit tick-api et tick-web
+cp .env.production.example .env               # puis remplir
+docker compose -f docker/compose.production.yaml up -d
+docker compose -f docker/compose.production.yaml run --rm   -e TICK_ADMIN_PASSWORD='…' api node dist/cli/initialiser.js
+```
+
+La description OpenAPI de l'API est servie sur `/api/openapi.json`, ou
+s'exporte hors ligne avec `pnpm openapi`.
+
+## Licence
+
+**AGPL-3.0-or-later** — voir [LICENSE](LICENSE).
+
+Sans exception de liaison : un plugin est chargé dans le processus de l'API et
+en est très probablement une œuvre dérivée, donc soumis à la même licence. Voir
+le [SDK de plugins](docs/15-sdk-plugins.md).
 
 ## Conventions
 

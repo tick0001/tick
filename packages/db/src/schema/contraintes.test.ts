@@ -41,7 +41,10 @@ describe('Index', () => {
   it('porte au moins un index par table, en moyenne', () => {
     // Garde-fou : si `getTableConfig` cessait de resoudre les rappels, tous les
     // tests de ce fichier passeraient en ne voyant plus aucun index.
-    const total = tables.reduce((somme, [, table]) => somme + getTableConfig(table).indexes.length, 0);
+    const total = tables.reduce(
+      (somme, [, table]) => somme + getTableConfig(table).indexes.length,
+      0,
+    );
 
     expect(total).toBeGreaterThan(tables.length);
   });

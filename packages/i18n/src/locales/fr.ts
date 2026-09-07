@@ -33,7 +33,8 @@ export const fr = {
   },
   categories: {
     titre: 'Catégories',
-    intro: 'Le classement des demandes : ce qui oriente vers la bonne file et alimente les rapports.',
+    intro:
+      'Le classement des demandes : ce qui oriente vers la bonne file et alimente les rapports.',
     nouvelle: 'Nouvelle catégorie',
     nom: 'Nom',
     parent: 'Rattachée à',
@@ -297,7 +298,8 @@ export const fr = {
     },
   },
   regles: {
-    intro: 'Ce qui s’applique automatiquement : dictionnaire, aiguillage à la création, mise à jour.',
+    intro:
+      'Ce qui s’applique automatiquement : dictionnaire, aiguillage à la création, mise à jour.',
     titre: 'Règles',
     nouvelle: 'Nouvelle règle',
     nom: 'Nom',
@@ -807,7 +809,8 @@ export const fr = {
     plugins: 'Extensions',
     annuaires: {
       titre: 'Annuaires',
-      description: 'LDAP et Active Directory : authentification déléguée et synchronisation des comptes.',
+      description:
+        'LDAP et Active Directory : authentification déléguée et synchronisation des comptes.',
       aucun: 'Aucun annuaire configuré. L’authentification reste locale.',
       nouveau: 'Nouvel annuaire',
       nom: 'Nom',

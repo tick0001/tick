@@ -79,7 +79,14 @@ describe('HTTP — objets ITIL', () => {
     it('accepte une modification vide', async () => {
       // Le contrat n'exige aucun champ : l'ecran n'envoie que ce qu'il a change,
       // et une requete sans changement ne doit pas etre une erreur.
-      expect((await harnais.admin().patch('/api/tickets/' + ticket).send({})).status).toBe(200);
+      expect(
+        (
+          await harnais
+            .admin()
+            .patch('/api/tickets/' + ticket)
+            .send({})
+        ).status,
+      ).toBe(200);
     });
 
     it('liste les tickets avec ses filtres', async () => {
@@ -143,7 +150,10 @@ describe('HTTP — objets ITIL', () => {
     it('refuse une liste d’acteurs vide', async () => {
       // Un ticket sans demandeur n'a personne a informer : le vide est refuse
       // au contrat plutot que decouvert a l'envoi de la notification.
-      const reponse = await harnais.admin().post('/api/tickets/' + ticket + '/actors').send([]);
+      const reponse = await harnais
+        .admin()
+        .post('/api/tickets/' + ticket + '/actors')
+        .send([]);
 
       expect(reponse.status).toBe(400);
     });
@@ -313,7 +323,9 @@ describe('HTTP — objets ITIL', () => {
 
       expect(reponse.status).toBe(200);
       expect(reponse.body.failures).toEqual(
-        expect.arrayContaining([expect.objectContaining({ id: 99_999_999, reason: expect.any(String) })]),
+        expect.arrayContaining([
+          expect.objectContaining({ id: 99_999_999, reason: expect.any(String) }),
+        ]),
       );
     });
 

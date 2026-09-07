@@ -884,7 +884,8 @@ async function main(): Promise<void> {
         priority: 4,
         categoryId: impression,
         deploymentPlan: 'Livraison le samedi, installation etage par etage le dimanche.',
-        rollbackPlan: 'Les anciens materiels restent stockes une semaine, reinstallables en deux heures.',
+        rollbackPlan:
+          'Les anciens materiels restent stockes une semaine, reinstallables en deux heures.',
         validationPlan: 'Une impression de test par etage, et une semaine sans incident.',
         checklist: [
           { label: 'Commander les six materiels', done: true },

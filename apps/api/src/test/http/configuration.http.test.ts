@@ -136,7 +136,10 @@ describe('HTTP — configuration', () => {
     });
 
     it('réordonne les règles', async () => {
-      const reponse = await harnais.admin().post('/api/rules/reorder').send({ ids: [regle] });
+      const reponse = await harnais
+        .admin()
+        .post('/api/rules/reorder')
+        .send({ ids: [regle] });
 
       expect(reponse.status).toBe(204);
     });
@@ -369,7 +372,9 @@ describe('HTTP — configuration', () => {
 
     it('liste, retrouve et modifie le modèle', async () => {
       expect((await harnais.admin().get('/api/notifications/templates')).status).toBe(200);
-      expect((await harnais.admin().get('/api/notifications/templates/' + modele)).status).toBe(200);
+      expect((await harnais.admin().get('/api/notifications/templates/' + modele)).status).toBe(
+        200,
+      );
 
       const reponse = await harnais
         .admin()
@@ -402,7 +407,10 @@ describe('HTTP — configuration', () => {
       expect(filtree.status).toBe(200);
       expect(filtree.body.length).toBeLessThanOrEqual(10);
 
-      const purge = await harnais.admin().post('/api/notifications/queue/purge').query({ days: 30 });
+      const purge = await harnais
+        .admin()
+        .post('/api/notifications/queue/purge')
+        .query({ days: 30 });
 
       expect(purge.status).toBe(200);
       expect(purge.body).toHaveProperty('removed');
@@ -539,17 +547,20 @@ describe('HTTP — configuration', () => {
     let fille: number;
 
     it('crée une catégorie racine', async () => {
-      const reponse = await harnais.admin().post('/api/referentials/itil-categories').send({
-        name: PREFIXE + 'mere',
-        parentId: null,
-        comment: 'Racine de test',
-        isHelpdeskVisible: true,
-        forIncident: true,
-        forRequest: true,
-        forProblem: false,
-        forChange: false,
-        isRecursive: true,
-      });
+      const reponse = await harnais
+        .admin()
+        .post('/api/referentials/itil-categories')
+        .send({
+          name: PREFIXE + 'mere',
+          parentId: null,
+          comment: 'Racine de test',
+          isHelpdeskVisible: true,
+          forIncident: true,
+          forRequest: true,
+          forProblem: false,
+          forChange: false,
+          isRecursive: true,
+        });
 
       expect(reponse.status).toBe(201);
       expect(reponse.body).toMatchObject({
@@ -564,16 +575,19 @@ describe('HTTP — configuration', () => {
     });
 
     it('calcule le nom complet d’une fille à partir de sa mère', async () => {
-      const reponse = await harnais.admin().post('/api/referentials/itil-categories').send({
-        name: PREFIXE + 'fille',
-        parentId: mere,
-        isHelpdeskVisible: true,
-        forIncident: true,
-        forRequest: true,
-        forProblem: true,
-        forChange: true,
-        isRecursive: true,
-      });
+      const reponse = await harnais
+        .admin()
+        .post('/api/referentials/itil-categories')
+        .send({
+          name: PREFIXE + 'fille',
+          parentId: mere,
+          isHelpdeskVisible: true,
+          forIncident: true,
+          forRequest: true,
+          forProblem: true,
+          forChange: true,
+          isRecursive: true,
+        });
 
       expect(reponse.status).toBe(201);
 
@@ -631,13 +645,16 @@ describe('HTTP — configuration', () => {
     });
 
     it('refuse une catégorie qui ne s’applique à rien', async () => {
-      const reponse = await harnais.admin().post('/api/referentials/itil-categories').send({
-        name: PREFIXE + 'inerte',
-        forIncident: false,
-        forRequest: false,
-        forProblem: false,
-        forChange: false,
-      });
+      const reponse = await harnais
+        .admin()
+        .post('/api/referentials/itil-categories')
+        .send({
+          name: PREFIXE + 'inerte',
+          forIncident: false,
+          forRequest: false,
+          forProblem: false,
+          forChange: false,
+        });
 
       expect(reponse.status).toBe(400);
     });
@@ -687,9 +704,9 @@ describe('HTTP — configuration', () => {
     });
 
     it('refuse un visiteur sans session', async () => {
-      expect(
-        (await harnais.anonyme().get('/api/referentials/itil-categories/all')).status,
-      ).toBe(401);
+      expect((await harnais.anonyme().get('/api/referentials/itil-categories/all')).status).toBe(
+        401,
+      );
     });
   });
 });

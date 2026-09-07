@@ -160,7 +160,8 @@ export class GroupsService {
         .returning({ id: groups.id }),
     );
 
-    if (supprimes.length === 0) throw new NotFoundException('Groupe introuvable ou hors perimetre.');
+    if (supprimes.length === 0)
+      throw new NotFoundException('Groupe introuvable ou hors perimetre.');
   }
 
   async addMember(groupId: number, input: UpsertMember): Promise<Group> {

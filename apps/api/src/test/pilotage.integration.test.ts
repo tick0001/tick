@@ -122,7 +122,9 @@ describe('Pilotage', () => {
 
       await fixture.owner.db
         .insert(profileRights)
-        .values(droits.map(([object, action, scope]) => ({ profileId: id, object, action, scope })));
+        .values(
+          droits.map(([object, action, scope]) => ({ profileId: id, object, action, scope })),
+        );
 
       return id;
     };

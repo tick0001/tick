@@ -37,13 +37,13 @@ oublié sa variante — la variante n'existe plus.
 
 Les noms disent le **rôle**, pas la teinte :
 
-| Famille | Jetons                                          | Usage                                    |
-| ------- | ----------------------------------------------- | ---------------------------------------- |
-| Fonds   | `canvas`, `surface`, `sunken`, `raised`         | du plus reculé au plus avancé            |
-| Traits  | `line`, `line-strong`                           | bordure ordinaire, bordure appuyée       |
-| Textes  | `ink`, `muted`, `faint`                         | du plus lisible au plus discret          |
-| Marque  | `brand`, `brand-hover`, `brand-soft`, `brand-ink`, `on-brand` | actions et éléments actifs |
-| Sens    | `positive`, `caution`, `critical`, `info` (+ `-soft`, `-ink`) | états et alertes           |
+| Famille | Jetons                                                        | Usage                              |
+| ------- | ------------------------------------------------------------- | ---------------------------------- |
+| Fonds   | `canvas`, `surface`, `sunken`, `raised`                       | du plus reculé au plus avancé      |
+| Traits  | `line`, `line-strong`                                         | bordure ordinaire, bordure appuyée |
+| Textes  | `ink`, `muted`, `faint`                                       | du plus lisible au plus discret    |
+| Marque  | `brand`, `brand-hover`, `brand-soft`, `brand-ink`, `on-brand` | actions et éléments actifs         |
+| Sens    | `positive`, `caution`, `critical`, `info` (+ `-soft`, `-ink`) | états et alertes                   |
 
 `surface` reste `surface` le jour où le fond passe du blanc au gris ; `bg-white`
 aurait menti dès la première retouche.

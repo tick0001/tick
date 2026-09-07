@@ -21,15 +21,15 @@ le faire était de rejouer la graine, ou d'ouvrir `psql`.
 
 Le tableau au moment du constat :
 
-| Objet | Base + RLS | Route | Écran |
-| ------------------ | ---------- | -------------- | -------------- |
-| Entités | ✅ | CRUD complet | liste seule |
-| Utilisateurs | ✅ | — | — |
-| Groupes | ✅ | — | — |
-| Profils et droits | ✅ | — | — |
-| Habilitations | ✅ | — | — |
-| Annuaires LDAP | ✅ | — | — |
-| Réglages par entité | ✅ | lecture seule | — |
+| Objet               | Base + RLS | Route         | Écran       |
+| ------------------- | ---------- | ------------- | ----------- |
+| Entités             | ✅         | CRUD complet  | liste seule |
+| Utilisateurs        | ✅         | —             | —           |
+| Groupes             | ✅         | —             | —           |
+| Profils et droits   | ✅         | —             | —           |
+| Habilitations       | ✅         | —             | —           |
+| Annuaires LDAP      | ✅         | —             | —           |
+| Réglages par entité | ✅         | lecture seule | —           |
 
 ## 2. Ce que le modèle impose
 
@@ -78,10 +78,10 @@ inconfigurables.
 
 ### Les portées sont restreintes par objet
 
-| Nature | Portées proposées |
-| --------------------- | ------------------------------------------ |
-| Objets ITIL | `own`, `group`, `entity`, `recursive`, `all` |
-| Objets de configuration | `entity`, `recursive`, `all` |
+| Nature                  | Portées proposées                            |
+| ----------------------- | -------------------------------------------- |
+| Objets ITIL             | `own`, `group`, `entity`, `recursive`, `all` |
+| Objets de configuration | `entity`, `recursive`, `all`                 |
 
 Un modèle de notification n'appartient à personne : lui proposer « les miens »
 enverrait l'administrateur chercher un quart d'heure pourquoi le choix ne change
@@ -135,8 +135,8 @@ mot de passe dans un formulaire de modification. En base, cela se traduit par un
 `COALESCE` : le formulaire n'a pas à se souvenir de ce qu'il n'a jamais reçu.
 
 **Le mode de résolution des groupes** ne montre que l'attribut qui sert :
-`memberOf` en mode *attribut* (Active Directory), l'attribut des membres en mode
-*recherche* (OpenLDAP). Afficher l'autre inviterait à le renseigner pour rien.
+`memberOf` en mode _attribut_ (Active Directory), l'attribut des membres en mode
+_recherche_ (OpenLDAP). Afficher l'autre inviterait à le renseigner pour rien.
 
 **L'essai de connexion** rend le message d'erreur de l'annuaire **tel quel**.
 C'est un écart assumé à la règle qui gouverne l'authentification, où toutes les

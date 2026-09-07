@@ -392,7 +392,9 @@ describe('HTTP — libre-service', () => {
       const reponse = await harnais
         .admin()
         .post('/api/search/tickets')
-        .send({ criteria: { kind: 'criterion', field: 'status', operator: 'ressemble', value: 'x' } });
+        .send({
+          criteria: { kind: 'criterion', field: 'status', operator: 'ressemble', value: 'x' },
+        });
 
       expect(reponse.status).toBe(400);
     });
@@ -422,7 +424,12 @@ describe('HTTP — libre-service', () => {
         .send({
           name: PREFIXE + 'recherche-2',
           isPinned: true,
-          criteria: { kind: 'criterion', field: 'ticket.status', operator: 'eq', value: 'assigned' },
+          criteria: {
+            kind: 'criterion',
+            field: 'ticket.status',
+            operator: 'eq',
+            value: 'assigned',
+          },
         });
 
       expect(modification.status).toBe(200);

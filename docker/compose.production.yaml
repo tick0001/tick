@@ -106,6 +106,13 @@ services:
       # Les pièces jointes vivent hors du conteneur : sans ce volume, une mise à
       # jour d'image les emporterait.
       - storage:/app/storage
+      # Plugins déposés par l'exploitant, en lecture seule.
+      #
+      # Un plugin est du code chargé dans le processus de l'API : lui donner le
+      # droit d'écrire dans son propre dossier permettrait à un plugin
+      # compromis de se réécrire, et de survivre à sa désinstallation. Le
+      # dossier est créé vide si l'on n'en dépose aucun.
+      - ./plugins:/app/plugins:ro
     healthcheck:
       test:
         - CMD

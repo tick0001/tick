@@ -127,10 +127,7 @@ describe('SearchCompiler', () => {
       const clause = compilateur.compile({
         kind: 'group',
         link: 'and',
-        children: [
-          { kind: 'group', link: 'and', children: [] },
-          critere('sujet', 'eq', 'panne')!,
-        ],
+        children: [{ kind: 'group', link: 'and', children: [] }, critere('sujet', 'eq', 'panne')!],
       });
 
       expect(clause).toBeDefined();

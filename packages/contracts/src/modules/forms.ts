@@ -60,7 +60,6 @@ export const KINDS_A_OPTIONS: readonly FormQuestionKind[] = ['select', 'radio', 
 /** Natures qui n'attendent aucune réponse : elles informent. */
 export const KINDS_SANS_REPONSE: readonly FormQuestionKind[] = ['description'];
 
-
 export const formTargetTypeSchema = z.enum(['profile', 'group', 'user']);
 export type FormTargetType = z.infer<typeof formTargetTypeSchema>;
 

@@ -279,10 +279,12 @@ describe('Objets ITIL', () => {
       );
       const surTicket = await commeIntervenant(() => timeline.timelineFor(ids.ticket));
 
-      expect(surProbleme.some((entree) => 'content' in entree && entree.content.includes('reseau')))
-        .toBe(true);
-      expect(surTicket.some((entree) => 'content' in entree && entree.content.includes('reseau')))
-        .toBe(false);
+      expect(
+        surProbleme.some((entree) => 'content' in entree && entree.content.includes('reseau')),
+      ).toBe(true);
+      expect(
+        surTicket.some((entree) => 'content' in entree && entree.content.includes('reseau')),
+      ).toBe(false);
     });
 
     it('cache les éléments privés au lecteur en portée « own »', async () => {
@@ -305,8 +307,9 @@ describe('Objets ITIL', () => {
         timeline.timelineFor(ids.probleme, 'problem'),
       );
 
-      expect(vu.some((entree) => 'content' in entree && entree.content.includes('Note interne')))
-        .toBe(false);
+      expect(
+        vu.some((entree) => 'content' in entree && entree.content.includes('Note interne')),
+      ).toBe(false);
     });
   });
 

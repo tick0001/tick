@@ -275,13 +275,7 @@ export function PageHeader({
  * fond creux et le filet les tiennent, et rattachent visuellement la commande à
  * son résultat.
  */
-export function FilterBar({
-  className,
-  children,
-}: {
-  className?: string;
-  children: ReactNode;
-}) {
+export function FilterBar({ className, children }: { className?: string; children: ReactNode }) {
   return (
     <div
       className={cn(
@@ -301,13 +295,7 @@ export function FilterBar({
  * en balayant les filets, sans lire les libellés. Un petit gras nu, lui, se
  * confond avec le contenu dès que la page s'allonge.
  */
-export function SectionTitle({
-  children,
-  action,
-}: {
-  children: ReactNode;
-  action?: ReactNode;
-}) {
+export function SectionTitle({ children, action }: { children: ReactNode; action?: ReactNode }) {
   return (
     <div className="flex items-center gap-3">
       <h3 className="text-xs font-semibold tracking-wider whitespace-nowrap text-muted uppercase">

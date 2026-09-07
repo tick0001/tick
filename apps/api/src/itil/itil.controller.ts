@@ -122,7 +122,8 @@ export class ItilController {
   @Post(':kind')
   async create(
     @Param('kind') kind: string,
-    @Body(new ZodValidationPipe(upsertItilObjectSchema)) body: z.infer<typeof upsertItilObjectSchema>,
+    @Body(new ZodValidationPipe(upsertItilObjectSchema))
+    body: z.infer<typeof upsertItilObjectSchema>,
   ): Promise<ItilObject> {
     return this.objects.create(kindDe(kind), body);
   }
@@ -138,10 +139,7 @@ export class ItilController {
 
   @Delete(':kind/:id')
   @HttpCode(204)
-  async remove(
-    @Param('kind') kind: string,
-    @Param('id', ParseIntPipe) id: number,
-  ): Promise<void> {
+  async remove(@Param('kind') kind: string, @Param('id', ParseIntPipe) id: number): Promise<void> {
     await this.objects.softDelete(kindDe(kind), id);
   }
 

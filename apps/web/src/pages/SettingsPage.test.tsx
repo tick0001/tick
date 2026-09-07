@@ -173,9 +173,7 @@ describe('SettingsPage', () => {
   it('affiche le refus du serveur plutôt que de l’avaler', async () => {
     const utilisateur = userEvent.setup();
 
-    vi.spyOn(api, 'writeEntitySettings').mockRejectedValue(
-      new ApiError(400, 'Adresse invalide.'),
-    );
+    vi.spyOn(api, 'writeEntitySettings').mockRejectedValue(new ApiError(400, 'Adresse invalide.'));
 
     monterPage(<SettingsPage session={SESSION} />, { droits: DROITS });
 

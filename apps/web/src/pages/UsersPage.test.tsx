@@ -19,7 +19,11 @@ import { UsersPage } from './UsersPage';
  * retirer à la main ne tient pas.
  */
 
-function compte(id: number, identifiant: string, surcharge: Partial<UserSummary> = {}): UserSummary {
+function compte(
+  id: number,
+  identifiant: string,
+  surcharge: Partial<UserSummary> = {},
+): UserSummary {
   return {
     id,
     username: identifiant,
@@ -68,8 +72,24 @@ const DETAIL: UserDetail = {
 };
 
 const PROFILS: Profile[] = [
-  { id: 1, name: 'Administrateur', interface: 'standard', isDefault: false, comment: null, rights: [], usageCount: 3 },
-  { id: 2, name: 'Technicien', interface: 'standard', isDefault: true, comment: null, rights: [], usageCount: 5 },
+  {
+    id: 1,
+    name: 'Administrateur',
+    interface: 'standard',
+    isDefault: false,
+    comment: null,
+    rights: [],
+    usageCount: 3,
+  },
+  {
+    id: 2,
+    name: 'Technicien',
+    interface: 'standard',
+    isDefault: true,
+    comment: null,
+    rights: [],
+    usageCount: 5,
+  },
 ];
 
 const ENTITES: EntitySummary[] = [

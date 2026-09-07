@@ -110,19 +110,16 @@ export function decouvrirRoutes(app: INestApplicationContext): RouteDecouverte[]
         // que comme un nombre, sinon toute comparaison avec l'un de ses
         // membres devient un rapprochement entre deux types etrangers.
         const methodeHttp = Reflect.getMetadata(METHOD_METADATA, prototype[nom] as object) as
-          | RequestMethod
-          | undefined;
+          RequestMethod | undefined;
 
         if (methodeHttp === undefined || !(methodeHttp in METHODES)) continue;
 
         const cheminMethode = Reflect.getMetadata(PATH_METADATA, prototype[nom] as object) as
-          | string
-          | undefined;
+          string | undefined;
 
         const arguments_ =
           (Reflect.getMetadata(ROUTE_ARGS_METADATA, classe, nom) as
-            | Record<string, ArgumentRoute>
-            | undefined) ?? {};
+            Record<string, ArgumentRoute> | undefined) ?? {};
 
         let corps: ZodType | undefined;
         let requete: ZodType | undefined;
@@ -142,8 +139,7 @@ export function decouvrirRoutes(app: INestApplicationContext): RouteDecouverte[]
           controleur: classe.name,
           action: nom,
           droit: Reflect.getMetadata('tick:right', prototype[nom] as object) as
-            | { object: string; action: string }
-            | undefined,
+            { object: string; action: string } | undefined,
           corps,
           requete,
           parametres,
@@ -151,8 +147,7 @@ export function decouvrirRoutes(app: INestApplicationContext): RouteDecouverte[]
           // une reponse que le client attendrait en vain.
           code:
             (Reflect.getMetadata(HTTP_CODE_METADATA, prototype[nom] as object) as
-              | number
-              | undefined) ?? (methodeHttp === RequestMethod.POST ? 201 : 200),
+              number | undefined) ?? (methodeHttp === RequestMethod.POST ? 201 : 200),
         });
       }
     }
@@ -224,7 +219,9 @@ export function construireOpenApi(
       ],
       responses: {
         [String(route.code)]:
-          route.code === 204 ? { description: 'Effectué, sans contenu.' } : { description: 'Succès.' },
+          route.code === 204
+            ? { description: 'Effectué, sans contenu.' }
+            : { description: 'Succès.' },
         '401': { description: 'Aucune session.' },
       },
     };
@@ -241,8 +238,7 @@ export function construireOpenApi(
       // d'OpenAPI ne dit « cette route exige tel droit applicatif », et le
       // noyer dans la description le rendrait illisible à la machine.
       operation['x-tick-droit'] = route.droit;
-      operation['description'] =
-        `Exige le droit \`${route.droit.object}:${route.droit.action}\`.`;
+      operation['description'] = `Exige le droit \`${route.droit.object}:${route.droit.action}\`.`;
 
       (operation['responses'] as Record<string, unknown>)['403'] = {
         description: 'Le profil actif ne détient pas ce droit.',

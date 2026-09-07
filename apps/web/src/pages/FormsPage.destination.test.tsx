@@ -173,9 +173,7 @@ describe('FormsPage — destination', () => {
 
     // Le doublon d'origine part avec : l'ecran ne peut plus en produire, et en
     // laisser trainer un rendrait l'enregistrement suivant illisible.
-    expect(urgences).toEqual([
-      { field: 'urgency', source: 'literal', question: null, value: '4' },
-    ]);
+    expect(urgences).toEqual([{ field: 'urgency', source: 'literal', question: null, value: '4' }]);
   });
 
   it('retire la correspondance quand on repasse à « par défaut »', async () => {

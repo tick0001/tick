@@ -84,9 +84,9 @@ describe('OpenAPI', () => {
 
     expect(creer?.corps).toBeDefined();
 
-    const corps = (
-      document['paths'] as Record<string, Record<string, Record<string, unknown>>>
-    )['/api/referentials/itil-categories']?.['post']?.['requestBody'] as Record<string, unknown>;
+    const corps = (document['paths'] as Record<string, Record<string, Record<string, unknown>>>)[
+      '/api/referentials/itil-categories'
+    ]?.['post']?.['requestBody'] as Record<string, unknown>;
 
     const schema = (corps['content'] as Record<string, Record<string, Record<string, unknown>>>)[
       'application/json'

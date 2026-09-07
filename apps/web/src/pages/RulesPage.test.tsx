@@ -33,7 +33,13 @@ const CHAMPS: RuleField[] = [
     actions: ['assign', 'clear'],
   },
   // Champ d'action pure : il ne doit pas apparaitre dans les criteres.
-  { key: 'assignedGroupId', label: 'Groupe attribué', type: 'number', operators: [], actions: ['assign'] },
+  {
+    key: 'assignedGroupId',
+    label: 'Groupe attribué',
+    type: 'number',
+    operators: [],
+    actions: ['assign'],
+  },
 ];
 
 function regle(id: number, nom: string, rang: number, surcharge: Partial<Rule> = {}): Rule {
@@ -66,7 +72,13 @@ const SIMULATION: SimulationResult = {
       matched: true,
       stopped: false,
       criteria: [
-        { field: 'name', operator: 'contains', value: 'panne', actual: 'panne reseau', matched: true },
+        {
+          field: 'name',
+          operator: 'contains',
+          value: 'panne',
+          actual: 'panne reseau',
+          matched: true,
+        },
       ],
       applied: [{ field: 'urgency', value: '5' }],
     },

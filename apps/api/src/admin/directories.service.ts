@@ -76,9 +76,7 @@ export class DirectoriesService {
 
   async save(input: UpsertLdapDirectory, id?: number): Promise<LdapDirectory> {
     if (id === undefined && !input.bindPassword && input.bindDn) {
-      throw new BadRequestException(
-        'Un compte de service exige son mot de passe a la creation.',
-      );
+      throw new BadRequestException('Un compte de service exige son mot de passe a la creation.');
     }
 
     const chiffre = input.bindPassword ? this.secrets.encrypt(input.bindPassword) : null;

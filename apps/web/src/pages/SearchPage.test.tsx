@@ -138,9 +138,7 @@ describe('SearchPage', () => {
 
   it('reconstruit le type de la valeur selon l’action massive choisie', async () => {
     const utilisateur = userEvent.setup();
-    const massive = vi
-      .spyOn(api, 'bulk')
-      .mockResolvedValue({ applied: 2, failures: [] });
+    const massive = vi.spyOn(api, 'bulk').mockResolvedValue({ applied: 2, failures: [] });
 
     vi.spyOn(api, 'searchTickets').mockResolvedValue(RESULTATS);
 
@@ -212,7 +210,9 @@ describe('SearchPage', () => {
 
     // « 2 tickets traites » alors qu'un seul l'a ete serait un mensonge qu'on
     // ne decouvrirait qu'en rouvrant les tickets un par un.
-    expect(await screen.findByText(/1 ticket\(s\) modifié\(s\).*1 échec\(s\) : #2/)).toBeInTheDocument();
+    expect(
+      await screen.findByText(/1 ticket\(s\) modifié\(s\).*1 échec\(s\) : #2/),
+    ).toBeInTheDocument();
   });
 
   it('interdit l’action massive tant que rien n’est sélectionné', async () => {

@@ -20,11 +20,7 @@ import { PlanningPage } from './PlanningPage';
  * planning pour en afficher une journée.
  */
 
-function entree(
-  id: number,
-  titre: string,
-  surcharge: Partial<PlanningEntry> = {},
-): PlanningEntry {
+function entree(id: number, titre: string, surcharge: Partial<PlanningEntry> = {}): PlanningEntry {
   return {
     kind: 'task',
     id,
@@ -169,9 +165,7 @@ describe('PlanningPage', () => {
 
     await utilisateur.selectOptions(screen.getByDisplayValue('Tous'), '10');
 
-    expect(
-      screen.getByRole('button', { name: /Déclarer une indisponibilité/ }),
-    ).not.toBeDisabled();
+    expect(screen.getByRole('button', { name: /Déclarer une indisponibilité/ })).not.toBeDisabled();
   });
 
   it('déclare une indisponibilité pour le technicien filtré', async () => {

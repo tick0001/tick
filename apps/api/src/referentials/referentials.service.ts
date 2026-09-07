@@ -47,7 +47,9 @@ export class ReferentialsService {
 
     // Une categorie « non selectionnable » reste dans l'arbre pour porter ses
     // filles : c'est un intitule de regroupement, pas un classement possible.
-    const applicable = filtre.type ? sql.raw(`AND (${APPLICABILITE[filtre.type] ?? 'TRUE'})`) : sql``;
+    const applicable = filtre.type
+      ? sql.raw(`AND (${APPLICABILITE[filtre.type] ?? 'TRUE'})`)
+      : sql``;
 
     return this.db.asUser(async (tx) => {
       const resultat = await tx.execute<ItilCategory>(sql`
@@ -200,9 +202,7 @@ export class ReferentialsService {
   /** Une categorie qui ne s'applique a rien ne peut jamais etre choisie. */
   private assertApplicable(input: UpsertItilCategory): void {
     if (!input.forIncident && !input.forRequest && !input.forProblem && !input.forChange) {
-      throw new BadRequestException(
-        'Une categorie doit s appliquer a au moins un type d objet.',
-      );
+      throw new BadRequestException('Une categorie doit s appliquer a au moins un type d objet.');
     }
   }
 

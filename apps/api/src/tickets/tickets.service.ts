@@ -24,7 +24,14 @@ import { PriorityService } from './priority.service.js';
 import { applyRuleOutput, borne, choix, reference, texte } from './ticket-rules.js';
 import { TicketScopeService } from './ticket-scope.service.js';
 import { TicketTemplatesService } from './ticket-templates.service.js';
-import { actorLabels, decodeCursor, encodeCursor, followupCount, SORTABLE, taskCount } from './ticket-sql.js';
+import {
+  actorLabels,
+  decodeCursor,
+  encodeCursor,
+  followupCount,
+  SORTABLE,
+  taskCount,
+} from './ticket-sql.js';
 import { toIso, toIsoRequired, toText } from '../common/sql.js';
 
 /**

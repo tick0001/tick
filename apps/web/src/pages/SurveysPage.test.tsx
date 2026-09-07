@@ -99,7 +99,14 @@ describe('SurveysPage', () => {
 
   it('recharge le formulaire quand le contexte change d’entité', async () => {
     const dsi = sessionFactice(DROITS, {
-      entity: { id: 2, name: 'DSI', completeName: 'Racine > DSI', path: 'e1.e2', level: 1, parentId: 1 },
+      entity: {
+        id: 2,
+        name: 'DSI',
+        completeName: 'Racine > DSI',
+        path: 'e1.e2',
+        level: 1,
+        parentId: 1,
+      },
     });
 
     monterPage(<SurveysPage session={dsi} />, { droits: DROITS });
@@ -115,7 +122,14 @@ describe('SurveysPage', () => {
 
   it('retombe sur les défauts quand l’entité n’a pas de configuration propre', async () => {
     const autre = sessionFactice(DROITS, {
-      entity: { id: 9, name: 'RH', completeName: 'Racine > RH', path: 'e1.e9', level: 1, parentId: 1 },
+      entity: {
+        id: 9,
+        name: 'RH',
+        completeName: 'Racine > RH',
+        path: 'e1.e9',
+        level: 1,
+        parentId: 1,
+      },
     });
 
     monterPage(<SurveysPage session={autre} />, { droits: DROITS });

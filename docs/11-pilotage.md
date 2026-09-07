@@ -185,13 +185,13 @@ n'aide personne à savoir lesquels reprendre.
 
 ## 8. Isolation
 
-| Table                                    | Nature        | Règle                                            |
-| ---------------------------------------- | ------------- | ------------------------------------------------ |
-| `recurring_tickets`                       | configuration | `tick_config_visible(path, false)`               |
-| `recurrence_runs`                         | donnée        | portée par sa récurrence                         |
-| `unavailabilities`                        | donnée        | `tick_in_scope(path)`, descendante               |
-| `dashboards`                              | configuration | `tick_config_visible(path, is_recursive)`        |
-| `dashboard_widgets`                       | —             | visibilité de son tableau, résolue par jointure  |
+| Table               | Nature        | Règle                                           |
+| ------------------- | ------------- | ----------------------------------------------- |
+| `recurring_tickets` | configuration | `tick_config_visible(path, false)`              |
+| `recurrence_runs`   | donnée        | portée par sa récurrence                        |
+| `unavailabilities`  | donnée        | `tick_in_scope(path)`, descendante              |
+| `dashboards`        | configuration | `tick_config_visible(path, is_recursive)`       |
+| `dashboard_widgets` | —             | visibilité de son tableau, résolue par jointure |
 
 La récurrence n'a pas de drapeau récursif : elle produit des tickets dans une entité précise, et les
 faire naître ailleurs que là où la règle est déclarée n'aurait pas de sens.

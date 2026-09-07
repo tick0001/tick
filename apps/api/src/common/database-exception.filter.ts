@@ -37,7 +37,11 @@ interface ErreurPostgres {
 function erreurPostgres(exception: unknown): ErreurPostgres | undefined {
   let courant: unknown = exception;
 
-  for (let profondeur = 0; profondeur < 5 && courant !== null && courant !== undefined; profondeur += 1) {
+  for (
+    let profondeur = 0;
+    profondeur < 5 && courant !== null && courant !== undefined;
+    profondeur += 1
+  ) {
     const candidat = courant as ErreurPostgres & { cause?: unknown };
 
     if (typeof candidat.code === 'string') return candidat;
@@ -56,7 +60,7 @@ function erreurPostgres(exception: unknown): ErreurPostgres | undefined {
  * contient la valeur saisie, qu'on ne renvoie pas.
  */
 const MESSAGES: Record<string, string> = {
-  users_username_key: "Cet identifiant est deja utilise par un autre compte.",
+  users_username_key: 'Cet identifiant est deja utilise par un autre compte.',
   users_email_key: 'Cette adresse est deja utilisee par un autre compte.',
   entities_path_key: 'Une entite porte deja ce chemin.',
   plugins_pkey: 'Ce plugin est deja installe.',

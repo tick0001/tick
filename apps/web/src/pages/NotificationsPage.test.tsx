@@ -41,9 +41,7 @@ const MODELES: NotificationTemplate[] = [
     entityName: 'Racine',
     isRecursive: true,
     targets: [{ target: 'requester', address: null }],
-    translations: [
-      { locale: 'fr', subject: 'Votre demande', bodyText: 'Bonjour', bodyHtml: null },
-    ],
+    translations: [{ locale: 'fr', subject: 'Votre demande', bodyText: 'Bonjour', bodyHtml: null }],
   },
   {
     id: 4,

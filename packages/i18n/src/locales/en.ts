@@ -804,7 +804,8 @@ export const en: Traductions = {
     plugins: 'Extensions',
     annuaires: {
       titre: 'Directories',
-      description: 'LDAP and Active Directory: delegated authentication and account synchronisation.',
+      description:
+        'LDAP and Active Directory: delegated authentication and account synchronisation.',
       aucun: 'No directory configured. Authentication stays local.',
       nouveau: 'New directory',
       nom: 'Name',

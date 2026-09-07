@@ -43,7 +43,10 @@ describe('withRequestContext', () => {
   };
 
   /** Base factice : la transaction se contente d'exécuter le travail demandé. */
-  function baseFactice(): { db: Database; execute: Mock<(requete: unknown) => Promise<undefined>> } {
+  function baseFactice(): {
+    db: Database;
+    execute: Mock<(requete: unknown) => Promise<undefined>>;
+  } {
     const execute = vi.fn<(requete: unknown) => Promise<undefined>>().mockResolvedValue(undefined);
     const tx = { execute } as unknown as Transaction;
     const db = {
@@ -161,10 +164,8 @@ describe('withRequestContext', () => {
   it('accepte un perimetre vide', async () => {
     const { db, execute } = baseFactice();
 
-    await withRequestContext(
-      db,
-      { ...contexte, scope: { subtreePaths: [], exactPaths: [] } },
-      () => Promise.resolve(undefined),
+    await withRequestContext(db, { ...contexte, scope: { subtreePaths: [], exactPaths: [] } }, () =>
+      Promise.resolve(undefined),
     );
 
     expect(JSON.stringify(execute.mock.calls[0]?.[0])).toContain('{}');

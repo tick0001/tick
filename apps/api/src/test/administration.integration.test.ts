@@ -269,11 +269,7 @@ describe('Administration', () => {
       expect(corrigee[0]?.isRecursive).toBe(false);
 
       const apresRetrait = await commeAdmin(() =>
-        usersService.revoke(
-          cree.id,
-          fixture.entityIds['siteA'] as number,
-          ids.profilCree,
-        ),
+        usersService.revoke(cree.id, fixture.entityIds['siteA'] as number, ids.profilCree),
       );
 
       expect(apresRetrait).toEqual([]);
@@ -293,11 +289,7 @@ describe('Administration', () => {
     it('refuse de retirer sa propre habilitation active', async () => {
       await expect(
         commeAdmin(() =>
-          usersService.revoke(
-            ids.admin,
-            fixture.entityIds['racine'] as number,
-            ids.profilAdmin,
-          ),
+          usersService.revoke(ids.admin, fixture.entityIds['racine'] as number, ids.profilAdmin),
         ),
       ).rejects.toThrow(/propre habilitation/i);
     });
@@ -376,9 +368,7 @@ describe('Administration', () => {
       expect(avecMembre.members).toHaveLength(1);
       expect(avecMembre.members[0]?.isManager).toBe(true);
 
-      const sansMembre = await commeAdmin(() =>
-        groupsService.removeMember(cree.id, ids.admin),
-      );
+      const sansMembre = await commeAdmin(() => groupsService.removeMember(cree.id, ids.admin));
 
       expect(sansMembre.members).toEqual([]);
 

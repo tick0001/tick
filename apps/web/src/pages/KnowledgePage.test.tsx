@@ -145,9 +145,7 @@ describe('KnowledgePage', () => {
 
   it('bascule un favori', async () => {
     const utilisateur = userEvent.setup();
-    const basculer = vi
-      .spyOn(api, 'toggleKbFavorite')
-      .mockResolvedValue({ isFavorite: false });
+    const basculer = vi.spyOn(api, 'toggleKbFavorite').mockResolvedValue({ isFavorite: false });
 
     monterPage(<KnowledgePage />, { droits: DROITS });
 

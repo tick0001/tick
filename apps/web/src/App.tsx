@@ -152,9 +152,9 @@ function Application() {
           {/* La configuration est une zone : la barre laterale devient la sienne,
             et `/settings` seul ouvre le premier ecran. */}
           <Route
-          path="/settings"
-          element={<Navigate to={premierReglageAccessible(session.data) ?? '/'} replace />}
-        />
+            path="/settings"
+            element={<Navigate to={premierReglageAccessible(session.data) ?? '/'} replace />}
+          />
           <Route path="/settings/service-levels" element={<ServiceLevelsPage />} />
           <Route path="/settings/rules" element={<RulesPage />} />
           <Route path="/settings/forms" element={<FormsPage />} />

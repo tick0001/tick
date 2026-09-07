@@ -29,7 +29,7 @@ const GABARITS: TicketTemplate[] = [
     predefined: { type: 'incident', urgency: 4 },
     mandatory: ['content'],
     hidden: ['impact'],
-    },
+  },
   {
     id: 2,
     name: 'Demande simple',

@@ -125,7 +125,9 @@ describe('CategoriesPage', () => {
     await utilisateur.click(screen.getAllByRole('button', { name: 'Modifier' })[0]!);
 
     const parent = await screen.findByLabelText('Rattachée à');
-    const options = within(parent).getAllByRole('option').map((option) => option.textContent);
+    const options = within(parent)
+      .getAllByRole('option')
+      .map((option) => option.textContent);
 
     // S'y rattacher, ou se rattacher a sa fille, fermerait l'arbre sur
     // lui-meme : le declencheur qui recalcule les chemins tournerait sans fin.

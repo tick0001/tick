@@ -55,13 +55,16 @@ describe('HTTP — administration', () => {
     let cree: number;
 
     it('crée un compte', async () => {
-      const reponse = await harnais.admin().post('/api/admin/users').send({
-        username: PREFIXE + 'compte',
-        firstName: 'Test',
-        lastName: 'HTTP',
-        email: 'test-http@exemple.fr',
-        password: 'motdepasse-long',
-      });
+      const reponse = await harnais
+        .admin()
+        .post('/api/admin/users')
+        .send({
+          username: PREFIXE + 'compte',
+          firstName: 'Test',
+          lastName: 'HTTP',
+          email: 'test-http@exemple.fr',
+          password: 'motdepasse-long',
+        });
 
       expect(reponse.status).toBe(201);
       expect(reponse.body).toMatchObject({ username: PREFIXE + 'compte', isActive: true });
@@ -70,10 +73,13 @@ describe('HTTP — administration', () => {
     });
 
     it('refuse un identifiant deja pris', async () => {
-      const reponse = await harnais.admin().post('/api/admin/users').send({
-        username: PREFIXE + 'compte',
-        password: 'motdepasse-long',
-      });
+      const reponse = await harnais
+        .admin()
+        .post('/api/admin/users')
+        .send({
+          username: PREFIXE + 'compte',
+          password: 'motdepasse-long',
+        });
 
       // Une saisie en double est une erreur d'utilisateur, pas une panne : sans
       // le filtre de contraintes, PostgreSQL remonterait une 500 et l'ecran
@@ -308,12 +314,15 @@ describe('HTTP — administration', () => {
     let annuaire: number;
 
     it('crée un annuaire', async () => {
-      const reponse = await harnais.admin().post('/api/admin/directories').send({
-        name: PREFIXE + 'annuaire',
-        host: 'ldap.invalide.test',
-        baseDn: 'dc=exemple,dc=fr',
-        bindPassword: 'secret-de-liaison',
-      });
+      const reponse = await harnais
+        .admin()
+        .post('/api/admin/directories')
+        .send({
+          name: PREFIXE + 'annuaire',
+          host: 'ldap.invalide.test',
+          baseDn: 'dc=exemple,dc=fr',
+          bindPassword: 'secret-de-liaison',
+        });
 
       expect(reponse.status).toBe(201);
       annuaire = reponse.body.id;
@@ -382,7 +391,9 @@ describe('HTTP — administration', () => {
         .put('/api/admin/settings/' + racine)
         .send({ autoCloseDelayDays: 15 });
 
-      const lit = (corps: { settings: { key: string; value: unknown; isOwn: boolean }[] }): {
+      const lit = (corps: {
+        settings: { key: string; value: unknown; isOwn: boolean }[];
+      }): {
         value: unknown;
         isOwn: boolean;
       } => {
@@ -461,7 +472,10 @@ describe('HTTP — administration', () => {
     });
 
     it('refuse un nom vide', async () => {
-      const reponse = await harnais.admin().patch('/api/entities/' + entite).send({ name: '' });
+      const reponse = await harnais
+        .admin()
+        .patch('/api/entities/' + entite)
+        .send({ name: '' });
 
       expect(reponse.status).toBe(400);
     });

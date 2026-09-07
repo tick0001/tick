@@ -1,13 +1,5 @@
 import { relations } from 'drizzle-orm';
-import {
-  bigint,
-  index,
-  integer,
-  jsonb,
-  pgTable,
-  text,
-  timestamp,
-} from 'drizzle-orm/pg-core';
+import { bigint, index, integer, jsonb, pgTable, text, timestamp } from 'drizzle-orm/pg-core';
 import { ltree } from '../types.js';
 import { entities } from './entities.js';
 import { itilStatusEnum, validationStateEnum } from './itil-enums.js';

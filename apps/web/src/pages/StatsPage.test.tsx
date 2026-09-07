@@ -1,9 +1,4 @@
-import type {
-  Dashboard,
-  StatsReport,
-  StatsTrendPoint,
-  WidgetCatalogEntry,
-} from '@tick/contracts';
+import type { Dashboard, StatsReport, StatsTrendPoint, WidgetCatalogEntry } from '@tick/contracts';
 import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -63,9 +58,7 @@ const TABLEAUX: Dashboard[] = [
     entityId: 1,
     entityName: 'Racine',
     owner: 'Alice Martin',
-    widgets: [
-      { id: 1, kind: 'ticket-count', title: 'Ouverts', position: 0, width: 4, config: {} },
-    ],
+    widgets: [{ id: 1, kind: 'ticket-count', title: 'Ouverts', position: 0, width: 4, config: {} }],
   },
 ];
 

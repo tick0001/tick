@@ -30,9 +30,19 @@ Côté code, un seul descripteur porte la différence :
 
 ```ts
 export const ITIL_KINDS: Record<ItilType, ItilDescriptor> = {
-  ticket:  { kind: 'ticket',  table: 'tickets',  right: 'ticket',  extra: [] },
-  problem: { kind: 'problem', table: 'problems', right: 'problem', extra: ['symptoms', 'causes', 'impacts'] },
-  change:  { kind: 'change',  table: 'changes',  right: 'change',  extra: ['deploymentPlan', 'rollbackPlan', 'validationPlan', 'checklist'] },
+  ticket: { kind: 'ticket', table: 'tickets', right: 'ticket', extra: [] },
+  problem: {
+    kind: 'problem',
+    table: 'problems',
+    right: 'problem',
+    extra: ['symptoms', 'causes', 'impacts'],
+  },
+  change: {
+    kind: 'change',
+    table: 'changes',
+    right: 'change',
+    extra: ['deploymentPlan', 'rollbackPlan', 'validationPlan', 'checklist'],
+  },
 };
 ```
 
@@ -102,13 +112,13 @@ perdu.
 
 Ce que l'objet promu reprend :
 
-| Reporté                            | Non reporté                                       |
-| ---------------------------------- | ------------------------------------------------- |
-| Titre (modifiable à la promotion)  | Statut — le nouvel objet démarre à `new`          |
-| Description                        | Suivis, tâches, solutions de l'original           |
-| Urgence, impact, catégorie         | Priorité — recalculée par la matrice de l'entité  |
-| Demandeurs et observateurs         | **Affectés** — voir ci-dessous                    |
-| Entité de l'objet d'origine        |                                                   |
+| Reporté                           | Non reporté                                      |
+| --------------------------------- | ------------------------------------------------ |
+| Titre (modifiable à la promotion) | Statut — le nouvel objet démarre à `new`         |
+| Description                       | Suivis, tâches, solutions de l'original          |
+| Urgence, impact, catégorie        | Priorité — recalculée par la matrice de l'entité |
+| Demandeurs et observateurs        | **Affectés** — voir ci-dessous                   |
+| Entité de l'objet d'origine       |                                                  |
 
 Les **affectés ne suivent pas** : qui traitera le problème est une décision de l'encadrement, pas
 une conséquence mécanique du fait qu'on a traité l'incident.

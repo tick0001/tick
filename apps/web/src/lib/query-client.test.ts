@@ -37,9 +37,9 @@ describe('politique de réessai', () => {
     const client = creerQueryClient();
     const requete = vi.fn().mockRejectedValue(new ApiError(status, 'Refus.'));
 
-    await client.fetchQuery({ queryKey: [`code-${String(status)}`], queryFn: requete }).catch(
-      () => undefined,
-    );
+    await client
+      .fetchQuery({ queryKey: [`code-${String(status)}`], queryFn: requete })
+      .catch(() => undefined);
 
     expect(requete).toHaveBeenCalledTimes(1);
   });
@@ -195,9 +195,9 @@ describe('perte de session', () => {
     const client = creerQueryClient();
     const requete = vi.fn().mockRejectedValue(new ApiError(401, 'Authentification requise.'));
 
-    await client.fetchQuery({ queryKey: [...CLE_SESSION], queryFn: requete }).catch(
-      () => undefined,
-    );
+    await client
+      .fetchQuery({ queryKey: [...CLE_SESSION], queryFn: requete })
+      .catch(() => undefined);
 
     // Sans cette exception, chaque echec de session en declencherait un autre.
     expect(requete).toHaveBeenCalledTimes(1);

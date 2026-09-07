@@ -271,8 +271,7 @@ export const api = {
 
   // --- Administration -------------------------------------------------------
 
-  rightCatalogue: (): Promise<RightObject[]> =>
-    request('/admin/rights', rightObjectSchema.array()),
+  rightCatalogue: (): Promise<RightObject[]> => request('/admin/rights', rightObjectSchema.array()),
 
   users: (filtre: UserFilter): Promise<UserSummary[]> =>
     request(`/admin/users${toUserQuery(filtre)}`, userSummarySchema.array()),

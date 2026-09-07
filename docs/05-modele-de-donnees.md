@@ -146,13 +146,13 @@ jamais par un identifiant : voir [09](09-self-service.md).
 
 ## Pilotage
 
-| Table               | Rôle                                                             |
-| ------------------- | ---------------------------------------------------------------- |
-| `recurring_tickets` | Gabarit plus calendrier de génération                            |
-| `recurrence_runs`   | Trace des occurrences produites : index unique anti-rejeu        |
-| `unavailabilities`  | Absences d'un technicien, superposées au planning                |
-| `dashboards`        | Tableaux de bord, personnels ou partagés                         |
-| `dashboard_widgets` | Composition ordonnée, configuration en JSON                      |
+| Table               | Rôle                                                      |
+| ------------------- | --------------------------------------------------------- |
+| `recurring_tickets` | Gabarit plus calendrier de génération                     |
+| `recurrence_runs`   | Trace des occurrences produites : index unique anti-rejeu |
+| `unavailabilities`  | Absences d'un technicien, superposées au planning         |
+| `dashboards`        | Tableaux de bord, personnels ou partagés                  |
+| `dashboard_widgets` | Composition ordonnée, configuration en JSON               |
 
 Le planning ne crée pas de table : `itil_tasks` porte ses bornes et son technicien depuis le premier
 jour. Les indisponibilités vivent à côté parce qu'une absence n'a ni objet porteur ni durée facturée.
