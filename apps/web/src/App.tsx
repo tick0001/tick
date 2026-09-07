@@ -146,7 +146,7 @@ function Application() {
           <Route path="/planning" element={<PlanningPage />} />
           <Route path="/stats" element={<StatsPage />} />
           <Route path="/search" element={<SearchPage />} />
-          <Route path="/knowledge" element={<KnowledgePage session={session.data} />} />
+          <Route path="/knowledge" element={<KnowledgePage />} />
           <Route path="/catalogue" element={<CataloguePage />} />
 
           {/* La configuration est une zone : la barre laterale devient la sienne,

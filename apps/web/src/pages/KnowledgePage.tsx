@@ -1,10 +1,10 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import type { KbArticle, SessionContext, UpsertKbArticle } from '@tick/contracts';
+import type { KbArticle, UpsertKbArticle } from '@tick/contracts';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ApiError, api } from '@/lib/api';
 import { cn } from '@/lib/utils';
-import { peut } from '@/lib/droits';
+import { usePeut } from '@/lib/session';
 import {
   PageHeader,
   FilterBar,
@@ -45,7 +45,7 @@ function versFormulaire(article: KbArticle): UpsertKbArticle {
  * souvent juste après avoir été relu, et faire naviguer entre trois pages pour
  * cela décourage la correction — donc laisse vivre les articles faux.
  */
-export function KnowledgePage({ session }: { session: SessionContext }) {
+export function KnowledgePage() {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
 
@@ -132,7 +132,7 @@ export function KnowledgePage({ session }: { session: SessionContext }) {
    * Un bouton qui ne peut qu'echouer est pire qu'un bouton absent : il promet
    * une action, la refuse, et laisse croire a une panne.
    */
-  const peutEcrire = peut(session, 'kb', 'update');
+  const peutEcrire = usePeut('kb', 'update');
 
   const maj = (patch: Partial<UpsertKbArticle>): void => {
     if (!edite) return;
