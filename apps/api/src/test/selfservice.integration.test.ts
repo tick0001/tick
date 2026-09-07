@@ -12,6 +12,7 @@ import { RuleEngineService } from '../rules/rule-engine.service.js';
 import { RulesService } from '../rules/rules.service.js';
 import { SlaService } from '../slm/sla.service.js';
 import { SlmService } from '../slm/slm.service.js';
+import { ActorsService } from '../tickets/actors.service.js';
 import { HistoryService } from '../tickets/history.service.js';
 import { PriorityService } from '../tickets/priority.service.js';
 import { TicketScopeService } from '../tickets/ticket-scope.service.js';
@@ -82,18 +83,21 @@ describe('Self-service', () => {
     const entites = new EntitiesService(db, hooks);
     const rights = new RightsService(db);
 
+    const historique = new HistoryService();
+
     knowledge = new KnowledgeService(db);
     formsService = new FormsService(
       db,
       new TicketsService(
         db,
         hooks,
-        new HistoryService(),
+        historique,
         new PriorityService(entites),
         new TicketScopeService(db, rights),
         new TicketTemplatesService(db, entites),
         new RulesService(db, new RuleCatalogService(), new RuleEngineService()),
         new SlaService(db, new SlmService(db)),
+        new ActorsService(db, historique),
       ),
     );
 

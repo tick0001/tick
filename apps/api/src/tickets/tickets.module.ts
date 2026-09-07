@@ -4,6 +4,7 @@ import { EntitiesModule } from '../entities/entities.module.js';
 import { PluginsModule } from '../plugins/plugins.module.js';
 import { RulesCoreModule } from '../rules/rules-core.module.js';
 import { SlmModule } from '../slm/slm.module.js';
+import { ActorsService } from './actors.service.js';
 import { BulkService } from './bulk.service.js';
 import { HistoryService } from './history.service.js';
 import { PriorityService } from './priority.service.js';
@@ -19,6 +20,7 @@ import { TimelineService } from './timeline.service.js';
   controllers: [TicketsController, TicketTemplatesController],
   providers: [
     TicketsService,
+    ActorsService,
     BulkService,
     TimelineService,
     TicketScopeService,
@@ -28,6 +30,7 @@ import { TimelineService } from './timeline.service.js';
   ],
   exports: [
     TicketsService,
+    ActorsService,
     TimelineService,
     TicketScopeService,
     TicketTemplatesService,

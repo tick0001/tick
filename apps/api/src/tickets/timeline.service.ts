@@ -18,7 +18,7 @@ import { emitEvent } from '../plugins/event-buffer.js';
 import { HookBus } from '../plugins/hook-bus.service.js';
 import { HistoryService } from './history.service.js';
 import { TicketScopeService } from './ticket-scope.service.js';
-import { toIso, toIsoRequired, toText } from './ticket-sql.js';
+import { nomAffiche, toIso, toIsoRequired, toText } from '../common/sql.js';
 
 interface TicketRef {
   id: number;
@@ -180,10 +180,7 @@ export class TimelineService {
       const resultat = await tx.execute<
         { id: number; label: string } & Record<string, unknown>
       >(sql`
-        SELECT id, coalesce(
-          nullif(trim(coalesce(first_name, '') || ' ' || coalesce(last_name, '')), ''),
-          username::text
-        ) AS label
+        SELECT id, ${nomAffiche(null)} AS label
         FROM users WHERE id IN (${sql.join(
           [...identifiants].map((id) => sql`${id}`),
           sql`, `,

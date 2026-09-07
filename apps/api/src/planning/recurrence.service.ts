@@ -16,7 +16,7 @@ import { loadEnv } from '../config/env.js';
 import { DatabaseService } from '../database/database.service.js';
 import { emitEvent } from '../plugins/event-buffer.js';
 import { TicketsService } from '../tickets/tickets.service.js';
-import { toIso, toIsoRequired, toText } from '../tickets/ticket-sql.js';
+import { toIso, toIsoRequired, toText } from '../common/sql.js';
 import { estEchue, firstOccurrence, nextOccurrence, type RecurrenceRule } from './recurrence.js';
 
 export const RECURRENCE_QUEUE = 'tick.recurrence';

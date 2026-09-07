@@ -14,6 +14,7 @@ import { SlmService } from '../slm/slm.service.js';
 import { DashboardsService } from '../stats/dashboards.service.js';
 import { StatsService } from '../stats/stats.service.js';
 import { WidgetRegistry } from '../stats/widget-registry.service.js';
+import { ActorsService } from '../tickets/actors.service.js';
 import { BulkService } from '../tickets/bulk.service.js';
 import { HistoryService } from '../tickets/history.service.js';
 import { PriorityService } from '../tickets/priority.service.js';
@@ -100,6 +101,7 @@ describe('Pilotage', () => {
       new TicketTemplatesService(db, entites),
       new RulesService(db, new RuleCatalogService(), new RuleEngineService()),
       new SlaService(db, new SlmService(db)),
+      new ActorsService(db, history),
     );
     timeline = new TimelineService(db, hooks, history, scopes);
     planning = new PlanningService(db, scopes);

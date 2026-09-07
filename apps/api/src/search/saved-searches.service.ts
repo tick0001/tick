@@ -4,6 +4,7 @@ import { savedSearches, sql } from '@tick/db';
 import { requireContext } from '../common/request-context.js';
 import { DatabaseService } from '../database/database.service.js';
 import { SearchCompiler } from './search-compiler.service.js';
+import { nomAffiche } from '../common/sql.js';
 
 interface Row extends Record<string, unknown> {
   id: number;
@@ -38,10 +39,7 @@ export class SavedSearchesService {
       const resultat = await tx.execute<Row>(sql`
         SELECT r.id, r.name, r.target, r.is_public AS "isPublic", r.is_pinned AS "isPinned",
                r.user_id AS "userId", r.criteria,
-               coalesce(
-                 nullif(trim(coalesce(u.first_name, '') || ' ' || coalesce(u.last_name, '')), ''),
-                 u.username::text
-               ) AS owner
+               ${nomAffiche()} AS owner
           FROM saved_searches r
           LEFT JOIN users u ON u.id = r.user_id
          WHERE r.target = ${target}

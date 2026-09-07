@@ -4,7 +4,7 @@ import { groupMembers, groups, sql } from '@tick/db';
 import { entityNames } from '../common/entity-names.js';
 import { requireContext } from '../common/request-context.js';
 import { DatabaseService } from '../database/database.service.js';
-import { toText } from '../tickets/ticket-sql.js';
+import { nomAffiche, toText } from '../common/sql.js';
 
 /**
  * Groupes et appartenances.
@@ -66,10 +66,7 @@ export class GroupsService {
       const resultat = await tx.execute<Record<string, unknown>>(sql`
         SELECT m.group_id AS "groupId", m.user_id AS "userId",
                m.is_manager AS "isManager", m.is_dynamic AS "isDynamic",
-               coalesce(
-                 nullif(trim(coalesce(u.first_name, '') || ' ' || coalesce(u.last_name, '')), ''),
-                 u.username::text
-               ) AS "displayName"
+               ${nomAffiche()} AS "displayName"
           FROM group_members m
           JOIN users u ON u.id = m.user_id
          WHERE m.group_id IN (${sql.join(

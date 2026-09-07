@@ -4,7 +4,7 @@ import { profileRights, profiles, sql } from '@tick/db';
 import { requireContext } from '../common/request-context.js';
 import { DatabaseService } from '../database/database.service.js';
 import { RightsService } from '../auth/rights.service.js';
-import { toText } from '../tickets/ticket-sql.js';
+import { toText } from '../common/sql.js';
 import { estConnu } from './right-catalogue.js';
 
 /**

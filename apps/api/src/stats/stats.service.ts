@@ -10,7 +10,7 @@ import type {
 import { sql, type SQL } from '@tick/db';
 import { DatabaseService } from '../database/database.service.js';
 import { TicketScopeService } from '../tickets/ticket-scope.service.js';
-import { toText } from '../tickets/ticket-sql.js';
+import { nomAffiche, toText } from '../common/sql.js';
 
 /**
  * Dimensions d'analyse, vers leur clé et leur libellé SQL.
@@ -33,11 +33,9 @@ const DIMENSIONS: Record<StatDimension, { key: SQL; label: SQL; join: SQL }> = {
   },
   technician: {
     key: sql`coalesce(a.actor_id::text, '')`,
-    label: sql`coalesce(
-      nullif(trim(coalesce(u.first_name, '') || ' ' || coalesce(u.last_name, '')), ''),
-      u.username::text,
-      '(non attribue)'
-    )`,
+    // Le repli couvre les tickets sans technicien : un axe de rapport ne peut
+    // pas avoir de libelle vide, la barre deviendrait anonyme.
+    label: sql`coalesce(${nomAffiche()}, '(non attribue)')`,
     join: sql`
       LEFT JOIN itil_actors a ON a.itil_type = 'ticket' AND a.itil_id = t.id
                              AND a.role = 'assigned' AND a.actor_type = 'user'

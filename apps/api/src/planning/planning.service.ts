@@ -4,7 +4,7 @@ import { sql, unavailabilities, type SQL } from '@tick/db';
 import { requireContext } from '../common/request-context.js';
 import { DatabaseService } from '../database/database.service.js';
 import { TicketScopeService } from '../tickets/ticket-scope.service.js';
-import { toIsoRequired, toText } from '../tickets/ticket-sql.js';
+import { nomAffiche, toIsoRequired, toText } from '../common/sql.js';
 
 /**
  * Fenêtre maximale consultable, en jours.
@@ -80,10 +80,7 @@ export class PlanningService {
                  k.begin_at AS "beginAt", k.end_at AS "endAt",
                  k.content AS title,
                  k.technician_id AS "userId",
-                 coalesce(
-                   nullif(trim(coalesce(u.first_name, '') || ' ' || coalesce(u.last_name, '')), ''),
-                   u.username::text
-                 ) AS "userName",
+                 ${nomAffiche()} AS "userName",
                  k.group_id AS "groupId", g.name AS "groupName",
                  k.itil_type::text AS "itilType", k.itil_id AS "itilId",
                  k.state::text AS state
@@ -100,10 +97,7 @@ export class PlanningService {
                  i.begin_at, i.end_at,
                  i.reason,
                  i.user_id,
-                 coalesce(
-                   nullif(trim(coalesce(u.first_name, '') || ' ' || coalesce(u.last_name, '')), ''),
-                   u.username::text
-                 ),
+                 ${nomAffiche()},
                  NULL, NULL,
                  NULL, NULL,
                  NULL

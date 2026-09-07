@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { logs, type Transaction } from '@tick/db';
 import { currentContext } from '../common/request-context.js';
-import { toText } from './ticket-sql.js';
+import { toText } from '../common/sql.js';
 
 export interface FieldChange {
   field: string;

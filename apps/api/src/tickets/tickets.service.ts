@@ -11,29 +11,21 @@ import type {
   TicketSummary,
   UpdateTicket,
 } from '@tick/contracts';
-import { itilActors, sql, tickets, type SQL, type Transaction } from '@tick/db';
+import { sql, tickets, type SQL } from '@tick/db';
 import { requireContext } from '../common/request-context.js';
 import { DatabaseService } from '../database/database.service.js';
 import { emitEvent } from '../plugins/event-buffer.js';
 import { HookBus } from '../plugins/hook-bus.service.js';
 import { RulesService } from '../rules/rules.service.js';
 import { SlaService } from '../slm/sla.service.js';
+import { ActorsService } from './actors.service.js';
 import { HistoryService } from './history.service.js';
 import { PriorityService } from './priority.service.js';
 import { applyRuleOutput, borne, choix, reference, texte } from './ticket-rules.js';
 import { TicketScopeService } from './ticket-scope.service.js';
 import { TicketTemplatesService } from './ticket-templates.service.js';
-import {
-  actorLabels,
-  decodeCursor,
-  encodeCursor,
-  followupCount,
-  SORTABLE,
-  taskCount,
-  toIso,
-  toIsoRequired,
-  toText,
-} from './ticket-sql.js';
+import { actorLabels, decodeCursor, encodeCursor, followupCount, SORTABLE, taskCount } from './ticket-sql.js';
+import { toIso, toIsoRequired, toText } from '../common/sql.js';
 
 /**
  * Transitions autorisées.
@@ -105,6 +97,7 @@ export class TicketsService {
     private readonly templates: TicketTemplatesService,
     private readonly rules: RulesService,
     private readonly sla: SlaService,
+    private readonly actors: ActorsService,
   ) {}
 
   /**
@@ -224,7 +217,7 @@ export class TicketsService {
             ...decides,
           ];
 
-      await this.writeActors(tx, ticket.id, acteurs);
+      await this.actors.write(tx, 'ticket', ticket.id, acteurs);
       await this.history.recordAction(
         tx,
         { type: 'ticket', id: ticket.id, entityId: propose.entityId },
@@ -608,7 +601,7 @@ export class TicketsService {
         .set(patch)
         .where(sql`${tickets.id} = ${id}`);
 
-      if (decides.length > 0) await this.writeActors(tx, id, decides);
+      if (decides.length > 0) await this.actors.write(tx, 'ticket', id, decides);
 
       return this.history.recordChanges(
         tx,
@@ -780,24 +773,11 @@ export class TicketsService {
     const condition = await this.scopes.conditionFor('ticket', 'update');
     const avant = await this.rawById(id, condition);
 
-    if (!acteurs.some((acteur) => acteur.role === 'requester')) {
-      throw new BadRequestException('Un ticket doit conserver au moins un demandeur.');
-    }
+    this.actors.assertDemandeur(acteurs, 'ticket');
 
-    await this.db.asUser(async (tx) => {
-      await tx
-        .delete(itilActors)
-        .where(sql`${itilActors.itilType} = 'ticket' AND ${itilActors.itilId} = ${id}`);
-      await this.writeActors(tx, id, acteurs);
-      await this.history.recordAction(
-        tx,
-        { type: 'ticket', id, entityId: avant.entityId },
-        'acteurs',
-        acteurs
-          .map((acteur) => `${acteur.role}:${acteur.actorType}#${String(acteur.actorId)}`)
-          .join(', '),
-      );
-    });
+    await this.db.asUser((tx) =>
+      this.actors.replace(tx, { type: 'ticket', id, entityId: avant.entityId }, acteurs),
+    );
 
     emitEvent('ticket.updated', { id, entityId: avant.entityId, changedFields: ['actors'] });
 
@@ -805,54 +785,7 @@ export class TicketsService {
   }
 
   async actorsOf(id: number): Promise<TicketActor[]> {
-    return this.db.asUser(async (tx) => {
-      const resultat = await tx.execute<TicketActor & Record<string, unknown>>(sql`
-        SELECT
-          acteur.role, acteur.actor_type AS "actorType", acteur.actor_id AS "actorId",
-          acteur.alternative_email AS "alternativeEmail",
-          coalesce(
-            CASE acteur.actor_type
-              WHEN 'user' THEN coalesce(
-                nullif(trim(coalesce(u.first_name, '') || ' ' || coalesce(u.last_name, '')), ''),
-                u.username::text
-              )
-              WHEN 'group' THEN g.name
-              WHEN 'supplier' THEN f.name
-            END,
-            '(inconnu)'
-          ) AS "label"
-        FROM itil_actors acteur
-        LEFT JOIN users u ON acteur.actor_type = 'user' AND u.id = acteur.actor_id
-        LEFT JOIN groups g ON acteur.actor_type = 'group' AND g.id = acteur.actor_id
-        LEFT JOIN suppliers f ON acteur.actor_type = 'supplier' AND f.id = acteur.actor_id
-        WHERE acteur.itil_type = 'ticket' AND acteur.itil_id = ${id}
-        ORDER BY acteur.role, "label"
-      `);
-
-      return resultat.rows;
-    });
-  }
-
-  private async writeActors(
-    tx: Transaction,
-    ticketId: number,
-    acteurs: readonly TicketActorInput[],
-  ): Promise<void> {
-    if (acteurs.length === 0) return;
-
-    await tx
-      .insert(itilActors)
-      .values(
-        acteurs.map((acteur) => ({
-          itilType: 'ticket' as const,
-          itilId: ticketId,
-          role: acteur.role,
-          actorType: acteur.actorType,
-          actorId: acteur.actorId,
-          alternativeEmail: acteur.alternativeEmail ?? null,
-        })),
-      )
-      .onConflictDoNothing();
+    return this.actors.listOf('ticket', id);
   }
 
   /** Ligne brute du ticket, servant de point de comparaison pour l'historique. */

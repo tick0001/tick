@@ -12,6 +12,7 @@ import { RuleEngineService } from '../rules/rule-engine.service.js';
 import { RulesService } from '../rules/rules.service.js';
 import { SlaService } from '../slm/sla.service.js';
 import { SlmService } from '../slm/slm.service.js';
+import { ActorsService } from '../tickets/actors.service.js';
 import { HistoryService } from '../tickets/history.service.js';
 import { PriorityService } from '../tickets/priority.service.js';
 import { TicketScopeService } from '../tickets/ticket-scope.service.js';
@@ -87,7 +88,9 @@ describe('Objets ITIL', () => {
     const priority = new PriorityService(entites);
     const scopes = new TicketScopeService(db, rights);
 
-    objets = new ItilObjectsService(db, history, priority, scopes);
+    const acteurs = new ActorsService(db, history);
+
+    objets = new ItilObjectsService(db, history, priority, scopes, acteurs);
     liens = new LinksService(db, history, objets, scopes);
     timeline = new TimelineService(db, hooks, history, scopes);
     tickets = new TicketsService(
@@ -99,6 +102,7 @@ describe('Objets ITIL', () => {
       new TicketTemplatesService(db, entites),
       new RulesService(db, new RuleCatalogService(), new RuleEngineService()),
       new SlaService(db, new SlmService(db)),
+      acteurs,
     );
 
     const creerProfil = async (

@@ -11,13 +11,7 @@ import { authorizations, sql, users, type SQL } from '@tick/db';
 import { PasswordService } from '../auth/password.service.js';
 import { requireContext } from '../common/request-context.js';
 import { DatabaseService } from '../database/database.service.js';
-import { toIso, toText } from '../tickets/ticket-sql.js';
-
-/** Nom affiché : prénom et nom si connus, identifiant sinon. */
-const NOM_AFFICHE = sql`coalesce(
-  nullif(trim(coalesce(u.first_name, '') || ' ' || coalesce(u.last_name, '')), ''),
-  u.username::text
-)`;
+import { nomAffiche, toIso, toText } from '../common/sql.js';
 
 /**
  * Comptes et habilitations.
@@ -47,12 +41,12 @@ export class UsersService {
 
       conditions.push(sql`(u.username::text ILIKE ${motif}
                            OR coalesce(u.email::text, '') ILIKE ${motif}
-                           OR ${NOM_AFFICHE} ILIKE ${motif})`);
+                           OR ${nomAffiche()} ILIKE ${motif})`);
     }
 
     const lignes = await this.db.asUser(async (tx) => {
       const resultat = await tx.execute<Record<string, unknown>>(sql`
-        SELECT u.id, u.username::text AS username, ${NOM_AFFICHE} AS "displayName",
+        SELECT u.id, u.username::text AS username, ${nomAffiche()} AS "displayName",
                u.email::text AS email, u.auth_source::text AS "authSource",
                u.is_active AS "isActive", u.locale, u.last_login_at AS "lastLoginAt",
                (SELECT count(*) FROM authorizations a WHERE a.user_id = u.id)
@@ -93,7 +87,7 @@ export class UsersService {
   async findById(id: number): Promise<UserDetail> {
     const [ligne] = await this.db.asUser(async (tx) => {
       const resultat = await tx.execute<Record<string, unknown>>(sql`
-        SELECT u.id, u.username::text AS username, ${NOM_AFFICHE} AS "displayName",
+        SELECT u.id, u.username::text AS username, ${nomAffiche()} AS "displayName",
                u.email::text AS email, u.auth_source::text AS "authSource",
                u.is_active AS "isActive", u.locale, u.last_login_at AS "lastLoginAt",
                u.first_name AS "firstName", u.last_name AS "lastName",

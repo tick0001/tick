@@ -14,7 +14,7 @@ import { DatabaseService } from '../database/database.service.js';
 import { emitEvent } from '../plugins/event-buffer.js';
 import { HistoryService } from '../tickets/history.service.js';
 import { TicketScopeService } from '../tickets/ticket-scope.service.js';
-import { toText } from '../tickets/ticket-sql.js';
+import { toText } from '../common/sql.js';
 import { ITIL_KINDS } from './itil-kinds.js';
 import { ItilObjectsService } from './itil-objects.service.js';
 

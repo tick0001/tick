@@ -4,7 +4,7 @@ import { ldapDirectories, sql } from '@tick/db';
 import { Client } from 'ldapts';
 import { SecretsService } from '../common/secrets.service.js';
 import { DatabaseService } from '../database/database.service.js';
-import { toIso, toText } from '../tickets/ticket-sql.js';
+import { toIso, toText } from '../common/sql.js';
 
 /**
  * Configuration des annuaires.

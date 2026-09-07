@@ -4,7 +4,7 @@ import { dashboards, dashboardWidgets, sql } from '@tick/db';
 import { entityNames } from '../common/entity-names.js';
 import { requireContext } from '../common/request-context.js';
 import { DatabaseService } from '../database/database.service.js';
-import { toText } from '../tickets/ticket-sql.js';
+import { nomAffiche, toText } from '../common/sql.js';
 import { WidgetRegistry } from './widget-registry.service.js';
 
 interface DashboardRow extends Record<string, unknown> {
@@ -49,10 +49,7 @@ export class DashboardsService {
       const resultat = await tx.execute<DashboardRow>(sql`
         SELECT d.id, d.name, d.is_public AS "isPublic", d.is_recursive AS "isRecursive",
                d.entity_id AS "entityId", d.owner_id AS "ownerId",
-               coalesce(
-                 nullif(trim(coalesce(u.first_name, '') || ' ' || coalesce(u.last_name, '')), ''),
-                 u.username::text
-               ) AS "ownerName"
+               ${nomAffiche()} AS "ownerName"
           FROM dashboards d
           LEFT JOIN users u ON u.id = d.owner_id
          WHERE d.is_public OR d.owner_id = ${context.userId}

@@ -10,22 +10,17 @@ import type {
   UpdateItilObject,
   UpsertItilObject,
 } from '@tick/contracts';
-import { itilActors, sql, type SQL, type Transaction } from '@tick/db';
+import { sql, type SQL } from '@tick/db';
 import { requireContext } from '../common/request-context.js';
 import { DatabaseService } from '../database/database.service.js';
 import { entityNames } from '../common/entity-names.js';
 import { emitEvent } from '../plugins/event-buffer.js';
 import { HistoryService } from '../tickets/history.service.js';
 import { PriorityService } from '../tickets/priority.service.js';
+import { ActorsService } from '../tickets/actors.service.js';
 import { TicketScopeService } from '../tickets/ticket-scope.service.js';
-import {
-  actorLabels,
-  followupCount,
-  taskCount,
-  toIso,
-  toIsoRequired,
-  toText,
-} from '../tickets/ticket-sql.js';
+import { actorLabels, followupCount, taskCount } from '../tickets/ticket-sql.js';
+import { toIso, toIsoRequired, toText } from '../common/sql.js';
 import { colonne, ITIL_KINDS } from './itil-kinds.js';
 
 /**
@@ -43,6 +38,7 @@ export class ItilObjectsService {
     private readonly history: HistoryService,
     private readonly priority: PriorityService,
     private readonly scopes: TicketScopeService,
+    private readonly actors: ActorsService,
   ) {}
 
   /** Table de l'objet, interpolée en SQL brut depuis une constante du code. */
@@ -260,7 +256,7 @@ export class ItilObjectsService {
 
       if (!ligne) throw new BadRequestException('Creation impossible dans ce perimetre.');
 
-      await this.writeActors(
+      await this.actors.write(
         tx,
         kind,
         ligne.id,
@@ -422,34 +418,12 @@ export class ItilObjectsService {
 
   /** Acteurs de l'objet, tous rôles et toutes natures confondus. */
   async actorsOf(kind: ItilKind, id: number): Promise<TicketActor[]> {
+    // La lecture passe d'abord par l'objet : sans cela, on repondrait « aucun
+    // acteur » pour un objet hors perimetre, ce qui revient a confirmer qu'il
+    // existe et qu'il est vide.
     await this.findById(kind, id);
 
-    return this.db.asUser(async (tx) => {
-      const resultat = await tx.execute<TicketActor & Record<string, unknown>>(sql`
-        SELECT
-          acteur.role, acteur.actor_type AS "actorType", acteur.actor_id AS "actorId",
-          acteur.alternative_email AS "alternativeEmail",
-          coalesce(
-            CASE acteur.actor_type
-              WHEN 'user' THEN coalesce(
-                nullif(trim(coalesce(u.first_name, '') || ' ' || coalesce(u.last_name, '')), ''),
-                u.username::text
-              )
-              WHEN 'group' THEN g.name
-              WHEN 'supplier' THEN f.name
-            END,
-            '(inconnu)'
-          ) AS "label"
-        FROM itil_actors acteur
-        LEFT JOIN users u ON acteur.actor_type = 'user' AND u.id = acteur.actor_id
-        LEFT JOIN groups g ON acteur.actor_type = 'group' AND g.id = acteur.actor_id
-        LEFT JOIN suppliers f ON acteur.actor_type = 'supplier' AND f.id = acteur.actor_id
-        WHERE acteur.itil_type = ${kind} AND acteur.itil_id = ${id}
-        ORDER BY acteur.role, "label"
-      `);
-
-      return resultat.rows;
-    });
+    return this.actors.listOf(kind, id);
   }
 
   async setActors(
@@ -461,49 +435,12 @@ export class ItilObjectsService {
 
     await this.scopes.conditionFor(ITIL_KINDS[kind].right, 'update', kind);
 
-    if (!acteurs.some((acteur) => acteur.role === 'requester')) {
-      throw new BadRequestException('Un objet doit conserver au moins un demandeur.');
-    }
+    this.actors.assertDemandeur(acteurs, 'objet');
 
-    await this.db.asUser(async (tx) => {
-      await tx
-        .delete(itilActors)
-        .where(sql`${itilActors.itilType} = ${kind} AND ${itilActors.itilId} = ${id}`);
-      await this.writeActors(tx, kind, id, acteurs);
-      await this.history.recordAction(
-        tx,
-        { type: kind, id, entityId: avant.entityId },
-        'acteurs',
-        acteurs
-          .map((acteur) => `${acteur.role}:${acteur.actorType}#${String(acteur.actorId)}`)
-          .join(', '),
-      );
-    });
+    await this.db.asUser((tx) =>
+      this.actors.replace(tx, { type: kind, id, entityId: avant.entityId }, acteurs),
+    );
 
     return this.actorsOf(kind, id);
-  }
-
-  /** Écrit des acteurs sans effacer les existants. */
-  async writeActors(
-    tx: Transaction,
-    kind: ItilKind,
-    id: number,
-    acteurs: readonly TicketActorInput[],
-  ): Promise<void> {
-    if (acteurs.length === 0) return;
-
-    await tx
-      .insert(itilActors)
-      .values(
-        acteurs.map((acteur) => ({
-          itilType: kind,
-          itilId: id,
-          role: acteur.role,
-          actorType: acteur.actorType,
-          actorId: acteur.actorId,
-          alternativeEmail: acteur.alternativeEmail ?? null,
-        })),
-      )
-      .onConflictDoNothing();
   }
 }

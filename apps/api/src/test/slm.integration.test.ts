@@ -12,6 +12,7 @@ import { EscalationService } from '../slm/escalation.service.js';
 import { SlaService } from '../slm/sla.service.js';
 import { SlmService } from '../slm/slm.service.js';
 import { workingSecondsBetween, type WorkingCalendar } from '../slm/working-time.js';
+import { ActorsService } from '../tickets/actors.service.js';
 import { HistoryService } from '../tickets/history.service.js';
 import { PriorityService } from '../tickets/priority.service.js';
 import { TicketScopeService } from '../tickets/ticket-scope.service.js';
@@ -85,15 +86,18 @@ describe('Niveaux de service et regles', () => {
     sla = new SlaService(db, slm);
     regles = new RulesService(db, new RuleCatalogService(), new RuleEngineService());
     escalade = new EscalationService(db, sla);
+    const historique = new HistoryService();
+
     tickets = new TicketsService(
       db,
       hooks,
-      new HistoryService(),
+      historique,
       new PriorityService(entites),
       new TicketScopeService(db, rights),
       new TicketTemplatesService(db, entites),
       regles,
       sla,
+      new ActorsService(db, historique),
     );
 
     const [profil] = await fixture.owner.db

@@ -4,7 +4,7 @@ import { notificationQueue, sql, type SQL } from '@tick/db';
 import { loadEnv } from '../config/env.js';
 import { DatabaseService } from '../database/database.service.js';
 import { EventBus } from '../plugins/event-bus.service.js';
-import { toText } from '../tickets/ticket-sql.js';
+import { toText } from '../common/sql.js';
 import { MailerService } from './mailer.service.js';
 import { NOTIFIABLE_EVENTS, ROLES_INTERNES } from './notification-events.js';
 

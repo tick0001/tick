@@ -6,6 +6,7 @@ import { documentItems, documents, sql } from '@tick/db';
 import { appRoot, loadEnv } from '../config/env.js';
 import { requireContext } from '../common/request-context.js';
 import { DatabaseService } from '../database/database.service.js';
+import { nomAffiche } from '../common/sql.js';
 
 /** Taille maximale d'une pièce jointe. */
 export const MAX_SIZE = 25 * 1024 * 1024;
@@ -138,10 +139,7 @@ export class DocumentsService {
       const resultat = await tx.execute<StoredDocument & Record<string, unknown>>(sql`
         SELECT d.id, d.name, d.mime_type AS "mimeType", d.size,
                d.created_at AS "createdAt",
-               coalesce(
-                 nullif(trim(coalesce(u.first_name, '') || ' ' || coalesce(u.last_name, '')), ''),
-                 u.username::text
-               ) AS "uploadedBy"
+               ${nomAffiche()} AS "uploadedBy"
           FROM documents d
           JOIN document_items l ON l.document_id = d.id
           LEFT JOIN users u ON u.id = d.uploaded_by_id
