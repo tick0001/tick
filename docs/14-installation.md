@@ -18,7 +18,11 @@ passe en clair.
 
 ## Images
 
-Elles sont publiées sur GitHub Container Registry à chaque étiquette de version :
+Aucune version n'est étiquetée à ce jour : construisez depuis les sources avec `pnpm images`, ce
+qui produit `tick-api:local` et `tick-web:local`, puis renseignez `TICK_IMAGE_API`,
+`TICK_IMAGE_WEB` et `TICK_VERSION` en conséquence.
+
+À la première étiquette, les images seront publiées sur GitHub Container Registry :
 
 ```
 ghcr.io/tick0001/tick-api:1.0.0
@@ -30,21 +34,17 @@ version ; `latest` suit la dernière étiquette. Épingler une version précise 
 préférable en production — `latest` change sous vos pieds à la publication
 suivante.
 
-Pour construire depuis les sources — pour développer une modification, ou avant
-la première publication :
-
-```bash
-pnpm images
-```
-
-Cela produit `tick-api:local` et `tick-web:local`. Renseigner alors
-`TICK_IMAGE_API`, `TICK_IMAGE_WEB` et `TICK_VERSION` en conséquence.
+Publiques, donc tirables sans authentification.
 
 ## Configuration
 
 ```bash
-cp .env.production.example .env
+cp .env.production.example docker/.env
 ```
+
+Le fichier va dans `docker/`, à côté du fichier compose — c'est là que Compose le cherche, pas à la
+racine du dépôt. Un `.env` posé à la racine serait ignoré, et le démarrage échouerait sur une
+variable manquante.
 
 Puis remplir. Le fichier compose refuse de démarrer si une variable obligatoire
 manque, plutôt que de lancer un service qui échouerait plus tard sur une erreur

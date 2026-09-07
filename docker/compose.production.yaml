@@ -11,8 +11,12 @@
 # seconde échoue — ou pire, s'applique à moitié.
 #
 # Démarrage :
-#   cp .env.production.example .env
+#   cp .env.production.example docker/.env
 #   docker compose -f docker/compose.production.yaml up -d
+#
+# Le fichier d'environnement vit dans ce dossier, et non à la racine : Compose le
+# cherche à côté du fichier compose. Un `.env` posé à la racine serait ignoré, et
+# le démarrage échouerait sur une variable manquante.
 #
 # Voir docs/14-installation.md pour ce qu'il faut régler avant.
 

@@ -37,7 +37,7 @@ jalon J4 remplacera cette source sans toucher au mécanisme de révocation.
 > ni créer un compte, ni composer un profil, ni accorder une habilitation. Le module est livré au
 > jalon [J8+](#j8--pilotage--livré-m06-m14-m15), avec les écrans qui manquaient.
 
-### J2 — Substrat d'extension
+### J2 — Substrat d'extension · livré
 
 Bus de hooks et bus d'événements, contexte d'exécution des plugins, cycle de vie complet
 (découverte, validation du manifeste, résolution des dépendances, installation, activation, mise à
@@ -46,6 +46,11 @@ interface avec dépendances partagées.
 
 _Terminé quand_ : un plugin minimal s'installe, s'active, intercepte un hook, se met à jour et se
 désinstalle sans laisser de trace.
+
+**Livré.** Le critère est vérifié point par point par `plugins.integration.test.ts`, qui monte un
+plugin d'essai et le suit sur tout son cycle : découverte sans exécution, installation avec schéma
+dédié, interception d'un hook, refus qui annule la transaction, désactivation qui retire les hooks
+sans toucher aux données, montée de version, et désinstallation sans résidu.
 
 > **Le substrat vient avant le métier, la surface publique vient après.** L'infrastructure
 > d'extension dicte la façon dont les services sont écrits : la greffer après coup imposerait de
