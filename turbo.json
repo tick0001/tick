@@ -17,7 +17,25 @@
       "dependsOn": ["^build"]
     },
     "test": {
-      "dependsOn": ["^build"]
+      "dependsOn": ["^build"],
+
+      // Turbo filtre l'environnement : une tache ne recoit que ce qui est
+      // declare ici. Sans cette liste, les variables posees par le workflow
+      // n'atteignent jamais vitest, et les tests de l'API echouent sur
+      // « Configuration invalide ». En local le defaut etait masque par le
+      // `.env` de la racine, que le setup charge en repli.
+      //
+      // Dans `env` et non `passThroughEnv` : viser une autre base doit rejouer
+      // les tests d'integration, pas resservir un resultat obtenu ailleurs.
+      "env": [
+        "DATABASE_URL",
+        "DATABASE_APP_URL",
+        "REDIS_URL",
+        "SESSION_SECRET",
+        "ENCRYPTION_KEY",
+        "LDAP_HOST",
+        "LDAP_PORT"
+      ]
     }
   }
 }
