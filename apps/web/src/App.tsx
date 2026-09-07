@@ -28,6 +28,7 @@ import { SettingsPage } from '@/pages/SettingsPage';
 import { StatsPage } from '@/pages/StatsPage';
 import { SurveysPage } from '@/pages/SurveysPage';
 import { ServiceLevelsPage } from '@/pages/ServiceLevelsPage';
+import { TicketConversationPage } from '@/pages/TicketConversationPage';
 import { TicketPage } from '@/pages/TicketPage';
 import { TicketsPage } from '@/pages/TicketsPage';
 import { UsersPage } from '@/pages/UsersPage';
@@ -125,7 +126,15 @@ function Application() {
         />
         <Route path="/tickets" element={<TicketsPage session={session.data} />} />
         <Route path="/tickets/new" element={<NewTicketPage />} />
-        <Route path="/tickets/:id" element={<TicketPage />} />
+        {/* Le demandeur lit sa demande comme une conversation, le technicien
+            comme une fiche : ce ne sont pas deux mises en page du meme ecran,
+            mais deux besoins differents. Voir `TicketConversationPage`. */}
+        <Route
+          path="/tickets/:id"
+          element={
+            simplifiee ? <TicketConversationPage session={session.data} /> : <TicketPage />
+          }
+        />
         <Route path="/itil/problems" element={<ItilObjectsPage kind="problem" />} />
         <Route path="/itil/problems/:id" element={<ItilObjectPage kind="problem" />} />
         <Route path="/itil/changes" element={<ItilObjectsPage kind="change" />} />

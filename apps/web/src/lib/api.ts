@@ -1,6 +1,7 @@
 import type {
   AddFollowup,
   Agreement,
+  AnswerSolution,
   Calendar,
   CreateTicket,
   EntitySummary,
@@ -566,6 +567,17 @@ export const api = {
 
   deleteAttachment: async (id: number): Promise<void> => {
     await fetch(`/api/documents/${String(id)}`, { method: 'DELETE', credentials: 'include' });
+  },
+
+  /**
+   * Reponse du demandeur a la solution proposee.
+   *
+   * N'exige que la lecture du ticket : c'est **son** avis qu'on demande, et
+   * l'exiger sous un droit de modification le priverait du seul geste qui lui
+   * revient en propre.
+   */
+  answerSolution: async (id: number, body: AnswerSolution): Promise<void> => {
+    await send(`/tickets/${String(id)}/solutions/answer`, 'POST', body);
   },
 
   setStatus: (id: number, status: ItilStatus): Promise<TicketDetail> =>
