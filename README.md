@@ -1,193 +1,206 @@
+**English** · [Français](README.fr.md)
+
 # Tick&
 
-**Outil de ticketing ITSM, libre et auto-hébergeable.** Il couvre l'intégralité du périmètre
-_Assistance_ de GLPI 11 — tickets, problèmes, changements, engagements de service, règles,
-notifications, base de connaissances, formulaires, satisfaction, self-service — **sans** la gestion
-de parc.
+**Open-source, self-hosted ITSM ticketing.** Incidents, service requests, problems, changes,
+service level agreements, automation rules, notifications, knowledge base, catalogue forms,
+satisfaction surveys and a self-service portal — one tool, across an entire organisation. Asset
+and inventory management is deliberately out of scope.
 
 [![Licence](https://img.shields.io/badge/licence-AGPL--3.0-blue)](LICENSE)
 [![CI](https://github.com/tick0001/tick-/actions/workflows/ci.yml/badge.svg)](https://github.com/tick0001/tick-/actions/workflows/ci.yml)
 
+![Ticket list, filtered by the active profile and working context](docs/captures/en/tickets.png)
+
 ---
 
-## Ce que ça fait
+## What it does
 
-**Multi-organisation, appliqué par la base.** Les entités forment un arbre, et le cloisonnement
-repose sur le Row-Level Security de PostgreSQL — pas sur des conditions `WHERE` que l'on peut
-oublier d'écrire. Un droit est un triplet objet × action × portée, et l'absence de ligne vaut
-refus.
+**Multi-organisation, enforced by the database.** Entities form a tree, and isolation rests on
+PostgreSQL Row-Level Security — not on `WHERE` clauses somebody can forget to write. A right is a
+triplet of object × action × scope, and a missing row means refusal.
 
-**Le cycle ITIL complet.** Tickets, problèmes et changements partagent un socle commun : acteurs,
-chronologie unifiée, tâches, solutions, validations, liens entre objets, promotion d'un incident en
-problème.
+**The full ITIL cycle.** Tickets, problems and changes share one foundation: actors, a unified
+timeline, tasks, solutions, approvals, links between objects, promotion of an incident into a
+problem.
 
-**Ce qui fait tourner un centre de services.** Calendriers ouvrés et engagements avec escalade,
-moteur de règles avec simulateur, notifications par courriel et collecteur entrant, base de
-connaissances et FAQ publique, formulaires de catalogue avec conditions d'affichage, enquêtes de
-satisfaction, planning, statistiques et tableaux de bord, exports CSV et PDF.
+![Ticket detail: timeline, tasks, actors, and the fields that drive the deadlines](docs/captures/en/ticket.png)
 
-**Extensible sans forker.** Les plugins se chargent dans le processus, déclarent leurs permissions
-dans un manifeste versionné, obtiennent leur propre schéma PostgreSQL, et se retirent sans laisser
-de traces. Voir le [SDK](docs/15-sdk-plugins.md).
+**What actually runs a service desk.** Working-hour calendars and agreements with escalation, a
+rule engine with a simulator, email notifications and an inbound collector, a knowledge base and
+public FAQ, catalogue forms with display conditions, satisfaction surveys, planning, statistics
+and dashboards, CSV and PDF exports.
 
-**Français et anglais** dès le départ, interface comme courriels.
+![Rule engine, with the simulator that shows what a rule would do](docs/captures/en/regles.png)
 
-## Déployer
+![Calendars and service level agreements, with reminders and escalation](docs/captures/en/engagements.png)
+
+**Extensible without forking.** Plugins load in-process, declare their permissions in a versioned
+manifest, get their own PostgreSQL schema, and uninstall without leaving traces. See the
+[SDK](docs/15-sdk-plugins.md).
+
+**French and English** from day one, interface and emails alike.
+
+![Entity tree — every query is filtered against it by the database itself](docs/captures/en/entites.png)
+
+## Deploy
 
 ```bash
-pnpm images                                  # construit tick-api et tick-web
-cp .env.production.example docker/.env       # puis remplir : secrets, adresses, SMTP
+git clone https://github.com/tick0001/tick-.git && cd tick-
+cp .env.production.example docker/.env    # then fill in: secrets, URLs, SMTP
 docker compose -f docker/compose.production.yaml up -d
 
-# Créer le premier administrateur — sans lui, personne ne peut se connecter.
+# Create the first administrator — without it, nobody can sign in.
 docker compose -f docker/compose.production.yaml run --rm \
   -e TICK_ADMIN_PASSWORD='…' api node dist/cli/initialiser.js
 ```
 
-Le fichier d'environnement va dans `docker/`, à côté du fichier compose : c'est là que Compose le
-cherche, et non à la racine du dépôt.
+The environment file goes into `docker/`, next to the compose file: that is where Compose looks
+for it, not at the root of the repository.
 
-Les images se construisent depuis les sources tant qu'aucune version n'est étiquetée. À la première
-étiquette, elles seront publiées sur `ghcr.io/tick0001/tick-api` et `ghcr.io/tick0001/tick-web`, et
-`pnpm images` deviendra inutile.
+Images are pulled from `ghcr.io/tick0001/tick-api` and `ghcr.io/tick0001/tick-web`. Pin a version
+with `TICK_VERSION` rather than following `latest`, so that an upgrade stays a decision.
 
-Tick& attend derrière un terminateur TLS — Caddy, Traefik, nginx — qui présente le certificat.
+Tick& expects to sit behind a TLS terminator — Caddy, Traefik, nginx — that presents the
+certificate.
 
-Le [guide d'installation](docs/14-installation.md) détaille les secrets à générer, la rotation
-obligatoire du mot de passe du rôle applicatif, les sauvegardes et les mises à jour.
+The [installation guide](docs/14-installation.md) covers the secrets to generate, the **mandatory**
+rotation of the application role's password, backups and upgrades.
 
-## Essayer en local
+## Try it locally
 
-Prérequis : Node 22 ou plus, pnpm 11, Docker.
+Requirements: Node 22 or later, pnpm 11, Docker.
 
 ```bash
 pnpm install
 cp .env.example .env
 pnpm services:up      # PostgreSQL, Redis, Mailpit, OpenLDAP
-pnpm db:migrate       # schéma, déclencheurs, politiques RLS
-pnpm db:seed          # ⚠ jeu de démonstration — vide les tables avant d'écrire
-pnpm dev              # API sur :3000, interface sur :5173
+pnpm db:migrate       # schema, triggers, RLS policies
+pnpm db:seed          # ⚠ demo dataset — truncates every table before writing
+pnpm dev              # API on :3000, interface on :5173
 ```
 
-Puis <http://localhost:5173>, avec `sophie` / `tick` — le compte qui voit le plus de choses sans
-être administrateur. Les courriels partent vers Mailpit, sur <http://localhost:8025>.
+Then <http://localhost:5173>, with `sophie` / `tick` — the account that sees the most without
+being an administrator. Emails go to Mailpit, on <http://localhost:8025>.
 
-`db:seed` sert à **essayer**, jamais à installer : il tronque toutes les tables. Pour une vraie
-installation, c'est `initialiser` qui pose le strict minimum.
+`db:seed` is for **trying**, never for installing: it truncates every table. A real installation
+uses `initialiser`, which creates the bare minimum.
 
 <details>
-<summary>Comptes de démonstration — mot de passe commun <code>tick</code></summary>
+<summary>Demo accounts — shared password <code>tick</code></summary>
 
-Chacun illustre un cas que le modèle d'entités doit savoir traiter.
+Each one illustrates a case the entity model has to handle.
 
-| Compte      | Habilitations                                       | Ce qu'il démontre                                             |
-| ----------- | --------------------------------------------------- | ------------------------------------------------------------- |
-| `admin`     | Administrateur sur Racine, récursif                 | Accès complet à l'arborescence                                |
-| `sophie`    | Superviseur sur Filiale Nord, récursif              | Une branche entière, sans voir le Siège                       |
-| `thomas`    | Technicien sur Site A, non récursif                 | Une seule entité, sans sa descendance                         |
-| `lea`       | Technicien sur Site B **et** Self-service sur Siège | Le cumul : les droits suivent le profil actif, jamais l'union |
-| `demandeur` | Self-service sur DSI                                | L'interface simplifiée                                        |
+| Account     | Authorizations                                     | What it demonstrates                                      |
+| ----------- | -------------------------------------------------- | --------------------------------------------------------- |
+| `admin`     | Administrator on Racine, recursive                 | Full access to the tree                                   |
+| `sophie`    | Supervisor on Filiale Nord, recursive              | A whole branch, without seeing headquarters               |
+| `thomas`    | Technician on Site A, non-recursive                | A single entity, without its descendants                  |
+| `lea`       | Technician on Site B **and** Self-service on Siege | Stacking: rights follow the active profile, never a union |
+| `demandeur` | Self-service on DSI                                | The simplified interface                                  |
 
 </details>
 
-## Où en est le projet
+## Where the project stands
 
-Les jalons J0 à J8 de la [feuille de route](docs/06-feuille-de-route.md) sont livrés, et J9
-l'est à deux points près. Les dix-sept modules du périmètre fonctionnel sont couverts, l'API compte
-179 opérations documentées, et la suite fait 2 281 tests — dont des tests d'intégration sur une
-vraie base PostgreSQL qui vérifient l'isolation entre entités.
+Milestones J0 to J8 of the [roadmap](docs/06-feuille-de-route.md) are delivered, and J9 all but
+one point. The seventeen functional modules are covered, the API exposes 179 documented
+operations, and the suite runs 2 281 tests — including integration tests against a real PostgreSQL
+database that check isolation between entities.
 
-Ce qu'il faut savoir avant de s'en servir, dit franchement :
+What you should know before relying on it, said plainly:
 
-- **Aucune version étiquetée à ce jour.** Les images se construisent depuis les sources
-  (`pnpm images`) tant que la première étiquette n'est pas posée.
-- **Jamais déployé en production réelle.** Le déploiement Docker est vérifié de bout en bout —
-  migrations, création du premier compte, connexion à travers le relais — mais sur une machine de
-  développement, pas en exploitation.
-- **Le SDK de plugins reste en `0.x`** et peut rompre entre deux versions mineures. Il ne se figera
-  qu'une fois chaque point d'extension exercé par un usage réel ; le plugin de référence n'y suffit
-  pas seul.
+- **Never deployed in real production.** The Docker deployment is verified end to end —
+  migrations, first account creation, sign-in through the reverse proxy — but on a development
+  machine, not in operation.
+- **`0.1.0` is a first tagged version, not a proven one.** Expect breaking changes between minor
+  versions until the interfaces have been exercised by someone other than their author.
+- **The plugin SDK is still `0.x`** and may break between minor versions. It will only freeze once
+  every extension point has been exercised by real use; the reference plugin is not enough on its
+  own.
 
-Les retours, les rapports d'anomalie et les plugins d'essai sont donc utiles maintenant.
+Feedback, bug reports and trial plugins are useful now.
 
-## Développer
+## Develop
 
 ```bash
-pnpm build       # construit tous les paquets
-pnpm test        # 2 281 tests — nécessite les services démarrés
-pnpm lint        # ESLint avec règles typées
-pnpm typecheck   # vérification de types sans émission
-pnpm format      # applique Prettier
-pnpm db:reset    # repart d'une base vierge, migrée et amorcée
-pnpm openapi     # exporte la description de l'API
+pnpm build       # builds every package
+pnpm test        # 2 281 tests — requires the services to be running
+pnpm lint        # ESLint with type-aware rules
+pnpm typecheck   # type checking without emit
+pnpm format      # applies Prettier
+pnpm db:reset    # back to a clean database, migrated and seeded
+pnpm openapi     # exports the API description
 ```
 
-Le monorepo réunit l'API (NestJS), l'interface (React + Vite), et quatre paquets partagés :
-contrats Zod, couche de données Drizzle, traductions, SDK de plugins.
+The monorepo holds the API (NestJS), the interface (React + Vite), and four shared packages: Zod
+contracts, the Drizzle data layer, translations, and the plugin SDK.
 
-Le plugin de référence `plugins/exemple-bonjour` exerce chaque point d'extension et sert de test
-d'intégration permanent.
+The reference plugin `plugins/exemple-bonjour` exercises every extension point and doubles as a
+permanent integration test.
 
-Commits en français, courts, préfixés d'un gitmoji : `:sparkles: ajoute l'arbre des entités`.
+Commits are in French, short, prefixed with a gitmoji: `:sparkles: ajoute l'arbre des entités`.
 
-## Choix structurants
+## Design decisions
 
-| Sujet              | Décision                                                                 |
-| ------------------ | ------------------------------------------------------------------------ |
-| Backend            | NestJS (TypeScript)                                                      |
-| Base de données    | PostgreSQL — `ltree`, `tsvector`, Row-Level Security                     |
-| Accès données      | Drizzle ORM, schéma découpé par module                                   |
-| Frontend           | React + Vite, Tailwind, TanStack Query & Table                           |
-| Files d'attente    | BullMQ + Redis                                                           |
-| Plugins            | In-process, manifeste versionné, SDK semver, schéma SQL dédié par plugin |
-| Multi-organisation | Entités hiérarchiques façon GLPI + RLS PostgreSQL                        |
-| Déploiement        | Auto-hébergé mono-instance, Docker Compose                               |
-| Authentification   | Locale + LDAP / Active Directory                                         |
-| Échelle cible      | Quelques centaines de techniciens, 100 à 500 k tickets/an                |
+| Topic              | Decision                                                              |
+| ------------------ | --------------------------------------------------------------------- |
+| Backend            | NestJS (TypeScript)                                                   |
+| Database           | PostgreSQL — `ltree`, `tsvector`, Row-Level Security                  |
+| Data access        | Drizzle ORM, schema split per module                                  |
+| Frontend           | React + Vite, Tailwind, TanStack Query & Table                        |
+| Queues             | BullMQ + Redis                                                        |
+| Plugins            | In-process, versioned manifest, semver SDK, one SQL schema per plugin |
+| Multi-organisation | Hierarchical entities + PostgreSQL RLS                                |
+| Deployment         | Self-hosted, single instance, Docker Compose                          |
+| Authentication     | Local + LDAP / Active Directory                                       |
+| Target scale       | A few hundred technicians, 100 to 500 k tickets a year                |
 
-Les raisons de chacun sont argumentées dans [l'architecture](docs/02-architecture.md).
+The reasoning behind each is argued in [the architecture document](docs/02-architecture.md).
 
 ## API
 
-La description OpenAPI est servie par l'application elle-même, sans authentification :
+The OpenAPI description is served by the application itself, without authentication:
 
 ```
 GET /api/openapi.json
 ```
 
-Elle est **déduite** des contrôleurs et des schémas qu'ils valident : elle ne peut ni omettre une
-route existante, ni en décrire une disparue. Chaque opération porte le droit qu'elle exige.
+It is **derived** from the controllers and the schemas they validate: it can neither omit an
+existing route nor describe one that is gone. Every operation carries the right it requires.
 
 ## Documentation
 
-| Document                                                                | Contenu                                                       |
-| ----------------------------------------------------------------------- | ------------------------------------------------------------- |
-| [Périmètre fonctionnel](docs/01-perimetre-fonctionnel.md)               | Les 17 modules couverts, au détail près                       |
-| [Architecture](docs/02-architecture.md)                                 | Monorepo, backend, frontend, décisions techniques argumentées |
-| [Entités, droits et sécurité](docs/03-entites-droits-securite.md)       | Le modèle multi-organisation et son application par RLS       |
-| [Système de plugins](docs/04-plugins.md)                                | Manifeste, hooks, cycle de vie, isolation                     |
-| [SDK de plugins](docs/15-sdk-plugins.md)                                | Référence d'écriture d'un plugin, avec exemples               |
-| [Modèle de données](docs/05-modele-de-donnees.md)                       | Tables du cœur et conventions                                 |
-| [Niveaux de service et règles](docs/07-niveaux-de-service-et-regles.md) | Temps ouvré, engagements, escalade, moteur de règles          |
-| [Communication](docs/08-communication.md)                               | Notifications, courriel entrant, enquêtes de satisfaction     |
-| [Self-service](docs/09-self-service.md)                                 | Base de connaissances, formulaires, interface demandeur       |
-| [Problèmes et changements](docs/10-problemes-et-changements.md)         | Socle ITIL commun, liens entre objets, promotion              |
-| [Pilotage](docs/11-pilotage.md)                                         | Planning, statistiques, tableaux de bord, exports             |
-| [Interface](docs/12-interface.md)                                       | Jetons de couleur, navigation, briques communes               |
-| [Administration](docs/13-administration.md)                             | Comptes, groupes, profils et matrice de droits                |
-| [Installation et exploitation](docs/14-installation.md)                 | Déploiement Docker, sauvegardes, mises à jour, diagnostic     |
-| [Feuille de route](docs/06-feuille-de-route.md)                         | Dix jalons, du socle à l'ouverture publique                   |
+The detailed documentation is written in French.
+
+| Document                                                            | Contents                                                 |
+| ------------------------------------------------------------------- | -------------------------------------------------------- |
+| [Functional scope](docs/01-perimetre-fonctionnel.md)                | The 17 modules covered, in detail                        |
+| [Architecture](docs/02-architecture.md)                             | Monorepo, backend, frontend, technical decisions argued  |
+| [Entities, rights and security](docs/03-entites-droits-securite.md) | The multi-organisation model and its enforcement by RLS  |
+| [Plugin system](docs/04-plugins.md)                                 | Manifest, hooks, lifecycle, isolation                    |
+| [Plugin SDK](docs/15-sdk-plugins.md)                                | Reference for writing a plugin, with examples            |
+| [Data model](docs/05-modele-de-donnees.md)                          | Core tables and conventions                              |
+| [Service levels and rules](docs/07-niveaux-de-service-et-regles.md) | Working hours, agreements, escalation, rule engine       |
+| [Communication](docs/08-communication.md)                           | Notifications, inbound email, satisfaction surveys       |
+| [Self-service](docs/09-self-service.md)                             | Knowledge base, forms, requester interface               |
+| [Problems and changes](docs/10-problemes-et-changements.md)         | Shared ITIL foundation, links between objects, promotion |
+| [Steering](docs/11-pilotage.md)                                     | Planning, statistics, dashboards, exports                |
+| [Interface](docs/12-interface.md)                                   | Colour tokens, navigation, shared building blocks        |
+| [Administration](docs/13-administration.md)                         | Accounts, groups, profiles and the rights matrix         |
+| [Installation and operations](docs/14-installation.md)              | Docker deployment, backups, upgrades, troubleshooting    |
+| [Roadmap](docs/06-feuille-de-route.md)                              | Ten milestones, from the foundation to public release    |
 
 ## Licence
 
-**AGPL-3.0-or-later** — voir [LICENSE](LICENSE).
+**AGPL-3.0-or-later** — see [LICENSE](LICENSE).
 
-Copyleft avec clause réseau : quiconque héberge une version modifiée de Tick& doit en publier les
-modifications, même sans en distribuer le code.
+Copyleft with a network clause: anyone hosting a modified version of Tick& must publish their
+modifications, even without distributing the code.
 
-Sans exception de liaison : un plugin est chargé dans le processus de l'API et en est très
-probablement une œuvre dérivée, donc soumis à la même licence. À lire avant d'écrire un plugin
-propriétaire.
+No linking exception: a plugin is loaded into the API process and is very probably a derivative
+work of it, and therefore subject to the same licence. Worth reading before writing a proprietary
+plugin.
 
-> Nom : **Tick&** — identifiant technique partout ailleurs : `tick` (paquets `@tick/*`, images
-> Docker, schémas SQL, préfixes d'API).
+> Name: **Tick&** — technical identifier everywhere else: `tick` (`@tick/*` packages, Docker
+> images, SQL schemas, API prefixes).
