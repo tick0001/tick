@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { ldapGroupSearchModeSchema, type UpsertLdapDirectory } from '@tick/contracts';
 import { useState, type FormEvent } from 'react';
 import { useTranslation } from 'react-i18next';
+import { ActionsFormulaire } from '@/components/PiedFormulaire';
 import { IconPlus } from '@/components/ui/icons';
 import {
   ACTION_LIGNE,
@@ -368,18 +369,12 @@ export function DirectoriesPage() {
                   label={<span className="text-sm">{t('administration.annuaires.parDefaut')}</span>}
                 />
 
-                <div className="ml-auto flex gap-2">
-                  <Button
-                    onClick={() => {
-                      setEdite(null);
-                    }}
-                  >
-                    {t('entites.annuler')}
-                  </Button>
-                  <Button type="submit" variante="primaire" disabled={enregistrer.isPending}>
-                    {t('entites.enregistrer')}
-                  </Button>
-                </div>
+                <ActionsFormulaire
+                  enCours={enregistrer.isPending}
+                  onAnnuler={() => {
+                    setEdite(null);
+                  }}
+                />
               </div>
 
               <FieldError>{enregistrer.error?.message}</FieldError>

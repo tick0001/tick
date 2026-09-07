@@ -3,6 +3,7 @@ import type { SessionContext } from '@tick/contracts';
 import { useState, type FormEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { PluginSlot } from '@/components/PluginSlot';
+import { PiedFormulaire } from '@/components/PiedFormulaire';
 import { IconPlus } from '@/components/ui/icons';
 import {
   ACTION_LIGNE,
@@ -180,21 +181,14 @@ export function EntitiesPage({ session }: { session: SessionContext }) {
                 />
               </Field>
 
-              <div className="flex items-center gap-2 sm:col-span-3">
-                <FieldError>{enregistrer.error?.message}</FieldError>
-                <div className="ml-auto flex gap-2">
-                  <Button
-                    onClick={() => {
-                      setEdite(null);
-                    }}
-                  >
-                    {t('entites.annuler')}
-                  </Button>
-                  <Button type="submit" variante="primaire" disabled={enregistrer.isPending}>
-                    {t('entites.enregistrer')}
-                  </Button>
-                </div>
-              </div>
+              <PiedFormulaire
+                className="sm:col-span-3"
+                erreur={enregistrer.error?.message}
+                enCours={enregistrer.isPending}
+                onAnnuler={() => {
+                  setEdite(null);
+                }}
+              />
             </form>
           </CardBody>
         </Card>

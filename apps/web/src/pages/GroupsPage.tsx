@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { UpsertGroup } from '@tick/contracts';
 import { useState, type FormEvent } from 'react';
 import { useTranslation } from 'react-i18next';
+import { PiedFormulaire } from '@/components/PiedFormulaire';
 import { IconPlus } from '@/components/ui/icons';
 import {
   ACTION_LIGNE_DANGER,
@@ -181,21 +182,13 @@ export function GroupsPage() {
                 />
               </div>
 
-              <div className="flex items-center gap-2">
-                <FieldError>{enregistrer.error?.message}</FieldError>
-                <div className="ml-auto flex gap-2">
-                  <Button
-                    onClick={() => {
-                      setEdite(null);
-                    }}
-                  >
-                    {t('entites.annuler')}
-                  </Button>
-                  <Button type="submit" variante="primaire" disabled={enregistrer.isPending}>
-                    {t('entites.enregistrer')}
-                  </Button>
-                </div>
-              </div>
+              <PiedFormulaire
+                erreur={enregistrer.error?.message}
+                enCours={enregistrer.isPending}
+                onAnnuler={() => {
+                  setEdite(null);
+                }}
+              />
             </form>
           </CardBody>
         </Card>
