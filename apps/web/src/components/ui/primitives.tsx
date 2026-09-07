@@ -193,8 +193,14 @@ export function CardBody({ className, children }: { className?: string; children
 /**
  * En-tête de page.
  *
- * Titre, phrase d'intention et actions. La phrase n'est pas décorative : elle
- * dit ce que l'écran permet, ce qu'un titre de deux mots ne fait jamais.
+ * Le filet d'encre sous le titre n'est pas un ornement : c'est ce qui donne son
+ * assise à la page. Sans lui, le trio « titre, phrase grise, bouton » flotte au
+ * milieu du vide — la composition que produit toute bibliothèque, et qui ne dit
+ * jamais où la page commence.
+ *
+ * L'intention passe **sous** le filet, avec le contenu. Elle appartient à ce
+ * qu'on lit, pas à l'en-tête ; la garder au-dessus l'aurait mise sur le même
+ * plan que le titre, qu'elle n'a pas à concurrencer.
  */
 export function PageHeader({
   title,
@@ -206,15 +212,82 @@ export function PageHeader({
   action?: ReactNode;
 }) {
   return (
-    <header className="flex flex-wrap items-start justify-between gap-4">
-      <div className="space-y-1">
-        <h2 className="text-xl font-semibold tracking-tight text-ink">{title}</h2>
-        {description && <p className="max-w-2xl text-sm text-muted">{description}</p>}
+    <header className="space-y-3">
+      <div className="flex flex-wrap items-center justify-between gap-4 border-b-2 border-ink pb-3">
+        <h2 className="text-xl font-bold tracking-tight text-ink">{title}</h2>
+        {action && <div className="flex flex-wrap items-center gap-2">{action}</div>}
       </div>
-      {action && <div className="flex flex-wrap items-center gap-2">{action}</div>}
+      {description && <p className="max-w-2xl text-sm text-muted">{description}</p>}
     </header>
   );
 }
+
+/**
+ * Bandeau de filtres, posé sous l'en-tête.
+ *
+ * Les filtres laissés à nu sur le papier se lisent comme des restes : rien ne
+ * dit qu'ils forment un ensemble, ni qu'ils commandent la liste qui suit. Le
+ * fond creux et le filet les tiennent, et rattachent visuellement la commande à
+ * son résultat.
+ */
+export function FilterBar({
+  className,
+  children,
+}: {
+  className?: string;
+  children: ReactNode;
+}) {
+  return (
+    <div
+      className={cn(
+        'flex flex-wrap items-center gap-x-3 gap-y-2 border border-line bg-sunken px-3 py-2.5',
+        className,
+      )}
+    >
+      {children}
+    </div>
+  );
+}
+
+/**
+ * Titre de section, prolongé d'un filet jusqu'au bord.
+ *
+ * C'est le rythme vertical d'un document technique : l'œil trouve les sections
+ * en balayant les filets, sans lire les libellés. Un petit gras nu, lui, se
+ * confond avec le contenu dès que la page s'allonge.
+ */
+export function SectionTitle({
+  children,
+  action,
+}: {
+  children: ReactNode;
+  action?: ReactNode;
+}) {
+  return (
+    <div className="flex items-center gap-3">
+      <h3 className="text-xs font-semibold tracking-wider whitespace-nowrap text-muted uppercase">
+        {children}
+      </h3>
+      <span aria-hidden className="h-px flex-1 bg-line" />
+      {action}
+    </div>
+  );
+}
+
+/**
+ * Actions de ligne : des verbes, pas des boutons.
+ *
+ * Répétées sur chaque ligne d'un tableau, deux boutons pleins deviennent le
+ * motif dominant de l'écran — on voit la colonne d'actions avant les données
+ * qu'elle commande. Un verbe discret, souligné au survol, rend la ligne à son
+ * contenu tout en restant atteignable au clavier.
+ */
+export const ACTION_LIGNE =
+  'text-xs font-medium text-muted underline-offset-2 transition-colors hover:text-ink hover:underline disabled:pointer-events-none disabled:opacity-40';
+
+/** Même chose, pour ce qui détruit : l'encre critique tient lieu d'avertissement. */
+export const ACTION_LIGNE_DANGER =
+  'text-xs font-medium text-critical underline-offset-2 transition-colors hover:underline disabled:pointer-events-none disabled:opacity-40';
 
 // --- Étiquettes --------------------------------------------------------------
 

@@ -60,7 +60,7 @@ export function ItilObjectsPage({ kind }: { kind: ItilKind }) {
 
   return (
     <section className="space-y-4">
-      <header className="flex flex-wrap items-start justify-between gap-3">
+      <header className="flex flex-wrap items-start justify-between gap-3 border-b-2 border-ink pb-3">
         <div className="space-y-1">
           <h2 className="text-xl font-semibold tracking-tight">{t(`itil.${section}.titre`)}</h2>
           <p className="text-sm text-muted">{t(`itil.${section}.description`)}</p>

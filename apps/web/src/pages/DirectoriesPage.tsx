@@ -4,6 +4,8 @@ import { useState, type FormEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { IconPlus } from '@/components/ui/icons';
 import {
+  ACTION_LIGNE,
+  ACTION_LIGNE_DANGER,
   Badge,
   Button,
   Card,
@@ -20,6 +22,7 @@ import {
 } from '@/components/ui/primitives';
 import { ApiError, api } from '@/lib/api';
 import { usePeut } from '@/lib/session';
+import { cn } from '@/lib/utils';
 
 const VIDE: UpsertLdapDirectory = {
   name: '',
@@ -455,8 +458,9 @@ export function DirectoriesPage() {
                     {t('administration.annuaires.tester')}
                   </Button>
                   {peutEcrire && (
-                    <Button
-                      taille="sm"
+                    <button
+                      type="button"
+                      className={ACTION_LIGNE}
                       onClick={() => {
                         setEdite({
                           id: annuaire.id,
@@ -485,19 +489,18 @@ export function DirectoriesPage() {
                       }}
                     >
                       {t('entites.modifier')}
-                    </Button>
+                    </button>
                   )}
                   {peutEcrire && (
-                    <Button
-                      taille="sm"
-                      variante="danger"
-                      className="ml-auto"
+                    <button
+                      type="button"
+                      className={cn(ACTION_LIGNE_DANGER, 'ml-auto')}
                       onClick={() => {
                         supprimer.mutate(annuaire.id);
                       }}
                     >
                       {t('entites.supprimer')}
-                    </Button>
+                    </button>
                   )}
                 </div>
               </CardBody>

@@ -8,6 +8,7 @@ import { PluginSlot } from '@/components/PluginSlot';
 import { PriorityBadge, StatusBadge, TypeBadge } from '@/components/TicketBadges';
 import { IconPlus, IconRecherche } from '@/components/ui/icons';
 import {
+  FilterBar,
   Button,
   Checkbox,
   EmptyState,
@@ -79,7 +80,7 @@ export function TicketsPage({ session }: { session: SessionContext }) {
         }
       />
 
-      <div className="flex flex-wrap items-center gap-3">
+      <FilterBar>
         <Tabs
           value={vue}
           onChange={setVue}
@@ -109,7 +110,7 @@ export function TicketsPage({ session }: { session: SessionContext }) {
             className="pl-8"
           />
         </div>
-      </div>
+      </FilterBar>
 
       {interdit && <Notice ton="attention">{t('tickets.interdit')}</Notice>}
 

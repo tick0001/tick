@@ -29,11 +29,24 @@ export function duree(secondes: number | null, aucune: string): string {
   return `${String(jours)} j ${String(heures % 24)} h`;
 }
 
-function Carte({ libelle, valeur }: { libelle: string; valeur: string }) {
+/**
+ * Un indicateur : le chiffre d'abord, le libelle dessous.
+ *
+ * Pas de cadre autour. Huit boites bordees identiques sont l'archetype du
+ * tableau de bord genere : elles decoupent la bande en huit objets de meme
+ * poids, et l'oeil ne trouve plus le chiffre qu'il cherche. Un filet vertical
+ * separe, un chiffre grand en chasse tabulaire porte, un libelle en petites
+ * capitales nomme -- et la bande se lit d'un coup.
+ */
+function Indicateur({ libelle, valeur }: { libelle: string; valeur: string }) {
   return (
-    <div className="rounded-card border border-line bg-surface p-3.5 shadow-card">
-      <div className="text-xs font-medium text-faint">{libelle}</div>
-      <div className="mt-1 text-2xl font-semibold tabular-nums text-ink">{valeur}</div>
+    <div className="min-w-0 flex-1 px-4 py-3 first:pl-0 sm:border-l sm:border-line sm:first:border-l-0">
+      <div className="truncate text-2xl font-bold tabular-nums text-ink">{valeur}</div>
+      {/* Le libelle peut passer sur deux lignes : le tronquer donnerait
+          « PRISE EN CO... », qui ne nomme plus rien. */}
+      <div className="mt-0.5 text-[10px] leading-tight font-semibold tracking-wider text-faint uppercase">
+        {libelle}
+      </div>
     </div>
   );
 }
@@ -43,17 +56,17 @@ export function Compteurs({ rapport }: { rapport: StatsReport }) {
   const { summary } = rapport;
 
   return (
-    <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-      <Carte libelle={t('statistiques.ouverts')} valeur={String(summary.opened)} />
-      <Carte libelle={t('statistiques.resolus')} valeur={String(summary.solved)} />
-      <Carte libelle={t('statistiques.clos')} valeur={String(summary.closed)} />
-      <Carte libelle={t('statistiques.enCours')} valeur={String(summary.pending)} />
-      <Carte
+    <div className="flex flex-wrap border-y border-line sm:flex-nowrap">
+      <Indicateur libelle={t('statistiques.ouverts')} valeur={String(summary.opened)} />
+      <Indicateur libelle={t('statistiques.resolus')} valeur={String(summary.solved)} />
+      <Indicateur libelle={t('statistiques.clos')} valeur={String(summary.closed)} />
+      <Indicateur libelle={t('statistiques.enCours')} valeur={String(summary.pending)} />
+      <Indicateur
         libelle={t('statistiques.priseEnCompte')}
         valeur={duree(summary.averageTakeIntoAccount, '—')}
       />
-      <Carte libelle={t('statistiques.resolution')} valeur={duree(summary.averageSolve, '—')} />
-      <Carte
+      <Indicateur libelle={t('statistiques.resolution')} valeur={duree(summary.averageSolve, '—')} />
+      <Indicateur
         libelle={t('statistiques.respectSla')}
         valeur={
           summary.slaCompliance === null
@@ -61,7 +74,7 @@ export function Compteurs({ rapport }: { rapport: StatsReport }) {
             : `${String(Math.round(summary.slaCompliance * 100))} %`
         }
       />
-      <Carte
+      <Indicateur
         libelle={t('statistiques.satisfaction')}
         valeur={
           summary.satisfaction === null

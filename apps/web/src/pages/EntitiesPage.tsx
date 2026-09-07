@@ -5,6 +5,8 @@ import { useTranslation } from 'react-i18next';
 import { PluginSlot } from '@/components/PluginSlot';
 import { IconPlus } from '@/components/ui/icons';
 import {
+  ACTION_LIGNE,
+  ACTION_LIGNE_DANGER,
   Button,
   Card,
   CardBody,
@@ -232,8 +234,9 @@ export function EntitiesPage({ session }: { session: SessionContext }) {
                 <Td className="text-right">
                   <div className="flex justify-end gap-2">
                     {peutModifier && (
-                      <Button
-                        taille="sm"
+                      <button
+                        type="button"
+                        className={ACTION_LIGNE}
                         onClick={() => {
                           setEdite({
                             id: entite.id,
@@ -244,12 +247,12 @@ export function EntitiesPage({ session }: { session: SessionContext }) {
                         }}
                       >
                         {t('entites.modifier')}
-                      </Button>
+                      </button>
                     )}
                     {peutSupprimer && (
-                      <Button
-                        taille="sm"
-                        variante="danger"
+                      <button
+                        type="button"
+                        className={ACTION_LIGNE_DANGER}
                         disabled={entite.level === 0}
                         onClick={() => {
                           if (globalThis.confirm(t('entites.confirmerSuppression'))) {
@@ -258,7 +261,7 @@ export function EntitiesPage({ session }: { session: SessionContext }) {
                         }}
                       >
                         {t('entites.supprimer')}
-                      </Button>
+                      </button>
                     )}
                   </div>
                 </Td>

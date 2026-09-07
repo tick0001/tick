@@ -4,6 +4,7 @@ import { useState, type FormEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { IconPlus, IconRecherche } from '@/components/ui/icons';
 import {
+  ACTION_LIGNE,
   Badge,
   Button,
   Card,
@@ -340,8 +341,9 @@ export function UsersPage() {
                       <Badge ton="neutre">{t('administration.utilisateurs.actif')} ✕</Badge>
                     )}
                     {peutModifier && (
-                      <Button
-                        taille="sm"
+                      <button
+                        type="button"
+                        className={ACTION_LIGNE}
                         onClick={() => {
                           setEdite({
                             id: utilisateur.id,
@@ -357,7 +359,7 @@ export function UsersPage() {
                         }}
                       >
                         {t('entites.modifier')}
-                      </Button>
+                      </button>
                     )}
                   </div>
                 </Td>

@@ -86,7 +86,7 @@ export function SurveysPage({ session }: { session: SessionContext }) {
 
   return (
     <section className="space-y-6">
-      <header className="space-y-1">
+      <header className="space-y-1 border-b-2 border-ink pb-3">
         <h2 className="text-xl font-semibold tracking-tight">{t('enquetes.titre')}</h2>
         <p className="max-w-2xl text-sm text-muted">{t('enquetes.intro')}</p>
         <p className="text-sm text-muted">

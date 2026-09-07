@@ -4,6 +4,7 @@ import { useState, type FormEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { IconPlus } from '@/components/ui/icons';
 import {
+  ACTION_LIGNE_DANGER,
   Badge,
   Button,
   Card,
@@ -20,6 +21,7 @@ import {
 } from '@/components/ui/primitives';
 import { ApiError, api } from '@/lib/api';
 import { usePeut } from '@/lib/session';
+import { cn } from '@/lib/utils';
 
 const VIDE: UpsertGroup = {
   name: '',
@@ -203,10 +205,10 @@ export function GroupsPage() {
         <EmptyState title={t('administration.groupes.aucun')} />
       )}
 
-      <div className="grid gap-3 lg:grid-cols-2">
+      <div className="divide-y divide-line border-y border-line">
         {(liste.data ?? []).map((groupe) => (
-          <Card key={groupe.id}>
-            <CardBody className="space-y-3">
+          <div key={groupe.id}>
+            <div className="space-y-3 px-1 py-3.5">
               <div className="flex flex-wrap items-center gap-2">
                 <h3 className="text-sm font-semibold">{groupe.name}</h3>
                 <Badge ton="neutre">{groupe.entityName}</Badge>
@@ -289,20 +291,19 @@ export function GroupsPage() {
                 </Button>
 
                 {peutSupprimer && (
-                  <Button
-                    taille="sm"
-                    variante="danger"
-                    className="ml-auto"
+                  <button
+                    type="button"
+                    className={cn(ACTION_LIGNE_DANGER, 'ml-auto')}
                     onClick={() => {
                       supprimer.mutate(groupe.id);
                     }}
                   >
                     {t('entites.supprimer')}
-                  </Button>
+                  </button>
                 )}
               </div>
-            </CardBody>
-          </Card>
+            </div>
+          </div>
         ))}
       </div>
 

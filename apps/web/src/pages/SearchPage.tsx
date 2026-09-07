@@ -5,7 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router';
 import { PriorityBadge, StatusBadge } from '@/components/TicketBadges';
 import { ApiError, api } from '@/lib/api';
-import { CONTROLE } from '@/components/ui/primitives';
+import { SectionTitle, CONTROLE } from '@/components/ui/primitives';
 
 interface Ligne {
   field: string;
@@ -508,9 +508,12 @@ export function SearchPage() {
       </section>
 
       <aside className="space-y-3">
-        <h3 className="text-sm font-semibold">{t('recherche.mesRecherches')}</h3>
+        <SectionTitle>{t('recherche.mesRecherches')}</SectionTitle>
 
-        <div className="space-y-2 rounded-card border border-line bg-surface p-3 shadow-card">
+        {/* Le formulaire d'enregistrement n'est plus une carte dans la colonne :
+            une boite bordee dans une colonne deja bordee ajoute un cadre pour
+            rien, et fait paraitre la colonne vide plus vide encore. */}
+        <div className="space-y-2">
           <input
             value={nom}
             onChange={(event) => {
@@ -545,12 +548,9 @@ export function SearchPage() {
           <p className="text-xs text-muted">{t('recherche.aucuneEnregistree')}</p>
         )}
 
-        <ul className="space-y-1">
+        <ul className="divide-y divide-line border-y border-line">
           {(enregistrees.data ?? []).map((element) => (
-            <li
-              key={element.id}
-              className="flex items-center gap-2 rounded-lg border border-line px-2 py-1.5 text-sm"
-            >
+            <li key={element.id} className="flex items-center gap-2 py-1.5 text-sm">
               <button
                 type="button"
                 onClick={() => {

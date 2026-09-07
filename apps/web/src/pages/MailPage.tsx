@@ -4,7 +4,14 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ApiError, api } from '@/lib/api';
 import { usePeut } from '@/lib/session';
-import { BOUTON, BOUTON_PRIMAIRE, CARTE, CONTROLE } from '@/components/ui/primitives';
+import {
+  PageHeader,
+  ACTION_LIGNE,
+  BOUTON,
+  BOUTON_PRIMAIRE,
+  CARTE,
+  CONTROLE,
+} from '@/components/ui/primitives';
 
 const APRES_LECTURE: MailAfterRead[] = ['flag', 'move', 'delete'];
 
@@ -126,21 +133,23 @@ export function MailPage() {
 
   return (
     <section className="space-y-6">
-      <header className="flex items-center justify-between gap-3">
-        <h2 className="text-xl font-semibold tracking-tight">{t('courriel.titre')}</h2>
-        <p className="max-w-2xl text-sm text-muted">{t('courriel.intro')}</p>
-        {peutEcrire && (
-          <button
-            type="button"
-            className={BOUTON_PRIMAIRE}
-            onClick={() => {
-              setEdite({ valeurs: collecteurVide(collecteurs.data?.[0]?.profileId ?? 1) });
-            }}
-          >
-            {t('courriel.nouveau')}
-          </button>
-        )}
-      </header>
+      <PageHeader
+        title={t('courriel.titre')}
+        description={t('courriel.intro')}
+        action={
+          peutEcrire && (
+            <button
+              type="button"
+              className={BOUTON_PRIMAIRE}
+              onClick={() => {
+                setEdite({ valeurs: collecteurVide(collecteurs.data?.[0]?.profileId ?? 1) });
+              }}
+            >
+              {t('courriel.nouveau')}
+            </button>
+          )
+        }
+      />
 
       {erreur && <p className="text-sm text-critical">{erreur}</p>}
 
@@ -148,9 +157,9 @@ export function MailPage() {
         <p className="text-sm text-muted">{t('courriel.aucun')}</p>
       )}
 
-      <div className="grid gap-2 md:grid-cols-2">
+      <div className="divide-y divide-line border-y border-line">
         {collecteurs.data?.map((collecteur) => (
-          <div key={collecteur.id} className={CARTE}>
+          <div key={collecteur.id} className="px-1 py-3">
             <div className="flex items-start justify-between gap-2">
               <div className="space-y-1">
                 <p className="font-medium">
@@ -179,7 +188,7 @@ export function MailPage() {
               <div className="flex flex-wrap justify-end gap-1">
                 <button
                   type="button"
-                  className={BOUTON}
+                  className={ACTION_LIGNE}
                   onClick={() => {
                     relever.mutate(collecteur.id);
                   }}
@@ -191,7 +200,7 @@ export function MailPage() {
                 </button>
                 <button
                   type="button"
-                  className={BOUTON}
+                  className={ACTION_LIGNE}
                   onClick={() => {
                     setJournal(journal === collecteur.id ? null : collecteur.id);
                   }}
@@ -200,7 +209,7 @@ export function MailPage() {
                 </button>
                 <button
                   type="button"
-                  className={BOUTON}
+                  className={ACTION_LIGNE}
                   onClick={() => {
                     setEdite({ id: collecteur.id, valeurs: versFormulaire(collecteur) });
                   }}
@@ -209,7 +218,7 @@ export function MailPage() {
                 </button>
                 <button
                   type="button"
-                  className={BOUTON}
+                  className={ACTION_LIGNE}
                   onClick={() => {
                     supprimer.mutate(collecteur.id);
                   }}

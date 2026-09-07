@@ -13,7 +13,7 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ApiError, api } from '@/lib/api';
 import { usePeut } from '@/lib/session';
-import { BOUTON, BOUTON_PRIMAIRE, CARTE, CONTROLE } from '@/components/ui/primitives';
+import { ACTION_LIGNE, BOUTON, BOUTON_PRIMAIRE, CARTE, CONTROLE } from '@/components/ui/primitives';
 
 const JOURS = [1, 2, 3, 4, 5, 6, 0];
 
@@ -204,7 +204,7 @@ export function ServiceLevelsPage() {
 
       {/* ---- Calendriers ---- */}
       <div className="space-y-3">
-        <header className="flex items-center justify-between gap-3">
+        <header className="flex items-center justify-between gap-3 border-b-2 border-ink pb-3">
           <h2 className="text-xl font-semibold tracking-tight">{t('calendriers.titre')}</h2>
           <p className="max-w-2xl text-sm text-muted">{t('calendriers.intro')}</p>
           {peutEcrire && (
@@ -224,9 +224,9 @@ export function ServiceLevelsPage() {
           <p className="text-sm text-muted">{t('calendriers.aucun')}</p>
         )}
 
-        <div className="grid gap-2 md:grid-cols-2">
+        <div className="divide-y divide-line border-y border-line">
           {calendriers.data?.map((calendrier) => (
-            <div key={calendrier.id} className={CARTE}>
+            <div key={calendrier.id} className="px-1 py-3">
               <div className="flex items-start justify-between gap-2">
                 <div>
                   <p className="font-medium">{calendrier.name}</p>
@@ -238,7 +238,7 @@ export function ServiceLevelsPage() {
                 <div className="flex gap-1">
                   <button
                     type="button"
-                    className={BOUTON}
+                    className={ACTION_LIGNE}
                     onClick={() => {
                       setCalendrierEdite({
                         id: calendrier.id,
@@ -250,7 +250,7 @@ export function ServiceLevelsPage() {
                   </button>
                   <button
                     type="button"
-                    className={BOUTON}
+                    className={ACTION_LIGNE}
                     onClick={() => {
                       supprimerCalendrier.mutate(calendrier.id);
                     }}
@@ -521,9 +521,9 @@ export function ServiceLevelsPage() {
           <p className="text-sm text-muted">{t('engagements.aucun')}</p>
         )}
 
-        <div className="grid gap-2 md:grid-cols-2">
+        <div className="divide-y divide-line border-y border-line">
           {engagements.data?.map((engagement) => (
-            <div key={engagement.id} className={CARTE}>
+            <div key={engagement.id} className="px-1 py-3">
               <div className="flex items-start justify-between gap-2">
                 <div>
                   <p className="font-medium">{engagement.name}</p>
@@ -537,7 +537,7 @@ export function ServiceLevelsPage() {
                 <div className="flex gap-1">
                   <button
                     type="button"
-                    className={BOUTON}
+                    className={ACTION_LIGNE}
                     onClick={() => {
                       setEngagementEdite({
                         id: engagement.id,
@@ -549,7 +549,7 @@ export function ServiceLevelsPage() {
                   </button>
                   <button
                     type="button"
-                    className={BOUTON}
+                    className={ACTION_LIGNE}
                     onClick={() => {
                       supprimerEngagement.mutate(engagement.id);
                     }}

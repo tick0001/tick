@@ -3,8 +3,16 @@ import type { KbArticle, SessionContext, UpsertKbArticle } from '@tick/contracts
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ApiError, api } from '@/lib/api';
+import { cn } from '@/lib/utils';
 import { peut } from '@/lib/droits';
-import { BOUTON, BOUTON_PRIMAIRE, CARTE, CONTROLE } from '@/components/ui/primitives';
+import {
+  PageHeader,
+  FilterBar,
+  BOUTON,
+  BOUTON_PRIMAIRE,
+  CARTE,
+  CONTROLE,
+} from '@/components/ui/primitives';
 
 function articleVide(): UpsertKbArticle {
   return {
@@ -134,26 +142,28 @@ export function KnowledgePage({ session }: { session: SessionContext }) {
 
   return (
     <section className="space-y-5">
-      <header className="flex flex-wrap items-center justify-between gap-3">
-        <h2 className="text-xl font-semibold tracking-tight">{t('connaissance.titre')}</h2>
-        <p className="max-w-2xl text-sm text-muted">{t('connaissance.intro')}</p>
-        {peutEcrire && (
-          <button
-            type="button"
-            className={BOUTON_PRIMAIRE}
-            onClick={() => {
-              setEdite({ valeurs: articleVide() });
-              setOuvert(null);
-            }}
-          >
-            {t('connaissance.nouveau')}
-          </button>
-        )}
-      </header>
+      <PageHeader
+        title={t('connaissance.titre')}
+        description={t('connaissance.intro')}
+        action={
+          peutEcrire && (
+            <button
+              type="button"
+              className={BOUTON_PRIMAIRE}
+              onClick={() => {
+                setEdite({ valeurs: articleVide() });
+                setOuvert(null);
+              }}
+            >
+              {t('connaissance.nouveau')}
+            </button>
+          )
+        }
+      />
 
       {erreur && <p className="text-sm text-critical">{erreur}</p>}
 
-      <div className="flex flex-wrap items-center gap-2">
+      <FilterBar>
         <input
           className={`${CONTROLE} w-64`}
           placeholder={t('connaissance.rechercher')}
@@ -188,10 +198,10 @@ export function KnowledgePage({ session }: { session: SessionContext }) {
           />
           <span>{t('connaissance.mesFavoris')}</span>
         </label>
-      </div>
+      </FilterBar>
 
       <div className="grid gap-4 lg:grid-cols-[22rem_1fr]">
-        <ul className="space-y-2">
+        <ul className="divide-y divide-line border-y border-line">
           {articles.data?.length === 0 && (
             <li className="text-sm text-muted">{t('connaissance.aucun')}</li>
           )}
@@ -204,16 +214,22 @@ export function KnowledgePage({ session }: { session: SessionContext }) {
                   setOuvert(resume.id);
                   setEdite(null);
                 }}
-                className={`${CARTE} w-full text-left transition hover:bg-sunken ${
-                  ouvert === resume.id ? 'border-brand' : ''
-                }`}
+                className={cn(
+                  // Une entree de liste, pas une carte : empilees dans une
+                  // colonne etroite, les cartes ajoutent trois bordures et deux
+                  // fonds la ou un filet suffit -- et l'oeil ne descend plus.
+                  'w-full border-l-2 px-3 py-3 text-left transition-colors',
+                  ouvert === resume.id
+                    ? 'border-l-brand bg-sunken'
+                    : 'border-l-transparent hover:bg-sunken',
+                )}
               >
-                <p className="font-medium">
-                  {resume.isFavorite && <span className="mr-1">★</span>}
+                <p className="text-sm font-semibold text-ink">
+                  {resume.isFavorite && <span className="mr-1 text-caution">★</span>}
                   {resume.name}
                 </p>
-                <p className="mt-1 text-xs text-muted">{resume.excerpt}</p>
-                <p className="mt-1 text-xs text-muted">
+                <p className="mt-0.5 line-clamp-2 text-xs text-muted">{resume.excerpt}</p>
+                <p className="mt-1.5 text-[11px] tracking-wide text-faint uppercase">
                   {resume.categoryName ?? '—'}
                   {resume.isFaq ? ` · ${t('connaissance.faq')}` : ''}
                   {!resume.isPublished ? ` · ${t('connaissance.brouillon')}` : ''} ·{' '}

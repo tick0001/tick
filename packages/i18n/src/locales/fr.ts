@@ -208,6 +208,7 @@ export const fr = {
     obligatoire: 'obligatoire',
   },
   creation: {
+    intro: 'Décrivez la demande ; le gabarit choisi préremplit ce qui peut l’être.',
     titre: 'Nouveau ticket',
     sujet: 'Sujet',
     description: 'Description',
@@ -538,6 +539,7 @@ export const fr = {
     envoyer: 'Envoyer la demande',
   },
   formulaires: {
+    intro: 'Formulaires du catalogue : questions, ciblage et objet créé à la soumission.',
     titre: 'Formulaires',
     nouveau: 'Nouveau formulaire',
     nom: 'Nom',

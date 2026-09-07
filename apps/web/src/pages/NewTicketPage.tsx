@@ -76,109 +76,128 @@ export function NewTicketPage() {
   };
 
   return (
-    <form onSubmit={soumettre} className="mx-auto max-w-2xl space-y-4">
-      <PageHeader title={t('creation.titre')} />
+    <form onSubmit={soumettre} className="mx-auto max-w-4xl space-y-5">
+      <PageHeader title={t('creation.titre')} description={t('creation.intro')} />
 
-      <label className="block space-y-1">
-        <span className="text-sm font-medium">{t('gabarits.titre')}</span>
-        <select
-          value={gabaritId ?? ''}
-          onChange={(event) => {
-            appliquerGabarit(event.target.value ? Number(event.target.value) : null);
-          }}
-          className={CONTROLE}
-        >
-          <option value="">{t('gabarits.aucun')}</option>
-          {(gabarits.data ?? []).map((modele) => (
-            <option key={modele.id} value={modele.id}>
-              {modele.name}
-            </option>
-          ))}
-        </select>
-      </label>
-
-      <label className="block space-y-1">
-        <span className="text-sm font-medium">
-          {t('creation.sujet')}
-          {requis('name') && <span className="text-red-600"> *</span>}
-        </span>
-        <input
-          value={saisie.name}
-          required={requis('name')}
-          onChange={(event) => {
-            setSaisie((precedent) => ({ ...precedent, name: event.target.value }));
-          }}
-          className={CONTROLE}
-        />
-      </label>
-
-      <label className="block space-y-1">
-        <span className="text-sm font-medium">
-          {t('creation.description')}
-          {requis('content') && <span className="text-red-600"> *</span>}
-        </span>
-        <textarea
-          value={saisie.content}
-          required={requis('content')}
-          rows={6}
-          onChange={(event) => {
-            setSaisie((precedent) => ({ ...precedent, content: event.target.value }));
-          }}
-          className={CONTROLE}
-        />
-      </label>
-
-      <div className="grid gap-4 sm:grid-cols-3">
-        {!masque('type') && (
+      {/*
+        Deux colonnes, et non une pile de champs pleine largeur.
+        A gauche ce qu'on ecrit -- le sujet et le recit, qui prennent de la
+        place ; a droite ce qu'on choisit -- gabarit, type, severites, qui
+        tiennent en une ligne chacun. Empiler les huit champs sur toute la
+        largeur etire le sujet sur 40 caracteres inutiles et repousse le bouton
+        de creation sous la ligne de flottaison.
+      */}
+      <div className="grid gap-6 lg:grid-cols-[1fr_16rem]">
+        <div className="min-w-0 space-y-4">
           <label className="block space-y-1">
-            <span className="text-sm font-medium">{t('creation.type')}</span>
-            <select
-              value={saisie.type}
+            <span className="text-sm font-medium">
+              {t('creation.sujet')}
+              {requis('name') && <span className="text-red-600"> *</span>}
+            </span>
+            <input
+              value={saisie.name}
+              required={requis('name')}
               onChange={(event) => {
-                setSaisie((precedent) => ({
-                  ...precedent,
-                  type: event.target.value as CreateTicket['type'],
-                }));
+                setSaisie((precedent) => ({ ...precedent, name: event.target.value }));
+              }}
+              className={CONTROLE}
+            />
+          </label>
+
+          <label className="block space-y-1">
+            <span className="text-sm font-medium">
+              {t('creation.description')}
+              {requis('content') && <span className="text-red-600"> *</span>}
+            </span>
+            <textarea
+              value={saisie.content}
+              required={requis('content')}
+              rows={6}
+              onChange={(event) => {
+                setSaisie((precedent) => ({ ...precedent, content: event.target.value }));
+              }}
+              className={CONTROLE}
+            />
+          </label>
+        </div>
+
+        <aside className="space-y-4">
+          <label className="block space-y-1">
+            <span className="text-sm font-medium">{t('gabarits.titre')}</span>
+            <select
+              value={gabaritId ?? ''}
+              onChange={(event) => {
+                appliquerGabarit(event.target.value ? Number(event.target.value) : null);
               }}
               className={CONTROLE}
             >
-              <option value="incident">{t('tickets.types.incident')}</option>
-              <option value="request">{t('tickets.types.request')}</option>
+              <option value="">{t('gabarits.aucun')}</option>
+              {(gabarits.data ?? []).map((modele) => (
+                <option key={modele.id} value={modele.id}>
+                  {modele.name}
+                </option>
+              ))}
             </select>
           </label>
-        )}
 
-        {(['urgency', 'impact'] as const).map((cle) =>
-          masque(cle) ? null : (
-            <label key={cle} className="block space-y-1">
-              <span className="text-sm font-medium">
-                {cle === 'urgency' ? t('tickets.detail.urgence') : t('tickets.detail.impact')}
-              </span>
-              <select
-                value={saisie[cle]}
-                onChange={(event) => {
-                  setSaisie((precedent) => ({ ...precedent, [cle]: Number(event.target.value) }));
-                }}
-                className={CONTROLE}
-              >
-                {[1, 2, 3, 4, 5].map((niveau) => (
-                  <option key={niveau} value={niveau}>
-                    {niveau}
-                  </option>
-                ))}
-              </select>
-            </label>
-          ),
-        )}
+          <div className="space-y-4">
+            {!masque('type') && (
+              <label className="block space-y-1">
+                <span className="text-sm font-medium">{t('creation.type')}</span>
+                <select
+                  value={saisie.type}
+                  onChange={(event) => {
+                    setSaisie((precedent) => ({
+                      ...precedent,
+                      type: event.target.value as CreateTicket['type'],
+                    }));
+                  }}
+                  className={CONTROLE}
+                >
+                  <option value="incident">{t('tickets.types.incident')}</option>
+                  <option value="request">{t('tickets.types.request')}</option>
+                </select>
+              </label>
+            )}
+
+            {(['urgency', 'impact'] as const).map((cle) =>
+              masque(cle) ? null : (
+                <label key={cle} className="block space-y-1">
+                  <span className="text-sm font-medium">
+                    {cle === 'urgency' ? t('tickets.detail.urgence') : t('tickets.detail.impact')}
+                  </span>
+                  <select
+                    value={saisie[cle]}
+                    onChange={(event) => {
+                      setSaisie((precedent) => ({
+                        ...precedent,
+                        [cle]: Number(event.target.value),
+                      }));
+                    }}
+                    className={CONTROLE}
+                  >
+                    {[1, 2, 3, 4, 5].map((niveau) => (
+                      <option key={niveau} value={niveau}>
+                        {niveau}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              ),
+            )}
+          </div>
+        </aside>
       </div>
 
       {creation.error && (
-        <p className="rounded-md border border-critical/30 bg-critical-soft p-3 text-sm text-critical-ink">
+        <p className="border border-critical/30 bg-critical-soft p-3 text-sm text-critical-ink">
           {creation.error.message}
         </p>
       )}
 
-      <div className="flex items-center gap-3">
+      {/* Le pied d'action est separe par un filet : il clot la saisie, il n'en
+          fait pas partie. */}
+      <div className="flex items-center gap-3 border-t border-line pt-4">
         <button
           type="submit"
           disabled={creation.isPending}

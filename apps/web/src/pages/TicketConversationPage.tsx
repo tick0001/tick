@@ -67,14 +67,21 @@ function Bulle({ message, horodatage }: { message: Message; horodatage: string }
           <span className="tabular-nums"> · {horodatage}</span>
         </p>
 
+        {/*
+          Le vermillon est la couleur de signal : il designe ce sur quoi on agit.
+          L'employer comme fond de bulle en ferait de la decoration, et un fil de
+          dix messages en serait sature. Ce qui distingue « moi » de « le
+          support » est l'alignement et le filet -- une bulle bordee de vermillon
+          a droite, une bulle sur papier a gauche.
+        */}
         <div
           className={cn(
-            'rounded-2xl px-3.5 py-2.5 text-left text-sm leading-relaxed whitespace-pre-wrap',
+            'px-3.5 py-2.5 text-left text-sm leading-relaxed whitespace-pre-wrap',
             message.nature === 'solution'
-              ? 'border border-positive/30 bg-positive-soft text-positive-ink'
+              ? 'border-l-2 border-positive bg-positive-soft text-positive-ink'
               : message.deMoi
-                ? 'bg-brand text-on-brand'
-                : 'border border-line bg-surface text-ink shadow-card',
+                ? 'border-r-2 border-brand bg-brand-soft text-ink'
+                : 'border-l-2 border-line-strong bg-surface text-ink',
           )}
         >
           {message.nature !== 'message' && (

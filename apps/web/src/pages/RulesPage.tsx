@@ -168,7 +168,7 @@ export function RulesPage() {
 
   return (
     <section className="space-y-6">
-      <header className="flex flex-wrap items-center justify-between gap-3">
+      <header className="flex flex-wrap items-center justify-between gap-3 border-b-2 border-ink pb-3">
         <div className="flex items-center gap-3">
           <h2 className="text-xl font-semibold tracking-tight">{t('regles.titre')}</h2>
           <p className="max-w-2xl text-sm text-muted">{t('regles.intro')}</p>

@@ -11,7 +11,14 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ApiError, api } from '@/lib/api';
 import { usePeut } from '@/lib/session';
-import { BOUTON, BOUTON_PRIMAIRE, CARTE, CONTROLE } from '@/components/ui/primitives';
+import {
+  PageHeader,
+  ACTION_LIGNE,
+  BOUTON,
+  BOUTON_PRIMAIRE,
+  CARTE,
+  CONTROLE,
+} from '@/components/ui/primitives';
 
 const NATURES: FormQuestionKind[] = [
   'text',
@@ -180,20 +187,23 @@ export function FormsPage() {
 
   return (
     <section className="space-y-5">
-      <header className="flex items-center justify-between gap-3">
-        <h2 className="text-xl font-semibold tracking-tight">{t('formulaires.titre')}</h2>
-        {peutEcrire && (
-          <button
-            type="button"
-            className={BOUTON_PRIMAIRE}
-            onClick={() => {
-              setEdite({ valeurs: formulaireVide() });
-            }}
-          >
-            {t('formulaires.nouveau')}
-          </button>
-        )}
-      </header>
+      <PageHeader
+        title={t('formulaires.titre')}
+        description={t('formulaires.intro')}
+        action={
+          peutEcrire && (
+            <button
+              type="button"
+              className={BOUTON_PRIMAIRE}
+              onClick={() => {
+                setEdite({ valeurs: formulaireVide() });
+              }}
+            >
+              {t('formulaires.nouveau')}
+            </button>
+          )
+        }
+      />
 
       {erreur && <p className="text-sm text-critical">{erreur}</p>}
 
@@ -201,9 +211,9 @@ export function FormsPage() {
         <p className="text-sm text-muted">{t('formulaires.aucun')}</p>
       )}
 
-      <div className="grid gap-2 md:grid-cols-2">
+      <div className="divide-y divide-line border-y border-line">
         {formulaires.data?.map((forme) => (
-          <div key={forme.id} className={CARTE}>
+          <div key={forme.id} className="px-1 py-3">
             <div className="flex items-start justify-between gap-2">
               <div>
                 <p className="font-medium">{forme.name}</p>
@@ -219,7 +229,7 @@ export function FormsPage() {
               <div className="flex gap-1">
                 <button
                   type="button"
-                  className={BOUTON}
+                  className={ACTION_LIGNE}
                   onClick={() => {
                     setEdite({ id: forme.id, valeurs: versFormulaire(forme) });
                   }}
@@ -228,7 +238,7 @@ export function FormsPage() {
                 </button>
                 <button
                   type="button"
-                  className={BOUTON}
+                  className={ACTION_LIGNE}
                   onClick={() => {
                     supprimer.mutate(forme.id);
                   }}

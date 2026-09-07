@@ -4,6 +4,8 @@ import { useMemo, useState, type FormEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { IconPlus } from '@/components/ui/icons';
 import {
+  ACTION_LIGNE,
+  ACTION_LIGNE_DANGER,
   Badge,
   Button,
   Card,
@@ -312,10 +314,17 @@ export function ProfilesPage() {
         <EmptyState title={t('administration.profils.aucun')} />
       )}
 
-      <div className="grid gap-3 lg:grid-cols-2">
+      {/*
+        Une liste a filets, pas une grille de cartes.
+        Un profil est une liste de droits : sur deux colonnes, la ligne de droits
+        se coupe au bout de huit et perd ce qu'elle avait a montrer. Pleine
+        largeur, elle se lit -- et deux profils se comparent en balayant la
+        colonne, ce qu'une grille interdit.
+      */}
+      <div className="border-y border-line">
         {(liste.data ?? []).map((profil) => (
-          <Card key={profil.id}>
-            <CardBody className="space-y-2">
+          <div key={profil.id} className="border-b border-line/70 last:border-0">
+            <div className="space-y-2 px-1 py-3.5">
               <div className="flex flex-wrap items-center gap-2">
                 <h3 className="text-sm font-semibold">{profil.name}</h3>
                 <Badge ton={profil.interface === 'self_service' ? 'info' : 'marque'}>
@@ -331,19 +340,19 @@ export function ProfilesPage() {
 
               {profil.comment && <p className="text-sm text-muted">{profil.comment}</p>}
 
-              <p className="text-xs text-faint">
+              {/* Les droits en chasse fixe : ce sont des identifiants, pas de
+                  la prose, et l'alignement rend la comparaison possible. */}
+              <p className="font-mono text-[11px] leading-relaxed text-faint">
                 {profil.rights.length === 0
                   ? t('administration.profils.aucunDroit')
-                  : profil.rights
-                      .map((droit) => `${droit.object}:${droit.action}`)
-                      .slice(0, 8)
-                      .join(' · ') + (profil.rights.length > 8 ? ' …' : '')}
+                  : profil.rights.map((droit) => `${droit.object}:${droit.action}`).join('  ')}
               </p>
 
               <div className="flex gap-2 pt-1">
                 {peutEcrire && (
-                  <Button
-                    taille="sm"
+                  <button
+                    type="button"
+                    className={ACTION_LIGNE}
                     onClick={() => {
                       setEdite({
                         id: profil.id,
@@ -358,23 +367,23 @@ export function ProfilesPage() {
                     }}
                   >
                     {t('entites.modifier')}
-                  </Button>
+                  </button>
                 )}
                 {peutEcrire && (
-                  <Button
-                    taille="sm"
-                    variante="danger"
+                  <button
+                    type="button"
+                    className={ACTION_LIGNE_DANGER}
                     disabled={profil.usageCount > 0}
                     onClick={() => {
                       supprimer.mutate(profil.id);
                     }}
                   >
                     {t('entites.supprimer')}
-                  </Button>
+                  </button>
                 )}
               </div>
-            </CardBody>
-          </Card>
+            </div>
+          </div>
         ))}
       </div>
 

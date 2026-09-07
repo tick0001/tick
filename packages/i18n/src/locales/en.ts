@@ -207,6 +207,7 @@ export const en: Traductions = {
     obligatoire: 'required',
   },
   creation: {
+    intro: 'Describe the request; the chosen template prefills what it can.',
     titre: 'New ticket',
     sujet: 'Subject',
     description: 'Description',
@@ -537,6 +538,7 @@ export const en: Traductions = {
     envoyer: 'Send the request',
   },
   formulaires: {
+    intro: 'Catalogue forms: questions, targeting and the object created on submission.',
     titre: 'Forms',
     nouveau: 'New form',
     nom: 'Name',

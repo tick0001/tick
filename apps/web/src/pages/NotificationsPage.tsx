@@ -10,7 +10,7 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ApiError, api } from '@/lib/api';
 import { usePeut } from '@/lib/session';
-import { BOUTON, BOUTON_PRIMAIRE, CARTE, CONTROLE } from '@/components/ui/primitives';
+import { ACTION_LIGNE, BOUTON, BOUTON_PRIMAIRE, CARTE, CONTROLE } from '@/components/ui/primitives';
 
 const CIBLES: NotificationTarget[] = [
   'requester',
@@ -154,7 +154,7 @@ export function NotificationsPage() {
 
       {/* ---- Préférences, accessibles à tous ---- */}
       <div className="space-y-3">
-        <header className="space-y-1">
+        <header className="space-y-1 border-b-2 border-ink pb-3">
           <h2 className="text-xl font-semibold tracking-tight">
             {t('notifications.preferences.titre')}
           </h2>
@@ -207,9 +207,9 @@ export function NotificationsPage() {
               <p className="text-sm text-muted">{t('notifications.aucun')}</p>
             )}
 
-            <div className="grid gap-2 md:grid-cols-2">
+            <div className="divide-y divide-line border-y border-line">
               {modeles.data?.map((modele) => (
-                <div key={modele.id} className={CARTE}>
+                <div key={modele.id} className="px-1 py-3">
                   <div className="flex items-start justify-between gap-2">
                     <div className="space-y-1">
                       <p className="font-medium">
@@ -241,7 +241,7 @@ export function NotificationsPage() {
                     <div className="flex gap-1">
                       <button
                         type="button"
-                        className={BOUTON}
+                        className={ACTION_LIGNE}
                         onClick={() => {
                           setEdite({ id: modele.id, valeurs: versFormulaire(modele) });
                         }}
@@ -250,7 +250,7 @@ export function NotificationsPage() {
                       </button>
                       <button
                         type="button"
-                        className={BOUTON}
+                        className={ACTION_LIGNE}
                         onClick={() => {
                           supprimer.mutate(modele.id);
                         }}
