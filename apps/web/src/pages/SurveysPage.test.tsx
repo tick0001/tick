@@ -27,7 +27,9 @@ const CONFIGS: SatisfactionConfig[] = [
     entityName: 'Racine',
     isRecursive: true,
     isActive: true,
-    percentage: 30,
+    // 35 et non 30 : le defaut du formulaire vaut 30, et une valeur identique
+    // rendrait le garde de chargement aveugle.
+    percentage: 35,
     delayDays: 1,
     durationDays: 30,
     reminderDays: 7,
@@ -63,6 +65,9 @@ const DROITS = tousDroits(['satisfaction']);
  * Le formulaire s'affiche avant la réponse du serveur, avec les valeurs par
  * défaut : agir tout de suite reviendrait à vérifier ces défauts, et le test
  * passerait quelle que soit la réponse.
+ *
+ * Le taux attendu doit donc **différer du défaut**, sans quoi le garde se
+ * satisfait de l'état initial et ne garde rien.
  */
 async function attendreChargement(taux: number): Promise<HTMLElement> {
   const champ = await screen.findByLabelText(/Part des tickets clos/);
@@ -86,7 +91,7 @@ describe('SurveysPage', () => {
 
     // L'entite active est la racine : c'est son taux de 30 % qui s'affiche, et
     // non les 80 % de la DSI qui figurent pourtant dans la meme reponse.
-    await attendreChargement(30);
+    await attendreChargement(35);
 
     expect(screen.getByLabelText(/Relance après/)).toHaveValue(7);
     expect(screen.getByLabelText(/Validité du lien/)).toHaveValue(30);
@@ -115,10 +120,14 @@ describe('SurveysPage', () => {
 
     monterPage(<SurveysPage session={autre} />, { droits: DROITS });
 
-    // Aucune configuration posee ici : le formulaire part des defauts plutot
-    // que de reprendre ceux d'une entite voisine.
-    await attendreChargement(30);
+    // Ici le garde ne peut pas s'appuyer sur le taux, qui vaut justement le
+    // defaut : on attend que les resultats soient peints, ce qui atteste que
+    // les deux requetes ont repondu.
+    await screen.findByText('120');
 
+    // Aucune configuration posee ici : le formulaire part des defauts plutot
+    // que de reprendre les 35 % de la racine ou les 80 % de la DSI.
+    expect(screen.getByLabelText(/Part des tickets clos/)).toHaveValue(30);
     expect(screen.getByLabelText(/Relance après/)).toHaveValue(null);
   });
 
@@ -139,7 +148,7 @@ describe('SurveysPage', () => {
 
     monterPage(<SurveysPage session={sessionFactice(DROITS)} />, { droits: DROITS });
 
-    const taux = await attendreChargement(30);
+    const taux = await attendreChargement(35);
 
     await utilisateur.clear(taux);
     await utilisateur.type(taux, '50');
@@ -155,7 +164,7 @@ describe('SurveysPage', () => {
 
     monterPage(<SurveysPage session={lecture} />, { droits: { 'satisfaction:read': 'all' } });
 
-    await attendreChargement(30);
+    await attendreChargement(35);
 
     expect(screen.queryByRole('button', { name: 'Enregistrer' })).not.toBeInTheDocument();
   });
@@ -169,7 +178,7 @@ describe('SurveysPage', () => {
 
     monterPage(<SurveysPage session={sessionFactice(DROITS)} />, { droits: DROITS });
 
-    const taux = await attendreChargement(30);
+    const taux = await attendreChargement(35);
 
     await utilisateur.clear(taux);
     await utilisateur.type(taux, '40');
