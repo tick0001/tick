@@ -14,7 +14,9 @@ import { useTranslation } from 'react-i18next';
 import { ApiError, api } from '@/lib/api';
 import { FormPreview } from '@/components/FormPreview';
 import { usePeut } from '@/lib/session';
+import { cn } from '@/lib/utils';
 import {
+  Tabs,
   ACTION_LIGNE_DANGER,
   SectionTitle,
   PageHeader,
@@ -224,6 +226,16 @@ export function FormsPage() {
   const queryClient = useQueryClient();
 
   const [edite, setEdite] = useState<{ id?: number; valeurs: UpsertForm } | null>(null);
+
+  /**
+   * Onglet courant de l'éditeur.
+   *
+   * Trois préoccupations distinctes vivaient sur une seule page : ce qu'est le
+   * formulaire, ce qu'il demande, et ce qu'il crée. Empilées, elles imposent un
+   * défilement de plusieurs écrans où l'on perd de vue ce qu'on est en train de
+   * régler. Elles se traitent l'une après l'autre, jamais ensemble.
+   */
+  const [onglet, setOnglet] = useState<'formulaire' | 'questions' | 'destination'>('formulaire');
   const [erreur, setErreur] = useState<string | null>(null);
 
   const formulaires = useQuery({ queryKey: ['forms'], queryFn: api.forms, retry: false });
@@ -312,6 +324,7 @@ export function FormsPage() {
               className={BOUTON_PRIMAIRE}
               onClick={() => {
                 setEdite({ valeurs: formulaireVide() });
+                setOnglet('formulaire');
               }}
             >
               {t('formulaires.nouveau')}
@@ -326,7 +339,7 @@ export function FormsPage() {
         <p className="text-sm text-muted">{t('formulaires.aucun')}</p>
       )}
 
-      <div className="divide-y divide-line border-y border-line">
+      <div className={cn('divide-y divide-line border-y border-line', edite && 'hidden')}>
         {formulaires.data?.map((forme) => (
           <div key={forme.id} className="px-1 py-3">
             <div className="flex items-start justify-between gap-2">
@@ -375,366 +388,398 @@ export function FormsPage() {
           }}
         >
           <div className="min-w-0 space-y-5">
-            <div className="grid gap-3 md:grid-cols-4">
-              <label className="space-y-1 md:col-span-2">
-                <span className="block text-[11px] font-semibold tracking-wider text-faint uppercase">
-                  {t('formulaires.nom')}
-                </span>
-                <input
-                  className={CONTROLE}
-                  required
-                  value={edite.valeurs.name}
-                  onChange={(event) => {
-                    maj({ name: event.target.value });
-                  }}
-                />
-              </label>
+            <div className="flex flex-wrap items-center justify-between gap-3 border-b-2 border-ink pb-3">
+              <h3 className="text-lg font-bold tracking-tight text-ink">
+                {edite.id === undefined
+                  ? t('formulaires.nouveau')
+                  : edite.valeurs.name || t('formulaires.nom')}
+              </h3>
 
-              <label className="space-y-1">
-                <span className="block text-[11px] font-semibold tracking-wider text-faint uppercase">
-                  {t('formulaires.rubrique')}
-                </span>
-                <input
-                  className={CONTROLE}
-                  value={edite.valeurs.category ?? ''}
-                  onChange={(event) => {
-                    maj({ category: event.target.value || null });
-                  }}
-                />
-              </label>
-
-              <label className="space-y-1">
-                <span className="block text-[11px] font-semibold tracking-wider text-faint uppercase">
-                  {t('formulaires.rang')}
-                </span>
-                <input
-                  type="number"
-                  className={CONTROLE}
-                  value={edite.valeurs.ranking}
-                  onChange={(event) => {
-                    maj({ ranking: Number(event.target.value) });
-                  }}
-                />
-              </label>
-
-              <label className="space-y-1 md:col-span-3">
-                <span className="block text-[11px] font-semibold tracking-wider text-faint uppercase">
-                  {t('formulaires.description')}
-                </span>
-                <input
-                  className={CONTROLE}
-                  value={edite.valeurs.description ?? ''}
-                  onChange={(event) => {
-                    maj({ description: event.target.value || null });
-                  }}
-                />
-              </label>
-
-              <div className="flex flex-col justify-end gap-1 text-sm">
-                <label className="flex items-center gap-2">
-                  <input
-                    type="checkbox"
-                    checked={edite.valeurs.isActive}
-                    onChange={(event) => {
-                      maj({ isActive: event.target.checked });
-                    }}
-                  />
-                  <span>{t('notifications.actif')}</span>
-                </label>
-                <label className="flex items-center gap-2">
-                  <input
-                    type="checkbox"
-                    checked={edite.valeurs.isRecursive}
-                    onChange={(event) => {
-                      maj({ isRecursive: event.target.checked });
-                    }}
-                  />
-                  <span>{t('commun.recursif')}</span>
-                </label>
-              </div>
+              <Tabs
+                value={onglet}
+                onChange={setOnglet}
+                options={[
+                  { value: 'formulaire', label: t('formulaires.ongletFormulaire') },
+                  {
+                    value: 'questions',
+                    // Le compte evite d'ouvrir l'onglet pour savoir s'il est vide.
+                    label: `${t('formulaires.ongletQuestions')} · ${String(plates.length)}`,
+                  },
+                  { value: 'destination', label: t('formulaires.ongletDestination') },
+                ]}
+              />
             </div>
 
-            {/* ---- Sections et questions ---- */}
-            {edite.valeurs.sections.map((section, indexSection) => (
-              /* La section n'est plus une boite : un numero, un titre et un filet.
-               Des boites dans des boites de meme poids -- section, question,
-               condition -- empechent de voir ou une question se termine. */
-              <div key={indexSection} className="space-y-3">
-                <div className="flex items-center gap-2 border-b border-line pb-2">
-                  <span className="grid size-5 shrink-0 place-items-center rounded-[2px] bg-ink text-[10px] font-bold text-canvas tabular-nums">
-                    {String(indexSection + 1)}
+            {onglet === 'formulaire' && (
+              <div className="grid gap-3 md:grid-cols-4">
+                <label className="space-y-1 md:col-span-2">
+                  <span className="block text-[11px] font-semibold tracking-wider text-faint uppercase">
+                    {t('formulaires.nom')}
                   </span>
                   <input
-                    className="min-w-0 flex-1 border-0 bg-transparent p-0 text-sm font-semibold text-ink placeholder:text-faint focus:outline-none"
+                    className={CONTROLE}
                     required
-                    placeholder={t('formulaires.section')}
-                    value={section.name}
+                    value={edite.valeurs.name}
                     onChange={(event) => {
-                      maj({
-                        sections: edite.valeurs.sections.map((autre, position) =>
-                          position === indexSection
-                            ? { ...autre, name: event.target.value }
-                            : autre,
-                        ),
-                      });
+                      maj({ name: event.target.value });
                     }}
                   />
-                  <button
-                    type="button"
-                    className={ACTION_LIGNE_DANGER}
-                    onClick={() => {
-                      maj({
-                        sections: edite.valeurs.sections.filter(
-                          (_, position) => position !== indexSection,
-                        ),
-                      });
+                </label>
+
+                <label className="space-y-1">
+                  <span className="block text-[11px] font-semibold tracking-wider text-faint uppercase">
+                    {t('formulaires.rubrique')}
+                  </span>
+                  <input
+                    className={CONTROLE}
+                    value={edite.valeurs.category ?? ''}
+                    onChange={(event) => {
+                      maj({ category: event.target.value || null });
                     }}
-                  >
-                    {t('recherche.retirer')}
-                  </button>
+                  />
+                </label>
+
+                <label className="space-y-1">
+                  <span className="block text-[11px] font-semibold tracking-wider text-faint uppercase">
+                    {t('formulaires.rang')}
+                  </span>
+                  <input
+                    type="number"
+                    className={CONTROLE}
+                    value={edite.valeurs.ranking}
+                    onChange={(event) => {
+                      maj({ ranking: Number(event.target.value) });
+                    }}
+                  />
+                </label>
+
+                <label className="space-y-1 md:col-span-3">
+                  <span className="block text-[11px] font-semibold tracking-wider text-faint uppercase">
+                    {t('formulaires.description')}
+                  </span>
+                  <input
+                    className={CONTROLE}
+                    value={edite.valeurs.description ?? ''}
+                    onChange={(event) => {
+                      maj({ description: event.target.value || null });
+                    }}
+                  />
+                </label>
+
+                <div className="flex flex-col justify-end gap-1 text-sm">
+                  <label className="flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      checked={edite.valeurs.isActive}
+                      onChange={(event) => {
+                        maj({ isActive: event.target.checked });
+                      }}
+                    />
+                    <span>{t('notifications.actif')}</span>
+                  </label>
+                  <label className="flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      checked={edite.valeurs.isRecursive}
+                      onChange={(event) => {
+                        maj({ isRecursive: event.target.checked });
+                      }}
+                    />
+                    <span>{t('commun.recursif')}</span>
+                  </label>
                 </div>
+              </div>
+            )}
 
-                {section.questions.map((question, indexQuestion) => {
-                  const rang =
-                    plates.find((plate) => plate.question === question && plate.rang >= 0)?.rang ??
-                    0;
+            {/* ---- Sections et questions ---- */}
+            {onglet === 'questions' && (
+              <>
+                {edite.valeurs.sections.map((section, indexSection) => (
+                  /* La section n'est plus une boite : un numero, un titre et un filet.
+                   Des boites dans des boites de meme poids -- section, question,
+                   condition -- empechent de voir ou une question se termine. */
+                  <div key={indexSection} className="space-y-3">
+                    <div className="flex items-center gap-2 border-b border-line pb-2">
+                      <span className="grid size-5 shrink-0 place-items-center rounded-[2px] bg-ink text-[10px] font-bold text-canvas tabular-nums">
+                        {String(indexSection + 1)}
+                      </span>
+                      <input
+                        className="min-w-0 flex-1 border-0 bg-transparent p-0 text-sm font-semibold text-ink placeholder:text-faint focus:outline-none"
+                        required
+                        placeholder={t('formulaires.section')}
+                        value={section.name}
+                        onChange={(event) => {
+                          maj({
+                            sections: edite.valeurs.sections.map((autre, position) =>
+                              position === indexSection
+                                ? { ...autre, name: event.target.value }
+                                : autre,
+                            ),
+                          });
+                        }}
+                      />
+                      <button
+                        type="button"
+                        className={ACTION_LIGNE_DANGER}
+                        onClick={() => {
+                          maj({
+                            sections: edite.valeurs.sections.filter(
+                              (_, position) => position !== indexSection,
+                            ),
+                          });
+                        }}
+                      >
+                        {t('recherche.retirer')}
+                      </button>
+                    </div>
 
-                  return (
-                    <div key={indexQuestion} className="space-y-2 border-l-2 border-line py-2 pl-3">
-                      <div className="flex flex-wrap items-center gap-2">
-                        {/* Le rang est technique : il sert aux conditions et aux
-                          correspondances, qui designent les questions par lui.
-                          Il reste donc visible, mais discret. */}
-                        <span className="w-5 font-mono text-[10px] text-faint tabular-nums">
-                          {String(rang)}
-                        </span>
+                    {section.questions.map((question, indexQuestion) => {
+                      const rang =
+                        plates.find((plate) => plate.question === question && plate.rang >= 0)
+                          ?.rang ?? 0;
 
-                        <input
-                          className={`${CONTROLE} min-w-0 flex-1`}
-                          required
-                          placeholder={t('formulaires.libelle')}
-                          value={question.label}
-                          onChange={(event) => {
-                            majQuestion(indexSection, indexQuestion, { label: event.target.value });
-                          }}
-                        />
-
-                        <select
-                          className={`${CONTROLE} w-40`}
-                          value={question.kind}
-                          onChange={(event) => {
-                            majQuestion(indexSection, indexQuestion, {
-                              kind: event.target.value as FormQuestionKind,
-                            });
-                          }}
+                      return (
+                        <div
+                          key={indexQuestion}
+                          className="space-y-2 border-l-2 border-line py-2 pl-3"
                         >
-                          {NATURES.map((nature) => (
-                            <option key={nature} value={nature}>
-                              {t(`formulaires.natures.${nature}`)}
-                            </option>
-                          ))}
-                        </select>
+                          <div className="flex flex-wrap items-center gap-2">
+                            {/* Le rang est technique : il sert aux conditions et aux
+                              correspondances, qui designent les questions par lui.
+                              Il reste donc visible, mais discret. */}
+                            <span className="w-5 font-mono text-[10px] text-faint tabular-nums">
+                              {String(rang)}
+                            </span>
 
-                        <label className="flex items-center gap-1 text-xs">
-                          <input
-                            type="checkbox"
-                            checked={question.isRequired}
-                            onChange={(event) => {
-                              majQuestion(indexSection, indexQuestion, {
-                                isRequired: event.target.checked,
-                              });
-                            }}
-                          />
-                          {t('formulaires.obligatoire')}
-                        </label>
+                            <input
+                              className={`${CONTROLE} min-w-0 flex-1`}
+                              required
+                              placeholder={t('formulaires.libelle')}
+                              value={question.label}
+                              onChange={(event) => {
+                                majQuestion(indexSection, indexQuestion, {
+                                  label: event.target.value,
+                                });
+                              }}
+                            />
 
-                        <button
-                          type="button"
-                          className={ACTION_LIGNE_DANGER}
-                          onClick={() => {
-                            maj({
-                              sections: edite.valeurs.sections.map((autre, position) =>
-                                position !== indexSection
-                                  ? autre
-                                  : {
-                                      ...autre,
-                                      questions: autre.questions.filter(
-                                        (_, rangQuestion) => rangQuestion !== indexQuestion,
-                                      ),
-                                    },
-                              ),
-                            });
-                          }}
-                        >
-                          {t('recherche.retirer')}
-                        </button>
-                      </div>
-
-                      {question.kind === 'select' && (
-                        <label className="block space-y-1">
-                          <span className="block text-[11px] font-semibold tracking-wider text-faint uppercase">
-                            {t('formulaires.choix')}
-                          </span>
-                          <textarea
-                            className={`${CONTROLE} h-20`}
-                            placeholder={t('formulaires.choix')}
-                            value={question.options.join('\n')}
-                            onChange={(event) => {
-                              majQuestion(indexSection, indexQuestion, {
-                                options: event.target.value.split('\n').filter(Boolean),
-                              });
-                            }}
-                          />
-                        </label>
-                      )}
-
-                      {question.conditions.map((condition, indexCondition) => (
-                        <div key={indexCondition} className="flex flex-wrap items-center gap-2">
-                          <span className="block text-[11px] font-semibold tracking-wider text-faint uppercase">
-                            {t('formulaires.conditions')}
-                          </span>
-
-                          <select
-                            className={`${CONTROLE} w-56`}
-                            value={condition.dependsOn}
-                            onChange={(event) => {
-                              majQuestion(indexSection, indexQuestion, {
-                                conditions: question.conditions.map((autre, position) =>
-                                  position === indexCondition
-                                    ? { ...autre, dependsOn: Number(event.target.value) }
-                                    : autre,
-                                ),
-                              });
-                            }}
-                          >
-                            {plates
-                              .filter((plate) => plate.rang < rang)
-                              .map((plate) => (
-                                <option key={plate.rang} value={plate.rang}>
-                                  {String(plate.rang)} — {plate.question.label}
+                            <select
+                              className={`${CONTROLE} w-40`}
+                              value={question.kind}
+                              onChange={(event) => {
+                                majQuestion(indexSection, indexQuestion, {
+                                  kind: event.target.value as FormQuestionKind,
+                                });
+                              }}
+                            >
+                              {NATURES.map((nature) => (
+                                <option key={nature} value={nature}>
+                                  {t(`formulaires.natures.${nature}`)}
                                 </option>
                               ))}
-                          </select>
+                            </select>
 
-                          <select
-                            className={`${CONTROLE} w-40`}
-                            value={condition.operator}
-                            onChange={(event) => {
-                              majQuestion(indexSection, indexQuestion, {
-                                conditions: question.conditions.map((autre, position) =>
-                                  position === indexCondition
-                                    ? { ...autre, operator: event.target.value as RuleOperator }
-                                    : autre,
-                                ),
-                              });
-                            }}
-                          >
-                            {OPERATEURS.map((operateur) => (
-                              <option key={operateur} value={operateur}>
-                                {t(`regles.operateurs.${operateur}`)}
-                              </option>
-                            ))}
-                          </select>
+                            <label className="flex items-center gap-1 text-xs">
+                              <input
+                                type="checkbox"
+                                checked={question.isRequired}
+                                onChange={(event) => {
+                                  majQuestion(indexSection, indexQuestion, {
+                                    isRequired: event.target.checked,
+                                  });
+                                }}
+                              />
+                              {t('formulaires.obligatoire')}
+                            </label>
 
-                          <input
-                            className={`${CONTROLE} w-40`}
-                            value={condition.value ?? ''}
-                            onChange={(event) => {
-                              majQuestion(indexSection, indexQuestion, {
-                                conditions: question.conditions.map((autre, position) =>
-                                  position === indexCondition
-                                    ? { ...autre, value: event.target.value }
-                                    : autre,
-                                ),
-                              });
-                            }}
-                          />
+                            <button
+                              type="button"
+                              className={ACTION_LIGNE_DANGER}
+                              onClick={() => {
+                                maj({
+                                  sections: edite.valeurs.sections.map((autre, position) =>
+                                    position !== indexSection
+                                      ? autre
+                                      : {
+                                          ...autre,
+                                          questions: autre.questions.filter(
+                                            (_, rangQuestion) => rangQuestion !== indexQuestion,
+                                          ),
+                                        },
+                                  ),
+                                });
+                              }}
+                            >
+                              {t('recherche.retirer')}
+                            </button>
+                          </div>
 
-                          <button
-                            type="button"
-                            className={BOUTON}
-                            onClick={() => {
-                              majQuestion(indexSection, indexQuestion, {
-                                conditions: question.conditions.filter(
-                                  (_, position) => position !== indexCondition,
-                                ),
-                              });
-                            }}
-                          >
-                            {t('recherche.retirer')}
-                          </button>
+                          {question.kind === 'select' && (
+                            <label className="block space-y-1">
+                              <span className="block text-[11px] font-semibold tracking-wider text-faint uppercase">
+                                {t('formulaires.choix')}
+                              </span>
+                              <textarea
+                                className={`${CONTROLE} h-20`}
+                                placeholder={t('formulaires.choix')}
+                                value={question.options.join('\n')}
+                                onChange={(event) => {
+                                  majQuestion(indexSection, indexQuestion, {
+                                    options: event.target.value.split('\n').filter(Boolean),
+                                  });
+                                }}
+                              />
+                            </label>
+                          )}
+
+                          {question.conditions.map((condition, indexCondition) => (
+                            <div key={indexCondition} className="flex flex-wrap items-center gap-2">
+                              <span className="block text-[11px] font-semibold tracking-wider text-faint uppercase">
+                                {t('formulaires.conditions')}
+                              </span>
+
+                              <select
+                                className={`${CONTROLE} w-56`}
+                                value={condition.dependsOn}
+                                onChange={(event) => {
+                                  majQuestion(indexSection, indexQuestion, {
+                                    conditions: question.conditions.map((autre, position) =>
+                                      position === indexCondition
+                                        ? { ...autre, dependsOn: Number(event.target.value) }
+                                        : autre,
+                                    ),
+                                  });
+                                }}
+                              >
+                                {plates
+                                  .filter((plate) => plate.rang < rang)
+                                  .map((plate) => (
+                                    <option key={plate.rang} value={plate.rang}>
+                                      {String(plate.rang)} — {plate.question.label}
+                                    </option>
+                                  ))}
+                              </select>
+
+                              <select
+                                className={`${CONTROLE} w-40`}
+                                value={condition.operator}
+                                onChange={(event) => {
+                                  majQuestion(indexSection, indexQuestion, {
+                                    conditions: question.conditions.map((autre, position) =>
+                                      position === indexCondition
+                                        ? { ...autre, operator: event.target.value as RuleOperator }
+                                        : autre,
+                                    ),
+                                  });
+                                }}
+                              >
+                                {OPERATEURS.map((operateur) => (
+                                  <option key={operateur} value={operateur}>
+                                    {t(`regles.operateurs.${operateur}`)}
+                                  </option>
+                                ))}
+                              </select>
+
+                              <input
+                                className={`${CONTROLE} w-40`}
+                                value={condition.value ?? ''}
+                                onChange={(event) => {
+                                  majQuestion(indexSection, indexQuestion, {
+                                    conditions: question.conditions.map((autre, position) =>
+                                      position === indexCondition
+                                        ? { ...autre, value: event.target.value }
+                                        : autre,
+                                    ),
+                                  });
+                                }}
+                              />
+
+                              <button
+                                type="button"
+                                className={BOUTON}
+                                onClick={() => {
+                                  majQuestion(indexSection, indexQuestion, {
+                                    conditions: question.conditions.filter(
+                                      (_, position) => position !== indexCondition,
+                                    ),
+                                  });
+                                }}
+                              >
+                                {t('recherche.retirer')}
+                              </button>
+                            </div>
+                          ))}
+
+                          {rang > 0 && (
+                            <button
+                              type="button"
+                              className={BOUTON}
+                              onClick={() => {
+                                majQuestion(indexSection, indexQuestion, {
+                                  conditions: [
+                                    ...question.conditions,
+                                    { dependsOn: 0, operator: 'is', value: '' },
+                                  ],
+                                });
+                              }}
+                            >
+                              {t('formulaires.ajouterCondition')}
+                            </button>
+                          )}
                         </div>
-                      ))}
+                      );
+                    })}
 
-                      {rang > 0 && (
-                        <button
-                          type="button"
-                          className={BOUTON}
-                          onClick={() => {
-                            majQuestion(indexSection, indexQuestion, {
-                              conditions: [
-                                ...question.conditions,
-                                { dependsOn: 0, operator: 'is', value: '' },
-                              ],
-                            });
-                          }}
-                        >
-                          {t('formulaires.ajouterCondition')}
-                        </button>
-                      )}
-                    </div>
-                  );
-                })}
+                    <button
+                      type="button"
+                      className={BOUTON}
+                      onClick={() => {
+                        maj({
+                          sections: edite.valeurs.sections.map((autre, position) =>
+                            position !== indexSection
+                              ? autre
+                              : {
+                                  ...autre,
+                                  questions: [
+                                    ...autre.questions,
+                                    {
+                                      kind: 'text' as const,
+                                      label: '',
+                                      description: null,
+                                      isRequired: false,
+                                      options: [],
+                                      defaultValue: null,
+                                      conditions: [],
+                                    },
+                                  ],
+                                },
+                          ),
+                        });
+                      }}
+                    >
+                      {t('formulaires.ajouterQuestion')}
+                    </button>
+                  </div>
+                ))}
 
                 <button
                   type="button"
                   className={BOUTON}
                   onClick={() => {
                     maj({
-                      sections: edite.valeurs.sections.map((autre, position) =>
-                        position !== indexSection
-                          ? autre
-                          : {
-                              ...autre,
-                              questions: [
-                                ...autre.questions,
-                                {
-                                  kind: 'text' as const,
-                                  label: '',
-                                  description: null,
-                                  isRequired: false,
-                                  options: [],
-                                  defaultValue: null,
-                                  conditions: [],
-                                },
-                              ],
-                            },
-                      ),
+                      sections: [
+                        ...edite.valeurs.sections,
+                        { name: '', description: null, questions: [] },
+                      ],
                     });
                   }}
                 >
-                  {t('formulaires.ajouterQuestion')}
+                  {t('formulaires.ajouterSection')}
                 </button>
-              </div>
-            ))}
+              </>
+            )}
 
-            <button
-              type="button"
-              className={BOUTON}
-              onClick={() => {
-                maj({
-                  sections: [
-                    ...edite.valeurs.sections,
-                    { name: '', description: null, questions: [] },
-                  ],
-                });
-              }}
-            >
-              {t('formulaires.ajouterSection')}
-            </button>
-
-            {/* ---- Correspondances ---- */}
-            {destination && (
+            {onglet === 'destination' && destination && (
               <div className="space-y-2">
                 <p className="text-xs font-medium text-muted">{t('formulaires.correspondances')}</p>
 
@@ -842,9 +887,13 @@ export function FormsPage() {
               </div>
             )}
 
-            {/* Le pied d'action clot la construction : il en est separe par un
-                filet, comme sur un bordereau. */}
-            <div className="flex gap-2 border-t border-line pt-4">
+            {/*
+              Le pied d'action reste sous les yeux.
+              L'onglet « Questions » est long par nature : laisser « Enregistrer »
+              tout en bas obligerait a redescendre tout le formulaire apres chaque
+              retouche, et c'est ainsi qu'on perd une saisie en changeant d'ecran.
+            */}
+            <div className="sticky bottom-0 -mx-1 flex gap-2 border-t border-line bg-canvas px-1 py-3">
               <button type="submit" className={BOUTON_PRIMAIRE}>
                 {t('commun.enregistrer')}
               </button>
