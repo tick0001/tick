@@ -1,21 +1,65 @@
 import { z } from 'zod';
 import { ruleOperatorSchema } from './slm.js';
 
+/**
+ * Natures de question, calquées sur le jeu de GLPI.
+ *
+ * Trois familles, et la distinction compte pour le rendu comme pour la
+ * validation :
+ *
+ *  - **la saisie libre** — texte, nombre, date, courriel, adresse. Le type dit
+ *    au navigateur quel clavier ouvrir sur téléphone et quelle vérification
+ *    faire avant l'envoi ;
+ *  - **le choix** — liste, boutons, cases. Un choix unique déployé (`radio`) et
+ *    un choix unique replié (`select`) ne se valent pas : au-delà de six
+ *    options la liste repliée devient plus lisible, en deçà elle cache ce
+ *    qu'elle propose ;
+ *  - **ce que le formulaire sait déjà** — urgence, type de demande, personne,
+ *    groupe. Ces réponses alimentent directement le ticket, et les demander en
+ *    texte libre obligerait à les retraduire à la main.
+ *
+ * `description` n'est pas une question : c'est un bloc de texte qui explique,
+ * et qui n'attend rien. GLPI en fait une nature à part entière parce qu'un
+ * formulaire sans consigne se remplit de travers, et qu'un paragraphe d'aide
+ * n'a pas à devenir un champ qu'on laisse vide.
+ */
 export const formQuestionKindSchema = z.enum([
+  // Saisie libre
   'text',
   'textarea',
   'number',
   'date',
+  'time',
+  'datetime',
+  'email',
+  'url',
+
+  // Choix
   'select',
+  'radio',
   'multiselect',
   'checkbox',
+
+  // Ce que le ticket attend
+  'urgency',
+  'requesttype',
   'user',
   'group',
   'location',
   'category',
-  'urgency',
+
+  // Ne demande rien
+  'description',
 ]);
+
 export type FormQuestionKind = z.infer<typeof formQuestionKindSchema>;
+
+/** Natures dont la valeur se choisit dans une liste rédigée par l'auteur. */
+export const KINDS_A_OPTIONS: readonly FormQuestionKind[] = ['select', 'radio', 'multiselect'];
+
+/** Natures qui n'attendent aucune réponse : elles informent. */
+export const KINDS_SANS_REPONSE: readonly FormQuestionKind[] = ['description'];
+
 
 export const formTargetTypeSchema = z.enum(['profile', 'group', 'user']);
 export type FormTargetType = z.infer<typeof formTargetTypeSchema>;

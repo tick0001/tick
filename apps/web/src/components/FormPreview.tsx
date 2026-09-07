@@ -1,6 +1,7 @@
-import type { FormQuestion, UpsertForm } from '@tick/contracts';
+import type { UpsertForm } from '@tick/contracts';
 import { useTranslation } from 'react-i18next';
-import { CONTROLE, SectionTitle } from '@/components/ui/primitives';
+import { FormField, type Referentiels } from '@/components/FormField';
+import { SectionTitle } from '@/components/ui/primitives';
 
 /**
  * Le formulaire tel que le demandeur le verra.
@@ -16,59 +17,13 @@ import { CONTROLE, SectionTitle } from '@/components/ui/primitives';
  * obligatoire — pas le remplissage.
  */
 
-function Champ({ question }: { question: FormQuestion }) {
-  const { t } = useTranslation();
-
-  const commun = {
-    className: CONTROLE,
-    disabled: true,
-    value: '',
-    readOnly: true,
-  } as const;
-
-  return (
-    <label className="block space-y-1">
-      <span className="block text-[11px] font-semibold tracking-wider text-faint uppercase">
-        {question.label || t('formulaires.libelle')}
-        {question.isRequired && <span className="text-brand"> *</span>}
-      </span>
-
-      {question.description && (
-        <span className="block text-xs text-muted">{question.description}</span>
-      )}
-
-      {question.kind === 'textarea' && <textarea {...commun} className={`${CONTROLE} h-20`} />}
-
-      {(question.kind === 'select' || question.kind === 'urgency') && (
-        <select className={CONTROLE} disabled value="">
-          <option value="">—</option>
-          {(question.kind === 'urgency' ? ['1', '2', '3', '4', '5'] : question.options).map(
-            (option) => (
-              <option key={option} value={option}>
-                {question.kind === 'urgency'
-                  ? t(`tickets.priorites.p${option}` as 'tickets.priorites.p1')
-                  : option}
-              </option>
-            ),
-          )}
-        </select>
-      )}
-
-      {question.kind === 'checkbox' && (
-        <input type="checkbox" disabled className="size-4 rounded-[2px] border-line-strong" />
-      )}
-
-      {!['textarea', 'select', 'urgency', 'checkbox'].includes(question.kind) && (
-        <input
-          {...commun}
-          type={question.kind === 'number' ? 'number' : question.kind === 'date' ? 'date' : 'text'}
-        />
-      )}
-    </label>
-  );
-}
-
-export function FormPreview({ valeurs }: { valeurs: UpsertForm }) {
+export function FormPreview({
+  valeurs,
+  referentiels,
+}: {
+  valeurs: UpsertForm;
+  referentiels?: Referentiels;
+}) {
   const { t } = useTranslation();
 
   return (
@@ -92,7 +47,14 @@ export function FormPreview({ valeurs }: { valeurs: UpsertForm }) {
           ) : (
             <div className="space-y-3">
               {section.questions.map((question, rang) => (
-                <Champ key={rang} question={question} />
+                <FormField
+                  key={rang}
+                  question={question}
+                  valeur={null}
+                  onChange={() => undefined}
+                  inerte
+                  {...(referentiels ? { referentiels } : {})}
+                />
               ))}
             </div>
           )}

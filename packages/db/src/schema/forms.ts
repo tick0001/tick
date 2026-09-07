@@ -25,6 +25,15 @@ import { users } from './users.js';
  * façon de retomber sur un champ de ticket. Accepter un type libre reviendrait à
  * ne rien pouvoir garantir de la réponse.
  */
+/**
+ * Natures de question, calquees sur le jeu de GLPI.
+ *
+ * L'ordre suit celui du contrat : saisie libre, choix, ce que le ticket attend,
+ * puis ce qui n'attend rien. Les valeurs ajoutees le sont **a la fin** de
+ * l'enumeration PostgreSQL : `ALTER TYPE ... ADD VALUE` ne sait pas inserer au
+ * milieu sans reecrire le type, et l'ordre de declaration n'a ici aucun effet
+ * sur le tri -- c'est l'ecran qui groupe.
+ */
 export const formQuestionKindEnum = pgEnum('form_question_kind', [
   'text',
   'textarea',
@@ -38,6 +47,13 @@ export const formQuestionKindEnum = pgEnum('form_question_kind', [
   'location',
   'category',
   'urgency',
+  'time',
+  'datetime',
+  'email',
+  'url',
+  'radio',
+  'requesttype',
+  'description',
 ]);
 
 /** À qui un formulaire est ouvert. */

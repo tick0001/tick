@@ -9,6 +9,7 @@ import type {
   RuleOperator,
   UpsertForm,
 } from '@tick/contracts';
+import { KINDS_A_OPTIONS } from '@tick/contracts';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ApiError, api } from '@/lib/api';
@@ -26,14 +27,29 @@ import {
   CONTROLE,
 } from '@/components/ui/primitives';
 
-const NATURES: FormQuestionKind[] = [
-  'text',
-  'textarea',
-  'number',
-  'date',
-  'select',
-  'checkbox',
-  'urgency',
+/**
+ * Natures proposées à l'auteur, groupées comme dans GLPI.
+ *
+ * Le regroupement n'est pas décoratif : dix-neuf entrées dans une liste à plat
+ * obligent à lire toute la liste pour trouver « Adresse électronique ». Les
+ * familles disent d'emblée dans quelle direction chercher.
+ *
+ * `location` et `category` sont déclarées au contrat mais absentes d'ici : leur
+ * valeur se choisit dans un référentiel que l'API n'expose pas encore en
+ * lecture. Les proposer donnerait une liste vide, ce qui se lit comme une
+ * panne — mieux vaut ne pas les offrir tant qu'elles ne peuvent pas tenir.
+ */
+const FAMILLES: {
+  cle: 'saisie' | 'choix' | 'ticket' | 'information';
+  natures: FormQuestionKind[];
+}[] = [
+  {
+    cle: 'saisie',
+    natures: ['text', 'textarea', 'number', 'date', 'time', 'datetime', 'email', 'url'],
+  },
+  { cle: 'choix', natures: ['select', 'radio', 'multiselect', 'checkbox'] },
+  { cle: 'ticket', natures: ['urgency', 'requesttype', 'user', 'group'] },
+  { cle: 'information', natures: ['description'] },
 ];
 
 /** Opérateurs proposés pour une condition d'affichage. */
@@ -572,10 +588,17 @@ export function FormsPage() {
                                 });
                               }}
                             >
-                              {NATURES.map((nature) => (
-                                <option key={nature} value={nature}>
-                                  {t(`formulaires.natures.${nature}`)}
-                                </option>
+                              {FAMILLES.map((famille) => (
+                                <optgroup
+                                  key={famille.cle}
+                                  label={t(`formulaires.familles.${famille.cle}`)}
+                                >
+                                  {famille.natures.map((nature) => (
+                                    <option key={nature} value={nature}>
+                                      {t(`formulaires.natures.${nature}`)}
+                                    </option>
+                                  ))}
+                                </optgroup>
                               ))}
                             </select>
 
@@ -614,7 +637,7 @@ export function FormsPage() {
                             </button>
                           </div>
 
-                          {question.kind === 'select' && (
+                          {KINDS_A_OPTIONS.includes(question.kind) && (
                             <label className="block space-y-1">
                               <span className="block text-[11px] font-semibold tracking-wider text-faint uppercase">
                                 {t('formulaires.choix')}

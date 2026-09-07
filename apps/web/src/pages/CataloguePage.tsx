@@ -3,8 +3,9 @@ import type { FormQuestion } from '@tick/contracts';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router';
+import { FormField } from '@/components/FormField';
 import { api } from '@/lib/api';
-import { BOUTON, CARTE, CONTROLE } from '@/components/ui/primitives';
+import { BOUTON, CARTE } from '@/components/ui/primitives';
 
 type Reponses = Record<string, string | string[] | null>;
 
@@ -90,6 +91,20 @@ export function CataloguePage() {
     queryFn: api.catalogue,
     retry: false,
   });
+
+  /**
+   * Referentiels des questions qui designent une personne ou un groupe.
+   *
+   * `retry: false` et repli sur une liste vide : un demandeur n'a pas le droit
+   * de lister les comptes, et ce n'est pas une panne -- la question se rend
+   * alors sans choix, plutot que d'empecher tout le formulaire de s'afficher.
+   */
+  const comptes = useQuery({
+    queryKey: ['users', 'actifs'],
+    queryFn: () => api.users({ inactive: false }),
+    retry: false,
+  });
+  const groupes = useQuery({ queryKey: ['groups'], queryFn: api.groups, retry: false });
 
   const formulaire = useQuery({
     queryKey: ['catalogue-form', choisi],
@@ -213,74 +228,16 @@ export function CataloguePage() {
                 };
 
                 return (
-                  <label key={rang} className="block space-y-1">
-                    <span className="text-sm">
-                      {question.label}
-                      {question.isRequired && <span className="ml-1 text-brand">*</span>}
-                    </span>
-                    {question.description && (
-                      <span className="block text-xs text-muted">{question.description}</span>
-                    )}
-
-                    {question.kind === 'textarea' && (
-                      <textarea
-                        className={`${CONTROLE} h-28`}
-                        value={typeof valeur === 'string' ? valeur : ''}
-                        onChange={(event) => {
-                          poser(event.target.value);
-                        }}
-                      />
-                    )}
-
-                    {(question.kind === 'select' || question.kind === 'urgency') && (
-                      <select
-                        className={CONTROLE}
-                        value={typeof valeur === 'string' ? valeur : ''}
-                        onChange={(event) => {
-                          poser(event.target.value || null);
-                        }}
-                      >
-                        <option value="">—</option>
-                        {(question.kind === 'urgency'
-                          ? ['1', '2', '3', '4', '5']
-                          : question.options
-                        ).map((option) => (
-                          <option key={option} value={option}>
-                            {question.kind === 'urgency'
-                              ? t(`tickets.priorites.p${option}` as 'tickets.priorites.p1')
-                              : option}
-                          </option>
-                        ))}
-                      </select>
-                    )}
-
-                    {question.kind === 'checkbox' && (
-                      <input
-                        type="checkbox"
-                        checked={valeur === 'true'}
-                        onChange={(event) => {
-                          poser(event.target.checked ? 'true' : 'false');
-                        }}
-                      />
-                    )}
-
-                    {!['textarea', 'select', 'urgency', 'checkbox'].includes(question.kind) && (
-                      <input
-                        className={CONTROLE}
-                        type={
-                          question.kind === 'number'
-                            ? 'number'
-                            : question.kind === 'date'
-                              ? 'date'
-                              : 'text'
-                        }
-                        value={typeof valeur === 'string' ? valeur : ''}
-                        onChange={(event) => {
-                          poser(event.target.value || null);
-                        }}
-                      />
-                    )}
-                  </label>
+                  <FormField
+                    key={rang}
+                    question={question}
+                    valeur={valeur}
+                    onChange={poser}
+                    referentiels={{
+                      utilisateurs: comptes.data ?? [],
+                      groupes: groupes.data ?? [],
+                    }}
+                  />
                 );
               })}
             </fieldset>

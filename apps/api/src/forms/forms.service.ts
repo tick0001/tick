@@ -9,6 +9,7 @@ import type {
   TicketActorInput,
   UpsertForm,
 } from '@tick/contracts';
+import { KINDS_SANS_REPONSE } from '@tick/contracts';
 import {
   formAccess,
   formDestinations,
@@ -290,6 +291,11 @@ export class FormsService {
 
     for (const [rang, question] of questions.entries()) {
       if (!estVisible(question, rang, questions, reponses)) continue;
+
+      // Un bloc d'explication n'attend aucune reponse. Le marquer obligatoire
+      // est une erreur de saisie de l'auteur, pas une exigence a faire respecter
+      // au demandeur -- qui n'aurait aucun moyen d'y satisfaire.
+      if (KINDS_SANS_REPONSE.includes(question.kind)) continue;
       if (!question.isRequired) continue;
 
       const valeur = reponses[String(rang)];

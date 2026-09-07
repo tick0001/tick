@@ -116,6 +116,90 @@ describe('HTTP — libre-service', () => {
       expect(reponse.status).toBe(400);
     });
 
+    it('accepte les natures de question calquées sur GLPI', async () => {
+      // Les natures vivent a trois endroits -- le contrat Zod, l'enumeration
+      // PostgreSQL et l'ecran -- et une seule oubliee suffit a rendre la nature
+      // inutilisable. L'aller-retour complet est le seul moyen de le savoir.
+      const natures = [
+        'text',
+        'textarea',
+        'number',
+        'date',
+        'time',
+        'datetime',
+        'email',
+        'url',
+        'select',
+        'radio',
+        'multiselect',
+        'checkbox',
+        'urgency',
+        'requesttype',
+        'user',
+        'group',
+        'description',
+      ];
+
+      const reponse = await harnais
+        .admin()
+        .post('/api/forms')
+        .send({
+          name: PREFIXE + 'natures',
+          sections: [
+            {
+              name: 'Toutes les natures',
+              questions: natures.map((kind) => ({
+                kind,
+                label: 'Question ' + kind,
+                options: ['A', 'B'],
+              })),
+            },
+          ],
+        });
+
+      expect(reponse.status).toBe(201);
+      expect(reponse.body.sections[0].questions.map((q: { kind: string }) => q.kind)).toEqual(
+        natures,
+      );
+
+      await harnais.admin().delete('/api/forms/' + reponse.body.id);
+    });
+
+    it('n’exige jamais un bloc d’explication', async () => {
+      const forme = await harnais
+        .admin()
+        .post('/api/forms')
+        .send({
+          name: PREFIXE + 'explication',
+          sections: [
+            {
+              name: 'Consignes',
+              questions: [
+                // Marque obligatoire par erreur : le demandeur n'aurait aucun
+                // moyen d'y satisfaire, puisqu'il n'y a rien a saisir.
+                { kind: 'description', label: 'Lisez ceci', isRequired: true },
+                { kind: 'text', label: 'Votre nom' },
+              ],
+            },
+          ],
+          destinations: [
+            { kind: 'ticket', mappings: [{ field: 'name', source: 'question', question: 1 }] },
+          ],
+        });
+
+      expect(forme.status).toBe(201);
+
+      const soumission = await harnais
+        .admin()
+        .post('/api/catalogue/' + forme.body.id)
+        .send({ answers: { '1': 'Paul Durand' } });
+
+      expect(soumission.status).toBe(201);
+
+      await harnais.admin().delete('/api/tickets/' + soumission.body.ticketId);
+      await harnais.admin().delete('/api/forms/' + forme.body.id);
+    });
+
     it('modifie puis supprime le formulaire', async () => {
       const modification = await harnais
         .admin()
