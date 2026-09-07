@@ -23,6 +23,7 @@ import {
   Textarea,
 } from '@/components/ui/primitives';
 import { ApiError, api } from '@/lib/api';
+import { usePeut } from '@/lib/session';
 
 /** Une ligne de la fiche latérale : libellé au-dessus, valeur en dessous. */
 function Champ({ libelle, children }: { libelle: string; children: ReactNode }) {
@@ -36,6 +37,7 @@ function Champ({ libelle, children }: { libelle: string; children: ReactNode }) 
 
 export function TicketPage() {
   const { t, i18n } = useTranslation();
+  const peutEcrire = usePeut('ticket', 'update');
   const queryClient = useQueryClient();
   const params = useParams();
   const id = Number(params['id']);
@@ -135,61 +137,69 @@ export function TicketPage() {
             <Timeline entrees={timeline.data} locale={i18n.language} />
           </section>
 
-          <Card>
-            <CardHeader title={t('tickets.detail.ajouterSuivi')} />
-            <CardBody>
-              <form onSubmit={soumettre} className="space-y-3">
-                <Textarea
-                  value={suivi}
-                  onChange={(event) => {
-                    setSuivi(event.target.value);
-                  }}
-                  rows={3}
-                  placeholder={t('tickets.detail.suiviPlaceholder')}
-                />
-                <div className="flex flex-wrap items-center gap-3">
-                  <Checkbox
-                    checked={prive}
+          {peutEcrire && (
+            <Card>
+              <CardHeader title={t('tickets.detail.ajouterSuivi')} />
+              <CardBody>
+                <form onSubmit={soumettre} className="space-y-3">
+                  <Textarea
+                    value={suivi}
                     onChange={(event) => {
-                      setPrive(event.target.checked);
+                      setSuivi(event.target.value);
                     }}
-                    label={<span className="text-xs text-muted">{t('tickets.detail.suiviPrive')}</span>}
+                    rows={3}
+                    placeholder={t('tickets.detail.suiviPlaceholder')}
                   />
-                  <Button
-                    type="submit"
-                    variante="primaire"
-                    disabled={publier.isPending || suivi.trim().length === 0}
-                    className="ml-auto"
-                  >
-                    {t('tickets.detail.envoyer')}
-                  </Button>
-                </div>
-                <FieldError>{publier.error?.message}</FieldError>
-              </form>
-            </CardBody>
-          </Card>
+                  <div className="flex flex-wrap items-center gap-3">
+                    <Checkbox
+                      checked={prive}
+                      onChange={(event) => {
+                        setPrive(event.target.checked);
+                      }}
+                      label={
+                        <span className="text-xs text-muted">{t('tickets.detail.suiviPrive')}</span>
+                      }
+                    />
+                    <Button
+                      type="submit"
+                      variante="primaire"
+                      disabled={publier.isPending || suivi.trim().length === 0}
+                      className="ml-auto"
+                    >
+                      {t('tickets.detail.envoyer')}
+                    </Button>
+                  </div>
+                  <FieldError>{publier.error?.message}</FieldError>
+                </form>
+              </CardBody>
+            </Card>
+          )}
         </div>
 
         <aside className="space-y-4">
           <Card>
             <CardBody className="space-y-4">
-              <Field label={t('tickets.detail.changerStatut')}>
-                <Select
-                  value={detail.status}
-                  disabled={changerStatut.isPending}
-                  onChange={(event) => {
-                    changerStatut.mutate(itilStatusSchema.parse(event.target.value));
-                  }}
-                >
-                  {itilStatusSchema.options.map((statut) => (
-                    <option key={statut} value={statut}>
-                      {t(`tickets.statuts.${statut}`)}
-                    </option>
-                  ))}
-                </Select>
-              </Field>
+              {peutEcrire && (
+                <>
+                  <Field label={t('tickets.detail.changerStatut')}>
+                    <Select
+                      value={detail.status}
+                      disabled={changerStatut.isPending}
+                      onChange={(event) => {
+                        changerStatut.mutate(itilStatusSchema.parse(event.target.value));
+                      }}
+                    >
+                      {itilStatusSchema.options.map((statut) => (
+                        <option key={statut} value={statut}>
+                          {t(`tickets.statuts.${statut}`)}
+                        </option>
+                      ))}
+                    </Select>
+                  </Field>
 
-              <FieldError>{changerStatut.error?.message}</FieldError>
+                  <FieldError>{changerStatut.error?.message}</FieldError>
+                </>
+              )}
 
               <dl className="grid grid-cols-2 gap-x-3 gap-y-3.5 border-t border-line pt-4">
                 <Champ libelle={t('tickets.entite')}>{detail.entity.name}</Champ>

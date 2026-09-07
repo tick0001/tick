@@ -9,6 +9,7 @@ import type {
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ApiError, api } from '@/lib/api';
+import { usePeut } from '@/lib/session';
 import { BOUTON, BOUTON_PRIMAIRE, CARTE, CONTROLE } from '@/components/ui/primitives';
 
 const CIBLES: NotificationTarget[] = [
@@ -58,6 +59,7 @@ function versFormulaire(modele: NotificationTemplate): UpsertNotificationTemplat
  */
 export function NotificationsPage() {
   const { t } = useTranslation();
+  const peutEcrire = usePeut('notification', 'update');
   const queryClient = useQueryClient();
 
   const [edite, setEdite] = useState<{ id?: number; valeurs: UpsertNotificationTemplate } | null>(
@@ -156,9 +158,7 @@ export function NotificationsPage() {
           <h2 className="text-xl font-semibold tracking-tight">
             {t('notifications.preferences.titre')}
           </h2>
-          <p className="text-sm text-muted">
-            {t('notifications.preferences.description')}
-          </p>
+          <p className="text-sm text-muted">{t('notifications.preferences.description')}</p>
         </header>
 
         <ul className="grid gap-1 md:grid-cols-2">
@@ -188,17 +188,19 @@ export function NotificationsPage() {
           <div className="space-y-3">
             <header className="flex items-center justify-between gap-3">
               <h2 className="text-xl font-semibold tracking-tight">{t('notifications.modeles')}</h2>
-              <button
-                type="button"
-                className={BOUTON_PRIMAIRE}
-                onClick={() => {
-                  setEdite({
-                    valeurs: modeleVide(evenements.data?.[0]?.name ?? 'ticket.created'),
-                  });
-                }}
-              >
-                {t('notifications.nouveau')}
-              </button>
+              {peutEcrire && (
+                <button
+                  type="button"
+                  className={BOUTON_PRIMAIRE}
+                  onClick={() => {
+                    setEdite({
+                      valeurs: modeleVide(evenements.data?.[0]?.name ?? 'ticket.created'),
+                    });
+                  }}
+                >
+                  {t('notifications.nouveau')}
+                </button>
+              )}
             </header>
 
             {modeles.data?.length === 0 && (
@@ -432,15 +434,10 @@ export function NotificationsPage() {
 
                 {/* ---- Traductions ---- */}
                 <div className="space-y-3">
-                  <p className="text-xs font-medium text-muted">
-                    {t('notifications.traductions')}
-                  </p>
+                  <p className="text-xs font-medium text-muted">{t('notifications.traductions')}</p>
 
                   {edite.valeurs.translations.map((traduction, index) => (
-                    <div
-                      key={index}
-                      className="space-y-2 rounded-lg border border-line p-3"
-                    >
+                    <div key={index} className="space-y-2 rounded-lg border border-line p-3">
                       <div className="flex flex-wrap items-center gap-2">
                         <select
                           className={`${CONTROLE} w-28`}
@@ -606,17 +603,10 @@ export function NotificationsPage() {
                   </thead>
                   <tbody>
                     {file.data.map((message) => (
-                      <tr
-                        key={message.id}
-                        className="border-b border-line last:border-0"
-                      >
+                      <tr key={message.id} className="border-b border-line last:border-0">
                         <td className="px-3 py-2">
                           <span
-                            className={
-                              message.state === 'failed'
-                                ? 'text-critical'
-                                : 'text-muted'
-                            }
+                            className={message.state === 'failed' ? 'text-critical' : 'text-muted'}
                           >
                             {t(`notifications.etats.${message.state}`)}
                           </span>
@@ -625,9 +615,7 @@ export function NotificationsPage() {
                         <td className="px-3 py-2">
                           {message.subject}
                           {message.lastError && (
-                            <span className="block text-xs text-critical">
-                              {message.lastError}
-                            </span>
+                            <span className="block text-xs text-critical">{message.lastError}</span>
                           )}
                         </td>
                         <td className="px-3 py-2 tabular-nums">{message.attempts}</td>

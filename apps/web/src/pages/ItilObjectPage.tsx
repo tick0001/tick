@@ -17,12 +17,7 @@ import { ApiError, api } from '@/lib/api';
  * réclamer au compilateur des libellés pour `id` et `status`.
  */
 type ChampExtra =
-  | 'symptoms'
-  | 'causes'
-  | 'impacts'
-  | 'deploymentPlan'
-  | 'rollbackPlan'
-  | 'validationPlan';
+  'symptoms' | 'causes' | 'impacts' | 'deploymentPlan' | 'rollbackPlan' | 'validationPlan';
 
 const CHAMPS: Record<ItilKind, readonly ChampExtra[]> = {
   problem: ['symptoms', 'causes', 'impacts'],
@@ -130,9 +125,7 @@ export function ItilObjectPage({ kind }: { kind: ItilKind }) {
               className="space-y-1 rounded-card border border-line bg-surface p-4 shadow-card"
             >
               <h3 className="text-sm font-semibold">{t(`itil.champs.${champ}`)}</h3>
-              <p className="whitespace-pre-wrap text-sm text-muted">
-                {detail[champ] || '—'}
-              </p>
+              <p className="whitespace-pre-wrap text-sm text-muted">{detail[champ] || '—'}</p>
             </section>
           ))}
 
@@ -192,9 +185,7 @@ export function ItilObjectPage({ kind }: { kind: ItilKind }) {
                 {t('tickets.detail.envoyer')}
               </button>
             </div>
-            {publier.error && (
-              <p className="text-xs text-critical">{publier.error.message}</p>
-            )}
+            {publier.error && <p className="text-xs text-critical">{publier.error.message}</p>}
           </form>
         </div>
 

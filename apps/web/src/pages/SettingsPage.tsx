@@ -16,6 +16,7 @@ import {
   Select,
 } from '@/components/ui/primitives';
 import { ApiError, api } from '@/lib/api';
+import { usePeut } from '@/lib/session';
 import { cn } from '@/lib/utils';
 
 /** Matrice par défaut, reprise du serveur quand aucune valeur n'existe. */
@@ -40,6 +41,7 @@ type Brouillon = Record<string, unknown>;
  */
 export function SettingsPage({ session }: { session: SessionContext }) {
   const { t } = useTranslation();
+  const peutEcrire = usePeut('entity', 'update');
   const queryClient = useQueryClient();
 
   const [entite, setEntite] = useState(session.entity.id);
@@ -128,15 +130,17 @@ export function SettingsPage({ session }: { session: SessionContext }) {
         title={t('administration.reglages.titre')}
         description={t('administration.reglages.description')}
         action={
-          <Button
-            variante="primaire"
-            disabled={Object.keys(brouillon).length === 0 || enregistrer.isPending}
-            onClick={() => {
-              enregistrer.mutate();
-            }}
-          >
-            {t('administration.reglages.enregistrer')}
-          </Button>
+          peutEcrire ? (
+            <Button
+              variante="primaire"
+              disabled={Object.keys(brouillon).length === 0 || enregistrer.isPending}
+              onClick={() => {
+                enregistrer.mutate();
+              }}
+            >
+              {t('administration.reglages.enregistrer')}
+            </Button>
+          ) : undefined
         }
       />
 

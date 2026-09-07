@@ -1,5 +1,9 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { statDimensionSchema, type StatDimension, type UpsertDashboardWidget } from '@tick/contracts';
+import {
+  statDimensionSchema,
+  type StatDimension,
+  type UpsertDashboardWidget,
+} from '@tick/contracts';
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Compteurs, Repartition, Tendance, WidgetView } from '@/components/StatsWidgets';
@@ -201,9 +205,7 @@ export function StatsPage() {
             </button>
           </form>
 
-          {creer.error && (
-            <p className="text-xs text-critical">{creer.error.message}</p>
-          )}
+          {creer.error && <p className="text-xs text-critical">{creer.error.message}</p>}
 
           {tableaux.data && tableaux.data.length === 0 && (
             <p className="text-sm text-muted">{t('tableaux.aucun')}</p>
@@ -243,7 +245,9 @@ export function StatsPage() {
                   return (
                     <div
                       key={widget.id}
-                      style={{ gridColumn: `span ${String(widget.width)} / span ${String(widget.width)}` }}
+                      style={{
+                        gridColumn: `span ${String(widget.width)} / span ${String(widget.width)}`,
+                      }}
                       className="space-y-2 rounded-card border border-line bg-surface p-3 shadow-card"
                     >
                       <h4 className="text-xs font-semibold uppercase tracking-wide text-muted">
@@ -260,5 +264,4 @@ export function StatsPage() {
       )}
     </section>
   );
-
 }

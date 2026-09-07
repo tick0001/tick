@@ -1,9 +1,5 @@
 import type { ButtonHTMLAttributes, InputHTMLAttributes, ReactNode } from 'react';
-import type {
-  AnchorHTMLAttributes,
-  SelectHTMLAttributes,
-  TextareaHTMLAttributes,
-} from 'react';
+import type { AnchorHTMLAttributes, SelectHTMLAttributes, TextareaHTMLAttributes } from 'react';
 import { cn } from '@/lib/utils';
 
 /**
@@ -72,9 +68,7 @@ export function LinkButton({
   className,
   ...props
 }: AnchorHTMLAttributes<HTMLAnchorElement> & { variante?: Variante; taille?: Taille }) {
-  return (
-    <a className={cn(SOCLE, VARIANTES[variante], TAILLES[taille], className)} {...props} />
-  );
+  return <a className={cn(SOCLE, VARIANTES[variante], TAILLES[taille], className)} {...props} />;
 }
 
 // --- Saisie ------------------------------------------------------------------
@@ -359,15 +353,14 @@ export function Td({ className, children }: { className?: string; children?: Rea
   return <td className={cn('px-3 py-2.5 align-middle', className)}>{children}</td>;
 }
 
-export function Tr({
-  className,
-  children,
-}: {
-  className?: string;
-  children: ReactNode;
-}) {
+export function Tr({ className, children }: { className?: string; children: ReactNode }) {
   return (
-    <tr className={cn('border-b border-line/70 transition-colors last:border-0 hover:bg-sunken', className)}>
+    <tr
+      className={cn(
+        'border-b border-line/70 transition-colors last:border-0 hover:bg-sunken',
+        className,
+      )}
+    >
       {children}
     </tr>
   );

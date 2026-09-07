@@ -3,6 +3,7 @@ import type { KbArticle, SessionContext, UpsertKbArticle } from '@tick/contracts
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ApiError, api } from '@/lib/api';
+import { peut } from '@/lib/droits';
 import { BOUTON, BOUTON_PRIMAIRE, CARTE, CONTROLE } from '@/components/ui/primitives';
 
 function articleVide(): UpsertKbArticle {
@@ -123,7 +124,7 @@ export function KnowledgePage({ session }: { session: SessionContext }) {
    * Un bouton qui ne peut qu'echouer est pire qu'un bouton absent : il promet
    * une action, la refuse, et laisse croire a une panne.
    */
-  const peutEcrire = 'kb:update' in session.rights;
+  const peutEcrire = peut(session, 'kb', 'update');
 
   const maj = (patch: Partial<UpsertKbArticle>): void => {
     if (!edite) return;
@@ -135,7 +136,7 @@ export function KnowledgePage({ session }: { session: SessionContext }) {
     <section className="space-y-5">
       <header className="flex flex-wrap items-center justify-between gap-3">
         <h2 className="text-xl font-semibold tracking-tight">{t('connaissance.titre')}</h2>
-          <p className="max-w-2xl text-sm text-muted">{t('connaissance.intro')}</p>
+        <p className="max-w-2xl text-sm text-muted">{t('connaissance.intro')}</p>
         {peutEcrire && (
           <button
             type="button"

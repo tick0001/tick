@@ -3,6 +3,7 @@ import type { MailAfterRead, MailCollector, UpsertMailCollector } from '@tick/co
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ApiError, api } from '@/lib/api';
+import { usePeut } from '@/lib/session';
 import { BOUTON, BOUTON_PRIMAIRE, CARTE, CONTROLE } from '@/components/ui/primitives';
 
 const APRES_LECTURE: MailAfterRead[] = ['flag', 'move', 'delete'];
@@ -56,6 +57,7 @@ function versFormulaire(collecteur: MailCollector): UpsertMailCollector {
  */
 export function MailPage() {
   const { t } = useTranslation();
+  const peutEcrire = usePeut('mailcollector', 'update');
   const queryClient = useQueryClient();
 
   const [edite, setEdite] = useState<{ id?: number; valeurs: UpsertMailCollector } | null>(null);
@@ -126,16 +128,18 @@ export function MailPage() {
     <section className="space-y-6">
       <header className="flex items-center justify-between gap-3">
         <h2 className="text-xl font-semibold tracking-tight">{t('courriel.titre')}</h2>
-          <p className="max-w-2xl text-sm text-muted">{t('courriel.intro')}</p>
-        <button
-          type="button"
-          className={BOUTON_PRIMAIRE}
-          onClick={() => {
-            setEdite({ valeurs: collecteurVide(collecteurs.data?.[0]?.profileId ?? 1) });
-          }}
-        >
-          {t('courriel.nouveau')}
-        </button>
+        <p className="max-w-2xl text-sm text-muted">{t('courriel.intro')}</p>
+        {peutEcrire && (
+          <button
+            type="button"
+            className={BOUTON_PRIMAIRE}
+            onClick={() => {
+              setEdite({ valeurs: collecteurVide(collecteurs.data?.[0]?.profileId ?? 1) });
+            }}
+          >
+            {t('courriel.nouveau')}
+          </button>
+        )}
       </header>
 
       {erreur && <p className="text-sm text-critical">{erreur}</p>}
@@ -417,10 +421,7 @@ export function MailPage() {
                 </thead>
                 <tbody>
                   {logs.data.map((ligne) => (
-                    <tr
-                      key={ligne.id}
-                      className="border-b border-line last:border-0"
-                    >
+                    <tr key={ligne.id} className="border-b border-line last:border-0">
                       <td className="px-3 py-2">{t(`courriel.resultats.${ligne.action}`)}</td>
                       <td className="px-3 py-2">{ligne.sender ?? '—'}</td>
                       <td className="px-3 py-2">

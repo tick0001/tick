@@ -12,6 +12,7 @@ import type {
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ApiError, api } from '@/lib/api';
+import { usePeut } from '@/lib/session';
 import { BOUTON, BOUTON_PRIMAIRE, CARTE, CONTROLE } from '@/components/ui/primitives';
 
 const JOURS = [1, 2, 3, 4, 5, 6, 0];
@@ -100,6 +101,7 @@ function versFormulaireEngagement(engagement: Agreement): UpsertAgreement {
  */
 export function ServiceLevelsPage() {
   const { t } = useTranslation();
+  const peutEcrire = usePeut('slm', 'update');
   const queryClient = useQueryClient();
 
   const calendriers = useQuery({ queryKey: ['calendars'], queryFn: api.calendars, retry: false });
@@ -205,15 +207,17 @@ export function ServiceLevelsPage() {
         <header className="flex items-center justify-between gap-3">
           <h2 className="text-xl font-semibold tracking-tight">{t('calendriers.titre')}</h2>
           <p className="max-w-2xl text-sm text-muted">{t('calendriers.intro')}</p>
-          <button
-            type="button"
-            className={BOUTON_PRIMAIRE}
-            onClick={() => {
-              setCalendrierEdite({ valeurs: calendrierVide() });
-            }}
-          >
-            {t('calendriers.nouveau')}
-          </button>
+          {peutEcrire && (
+            <button
+              type="button"
+              className={BOUTON_PRIMAIRE}
+              onClick={() => {
+                setCalendrierEdite({ valeurs: calendrierVide() });
+              }}
+            >
+              {t('calendriers.nouveau')}
+            </button>
+          )}
         </header>
 
         {calendriers.data?.length === 0 && (
@@ -500,15 +504,17 @@ export function ServiceLevelsPage() {
       <div className="space-y-3">
         <header className="flex items-center justify-between gap-3">
           <h2 className="text-xl font-semibold tracking-tight">{t('engagements.titre')}</h2>
-          <button
-            type="button"
-            className={BOUTON_PRIMAIRE}
-            onClick={() => {
-              setEngagementEdite({ valeurs: engagementVide() });
-            }}
-          >
-            {t('engagements.nouveau')}
-          </button>
+          {peutEcrire && (
+            <button
+              type="button"
+              className={BOUTON_PRIMAIRE}
+              onClick={() => {
+                setEngagementEdite({ valeurs: engagementVide() });
+              }}
+            >
+              {t('engagements.nouveau')}
+            </button>
+          )}
         </header>
 
         {engagements.data?.length === 0 && (

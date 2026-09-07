@@ -56,7 +56,9 @@ export function Compteurs({ rapport }: { rapport: StatsReport }) {
       <Carte
         libelle={t('statistiques.respectSla')}
         valeur={
-          summary.slaCompliance === null ? '—' : `${String(Math.round(summary.slaCompliance * 100))} %`
+          summary.slaCompliance === null
+            ? '—'
+            : `${String(Math.round(summary.slaCompliance * 100))} %`
         }
       />
       <Carte

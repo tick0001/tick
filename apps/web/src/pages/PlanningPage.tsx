@@ -6,6 +6,7 @@ import { Link } from 'react-router';
 import { RecurringPanel } from '@/components/RecurringPanel';
 import { CONTROLE, PageHeader, Tabs } from '@/components/ui/primitives';
 import { ApiError, api } from '@/lib/api';
+import { usePeut } from '@/lib/session';
 
 type Vue = 'jour' | 'semaine' | 'mois';
 
@@ -48,6 +49,7 @@ function chemin(entree: PlanningEntry): string | null {
  */
 export function PlanningPage() {
   const { t, i18n } = useTranslation();
+  const peutPlanifier = usePeut('planning', 'update');
   const queryClient = useQueryClient();
 
   const [vue, setVue] = useState<Vue>('semaine');
@@ -59,7 +61,8 @@ export function PlanningPage() {
   const [absence, setAbsence] = useState({ beginAt: '', endAt: '', reason: '' });
 
   const fenetre = useMemo(() => {
-    const debut = vue === 'mois' ? minuit(new Date(ancre.getFullYear(), ancre.getMonth(), 1)) : ancre;
+    const debut =
+      vue === 'mois' ? minuit(new Date(ancre.getFullYear(), ancre.getMonth(), 1)) : ancre;
 
     return { from: debut.toISOString(), to: minuit(debut, DUREE[vue]).toISOString() };
   }, [ancre, vue]);
@@ -218,17 +221,19 @@ export function PlanningPage() {
               {t('planning.exporterIcal')}
             </a>
 
-            <button
-              type="button"
-              disabled={!technicien}
-              title={technicien ? undefined : t('planning.technicien')}
-              onClick={() => {
-                setOuvertAbsence((valeur) => !valeur);
-              }}
-              className="rounded-lg border border-line px-3 py-1.5 text-xs transition hover:bg-sunken disabled:opacity-50"
-            >
-              {t('planning.ajouterIndisponibilite')}
-            </button>
+            {peutPlanifier && (
+              <button
+                type="button"
+                disabled={!technicien}
+                title={technicien ? undefined : t('planning.technicien')}
+                onClick={() => {
+                  setOuvertAbsence((valeur) => !valeur);
+                }}
+                className="rounded-lg border border-line px-3 py-1.5 text-xs transition hover:bg-sunken disabled:opacity-50"
+              >
+                {t('planning.ajouterIndisponibilite')}
+              </button>
+            )}
           </div>
 
           {ouvertAbsence && (
@@ -282,9 +287,7 @@ export function PlanningPage() {
                 {t('planning.enregistrer')}
               </button>
               {declarer.error && (
-                <p className="w-full text-xs text-critical">
-                  {declarer.error.message}
-                </p>
+                <p className="w-full text-xs text-critical">{declarer.error.message}</p>
               )}
             </form>
           )}
@@ -301,9 +304,7 @@ export function PlanningPage() {
             </p>
           )}
 
-          {planning.isPending && (
-            <p className="text-sm text-muted">{t('commun.chargement')}</p>
-          )}
+          {planning.isPending && <p className="text-sm text-muted">{t('commun.chargement')}</p>}
 
           {planning.data && entrees.length === 0 && (
             <p className="text-sm text-muted">{t('planning.aucune')}</p>

@@ -19,6 +19,7 @@ import {
   Select,
 } from '@/components/ui/primitives';
 import { ApiError, api } from '@/lib/api';
+import { usePeut } from '@/lib/session';
 
 const VIDE: UpsertLdapDirectory = {
   name: '',
@@ -55,6 +56,7 @@ const VIDE: UpsertLdapDirectory = {
  */
 export function DirectoriesPage() {
   const { t, i18n } = useTranslation();
+  const peutEcrire = usePeut('ldap', 'update');
   const queryClient = useQueryClient();
 
   const [edite, setEdite] = useState<{ id?: number; valeurs: UpsertLdapDirectory } | null>(null);
@@ -104,15 +106,17 @@ export function DirectoriesPage() {
         title={t('administration.annuaires.titre')}
         description={t('administration.annuaires.description')}
         action={
-          <Button
-            variante="primaire"
-            onClick={() => {
-              setEdite({ valeurs: { ...VIDE } });
-            }}
-          >
-            <IconPlus className="size-4" />
-            {t('administration.annuaires.nouveau')}
-          </Button>
+          peutEcrire ? (
+            <Button
+              variante="primaire"
+              onClick={() => {
+                setEdite({ valeurs: { ...VIDE } });
+              }}
+            >
+              <IconPlus className="size-4" />
+              {t('administration.annuaires.nouveau')}
+            </Button>
+          ) : undefined
         }
       />
 
@@ -157,7 +161,10 @@ export function DirectoriesPage() {
                   />
                 </Field>
 
-                <Field label={t('administration.annuaires.compteService')} className="lg:col-span-2">
+                <Field
+                  label={t('administration.annuaires.compteService')}
+                  className="lg:col-span-2"
+                >
                   <Input
                     value={edite.valeurs.bindDn ?? ''}
                     onChange={(event) => {
@@ -336,7 +343,10 @@ export function DirectoriesPage() {
                 <Checkbox
                   checked={edite.valeurs.useTls}
                   onChange={(event) => {
-                    modifier({ useTls: event.target.checked, port: event.target.checked ? 636 : 389 });
+                    modifier({
+                      useTls: event.target.checked,
+                      port: event.target.checked ? 636 : 389,
+                    });
                   }}
                   label={<span className="text-sm">{t('administration.annuaires.tls')}</span>}
                 />
@@ -444,47 +454,51 @@ export function DirectoriesPage() {
                   >
                     {t('administration.annuaires.tester')}
                   </Button>
-                  <Button
-                    taille="sm"
-                    onClick={() => {
-                      setEdite({
-                        id: annuaire.id,
-                        valeurs: {
-                          name: annuaire.name,
-                          host: annuaire.host,
-                          port: annuaire.port,
-                          useTls: annuaire.useTls,
-                          bindDn: annuaire.bindDn ?? '',
-                          baseDn: annuaire.baseDn,
-                          userFilter: annuaire.userFilter,
-                          loginAttribute: annuaire.loginAttribute,
-                          emailAttribute: annuaire.emailAttribute,
-                          firstNameAttribute: annuaire.firstNameAttribute,
-                          lastNameAttribute: annuaire.lastNameAttribute,
-                          groupSearchMode: annuaire.groupSearchMode,
-                          memberOfAttribute: annuaire.memberOfAttribute,
-                          groupMemberAttribute: annuaire.groupMemberAttribute,
-                          groupBaseDn: annuaire.groupBaseDn ?? '',
-                          groupFilter: annuaire.groupFilter,
-                          isActive: annuaire.isActive,
-                          isDefault: annuaire.isDefault,
-                          timeoutMs: annuaire.timeoutMs,
-                        },
-                      });
-                    }}
-                  >
-                    {t('entites.modifier')}
-                  </Button>
-                  <Button
-                    taille="sm"
-                    variante="danger"
-                    className="ml-auto"
-                    onClick={() => {
-                      supprimer.mutate(annuaire.id);
-                    }}
-                  >
-                    {t('entites.supprimer')}
-                  </Button>
+                  {peutEcrire && (
+                    <Button
+                      taille="sm"
+                      onClick={() => {
+                        setEdite({
+                          id: annuaire.id,
+                          valeurs: {
+                            name: annuaire.name,
+                            host: annuaire.host,
+                            port: annuaire.port,
+                            useTls: annuaire.useTls,
+                            bindDn: annuaire.bindDn ?? '',
+                            baseDn: annuaire.baseDn,
+                            userFilter: annuaire.userFilter,
+                            loginAttribute: annuaire.loginAttribute,
+                            emailAttribute: annuaire.emailAttribute,
+                            firstNameAttribute: annuaire.firstNameAttribute,
+                            lastNameAttribute: annuaire.lastNameAttribute,
+                            groupSearchMode: annuaire.groupSearchMode,
+                            memberOfAttribute: annuaire.memberOfAttribute,
+                            groupMemberAttribute: annuaire.groupMemberAttribute,
+                            groupBaseDn: annuaire.groupBaseDn ?? '',
+                            groupFilter: annuaire.groupFilter,
+                            isActive: annuaire.isActive,
+                            isDefault: annuaire.isDefault,
+                            timeoutMs: annuaire.timeoutMs,
+                          },
+                        });
+                      }}
+                    >
+                      {t('entites.modifier')}
+                    </Button>
+                  )}
+                  {peutEcrire && (
+                    <Button
+                      taille="sm"
+                      variante="danger"
+                      className="ml-auto"
+                      onClick={() => {
+                        supprimer.mutate(annuaire.id);
+                      }}
+                    >
+                      {t('entites.supprimer')}
+                    </Button>
+                  )}
                 </div>
               </CardBody>
             </Card>

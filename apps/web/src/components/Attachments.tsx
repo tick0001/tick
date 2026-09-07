@@ -90,14 +90,10 @@ export function Attachments({ itemType, itemId }: { itemType: string; itemId: nu
           }}
           className="text-xs file:mr-2 file:rounded-md file:border file:border-line file:bg-transparent file:px-2 file:py-1 file:text-xs"
         />
-        {envoyer.isPending && (
-          <span className="text-xs text-muted">{t('commun.chargement')}</span>
-        )}
+        {envoyer.isPending && <span className="text-xs text-muted">{t('commun.chargement')}</span>}
       </div>
 
-      {envoyer.error && (
-        <p className="text-xs text-critical">{envoyer.error.message}</p>
-      )}
+      {envoyer.error && <p className="text-xs text-critical">{envoyer.error.message}</p>}
     </section>
   );
 }

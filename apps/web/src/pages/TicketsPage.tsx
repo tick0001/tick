@@ -21,11 +21,13 @@ import {
   Tr,
 } from '@/components/ui/primitives';
 import { ApiError, api } from '@/lib/api';
+import { usePeut } from '@/lib/session';
 
 type Vue = 'ouverts' | 'tous' | 'corbeille';
 
 export function TicketsPage({ session }: { session: SessionContext }) {
   const { t, i18n } = useTranslation();
+  const peutCreer = usePeut('ticket', 'create');
   const [vue, setVue] = useState<Vue>('ouverts');
   const [mine, setMine] = useState(false);
   const [recherche, setRecherche] = useState('');
@@ -64,13 +66,15 @@ export function TicketsPage({ session }: { session: SessionContext }) {
               className="flex items-center gap-2"
               context={{ locale: i18n.language, entity: session.entity, profile: session.profile }}
             />
-            <Link
-              to="/tickets/new"
-              className="inline-flex h-9 items-center gap-2 rounded-lg bg-brand px-3.5 text-sm font-medium text-on-brand shadow-card transition-colors hover:bg-brand-hover"
-            >
-              <IconPlus className="size-4" />
-              {t('creation.nouveau')}
-            </Link>
+            {peutCreer && (
+              <Link
+                to="/tickets/new"
+                className="inline-flex h-9 items-center gap-2 rounded-lg bg-brand px-3.5 text-sm font-medium text-on-brand shadow-card transition-colors hover:bg-brand-hover"
+              >
+                <IconPlus className="size-4" />
+                {t('creation.nouveau')}
+              </Link>
+            )}
           </>
         }
       />

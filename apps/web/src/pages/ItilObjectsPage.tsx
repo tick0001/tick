@@ -63,9 +63,7 @@ export function ItilObjectsPage({ kind }: { kind: ItilKind }) {
       <header className="flex flex-wrap items-start justify-between gap-3">
         <div className="space-y-1">
           <h2 className="text-xl font-semibold tracking-tight">{t(`itil.${section}.titre`)}</h2>
-          <p className="text-sm text-muted">
-            {t(`itil.${section}.description`)}
-          </p>
+          <p className="text-sm text-muted">{t(`itil.${section}.description`)}</p>
         </div>
 
         <button
@@ -130,9 +128,7 @@ export function ItilObjectsPage({ kind }: { kind: ItilKind }) {
             </button>
           </div>
 
-          {creer.error && (
-            <p className="text-xs text-critical">{creer.error.message}</p>
-          )}
+          {creer.error && <p className="text-xs text-critical">{creer.error.message}</p>}
         </form>
       )}
 
@@ -196,12 +192,8 @@ export function ItilObjectsPage({ kind }: { kind: ItilKind }) {
                       <div className="text-xs text-muted">{objet.categoryName}</div>
                     )}
                   </td>
-                  <td className="px-3 py-2 text-muted">
-                    {objet.requesters.join(', ') || '—'}
-                  </td>
-                  <td className="px-3 py-2 text-muted">
-                    {objet.assignees.join(', ') || '—'}
-                  </td>
+                  <td className="px-3 py-2 text-muted">{objet.requesters.join(', ') || '—'}</td>
+                  <td className="px-3 py-2 text-muted">{objet.assignees.join(', ') || '—'}</td>
                   <td className="px-3 py-2 text-muted">{objet.entityName}</td>
                   <td className="px-3 py-2 whitespace-nowrap text-muted">
                     {dates.format(new Date(objet.dateOpened))}

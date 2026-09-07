@@ -23,6 +23,7 @@ import {
   Tr,
 } from '@/components/ui/primitives';
 import { ApiError, api } from '@/lib/api';
+import { usePeut } from '@/lib/session';
 
 const VIDE: UpsertUser = {
   username: '',
@@ -43,6 +44,8 @@ const VIDE: UpsertUser = {
  */
 export function UsersPage() {
   const { t, i18n } = useTranslation();
+  const peutModifier = usePeut('user', 'update');
+  const peutEcrire = usePeut('user', 'create');
   const queryClient = useQueryClient();
 
   const [recherche, setRecherche] = useState('');
@@ -105,15 +108,17 @@ export function UsersPage() {
         title={t('administration.utilisateurs.titre')}
         description={t('administration.utilisateurs.description')}
         action={
-          <Button
-            variante="primaire"
-            onClick={() => {
-              setEdite({ valeurs: { ...VIDE } });
-            }}
-          >
-            <IconPlus className="size-4" />
-            {t('administration.utilisateurs.nouveau')}
-          </Button>
+          peutEcrire ? (
+            <Button
+              variante="primaire"
+              onClick={() => {
+                setEdite({ valeurs: { ...VIDE } });
+              }}
+            >
+              <IconPlus className="size-4" />
+              {t('administration.utilisateurs.nouveau')}
+            </Button>
+          ) : undefined
         }
       />
 
@@ -134,7 +139,10 @@ export function UsersPage() {
                 <Input
                   value={edite.valeurs.username}
                   onChange={(event) => {
-                    setEdite({ ...edite, valeurs: { ...edite.valeurs, username: event.target.value } });
+                    setEdite({
+                      ...edite,
+                      valeurs: { ...edite.valeurs, username: event.target.value },
+                    });
                   }}
                   autoFocus
                 />
@@ -145,7 +153,10 @@ export function UsersPage() {
                   type="email"
                   value={edite.valeurs.email ?? ''}
                   onChange={(event) => {
-                    setEdite({ ...edite, valeurs: { ...edite.valeurs, email: event.target.value } });
+                    setEdite({
+                      ...edite,
+                      valeurs: { ...edite.valeurs, email: event.target.value },
+                    });
                   }}
                 />
               </Field>
@@ -176,7 +187,11 @@ export function UsersPage() {
 
               <Field
                 label={t('administration.utilisateurs.motDePasse')}
-                hint={edite.id === undefined ? undefined : t('administration.utilisateurs.motDePasseAide')}
+                hint={
+                  edite.id === undefined
+                    ? undefined
+                    : t('administration.utilisateurs.motDePasseAide')
+                }
               >
                 <Input
                   type="password"
@@ -198,7 +213,10 @@ export function UsersPage() {
                 <Select
                   value={edite.valeurs.locale ?? ''}
                   onChange={(event) => {
-                    setEdite({ ...edite, valeurs: { ...edite.valeurs, locale: event.target.value } });
+                    setEdite({
+                      ...edite,
+                      valeurs: { ...edite.valeurs, locale: event.target.value },
+                    });
                   }}
                 >
                   <option value="">—</option>
@@ -259,7 +277,9 @@ export function UsersPage() {
           onChange={(event) => {
             setInactifs(event.target.checked);
           }}
-          label={<span className="text-xs text-muted">{t('administration.utilisateurs.inactifs')}</span>}
+          label={
+            <span className="text-xs text-muted">{t('administration.utilisateurs.inactifs')}</span>
+          }
         />
       </div>
 
@@ -319,24 +339,26 @@ export function UsersPage() {
                     {!utilisateur.isActive && (
                       <Badge ton="neutre">{t('administration.utilisateurs.actif')} ✕</Badge>
                     )}
-                    <Button
-                      taille="sm"
-                      onClick={() => {
-                        setEdite({
-                          id: utilisateur.id,
-                          valeurs: {
-                            username: utilisateur.username,
-                            email: utilisateur.email ?? '',
-                            firstName: '',
-                            lastName: '',
-                            locale: utilisateur.locale ?? '',
-                            isActive: utilisateur.isActive,
-                          },
-                        });
-                      }}
-                    >
-                      {t('entites.modifier')}
-                    </Button>
+                    {peutModifier && (
+                      <Button
+                        taille="sm"
+                        onClick={() => {
+                          setEdite({
+                            id: utilisateur.id,
+                            valeurs: {
+                              username: utilisateur.username,
+                              email: utilisateur.email ?? '',
+                              firstName: '',
+                              lastName: '',
+                              locale: utilisateur.locale ?? '',
+                              isActive: utilisateur.isActive,
+                            },
+                          });
+                        }}
+                      >
+                        {t('entites.modifier')}
+                      </Button>
+                    )}
                   </div>
                 </Td>
               </Tr>
@@ -480,7 +502,11 @@ function Habilitations({
             onChange={(event) => {
               setRecursive(event.target.checked);
             }}
-            label={<span className="text-xs text-muted">{t('administration.utilisateurs.recursive')}</span>}
+            label={
+              <span className="text-xs text-muted">
+                {t('administration.utilisateurs.recursive')}
+              </span>
+            }
             className="pb-2"
           />
 

@@ -199,7 +199,7 @@ export function SearchPage() {
     <div className="grid gap-6 lg:grid-cols-[1fr_18rem]">
       <section className="space-y-4">
         <h2 className="text-xl font-semibold tracking-tight">{t('recherche.titre')}</h2>
-          <p className="max-w-2xl text-sm text-muted">{t('recherche.intro')}</p>
+        <p className="max-w-2xl text-sm text-muted">{t('recherche.intro')}</p>
 
         <div className="space-y-2 rounded-card border border-line bg-surface p-4 shadow-card">
           <div className="flex overflow-hidden rounded-lg border border-line text-xs">
@@ -211,9 +211,7 @@ export function SearchPage() {
                   setLink(valeur);
                 }}
                 className={`px-3 py-1 transition ${
-                  link === valeur
-                    ? 'bg-brand text-on-brand'
-                    : 'hover:bg-sunken'
+                  link === valeur ? 'bg-brand text-on-brand' : 'hover:bg-sunken'
                 }`}
               >
                 {valeur === 'and' ? t('recherche.toutes') : t('recherche.aumoins')}
@@ -434,13 +432,9 @@ export function SearchPage() {
 
         {bilan && <p className="text-xs text-muted">{bilan}</p>}
 
-        {massive.error && (
-          <p className="text-xs text-critical">{massive.error.message}</p>
-        )}
+        {massive.error && <p className="text-xs text-critical">{massive.error.message}</p>}
 
-        {exporter.error && (
-          <p className="text-xs text-critical">{exporter.error.message}</p>
-        )}
+        {exporter.error && <p className="text-xs text-critical">{exporter.error.message}</p>}
 
         {recherche.data && (
           <div className="overflow-x-auto rounded-card border border-line">
@@ -472,10 +466,7 @@ export function SearchPage() {
               </thead>
               <tbody>
                 {recherche.data.items.map((ticket) => (
-                  <tr
-                    key={ticket.id}
-                    className="border-b border-line last:border-0"
-                  >
+                  <tr key={ticket.id} className="border-b border-line last:border-0">
                     <td className="px-3 py-2">
                       <input
                         type="checkbox"

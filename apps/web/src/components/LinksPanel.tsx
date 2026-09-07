@@ -82,9 +82,7 @@ export function LinksPanel({ type, id }: { type: ItilType; id: number }) {
             >
               #{lien.targetId} {lien.targetName}
             </Link>
-            <span className="text-xs text-muted">
-              {t(`tickets.statuts.${lien.targetStatus}`)}
-            </span>
+            <span className="text-xs text-muted">{t(`tickets.statuts.${lien.targetStatus}`)}</span>
             <button
               type="button"
               onClick={() => {
@@ -167,14 +165,10 @@ export function LinksPanel({ type, id }: { type: ItilType; id: number }) {
       </form>
 
       {lier.error && <p className="text-xs text-critical">{lier.error.message}</p>}
-      {delier.error && (
-        <p className="text-xs text-critical">{delier.error.message}</p>
-      )}
+      {delier.error && <p className="text-xs text-critical">{delier.error.message}</p>}
 
       <div className="space-y-2 border-t border-line pt-3">
-        <h4 className="text-xs uppercase tracking-wide text-muted">
-          {t('itil.promotion.titre')}
-        </h4>
+        <h4 className="text-xs uppercase tracking-wide text-muted">{t('itil.promotion.titre')}</h4>
         <p className="text-xs text-muted">{t('itil.promotion.explication')}</p>
 
         <div className="flex flex-wrap gap-2">
@@ -204,9 +198,7 @@ export function LinksPanel({ type, id }: { type: ItilType; id: number }) {
           )}
         </div>
 
-        {promouvoir.error && (
-          <p className="text-xs text-critical">{promouvoir.error.message}</p>
-        )}
+        {promouvoir.error && <p className="text-xs text-critical">{promouvoir.error.message}</p>}
       </div>
     </section>
   );

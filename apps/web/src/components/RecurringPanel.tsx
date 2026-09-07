@@ -3,6 +3,7 @@ import { recurrenceStepSchema, type RecurrenceStep } from '@tick/contracts';
 import { useState, type FormEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ApiError, api } from '@/lib/api';
+import { usePeut } from '@/lib/session';
 
 const VIDE = {
   name: '',
@@ -25,6 +26,7 @@ const VIDE = {
  */
 export function RecurringPanel() {
   const { t, i18n } = useTranslation();
+  const peutEcrire = usePeut('recurrence', 'update');
   const queryClient = useQueryClient();
 
   const [ouvert, setOuvert] = useState(false);
@@ -73,8 +75,7 @@ export function RecurringPanel() {
   });
 
   const dates = new Intl.DateTimeFormat(i18n.language, { dateStyle: 'short', timeStyle: 'short' });
-  const controle =
-    'rounded-lg border border-line bg-surface px-2 py-1.5 text-sm';
+  const controle = 'rounded-lg border border-line bg-surface px-2 py-1.5 text-sm';
 
   const soumettre = (event: FormEvent): void => {
     event.preventDefault();
@@ -84,30 +85,32 @@ export function RecurringPanel() {
   return (
     <section className="space-y-3">
       <div className="flex flex-wrap items-start justify-between gap-2">
-        <p className="text-sm text-muted">
-          {t('recurrence.description')}
-        </p>
+        <p className="text-sm text-muted">{t('recurrence.description')}</p>
 
         <div className="flex gap-2">
-          <button
-            type="button"
-            disabled={executer.isPending}
-            onClick={() => {
-              executer.mutate();
-            }}
-            className="rounded-lg border border-line px-3 py-1.5 text-sm transition hover:bg-sunken disabled:opacity-60"
-          >
-            {t('recurrence.executer')}
-          </button>
-          <button
-            type="button"
-            onClick={() => {
-              setOuvert((valeur) => !valeur);
-            }}
-            className="rounded-md bg-brand px-3 py-1.5 text-sm font-medium text-on-brand shadow-card transition hover:bg-brand-hover"
-          >
-            {t('recurrence.nouveau')}
-          </button>
+          {peutEcrire && (
+            <>
+              <button
+                type="button"
+                disabled={executer.isPending}
+                onClick={() => {
+                  executer.mutate();
+                }}
+                className="rounded-lg border border-line px-3 py-1.5 text-sm transition hover:bg-sunken disabled:opacity-60"
+              >
+                {t('recurrence.executer')}
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setOuvert((valeur) => !valeur);
+                }}
+                className="rounded-md bg-brand px-3 py-1.5 text-sm font-medium text-on-brand shadow-card transition hover:bg-brand-hover"
+              >
+                {t('recurrence.nouveau')}
+              </button>
+            </>
+          )}
         </div>
       </div>
 
@@ -152,7 +155,10 @@ export function RecurringPanel() {
             <select
               value={saisie.templateId}
               onChange={(event) => {
-                setSaisie((precedent) => ({ ...precedent, templateId: Number(event.target.value) }));
+                setSaisie((precedent) => ({
+                  ...precedent,
+                  templateId: Number(event.target.value),
+                }));
               }}
               className={`${controle} w-full`}
             >
@@ -175,7 +181,10 @@ export function RecurringPanel() {
                 min={1}
                 value={saisie.interval}
                 onChange={(event) => {
-                  setSaisie((precedent) => ({ ...precedent, interval: Number(event.target.value) }));
+                  setSaisie((precedent) => ({
+                    ...precedent,
+                    interval: Number(event.target.value),
+                  }));
                 }}
                 className={`${controle} w-20`}
               />
@@ -266,9 +275,7 @@ export function RecurringPanel() {
           </div>
 
           {enregistrer.error && (
-            <p className="text-xs text-critical sm:col-span-2">
-              {enregistrer.error.message}
-            </p>
+            <p className="text-xs text-critical sm:col-span-2">{enregistrer.error.message}</p>
           )}
         </form>
       )}
@@ -299,16 +306,11 @@ export function RecurringPanel() {
             </thead>
             <tbody>
               {liste.data.map((recurrence) => (
-                <tr
-                  key={recurrence.id}
-                  className="border-b border-line last:border-0"
-                >
+                <tr key={recurrence.id} className="border-b border-line last:border-0">
                   <td className="px-3 py-2">
                     <span className="font-medium">{recurrence.name}</span>
                     {!recurrence.isActive && (
-                      <span className="ml-2 rounded bg-sunken px-1.5 py-0.5 text-xs">
-                        ⏸
-                      </span>
+                      <span className="ml-2 rounded bg-sunken px-1.5 py-0.5 text-xs">⏸</span>
                     )}
                   </td>
                   <td className="px-3 py-2 text-muted">{recurrence.templateName}</td>

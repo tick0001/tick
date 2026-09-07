@@ -34,6 +34,8 @@ import {
   IconUtilisateurs,
   type Icone,
 } from '@/components/ui/icons';
+import { peut, type Droit } from '@/lib/droits';
+import { droitDe } from '@/lib/navigation';
 import { changeLocale } from '@/lib/i18n';
 import { useTheme, type Theme } from '@/lib/theme';
 import { cn } from '@/lib/utils';
@@ -42,11 +44,37 @@ interface Entree {
   to: string;
   label: string;
   icone: Icone;
+  /**
+   * Droit qui ouvre l'écran, ou `undefined` s'il est ouvert à tous.
+   *
+   * C'est le droit que la route exige côté serveur : les deux doivent désigner
+   * la même chose, faute de quoi l'entrée reste visible et mène à un refus, ou
+   * disparaît alors qu'elle fonctionnait.
+   */
+  droit?: Droit | undefined;
 }
 
 interface Groupe {
   titre: string;
   entrees: Entree[];
+}
+
+/**
+ * Retire ce que le profil actif ne peut pas ouvrir.
+ *
+ * Un groupe vidé de toutes ses entrées disparaît avec elles : garder son titre
+ * seul afficherait une rubrique qui ne mène nulle part, ce qui se lit comme une
+ * panne plutôt que comme une absence de droit.
+ */
+function filtrer(groupes: Groupe[], session: SessionContext): Groupe[] {
+  return groupes
+    .map((groupe) => ({
+      ...groupe,
+      entrees: groupe.entrees.filter(
+        (entree) => !entree.droit || peut(session, entree.droit.objet, entree.droit.action),
+      ),
+    }))
+    .filter((groupe) => groupe.entrees.length > 0);
 }
 
 function Lien({ entree, onNavigate }: { entree: Entree; onNavigate: () => void }) {
@@ -152,8 +180,18 @@ export function AppShell({
           titre: t('navigation.groupes.travail'),
           entrees: [
             { to: '/catalogue', label: t('catalogue.titre'), icone: IconCatalogue },
-            { to: '/tickets', label: t('navigation.mesDemandes'), icone: IconTicket },
-            { to: '/knowledge', label: t('connaissance.titre'), icone: IconConnaissance },
+            {
+              to: '/tickets',
+              label: t('navigation.mesDemandes'),
+              icone: IconTicket,
+              droit: { objet: 'ticket', action: 'read' },
+            },
+            {
+              to: '/knowledge',
+              label: t('connaissance.titre'),
+              icone: IconConnaissance,
+              droit: { objet: 'kb', action: 'read' },
+            },
           ],
         },
       ]
@@ -161,24 +199,59 @@ export function AppShell({
         {
           titre: t('navigation.groupes.travail'),
           entrees: [
-            { to: '/tickets', label: t('navigation.tickets'), icone: IconTicket },
-            { to: '/itil/problems', label: t('navigation.problemes'), icone: IconProbleme },
-            { to: '/itil/changes', label: t('navigation.changements'), icone: IconChangement },
-            { to: '/planning', label: t('navigation.planning'), icone: IconPlanning },
+            {
+              to: '/tickets',
+              label: t('navigation.tickets'),
+              icone: IconTicket,
+              droit: { objet: 'ticket', action: 'read' },
+            },
+            {
+              to: '/itil/problems',
+              label: t('navigation.problemes'),
+              icone: IconProbleme,
+              droit: { objet: 'problem', action: 'read' },
+            },
+            {
+              to: '/itil/changes',
+              label: t('navigation.changements'),
+              icone: IconChangement,
+              droit: { objet: 'change', action: 'read' },
+            },
+            {
+              to: '/planning',
+              label: t('navigation.planning'),
+              icone: IconPlanning,
+              droit: { objet: 'planning', action: 'read' },
+            },
           ],
         },
         {
           titre: t('navigation.groupes.services'),
           entrees: [
             { to: '/catalogue', label: t('catalogue.titre'), icone: IconCatalogue },
-            { to: '/knowledge', label: t('connaissance.titre'), icone: IconConnaissance },
+            {
+              to: '/knowledge',
+              label: t('connaissance.titre'),
+              icone: IconConnaissance,
+              droit: { objet: 'kb', action: 'read' },
+            },
           ],
         },
         {
           titre: t('navigation.groupes.analyse'),
           entrees: [
-            { to: '/search', label: t('recherche.titre'), icone: IconRecherche },
-            { to: '/stats', label: t('navigation.statistiques'), icone: IconStatistiques },
+            {
+              to: '/search',
+              label: t('recherche.titre'),
+              icone: IconRecherche,
+              droit: { objet: 'ticket', action: 'read' },
+            },
+            {
+              to: '/stats',
+              label: t('navigation.statistiques'),
+              icone: IconStatistiques,
+              droit: { objet: 'stats', action: 'read' },
+            },
           ],
         },
       ];
@@ -187,30 +260,76 @@ export function AppShell({
     {
       titre: t('configuration.groupes.assistance'),
       entrees: [
-        { to: '/settings/service-levels', label: t('engagements.titre'), icone: IconEngagement },
-        { to: '/settings/rules', label: t('regles.titre'), icone: IconRegles },
-        { to: '/settings/forms', label: t('formulaires.titre'), icone: IconFormulaire },
+        {
+          to: '/settings/service-levels',
+          label: t('engagements.titre'),
+          icone: IconEngagement,
+          droit: droitDe('/settings/service-levels'),
+        },
+        {
+          to: '/settings/rules',
+          label: t('regles.titre'),
+          icone: IconRegles,
+          droit: droitDe('/settings/rules'),
+        },
+        {
+          to: '/settings/forms',
+          label: t('formulaires.titre'),
+          icone: IconFormulaire,
+          droit: droitDe('/settings/forms'),
+        },
       ],
     },
     {
       titre: t('configuration.groupes.communication'),
       entrees: [
-        { to: '/settings/notifications', label: t('notifications.titre'), icone: IconNotification },
-        { to: '/settings/mail', label: t('courriel.titre'), icone: IconCourriel },
-        { to: '/settings/surveys', label: t('enquetes.titre'), icone: IconEnquete },
+        {
+          to: '/settings/notifications',
+          label: t('notifications.titre'),
+          icone: IconNotification,
+          droit: droitDe('/settings/notifications'),
+        },
+        {
+          to: '/settings/mail',
+          label: t('courriel.titre'),
+          icone: IconCourriel,
+          droit: droitDe('/settings/mail'),
+        },
+        {
+          to: '/settings/surveys',
+          label: t('enquetes.titre'),
+          icone: IconEnquete,
+          droit: droitDe('/settings/surveys'),
+        },
       ],
     },
     {
       titre: t('configuration.groupes.organisation'),
       entrees: [
-        { to: '/settings/entities', label: t('navigation.entites'), icone: IconEntites },
+        {
+          to: '/settings/entities',
+          label: t('navigation.entites'),
+          icone: IconEntites,
+          droit: droitDe('/settings/entities'),
+        },
         {
           to: '/settings/users',
           label: t('administration.utilisateurs.titre'),
           icone: IconUtilisateurs,
+          droit: droitDe('/settings/users'),
         },
-        { to: '/settings/groups', label: t('administration.groupes.titre'), icone: IconGroupes },
-        { to: '/settings/profiles', label: t('administration.profils.titre'), icone: IconDroits },
+        {
+          to: '/settings/groups',
+          label: t('administration.groupes.titre'),
+          icone: IconGroupes,
+          droit: droitDe('/settings/groups'),
+        },
+        {
+          to: '/settings/profiles',
+          label: t('administration.profils.titre'),
+          icone: IconDroits,
+          droit: droitDe('/settings/profiles'),
+        },
       ],
     },
     {
@@ -220,13 +339,20 @@ export function AppShell({
           to: '/settings/directories',
           label: t('administration.annuaires.titre'),
           icone: IconAnnuaire,
+          droit: droitDe('/settings/directories'),
         },
-        { to: '/settings/general', label: t('administration.reglages.titre'), icone: IconReglages },
+        {
+          to: '/settings/general',
+          label: t('administration.reglages.titre'),
+          icone: IconReglages,
+          droit: droitDe('/settings/general'),
+        },
       ],
     },
   ];
 
-  const sections = dansConfiguration ? reglages : travail;
+  const configurables = filtrer(reglages, session);
+  const sections = dansConfiguration ? configurables : filtrer(travail, session);
 
   // Le tiroir se referme à chaque navigation : le laisser ouvert masquerait la
   // page qu'on vient de demander.
@@ -321,7 +447,9 @@ export function AppShell({
         <div className="space-y-1 border-t border-line p-3">
           {/* La configuration est en pied de barre, separee du travail
               quotidien : on l'ouvre rarement, et jamais par erreur. */}
-          {!simplifiee && !dansConfiguration && (
+          {/* Rien à configurer, pas d'entrée : proposer une zone dont tous les
+              écrans sont refusés reviendrait à annoncer une porte murée. */}
+          {!simplifiee && !dansConfiguration && configurables.length > 0 && (
             <NavLink
               to="/settings"
               className={({ isActive }) =>
@@ -349,9 +477,7 @@ export function AppShell({
               {initiales(session.user.displayName)}
             </span>
             <span className="min-w-0 flex-1">
-              <span className="block truncate text-sm font-medium">
-                {session.user.displayName}
-              </span>
+              <span className="block truncate text-sm font-medium">{session.user.displayName}</span>
               <span className="block truncate text-xs text-faint">{session.profile.name}</span>
             </span>
             <button

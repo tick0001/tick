@@ -6,6 +6,8 @@ import { AppShell } from '@/components/AppShell';
 import { ApiError, api } from '@/lib/api';
 import { loadPluginClients, resetPluginClients } from '@/lib/plugins';
 import { useRetourAccueilALaDeconnexion } from '@/lib/session-navigation';
+import { premierReglageAccessible } from '@/lib/navigation';
+import { SessionProvider } from '@/lib/session';
 import { CataloguePage } from '@/pages/CataloguePage';
 import { DirectoriesPage } from '@/pages/DirectoriesPage';
 import { EntitiesPage } from '@/pages/EntitiesPage';
@@ -113,78 +115,83 @@ function Application() {
   const simplifiee = session.data.profile.interface === 'self_service';
 
   return (
-    <AppShell
-      session={session.data}
-      onLogout={() => {
-        deconnexion.mutate();
-      }}
-    >
-      <Routes>
-        <Route
-          path="/"
-          element={<Navigate to={simplifiee ? '/catalogue' : '/tickets'} replace />}
-        />
-        <Route path="/tickets" element={<TicketsPage session={session.data} />} />
-        <Route path="/tickets/new" element={<NewTicketPage />} />
-        {/* Le demandeur lit sa demande comme une conversation, le technicien
+    <SessionProvider session={session.data}>
+      <AppShell
+        session={session.data}
+        onLogout={() => {
+          deconnexion.mutate();
+        }}
+      >
+        <Routes>
+          <Route
+            path="/"
+            element={<Navigate to={simplifiee ? '/catalogue' : '/tickets'} replace />}
+          />
+          <Route path="/tickets" element={<TicketsPage session={session.data} />} />
+          <Route path="/tickets/new" element={<NewTicketPage />} />
+          {/* Le demandeur lit sa demande comme une conversation, le technicien
             comme une fiche : ce ne sont pas deux mises en page du meme ecran,
             mais deux besoins differents. Voir `TicketConversationPage`. */}
-        <Route
-          path="/tickets/:id"
-          element={
-            simplifiee ? <TicketConversationPage session={session.data} /> : <TicketPage />
-          }
-        />
-        <Route path="/itil/problems" element={<ItilObjectsPage kind="problem" />} />
-        <Route path="/itil/problems/:id" element={<ItilObjectPage kind="problem" />} />
-        <Route path="/itil/changes" element={<ItilObjectsPage kind="change" />} />
-        <Route path="/itil/changes/:id" element={<ItilObjectPage kind="change" />} />
-        <Route path="/planning" element={<PlanningPage />} />
-        <Route path="/stats" element={<StatsPage />} />
-        <Route path="/search" element={<SearchPage />} />
-        <Route path="/knowledge" element={<KnowledgePage session={session.data} />} />
-        <Route path="/catalogue" element={<CataloguePage />} />
-
-        {/* La configuration est une zone : la barre laterale devient la sienne,
-            et `/settings` seul ouvre le premier ecran. */}
-        <Route path="/settings" element={<Navigate to="/settings/service-levels" replace />} />
-        <Route path="/settings/service-levels" element={<ServiceLevelsPage />} />
-        <Route path="/settings/rules" element={<RulesPage />} />
-        <Route path="/settings/forms" element={<FormsPage />} />
-        <Route path="/settings/notifications" element={<NotificationsPage />} />
-        <Route path="/settings/mail" element={<MailPage />} />
-        <Route path="/settings/surveys" element={<SurveysPage session={session.data} />} />
-        <Route path="/settings/entities" element={<EntitiesPage session={session.data} />} />
-        <Route path="/settings/users" element={<UsersPage />} />
-        <Route path="/settings/groups" element={<GroupsPage />} />
-        <Route path="/settings/profiles" element={<ProfilesPage />} />
-        <Route path="/settings/directories" element={<DirectoriesPage />} />
-        <Route path="/settings/general" element={<SettingsPage session={session.data} />} />
-
-        {/* Anciennes adresses : un signet ne doit pas tomber sur une page
-            d'accueil sans explication. */}
-        {[
-          ['/entities', '/settings/entities'],
-          ['/service-levels', '/settings/service-levels'],
-          ['/rules', '/settings/rules'],
-          ['/forms', '/settings/forms'],
-          ['/notifications', '/settings/notifications'],
-          ['/mail', '/settings/mail'],
-          ['/surveys', '/settings/surveys'],
-          ['/admin/users', '/settings/users'],
-          ['/admin/groups', '/settings/groups'],
-          ['/admin/profiles', '/settings/profiles'],
-          ['/admin/directories', '/settings/directories'],
-          ['/admin/settings', '/settings/general'],
-        ].map(([ancienne, nouvelle]) => (
           <Route
-            key={ancienne}
-            path={ancienne}
-            element={<Navigate to={nouvelle as string} replace />}
+            path="/tickets/:id"
+            element={
+              simplifiee ? <TicketConversationPage session={session.data} /> : <TicketPage />
+            }
           />
-        ))}
-        <Route path="*" element={<Navigate to="/tickets" replace />} />
-      </Routes>
-    </AppShell>
+          <Route path="/itil/problems" element={<ItilObjectsPage kind="problem" />} />
+          <Route path="/itil/problems/:id" element={<ItilObjectPage kind="problem" />} />
+          <Route path="/itil/changes" element={<ItilObjectsPage kind="change" />} />
+          <Route path="/itil/changes/:id" element={<ItilObjectPage kind="change" />} />
+          <Route path="/planning" element={<PlanningPage />} />
+          <Route path="/stats" element={<StatsPage />} />
+          <Route path="/search" element={<SearchPage />} />
+          <Route path="/knowledge" element={<KnowledgePage session={session.data} />} />
+          <Route path="/catalogue" element={<CataloguePage />} />
+
+          {/* La configuration est une zone : la barre laterale devient la sienne,
+            et `/settings` seul ouvre le premier ecran. */}
+          <Route
+          path="/settings"
+          element={<Navigate to={premierReglageAccessible(session.data) ?? '/'} replace />}
+        />
+          <Route path="/settings/service-levels" element={<ServiceLevelsPage />} />
+          <Route path="/settings/rules" element={<RulesPage />} />
+          <Route path="/settings/forms" element={<FormsPage />} />
+          <Route path="/settings/notifications" element={<NotificationsPage />} />
+          <Route path="/settings/mail" element={<MailPage />} />
+          <Route path="/settings/surveys" element={<SurveysPage session={session.data} />} />
+          <Route path="/settings/entities" element={<EntitiesPage session={session.data} />} />
+          <Route path="/settings/users" element={<UsersPage />} />
+          <Route path="/settings/groups" element={<GroupsPage />} />
+          <Route path="/settings/profiles" element={<ProfilesPage />} />
+          <Route path="/settings/directories" element={<DirectoriesPage />} />
+          <Route path="/settings/general" element={<SettingsPage session={session.data} />} />
+
+          {/* Anciennes adresses : un signet ne doit pas tomber sur une page
+            d'accueil sans explication. */}
+          {[
+            ['/entities', '/settings/entities'],
+            ['/service-levels', '/settings/service-levels'],
+            ['/rules', '/settings/rules'],
+            ['/forms', '/settings/forms'],
+            ['/notifications', '/settings/notifications'],
+            ['/mail', '/settings/mail'],
+            ['/surveys', '/settings/surveys'],
+            ['/admin/users', '/settings/users'],
+            ['/admin/groups', '/settings/groups'],
+            ['/admin/profiles', '/settings/profiles'],
+            ['/admin/directories', '/settings/directories'],
+            ['/admin/settings', '/settings/general'],
+          ].map(([ancienne, nouvelle]) => (
+            <Route
+              key={ancienne}
+              path={ancienne}
+              element={<Navigate to={nouvelle as string} replace />}
+            />
+          ))}
+          <Route path="*" element={<Navigate to="/tickets" replace />} />
+        </Routes>
+      </AppShell>
+    </SessionProvider>
   );
 }

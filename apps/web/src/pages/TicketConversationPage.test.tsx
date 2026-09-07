@@ -61,8 +61,20 @@ const TICKET: TicketDetail = {
   waitingDuration: 0,
   validationStatus: null,
   actors: [
-    { role: 'requester', actorType: 'user', actorId: 9, label: 'Paul Durand', alternativeEmail: null },
-    { role: 'assigned', actorType: 'user', actorId: 1, label: 'Alice Martin', alternativeEmail: null },
+    {
+      role: 'requester',
+      actorType: 'user',
+      actorId: 9,
+      label: 'Paul Durand',
+      alternativeEmail: null,
+    },
+    {
+      role: 'assigned',
+      actorType: 'user',
+      actorId: 1,
+      label: 'Alice Martin',
+      alternativeEmail: null,
+    },
   ],
 };
 
@@ -153,7 +165,15 @@ describe('TicketConversationPage', () => {
 
   it('affiche les changements d’état comme des jalons', async () => {
     rendrePage([
-      { id: 3, at: '2026-03-01T10:30:00.000Z', author: SUPPORT, kind: 'log', field: 'status', oldValue: 'new', newValue: 'assigned' },
+      {
+        id: 3,
+        at: '2026-03-01T10:30:00.000Z',
+        author: SUPPORT,
+        kind: 'log',
+        field: 'status',
+        oldValue: 'new',
+        newValue: 'assigned',
+      },
     ]);
 
     expect(await screen.findByText(/Statut : En cours/)).toBeInTheDocument();
@@ -161,9 +181,33 @@ describe('TicketConversationPage', () => {
 
   it('tait les arbitrages internes', async () => {
     rendrePage([
-      { id: 4, at: '2026-03-01T10:30:00.000Z', author: SUPPORT, kind: 'log', field: 'urgency', oldValue: '3', newValue: '5' },
-      { id: 5, at: '2026-03-01T10:31:00.000Z', author: SUPPORT, kind: 'log', field: 'category', oldValue: null, newValue: 'Droits' },
-      { id: 6, at: '2026-03-01T10:32:00.000Z', author: SUPPORT, kind: 'log', field: 'impact', oldValue: '3', newValue: '4' },
+      {
+        id: 4,
+        at: '2026-03-01T10:30:00.000Z',
+        author: SUPPORT,
+        kind: 'log',
+        field: 'urgency',
+        oldValue: '3',
+        newValue: '5',
+      },
+      {
+        id: 5,
+        at: '2026-03-01T10:31:00.000Z',
+        author: SUPPORT,
+        kind: 'log',
+        field: 'category',
+        oldValue: null,
+        newValue: 'Droits',
+      },
+      {
+        id: 6,
+        at: '2026-03-01T10:32:00.000Z',
+        author: SUPPORT,
+        kind: 'log',
+        field: 'impact',
+        oldValue: '3',
+        newValue: '4',
+      },
     ]);
 
     await screen.findByText(TICKET.content);
@@ -242,7 +286,10 @@ describe('TicketConversationPage', () => {
     // Un demandeur n'ecrit pas de note interne : la case n'existe pas, et le
     // drapeau part a faux sans qu'on ait a s'en souvenir.
     await waitFor(() => {
-      expect(api.addFollowup).toHaveBeenCalledWith(6, expect.objectContaining({ isPrivate: false }));
+      expect(api.addFollowup).toHaveBeenCalledWith(
+        6,
+        expect.objectContaining({ isPrivate: false }),
+      );
     });
   });
 
@@ -268,7 +315,9 @@ describe('TicketConversationPage', () => {
       },
     ]);
 
-    expect(await screen.findByText('Cette solution règle-t-elle votre demande ?')).toBeInTheDocument();
+    expect(
+      await screen.findByText('Cette solution règle-t-elle votre demande ?'),
+    ).toBeInTheDocument();
 
     await userEvent.click(screen.getByRole('button', { name: 'Cela résout ma demande' }));
 
@@ -315,7 +364,9 @@ describe('TicketConversationPage', () => {
     ]);
 
     expect(await screen.findByText('Droits ajoutes au groupe.')).toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: 'Cela résout ma demande' })).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: 'Cela résout ma demande' }),
+    ).not.toBeInTheDocument();
   });
 
   it('ferme la conversation sur une demande close', async () => {
@@ -325,7 +376,9 @@ describe('TicketConversationPage', () => {
 
     // Ecrire sur une demande close laisserait croire qu'un message va repartir
     // vers quelqu'un, alors que plus personne ne la suit.
-    expect(screen.queryByRole('textbox', { name: /Écrivez votre message/ })).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole('textbox', { name: /Écrivez votre message/ }),
+    ).not.toBeInTheDocument();
   });
 
   it('explique un refus de droit plutôt que d’afficher une panne', async () => {

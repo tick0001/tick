@@ -3,6 +3,7 @@ import type { SessionContext, UpsertSatisfactionConfig } from '@tick/contracts';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ApiError, api } from '@/lib/api';
+import { usePeut } from '@/lib/session';
 import { BOUTON, CARTE, CONTROLE } from '@/components/ui/primitives';
 
 const DEFAUT: UpsertSatisfactionConfig = {
@@ -23,6 +24,7 @@ const DEFAUT: UpsertSatisfactionConfig = {
  */
 export function SurveysPage({ session }: { session: SessionContext }) {
   const { t } = useTranslation();
+  const peutEcrire = usePeut('satisfaction', 'update');
   const queryClient = useQueryClient();
 
   const [valeurs, setValeurs] = useState<UpsertSatisfactionConfig>(DEFAUT);
@@ -86,7 +88,7 @@ export function SurveysPage({ session }: { session: SessionContext }) {
     <section className="space-y-6">
       <header className="space-y-1">
         <h2 className="text-xl font-semibold tracking-tight">{t('enquetes.titre')}</h2>
-          <p className="max-w-2xl text-sm text-muted">{t('enquetes.intro')}</p>
+        <p className="max-w-2xl text-sm text-muted">{t('enquetes.intro')}</p>
         <p className="text-sm text-muted">
           {t('enquetes.description', { entite: session.entity.name })}
         </p>
@@ -181,9 +183,11 @@ export function SurveysPage({ session }: { session: SessionContext }) {
           </label>
         </div>
 
-        <button type="submit" className={BOUTON}>
-          {t('commun.enregistrer')}
-        </button>
+        {peutEcrire && (
+          <button type="submit" className={BOUTON}>
+            {t('commun.enregistrer')}
+          </button>
+        )}
       </form>
 
       {stats.data && (

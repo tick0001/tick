@@ -19,6 +19,7 @@ import {
   Select,
 } from '@/components/ui/primitives';
 import { ApiError, api } from '@/lib/api';
+import { usePeut } from '@/lib/session';
 import { cn } from '@/lib/utils';
 
 const VIDE: UpsertProfile = {
@@ -42,6 +43,7 @@ const GROUPES = ['itil', 'connaissance', 'configuration', 'administration'] as c
  */
 export function ProfilesPage() {
   const { t } = useTranslation();
+  const peutEcrire = usePeut('profile', 'update');
   const queryClient = useQueryClient();
 
   const [edite, setEdite] = useState<{ id?: number; valeurs: UpsertProfile } | null>(null);
@@ -120,15 +122,17 @@ export function ProfilesPage() {
         title={t('administration.profils.titre')}
         description={t('administration.profils.description')}
         action={
-          <Button
-            variante="primaire"
-            onClick={() => {
-              setEdite({ valeurs: { ...VIDE, rights: [] } });
-            }}
-          >
-            <IconPlus className="size-4" />
-            {t('administration.profils.nouveau')}
-          </Button>
+          peutEcrire ? (
+            <Button
+              variante="primaire"
+              onClick={() => {
+                setEdite({ valeurs: { ...VIDE, rights: [] } });
+              }}
+            >
+              <IconPlus className="size-4" />
+              {t('administration.profils.nouveau')}
+            </Button>
+          ) : undefined
         }
       />
 
@@ -137,7 +141,9 @@ export function ProfilesPage() {
       {edite && (
         <Card>
           <CardHeader
-            title={edite.id === undefined ? t('administration.profils.nouveau') : edite.valeurs.name}
+            title={
+              edite.id === undefined ? t('administration.profils.nouveau') : edite.valeurs.name
+            }
           />
           <CardBody>
             <form onSubmit={soumettre} className="space-y-5">
@@ -146,7 +152,10 @@ export function ProfilesPage() {
                   <Input
                     value={edite.valeurs.name}
                     onChange={(event) => {
-                      setEdite({ ...edite, valeurs: { ...edite.valeurs, name: event.target.value } });
+                      setEdite({
+                        ...edite,
+                        valeurs: { ...edite.valeurs, name: event.target.value },
+                      });
                     }}
                     autoFocus
                   />
@@ -215,7 +224,10 @@ export function ProfilesPage() {
                         <table className="w-full text-left text-sm">
                           <tbody>
                             {objets.map((objet) => (
-                              <tr key={objet.object} className="border-b border-line/70 last:border-0">
+                              <tr
+                                key={objet.object}
+                                className="border-b border-line/70 last:border-0"
+                              >
                                 <td className="w-52 px-3 py-2 font-medium">{objet.label}</td>
                                 <td className="px-3 py-2">
                                   <div className="flex flex-wrap gap-2">
@@ -329,33 +341,37 @@ export function ProfilesPage() {
               </p>
 
               <div className="flex gap-2 pt-1">
-                <Button
-                  taille="sm"
-                  onClick={() => {
-                    setEdite({
-                      id: profil.id,
-                      valeurs: {
-                        name: profil.name,
-                        interface: profil.interface,
-                        isDefault: profil.isDefault,
-                        comment: profil.comment ?? '',
-                        rights: profil.rights,
-                      },
-                    });
-                  }}
-                >
-                  {t('entites.modifier')}
-                </Button>
-                <Button
-                  taille="sm"
-                  variante="danger"
-                  disabled={profil.usageCount > 0}
-                  onClick={() => {
-                    supprimer.mutate(profil.id);
-                  }}
-                >
-                  {t('entites.supprimer')}
-                </Button>
+                {peutEcrire && (
+                  <Button
+                    taille="sm"
+                    onClick={() => {
+                      setEdite({
+                        id: profil.id,
+                        valeurs: {
+                          name: profil.name,
+                          interface: profil.interface,
+                          isDefault: profil.isDefault,
+                          comment: profil.comment ?? '',
+                          rights: profil.rights,
+                        },
+                      });
+                    }}
+                  >
+                    {t('entites.modifier')}
+                  </Button>
+                )}
+                {peutEcrire && (
+                  <Button
+                    taille="sm"
+                    variante="danger"
+                    disabled={profil.usageCount > 0}
+                    onClick={() => {
+                      supprimer.mutate(profil.id);
+                    }}
+                  >
+                    {t('entites.supprimer')}
+                  </Button>
+                )}
               </div>
             </CardBody>
           </Card>

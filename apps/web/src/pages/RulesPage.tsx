@@ -11,6 +11,7 @@ import type {
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ApiError, api } from '@/lib/api';
+import { usePeut } from '@/lib/session';
 import { BOUTON, BOUTON_PRIMAIRE, CARTE, CONTROLE } from '@/components/ui/primitives';
 
 const COLLECTIONS: RuleCollection[] = [
@@ -78,14 +79,13 @@ function versFormulaire(regle: Rule): UpsertRule {
  */
 export function RulesPage() {
   const { t } = useTranslation();
+  const peutEcrire = usePeut('rule', 'update');
   const queryClient = useQueryClient();
 
   const [collection, setCollection] = useState<RuleCollection>('ticket.create');
   const [edite, setEdite] = useState<{ id?: number; valeurs: UpsertRule } | null>(null);
   const [erreur, setErreur] = useState<string | null>(null);
-  const [entree, setEntree] = useState(
-    '{\n"name":"Incident bloquant",\n"type":"incident"\n}',
-  );
+  const [entree, setEntree] = useState('{\n"name":"Incident bloquant",\n"type":"incident"\n}');
   const [simulation, setSimulation] = useState<SimulationResult | null>(null);
 
   const regles = useQuery({
@@ -191,22 +191,22 @@ export function RulesPage() {
           </select>
         </div>
 
-        <button
-          type="button"
-          className={BOUTON_PRIMAIRE}
-          onClick={() => {
-            setEdite({ valeurs: regleVide(collection) });
-          }}
-        >
-          {t('regles.nouvelle')}
-        </button>
+        {peutEcrire && (
+          <button
+            type="button"
+            className={BOUTON_PRIMAIRE}
+            onClick={() => {
+              setEdite({ valeurs: regleVide(collection) });
+            }}
+          >
+            {t('regles.nouvelle')}
+          </button>
+        )}
       </header>
 
       {erreur && <p className="text-sm text-critical">{erreur}</p>}
 
-      {regles.data?.length === 0 && (
-        <p className="text-sm text-muted">{t('regles.aucune')}</p>
-      )}
+      {regles.data?.length === 0 && <p className="text-sm text-muted">{t('regles.aucune')}</p>}
 
       <ol className="space-y-2">
         {regles.data?.map((regle, index) => (
@@ -236,10 +236,7 @@ export function RulesPage() {
                     </li>
                   ))}
                   {regle.actions.map((action, position) => (
-                    <li
-                      key={`a${String(position)}`}
-                      className="text-ink"
-                    >
+                    <li key={`a${String(position)}`} className="text-ink">
                       → {t(`regles.typesAction.${action.action}`)}{' '}
                       {definitionDe(action.field)?.label ?? action.field}{' '}
                       <code>{action.value ?? ''}</code>
@@ -753,9 +750,7 @@ export function RulesPage() {
                 <li
                   key={trace.ruleId}
                   className={`rounded-md border p-2 text-xs ${
-                    trace.matched
-                      ? 'border-positive/40'
-                      : 'border-line'
+                    trace.matched ? 'border-positive/40' : 'border-line'
                   }`}
                 >
                   <p className="font-medium">
@@ -764,14 +759,7 @@ export function RulesPage() {
                   </p>
 
                   {trace.criteria.map((critere, position) => (
-                    <p
-                      key={position}
-                      className={
-                        critere.matched
-                          ? 'text-positive'
-                          : 'text-muted'
-                      }
-                    >
+                    <p key={position} className={critere.matched ? 'text-positive' : 'text-muted'}>
                       {definitionDe(critere.field)?.label ?? critere.field}{' '}
                       {t(`regles.operateurs.${critere.operator}`)}{' '}
                       <code>{critere.value ?? ''}</code> — {t('regles.valeurObtenue')}{' '}

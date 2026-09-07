@@ -10,6 +10,7 @@ import type {
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ApiError, api } from '@/lib/api';
+import { usePeut } from '@/lib/session';
 import { BOUTON, BOUTON_PRIMAIRE, CARTE, CONTROLE } from '@/components/ui/primitives';
 
 const NATURES: FormQuestionKind[] = [
@@ -107,6 +108,7 @@ function aplatir(valeurs: UpsertForm): { rang: number; question: FormQuestion }[
  */
 export function FormsPage() {
   const { t } = useTranslation();
+  const peutEcrire = usePeut('form', 'update');
   const queryClient = useQueryClient();
 
   const [edite, setEdite] = useState<{ id?: number; valeurs: UpsertForm } | null>(null);
@@ -180,15 +182,17 @@ export function FormsPage() {
     <section className="space-y-5">
       <header className="flex items-center justify-between gap-3">
         <h2 className="text-xl font-semibold tracking-tight">{t('formulaires.titre')}</h2>
-        <button
-          type="button"
-          className={BOUTON_PRIMAIRE}
-          onClick={() => {
-            setEdite({ valeurs: formulaireVide() });
-          }}
-        >
-          {t('formulaires.nouveau')}
-        </button>
+        {peutEcrire && (
+          <button
+            type="button"
+            className={BOUTON_PRIMAIRE}
+            onClick={() => {
+              setEdite({ valeurs: formulaireVide() });
+            }}
+          >
+            {t('formulaires.nouveau')}
+          </button>
+        )}
       </header>
 
       {erreur && <p className="text-sm text-critical">{erreur}</p>}
@@ -318,10 +322,7 @@ export function FormsPage() {
 
           {/* ---- Sections et questions ---- */}
           {edite.valeurs.sections.map((section, indexSection) => (
-            <div
-              key={indexSection}
-              className="space-y-3 rounded-lg border border-line p-3"
-            >
+            <div key={indexSection} className="space-y-3 rounded-lg border border-line p-3">
               <div className="flex items-center gap-2">
                 <input
                   className={`${CONTROLE} flex-1`}
@@ -360,9 +361,7 @@ export function FormsPage() {
                     className="space-y-2 rounded-md bg-sunken p-2 bg-surface"
                   >
                     <div className="flex flex-wrap items-center gap-2">
-                      <span className="w-6 text-xs tabular-nums text-faint">
-                        {String(rang)}
-                      </span>
+                      <span className="w-6 text-xs tabular-nums text-faint">{String(rang)}</span>
 
                       <input
                         className={`${CONTROLE} w-64`}
@@ -440,9 +439,7 @@ export function FormsPage() {
 
                     {question.conditions.map((condition, indexCondition) => (
                       <div key={indexCondition} className="flex flex-wrap items-center gap-2">
-                        <span className="text-xs text-muted">
-                          {t('formulaires.conditions')}
-                        </span>
+                        <span className="text-xs text-muted">{t('formulaires.conditions')}</span>
 
                         <select
                           className={`${CONTROLE} w-56`}
@@ -586,9 +583,7 @@ export function FormsPage() {
           {/* ---- Correspondances ---- */}
           {destination && (
             <div className="space-y-2">
-              <p className="text-xs font-medium text-muted">
-                {t('formulaires.correspondances')}
-              </p>
+              <p className="text-xs font-medium text-muted">{t('formulaires.correspondances')}</p>
 
               {destination.mappings.map((mapping, indexMapping) => (
                 <div key={indexMapping} className="flex flex-wrap items-center gap-2">

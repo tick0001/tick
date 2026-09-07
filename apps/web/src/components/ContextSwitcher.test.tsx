@@ -125,6 +125,8 @@ describe('ContextSwitcher', () => {
 
     // Sans etiquette, un lecteur d'ecran annonce « liste deroulante » sans dire
     // ce qu'elle change — ici, rien de moins que le perimetre de travail.
-    expect(screen.getByRole('combobox', { name: /Changer d'entité ou de profil/ })).toBeInTheDocument();
+    expect(
+      screen.getByRole('combobox', { name: /Changer d'entité ou de profil/ }),
+    ).toBeInTheDocument();
   });
 });

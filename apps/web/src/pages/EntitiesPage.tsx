@@ -22,6 +22,7 @@ import {
   Tr,
 } from '@/components/ui/primitives';
 import { ApiError, api } from '@/lib/api';
+import { usePeut } from '@/lib/session';
 
 interface Saisie {
   id?: number;
@@ -47,6 +48,9 @@ interface Saisie {
  */
 export function EntitiesPage({ session }: { session: SessionContext }) {
   const { t, i18n } = useTranslation();
+  const peutModifier = usePeut('entity', 'update');
+  const peutSupprimer = usePeut('entity', 'delete');
+  const peutEcrire = usePeut('entity', 'create');
   const queryClient = useQueryClient();
   const [edite, setEdite] = useState<Saisie | null>(null);
 
@@ -100,26 +104,28 @@ export function EntitiesPage({ session }: { session: SessionContext }) {
         title={t('entites.titre')}
         description={t('entites.description')}
         action={
-          <>
-            <PluginSlot
-              name="entity.list.actions"
-              className="flex items-center gap-2"
-              context={{
-                locale: i18n.language,
-                entity: session.entity,
-                profile: session.profile,
-              }}
-            />
-            <Button
-              variante="primaire"
-              onClick={() => {
-                setEdite({ name: '', parentId: session.entity.id, comment: '' });
-              }}
-            >
-              <IconPlus className="size-4" />
-              {t('entites.nouvelle')}
-            </Button>
-          </>
+          peutEcrire ? (
+            <>
+              <PluginSlot
+                name="entity.list.actions"
+                className="flex items-center gap-2"
+                context={{
+                  locale: i18n.language,
+                  entity: session.entity,
+                  profile: session.profile,
+                }}
+              />
+              <Button
+                variante="primaire"
+                onClick={() => {
+                  setEdite({ name: '', parentId: session.entity.id, comment: '' });
+                }}
+              >
+                <IconPlus className="size-4" />
+                {t('entites.nouvelle')}
+              </Button>
+            </>
+          ) : undefined
         }
       />
 
@@ -225,31 +231,35 @@ export function EntitiesPage({ session }: { session: SessionContext }) {
                 <Td className="tabular-nums text-muted">{entite.level}</Td>
                 <Td className="text-right">
                   <div className="flex justify-end gap-2">
-                    <Button
-                      taille="sm"
-                      onClick={() => {
-                        setEdite({
-                          id: entite.id,
-                          name: entite.name,
-                          parentId: entite.parentId ?? entite.id,
-                          comment: '',
-                        });
-                      }}
-                    >
-                      {t('entites.modifier')}
-                    </Button>
-                    <Button
-                      taille="sm"
-                      variante="danger"
-                      disabled={entite.level === 0}
-                      onClick={() => {
-                        if (globalThis.confirm(t('entites.confirmerSuppression'))) {
-                          supprimer.mutate(entite.id);
-                        }
-                      }}
-                    >
-                      {t('entites.supprimer')}
-                    </Button>
+                    {peutModifier && (
+                      <Button
+                        taille="sm"
+                        onClick={() => {
+                          setEdite({
+                            id: entite.id,
+                            name: entite.name,
+                            parentId: entite.parentId ?? entite.id,
+                            comment: '',
+                          });
+                        }}
+                      >
+                        {t('entites.modifier')}
+                      </Button>
+                    )}
+                    {peutSupprimer && (
+                      <Button
+                        taille="sm"
+                        variante="danger"
+                        disabled={entite.level === 0}
+                        onClick={() => {
+                          if (globalThis.confirm(t('entites.confirmerSuppression'))) {
+                            supprimer.mutate(entite.id);
+                          }
+                        }}
+                      >
+                        {t('entites.supprimer')}
+                      </Button>
+                    )}
                   </div>
                 </Td>
               </Tr>

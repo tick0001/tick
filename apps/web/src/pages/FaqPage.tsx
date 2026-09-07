@@ -48,10 +48,7 @@ export function FaqPage() {
 
       <ul className="space-y-2">
         {articles.data?.map((resume) => (
-          <li
-            key={resume.id}
-            className="rounded-card border border-line"
-          >
+          <li key={resume.id} className="rounded-card border border-line">
             <button
               type="button"
               className="w-full px-4 py-3 text-left"

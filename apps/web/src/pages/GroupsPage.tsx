@@ -19,6 +19,7 @@ import {
   Select,
 } from '@/components/ui/primitives';
 import { ApiError, api } from '@/lib/api';
+import { usePeut } from '@/lib/session';
 
 const VIDE: UpsertGroup = {
   name: '',
@@ -37,6 +38,8 @@ const VIDE: UpsertGroup = {
  */
 export function GroupsPage() {
   const { t } = useTranslation();
+  const peutSupprimer = usePeut('group', 'delete');
+  const peutEcrire = usePeut('group', 'create');
   const queryClient = useQueryClient();
 
   const [edite, setEdite] = useState<{ id?: number; valeurs: UpsertGroup } | null>(null);
@@ -91,15 +94,17 @@ export function GroupsPage() {
         title={t('administration.groupes.titre')}
         description={t('administration.groupes.description')}
         action={
-          <Button
-            variante="primaire"
-            onClick={() => {
-              setEdite({ valeurs: { ...VIDE } });
-            }}
-          >
-            <IconPlus className="size-4" />
-            {t('administration.groupes.nouveau')}
-          </Button>
+          peutEcrire ? (
+            <Button
+              variante="primaire"
+              onClick={() => {
+                setEdite({ valeurs: { ...VIDE } });
+              }}
+            >
+              <IconPlus className="size-4" />
+              {t('administration.groupes.nouveau')}
+            </Button>
+          ) : undefined
         }
       />
 
@@ -108,7 +113,9 @@ export function GroupsPage() {
       {edite && (
         <Card>
           <CardHeader
-            title={edite.id === undefined ? t('administration.groupes.nouveau') : edite.valeurs.name}
+            title={
+              edite.id === undefined ? t('administration.groupes.nouveau') : edite.valeurs.name
+            }
           />
           <CardBody>
             <form onSubmit={soumettre} className="space-y-4">
@@ -117,7 +124,10 @@ export function GroupsPage() {
                   <Input
                     value={edite.valeurs.name}
                     onChange={(event) => {
-                      setEdite({ ...edite, valeurs: { ...edite.valeurs, name: event.target.value } });
+                      setEdite({
+                        ...edite,
+                        valeurs: { ...edite.valeurs, name: event.target.value },
+                      });
                     }}
                     autoFocus
                   />
@@ -278,16 +288,18 @@ export function GroupsPage() {
                   {t('administration.groupes.ajouterMembre')}
                 </Button>
 
-                <Button
-                  taille="sm"
-                  variante="danger"
-                  className="ml-auto"
-                  onClick={() => {
-                    supprimer.mutate(groupe.id);
-                  }}
-                >
-                  {t('entites.supprimer')}
-                </Button>
+                {peutSupprimer && (
+                  <Button
+                    taille="sm"
+                    variante="danger"
+                    className="ml-auto"
+                    onClick={() => {
+                      supprimer.mutate(groupe.id);
+                    }}
+                  >
+                    {t('entites.supprimer')}
+                  </Button>
+                )}
               </div>
             </CardBody>
           </Card>

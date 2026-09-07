@@ -60,7 +60,9 @@ function Bulle({ message, horodatage }: { message: Message; horodatage: string }
       <div className={cn('max-w-[42rem] min-w-0 space-y-1', message.deMoi && 'text-right')}>
         <p className="px-1 text-xs text-faint">
           <span className="font-medium text-muted">
-            {message.deMoi ? t('tickets.conversation.vous') : (message.auteur ?? t('tickets.conversation.support'))}
+            {message.deMoi
+              ? t('tickets.conversation.vous')
+              : (message.auteur ?? t('tickets.conversation.support'))}
           </span>
           <span className="tabular-nums"> · {horodatage}</span>
         </p>
@@ -100,8 +102,16 @@ export function TicketConversationPage({ session }: { session: SessionContext })
   const [message, setMessage] = useState('');
   const finDuFil = useRef<HTMLDivElement>(null);
 
-  const ticket = useQuery({ queryKey: ['ticket', id], queryFn: () => api.ticket(id), retry: false });
-  const fil = useQuery({ queryKey: ['timeline', id], queryFn: () => api.timeline(id), retry: false });
+  const ticket = useQuery({
+    queryKey: ['ticket', id],
+    queryFn: () => api.ticket(id),
+    retry: false,
+  });
+  const fil = useQuery({
+    queryKey: ['timeline', id],
+    queryFn: () => api.timeline(id),
+    retry: false,
+  });
 
   const rafraichir = async (): Promise<void> => {
     await queryClient.invalidateQueries({ queryKey: ['ticket', id] });
@@ -192,7 +202,11 @@ export function TicketConversationPage({ session }: { session: SessionContext })
       at: entree.at,
       contenu: 'content' in entree ? entree.content : '',
       nature:
-        entree.kind === 'solution' ? 'solution' : entree.kind === 'task' ? 'intervention' : 'message',
+        entree.kind === 'solution'
+          ? 'solution'
+          : entree.kind === 'task'
+            ? 'intervention'
+            : 'message',
       solutionEnAttente: entree.kind === 'solution' && entree.status === 'proposed',
     });
   }

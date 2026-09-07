@@ -140,9 +140,7 @@ export function CataloguePage() {
     <section className="space-y-5">
       <header className="space-y-1">
         <h2 className="text-xl font-semibold tracking-tight">{t('catalogue.titre')}</h2>
-        <p className="text-sm text-muted">
-          {t('catalogue.description')}
-        </p>
+        <p className="text-sm text-muted">{t('catalogue.description')}</p>
       </header>
 
       {erreur && <p className="text-sm text-critical">{erreur}</p>}
@@ -168,9 +166,7 @@ export function CataloguePage() {
                 {service.description && (
                   <p className="mt-1 text-xs text-muted">{service.description}</p>
                 )}
-                {service.category && (
-                  <p className="mt-2 text-xs text-faint">{service.category}</p>
-                )}
+                {service.category && <p className="mt-2 text-xs text-faint">{service.category}</p>}
               </button>
             ))}
           </div>
@@ -204,9 +200,7 @@ export function CataloguePage() {
           {formulaire.data.sections.map((section, indexSection) => (
             <fieldset key={indexSection} className="space-y-3">
               <legend className="text-sm font-semibold">{section.name}</legend>
-              {section.description && (
-                <p className="text-xs text-muted">{section.description}</p>
-              )}
+              {section.description && <p className="text-xs text-muted">{section.description}</p>}
 
               {section.questions.map((question, indexQuestion) => {
                 const rang = (depart[indexSection] ?? 0) + indexQuestion;

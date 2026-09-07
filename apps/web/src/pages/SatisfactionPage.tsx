@@ -30,8 +30,7 @@ export function SatisfactionPage() {
     mutationFn: () => api.answerSurvey(token, { rating: note ?? 3, comment: commentaire || null }),
   });
 
-  const encadre =
-    'mx-auto max-w-lg space-y-4 rounded-card border border-line p-6';
+  const encadre = 'mx-auto max-w-lg space-y-4 rounded-card border border-line p-6';
 
   if (enquete.error) {
     return (
