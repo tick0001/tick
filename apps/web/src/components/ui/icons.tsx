@@ -111,6 +111,15 @@ export const IconRegles: Icone = (props) => (
   </Trace>
 );
 
+/** Arbre de classement : une racine, deux branches. */
+export const IconCategories: Icone = (props) => (
+  <Trace {...props}>
+    <path d="M5 4v12a2 2 0 0 0 2 2h4M5 10h6" />
+    <rect x="13" y="7" width="7" height="5" rx="1" />
+    <rect x="13" y="15" width="7" height="5" rx="1" />
+  </Trace>
+);
+
 export const IconFormulaire: Icone = (props) => (
   <Trace {...props}>
     <rect x="4" y="3" width="16" height="18" rx="2" />

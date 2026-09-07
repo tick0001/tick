@@ -73,6 +73,10 @@ async function nettoyer(prefixe: string): Promise<void> {
             SELECT id FROM profiles WHERE name LIKE ${marque})`,
     );
     await proprietaire.db.execute(sql`DELETE FROM profiles WHERE name LIKE ${marque}`);
+    // Les categories partent d'un seul coup : les contraintes de cle
+    // etrangere se verifient en fin d'instruction, si bien qu'une mere et
+    // sa fille peuvent disparaitre ensemble sans ordre a respecter.
+    await proprietaire.db.execute(sql`DELETE FROM itil_categories WHERE name LIKE ${marque}`);
     await proprietaire.db.execute(sql`DELETE FROM ldap_directories WHERE name LIKE ${marque}`);
     await proprietaire.db.execute(sql`DELETE FROM entities WHERE name LIKE ${marque}`);
   } finally {

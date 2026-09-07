@@ -140,20 +140,47 @@ export function Field({
   label,
   hint,
   className,
+  groupe = false,
   children,
 }: {
   label: string;
   hint?: string | undefined;
   className?: string | undefined;
+  /**
+   * Le champ porte plusieurs controles, et non un seul.
+   *
+   * Un `<label>` s'associe a **un** controle : celui qu'il enveloppe, ou le
+   * premier s'il en enveloppe plusieurs. Un groupe de cases logees dans un
+   * `<label>` produit donc des etiquettes imbriquees -- ce que la norme
+   * interdit -- et, a l'usage, un clic sur la troisieme case qui bascule aussi
+   * la premiere. Le groupe se declare en `<fieldset>`, dont c'est le role.
+   */
+  groupe?: boolean;
   children: ReactNode;
 }) {
+  const intitule = (
+    <span className="block text-[11px] font-semibold tracking-wider text-faint uppercase">
+      {label}
+    </span>
+  );
+
+  const aide = hint ? <span className="block text-xs text-faint">{hint}</span> : null;
+
+  if (groupe) {
+    return (
+      <fieldset className={cn('block space-y-1', className)}>
+        <legend>{intitule}</legend>
+        {children}
+        {aide}
+      </fieldset>
+    );
+  }
+
   return (
     <label className={cn('block space-y-1', className)}>
-      <span className="block text-[11px] font-semibold tracking-wider text-faint uppercase">
-        {label}
-      </span>
+      {intitule}
       {children}
-      {hint && <span className="block text-xs text-faint">{hint}</span>}
+      {aide}
     </label>
   );
 }

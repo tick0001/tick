@@ -124,6 +124,22 @@ export const RIGHT_CATALOGUE: readonly CatalogueEntry[] = [
   },
 
   {
+    /**
+     * Categories ITIL.
+     *
+     * `read` n'y figure pas : lire les categories fait partie de l'ouverture
+     * d'un ticket, et tout compte authentifie y a droit. Declarer une action
+     * que personne ne verifie produirait un droit fantome -- configurable,
+     * accorde, et sans effet.
+     */
+    object: 'category',
+    labelKey: 'categories.titre',
+    group: 'configuration',
+    actions: ['create', 'update', 'delete'],
+    scopes: PORTEES_CONFIG,
+  },
+
+  {
     object: 'entity',
     labelKey: 'entites.titre',
     group: 'administration',

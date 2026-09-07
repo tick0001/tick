@@ -534,4 +534,162 @@ describe('HTTP — configuration', () => {
       }
     });
   });
+  describe('catégories ITIL', () => {
+    let mere: number;
+    let fille: number;
+
+    it('crée une catégorie racine', async () => {
+      const reponse = await harnais.admin().post('/api/referentials/itil-categories').send({
+        name: PREFIXE + 'mere',
+        parentId: null,
+        comment: 'Racine de test',
+        isHelpdeskVisible: true,
+        forIncident: true,
+        forRequest: true,
+        forProblem: false,
+        forChange: false,
+        isRecursive: true,
+      });
+
+      expect(reponse.status).toBe(201);
+      expect(reponse.body).toMatchObject({
+        name: PREFIXE + 'mere',
+        completeName: PREFIXE + 'mere',
+        parentId: null,
+        level: 0,
+        childCount: 0,
+      });
+
+      mere = reponse.body.id;
+    });
+
+    it('calcule le nom complet d’une fille à partir de sa mère', async () => {
+      const reponse = await harnais.admin().post('/api/referentials/itil-categories').send({
+        name: PREFIXE + 'fille',
+        parentId: mere,
+        isHelpdeskVisible: true,
+        forIncident: true,
+        forRequest: true,
+        forProblem: true,
+        forChange: true,
+        isRecursive: true,
+      });
+
+      expect(reponse.status).toBe(201);
+
+      // Ni `path` ni `completeName` ne sont envoyes : la base les deduit du
+      // parent. Les laisser ecrire par l'appelant permettrait de composer un
+      // chemin incoherent avec la hierarchie reelle.
+      expect(reponse.body.completeName).toBe(PREFIXE + 'mere > ' + PREFIXE + 'fille');
+      expect(reponse.body.level).toBe(1);
+
+      fille = reponse.body.id;
+    });
+
+    it('compte les filles sur la ligne de la mère', async () => {
+      const reponse = await harnais.admin().get('/api/referentials/itil-categories/all');
+
+      expect(reponse.status).toBe(200);
+
+      const trouvee = reponse.body.find((c: { id: number }) => c.id === mere);
+
+      expect(trouvee.childCount).toBe(1);
+    });
+
+    it('renomme la mère et propage le nom complet à sa fille', async () => {
+      const reponse = await harnais
+        .admin()
+        .put('/api/referentials/itil-categories/' + String(mere))
+        .send({
+          name: PREFIXE + 'renommee',
+          parentId: null,
+          isHelpdeskVisible: false,
+          forIncident: true,
+          forRequest: true,
+          forProblem: true,
+          forChange: true,
+          isRecursive: true,
+        });
+
+      expect(reponse.status).toBe(200);
+      expect(reponse.body.isHelpdeskVisible).toBe(false);
+
+      const toutes = await harnais.admin().get('/api/referentials/itil-categories/all');
+      const enfant = toutes.body.find((c: { id: number }) => c.id === fille);
+
+      // Le declencheur de propagation retouche les filles : sans lui, le nom
+      // complet resterait fige sur l'ancien intitule de la mere.
+      expect(enfant.completeName).toBe(PREFIXE + 'renommee > ' + PREFIXE + 'fille');
+    });
+
+    it('masque au guichet ce qui n’y est pas proposé', async () => {
+      const demandeur = await harnais.connecte('demandeur');
+      const reponse = await demandeur.get('/api/referentials/itil-categories');
+
+      expect(reponse.status).toBe(200);
+      expect(reponse.body.some((c: { id: number }) => c.id === mere)).toBe(false);
+    });
+
+    it('refuse une catégorie qui ne s’applique à rien', async () => {
+      const reponse = await harnais.admin().post('/api/referentials/itil-categories').send({
+        name: PREFIXE + 'inerte',
+        forIncident: false,
+        forRequest: false,
+        forProblem: false,
+        forChange: false,
+      });
+
+      expect(reponse.status).toBe(400);
+    });
+
+    it('refuse de rattacher une catégorie à sa propre descendance', async () => {
+      const reponse = await harnais
+        .admin()
+        .put('/api/referentials/itil-categories/' + String(mere))
+        .send({ name: PREFIXE + 'renommee', parentId: fille });
+
+      expect(reponse.status).toBe(400);
+    });
+
+    it('refuse de supprimer une catégorie qui porte des filles', async () => {
+      const reponse = await harnais
+        .admin()
+        .delete('/api/referentials/itil-categories/' + String(mere));
+
+      expect(reponse.status).toBe(400);
+    });
+
+    it('supprime la fille puis la mère', async () => {
+      expect(
+        (await harnais.admin().delete('/api/referentials/itil-categories/' + String(fille))).status,
+      ).toBe(204);
+      expect(
+        (await harnais.admin().delete('/api/referentials/itil-categories/' + String(mere))).status,
+      ).toBe(204);
+    });
+
+    it('ne trouve plus une catégorie déjà supprimée', async () => {
+      expect(
+        (await harnais.admin().delete('/api/referentials/itil-categories/' + String(mere))).status,
+      ).toBe(404);
+    });
+
+    it('garde l’écran de configuration derrière un droit', async () => {
+      // La lecture de saisie reste ouverte a tous : c'est l'ecriture, et la vue
+      // qui la sert, que le droit protege.
+      const demandeur = await harnais.connecte('demandeur');
+
+      expect((await demandeur.get('/api/referentials/itil-categories')).status).toBe(200);
+      expect((await demandeur.get('/api/referentials/itil-categories/all')).status).toBe(403);
+      expect(
+        (await demandeur.post('/api/referentials/itil-categories').send({ name: 'x' })).status,
+      ).toBe(403);
+    });
+
+    it('refuse un visiteur sans session', async () => {
+      expect(
+        (await harnais.anonyme().get('/api/referentials/itil-categories/all')).status,
+      ).toBe(401);
+    });
+  });
 });

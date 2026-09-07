@@ -8,6 +8,7 @@ import { loadPluginClients, resetPluginClients } from '@/lib/plugins';
 import { useRetourAccueilALaDeconnexion } from '@/lib/session-navigation';
 import { premierReglageAccessible } from '@/lib/navigation';
 import { SessionProvider } from '@/lib/session';
+import { CategoriesPage } from '@/pages/CategoriesPage';
 import { CataloguePage } from '@/pages/CataloguePage';
 import { DirectoriesPage } from '@/pages/DirectoriesPage';
 import { EntitiesPage } from '@/pages/EntitiesPage';
@@ -157,6 +158,7 @@ function Application() {
           <Route path="/settings/service-levels" element={<ServiceLevelsPage />} />
           <Route path="/settings/rules" element={<RulesPage />} />
           <Route path="/settings/forms" element={<FormsPage />} />
+          <Route path="/settings/categories" element={<CategoriesPage />} />
           <Route path="/settings/notifications" element={<NotificationsPage />} />
           <Route path="/settings/mail" element={<MailPage />} />
           <Route path="/settings/surveys" element={<SurveysPage session={session.data} />} />

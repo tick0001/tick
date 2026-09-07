@@ -17,6 +17,9 @@ export const REGLAGES: readonly { to: string; droit: Droit }[] = [
   { to: '/settings/service-levels', droit: { objet: 'slm', action: 'read' } },
   { to: '/settings/rules', droit: { objet: 'rule', action: 'read' } },
   { to: '/settings/forms', droit: { objet: 'form', action: 'read' } },
+  // Pas de droit de lecture sur les categories : tout le monde les lit pour
+  // classer sa demande. C'est le droit de modification qui ouvre l'ecran.
+  { to: '/settings/categories', droit: { objet: 'category', action: 'update' } },
   { to: '/settings/notifications', droit: { objet: 'notification', action: 'read' } },
   { to: '/settings/mail', droit: { objet: 'mailcollector', action: 'read' } },
   { to: '/settings/surveys', droit: { objet: 'satisfaction', action: 'read' } },

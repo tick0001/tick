@@ -1,5 +1,6 @@
 import type {
   ItilCategory,
+  ItilCategoryDetail,
   ItilCategoryFilter,
   AddFollowup,
   Agreement,
@@ -20,6 +21,7 @@ import type {
   UpdateEntity,
   UpsertAuthorization,
   UpsertGroup,
+  UpsertItilCategory,
   UpsertLdapDirectory,
   UpsertMember,
   UpsertProfile,
@@ -97,6 +99,7 @@ import type {
   UpsertSatisfactionConfig,
 } from '@tick/contracts';
 import {
+  itilCategoryDetailSchema,
   itilCategorySchema,
   agreementSchema,
   calendarSchema,
@@ -540,6 +543,29 @@ export const api = {
       `/referentials/itil-categories${chaine ? `?${chaine}` : ''}`,
       itilCategorySchema.array(),
     );
+  },
+
+  /**
+   * Categories telles que la configuration les voit.
+   *
+   * Route distincte de `itilCategories` : celle-ci ne filtre ni sur le guichet
+   * ni sur l'applicabilite, parce qu'on configure aussi ce qu'on ne propose
+   * pas, et elle demande le droit correspondant.
+   */
+  allItilCategories: (): Promise<ItilCategoryDetail[]> =>
+    request('/referentials/itil-categories/all', itilCategoryDetailSchema.array()),
+
+  saveItilCategory: (body: UpsertItilCategory, id?: number): Promise<ItilCategoryDetail> =>
+    request(
+      id === undefined
+        ? '/referentials/itil-categories'
+        : `/referentials/itil-categories/${String(id)}`,
+      itilCategoryDetailSchema,
+      { method: id === undefined ? 'POST' : 'PUT', body: JSON.stringify(body) },
+    ),
+
+  deleteItilCategory: async (id: number): Promise<void> => {
+    await send(`/referentials/itil-categories/${String(id)}`, 'DELETE');
   },
 
   templates: (): Promise<TicketTemplate[]> =>
