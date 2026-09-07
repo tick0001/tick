@@ -18,8 +18,20 @@ passe en clair.
 
 ## Images
 
-Tant qu'aucun registre public n'est en place, elles se construisent depuis les
-sources :
+Elles sont publiées sur GitHub Container Registry à chaque étiquette de version :
+
+```
+ghcr.io/tick0001/tick-api:1.0.0
+ghcr.io/tick0001/tick-web:1.0.0
+```
+
+Publiques, donc tirables sans authentification. `TICK_VERSION` choisit la
+version ; `latest` suit la dernière étiquette. Épingler une version précise est
+préférable en production — `latest` change sous vos pieds à la publication
+suivante.
+
+Pour construire depuis les sources — pour développer une modification, ou avant
+la première publication :
 
 ```bash
 pnpm images

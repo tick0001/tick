@@ -58,7 +58,7 @@ services:
   # une migration s'y appliquerait partiellement, sur les seules lignes que les
   # politiques laissent voir.
   migrate:
-    image: ${TICK_IMAGE_API:-ghcr.io/tick/api}:${TICK_VERSION:-latest}
+    image: ${TICK_IMAGE_API:-ghcr.io/tick0001/tick-api}:${TICK_VERSION:-latest}
     restart: 'no'
     depends_on:
       postgres:
@@ -68,7 +68,7 @@ services:
     command: ['node', 'node_modules/@tick/db/dist/migrate.js']
 
   api:
-    image: ${TICK_IMAGE_API:-ghcr.io/tick/api}:${TICK_VERSION:-latest}
+    image: ${TICK_IMAGE_API:-ghcr.io/tick0001/tick-api}:${TICK_VERSION:-latest}
     restart: unless-stopped
     depends_on:
       postgres:
@@ -125,7 +125,7 @@ services:
       retries: 5
 
   web:
-    image: ${TICK_IMAGE_WEB:-ghcr.io/tick/web}:${TICK_VERSION:-latest}
+    image: ${TICK_IMAGE_WEB:-ghcr.io/tick0001/tick-web}:${TICK_VERSION:-latest}
     restart: unless-stopped
     depends_on:
       api:
