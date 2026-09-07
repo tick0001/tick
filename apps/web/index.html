@@ -3,6 +3,28 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+
+    <!--
+      La couleur de fond est posee des le document, pas au premier rendu.
+      Sans elle, le navigateur peint son blanc par defaut avant que la feuille
+      de style arrive : l'ouverture commence par un eclair blanc, puis vire au
+      papier. Les deux valeurs sont celles de `--tick-canvas`.
+    -->
+    <meta name="theme-color" content="#f7f4ee" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#14120e" media="(prefers-color-scheme: dark)" />
+    <style>
+      html {
+        background: #f7f4ee;
+      }
+
+      @media (prefers-color-scheme: dark) {
+        html {
+          background: #14120e;
+        }
+      }
+    </style>
+
     <title>Tick&amp;</title>
   </head>
   <body>

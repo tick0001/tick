@@ -1,7 +1,7 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useState, type FormEvent } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Button, Field, Input } from '@/components/ui/primitives';
+import { Button, Field, Input, Marque } from '@/components/ui/primitives';
 import { ApiError, api } from '@/lib/api';
 
 /**
@@ -42,10 +42,8 @@ export function LoginPage() {
       <div className="flex items-center justify-center p-6">
         <form onSubmit={soumettre} className="w-full max-w-sm space-y-6">
           <div className="space-y-2">
-            <span className="grid size-10 place-items-center rounded-xl bg-brand text-lg font-bold text-on-brand">
-              T
-            </span>
-            <h1 className="text-2xl font-semibold tracking-tight">Tick&amp;</h1>
+            <Marque taille="lg" />
+            <h1 className="text-3xl font-bold tracking-tight">Tick&amp;</h1>
             <p className="text-sm text-muted">{t('connexion.sousTitre')}</p>
           </div>
 
@@ -95,23 +93,30 @@ export function LoginPage() {
         </form>
       </div>
 
-      <aside className="relative hidden overflow-hidden bg-brand lg:block">
-        {/* Motif discret : deux halos, sans image a telecharger. */}
-        <div
+      {/*
+        Le panneau de droite est en encre, pas en vermillon.
+        Le vermillon est la couleur de signal : il designe ce sur quoi on agit.
+        L'etaler sur une demi-page le banaliserait, et le bouton « Se connecter »
+        ne se distinguerait plus de son fond. L'encre chaude tient l'aplat,
+        laisse la couleur au seul bouton, et fait de l'esperluette la marque.
+      */}
+      <aside className="relative hidden overflow-hidden bg-ink lg:block">
+        {/* L'esperluette en filigrane, debordant volontairement du cadre : c'est
+            le signe du nom, employe ici comme motif plutot que comme logo. */}
+        <span
           aria-hidden
-          className="absolute inset-0 opacity-60"
-          style={{
-            backgroundImage:
-              'radial-gradient(60rem 40rem at 20% 15%, rgb(255 255 255 / 0.22), transparent 60%),' +
-              'radial-gradient(50rem 40rem at 85% 85%, rgb(255 255 255 / 0.14), transparent 55%)',
-          }}
-        />
+          className="pointer-events-none absolute -right-16 -bottom-24 leading-none font-bold text-canvas/[0.06] select-none"
+          style={{ fontSize: '32rem' }}
+        >
+          &amp;
+        </span>
 
-        <div className="relative flex h-full flex-col justify-end gap-3 p-12 text-on-brand">
-          <p className="max-w-md text-2xl leading-snug font-semibold text-balance">
+        <div className="relative flex h-full flex-col justify-end gap-4 p-12">
+          <span aria-hidden className="h-0.5 w-12 bg-brand" />
+          <p className="max-w-md text-2xl leading-snug font-bold text-balance text-canvas">
             {t('connexion.accroche')}
           </p>
-          <p className="max-w-md text-sm opacity-80">{t('connexion.accrocheDetail')}</p>
+          <p className="max-w-md text-sm text-canvas/60">{t('connexion.accrocheDetail')}</p>
         </div>
       </aside>
     </main>

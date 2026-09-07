@@ -46,6 +46,31 @@ export const BOUTON_SM = cn(SOCLE, VARIANTES.secondaire, TAILLES.sm);
 /** Carte, en classes : quelques listes composent leurs cartes dans une boucle. */
 export const CARTE = 'rounded-card border border-line bg-surface p-4 shadow-card';
 
+/**
+ * La marque : l'esperluette du nom.
+ *
+ * « Tick& » porte deja son signe distinctif dans son nom. Un « T » dans un carre
+ * arrondi est le monogramme que produit n'importe quel generateur ; l'esperluette
+ * ne ressemble qu'a cette application, et se reconnait a la taille d'un favicon.
+ *
+ * Le carre est presque droit et l'aplat plein : c'est le seul endroit de
+ * l'interface ou le vermillon occupe une surface, ce qui en fait un point
+ * d'ancrage plutot qu'une decoration de plus.
+ */
+export function Marque({ taille = 'sm' }: { taille?: 'sm' | 'lg' }) {
+  return (
+    <span
+      aria-hidden
+      className={cn(
+        'grid shrink-0 place-items-center rounded-[3px] bg-brand font-bold text-on-brand',
+        taille === 'lg' ? 'size-11 text-2xl' : 'size-7 text-base',
+      )}
+    >
+      &amp;
+    </span>
+  );
+}
+
 export function Button({
   variante = 'secondaire',
   taille = 'md',

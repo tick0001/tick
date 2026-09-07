@@ -5,19 +5,22 @@ import { cn } from '@/lib/utils';
 /**
  * Codes couleur des statuts.
  *
- * Les quatre statuts ouverts se distinguent entre eux, les deux fermés
- * s'effacent : dans une liste de travail, l'œil doit trouver ce qui reste à
- * faire, pas ce qui est fini. Une pastille précède le libellé — elle porte la
- * couleur, ce qui laisse le fond de l'étiquette léger et garde une liste de
- * quarante lignes lisible.
+ * Un carré plein précède le libellé, et le libellé reste en encre : c'est le
+ * carré qui porte l'état, pas un aplat de couleur derrière le texte. La pastille
+ * pastel — celle que produisent toutes les bibliothèques — teinte la moitié de
+ * la ligne et fait perdre au tableau sa tenue dès qu'on en affiche quarante.
+ *
+ * Les quatre statuts ouverts se distinguent entre eux ; les deux fermés
+ * s'effacent, carré évidé et texte pâle. Dans une liste de travail, l'œil doit
+ * trouver ce qui reste à faire, pas ce qui est fini.
  */
-const STATUTS: Record<ItilStatus, { fond: string; pastille: string }> = {
-  new: { fond: 'bg-info-soft text-info-ink', pastille: 'bg-info' },
-  assigned: { fond: 'bg-brand-soft text-brand-ink', pastille: 'bg-brand' },
-  planned: { fond: 'bg-brand-soft text-brand-ink', pastille: 'bg-brand/50' },
-  waiting: { fond: 'bg-caution-soft text-caution-ink', pastille: 'bg-caution' },
-  solved: { fond: 'bg-positive-soft text-positive-ink', pastille: 'bg-positive' },
-  closed: { fond: 'bg-sunken text-faint', pastille: 'bg-line-strong' },
+const STATUTS: Record<ItilStatus, { texte: string; carre: string }> = {
+  new: { texte: 'text-ink', carre: 'bg-info' },
+  assigned: { texte: 'text-ink', carre: 'bg-brand' },
+  planned: { texte: 'text-ink', carre: 'bg-brand/45' },
+  waiting: { texte: 'text-ink', carre: 'bg-caution' },
+  solved: { texte: 'text-muted', carre: 'bg-positive' },
+  closed: { texte: 'text-faint', carre: 'border border-line-strong bg-transparent' },
 };
 
 export function StatusBadge({ status }: { status: ItilStatus }) {
@@ -27,11 +30,11 @@ export function StatusBadge({ status }: { status: ItilStatus }) {
   return (
     <span
       className={cn(
-        'inline-flex items-center gap-1.5 rounded-md px-2 py-0.5 text-xs font-medium whitespace-nowrap',
-        style.fond,
+        'inline-flex items-center gap-1.5 text-xs font-medium whitespace-nowrap',
+        style.texte,
       )}
     >
-      <span className={cn('size-1.5 shrink-0 rounded-full', style.pastille)} aria-hidden />
+      <span className={cn('size-2 shrink-0 rounded-[1px]', style.carre)} aria-hidden />
       {t(`tickets.statuts.${status}`)}
     </span>
   );
@@ -49,24 +52,26 @@ export function PriorityBadge({ value }: { value: number }) {
   const { t } = useTranslation();
   const teinte =
     value >= 5
-      ? 'bg-critical'
+      ? 'bg-brand'
       : value === 4
         ? 'bg-caution'
         : value === 3
-          ? 'bg-caution/60'
+          ? 'bg-caution/55'
           : value === 2
-            ? 'bg-info/70'
+            ? 'bg-info/60'
             : 'bg-line-strong';
 
   const libelle = t(`tickets.priorites.p${String(value)}` as 'tickets.priorites.p1');
 
   return (
     <span className="inline-flex items-center gap-1.5" title={libelle}>
-      <span className="flex h-1.5 w-10 gap-0.5" aria-hidden>
+      {/* Des barres droites et jointives : une echelle graduee, pas cinq points.
+          La comparaison entre deux lignes se fait alors sans lire les libelles. */}
+      <span className="flex h-2.5 w-10 gap-px" aria-hidden>
         {[1, 2, 3, 4, 5].map((niveau) => (
           <span
             key={niveau}
-            className={cn('flex-1 rounded-full', niveau <= value ? teinte : 'bg-sunken')}
+            className={cn('flex-1 rounded-[1px]', niveau <= value ? teinte : 'bg-sunken')}
           />
         ))}
       </span>

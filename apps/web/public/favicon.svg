@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <!--
+    La marque : l'esperluette du nom, sur le vermillon de signal.
+    Un carre presque droit plutot qu'un rond ou un monogramme genere : c'est
+    le seul signe qui ne ressemble qu'a Tick&, et il tient a 16 pixels.
+  -->
+  <rect width="32" height="32" rx="3" fill="#d4451f" />
+  <text
+    x="16"
+    y="17"
+    fill="#fffdf9"
+    font-family="Archivo, Helvetica, Arial, sans-serif"
+    font-size="23"
+    font-weight="700"
+    text-anchor="middle"
+    dominant-baseline="central"
+  >&amp;</text>
+</svg>

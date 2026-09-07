@@ -30,20 +30,34 @@
 }
 
 /**
- * Jetons semantiques.
+ * L'identite tient dans ce fichier.
  *
- * `inline` fait pointer l'utilitaire directement sur la propriete personnalisee
- * — `.bg-surface` devient `background-color: var(--tick-surface)`. Le theme
- * sombre n'a alors qu'a redefinir ces proprietes : aucune page n'ecrit plus
- * `dark:`, et une couleur ne peut plus diverger entre deux ecrans parce qu'on
- * a oublie sa variante.
+ * Tick& est un instrument de travail : on y passe ses journees, on y lit des
+ * listes denses, on y decide. L'ecriture visuelle retenue est celle de l'atelier
+ * -- papier, encre, filets, une seule couleur de signal.
  *
- * Les noms disent le role, pas la teinte. `surface` reste `surface` le jour ou
- * le fond passe du blanc au gris ; `bg-white` aurait menti des la premiere
- * retouche.
+ * Trois partis pris s'y jouent, et chacun s'oppose a ce que produisent les
+ * bibliotheques par defaut :
+ *
+ *  1. **Le fond est du papier, pas du gris ecran.** Un gris froid neutre est le
+ *     reglage par defaut de tout le monde ; un blanc casse chaud donne une
+ *     assise a la page et repose l'oeil sur huit heures.
+ *
+ *  2. **Aucune ombre floue.** La separation se fait au filet d'un pixel, comme
+ *     sur un plan technique. L'ombre portee douce est la signature de l'epoque :
+ *     elle rend tout flottant, et rien n'a de bord.
+ *
+ *  3. **Une seule couleur de signal, rare.** Le vermillon ne sert qu'a ce sur
+ *     quoi on agit. Une interface ou trois couleurs se disputent l'attention
+ *     n'en dirige aucune.
+ *
+ * Les noms disent le role, pas la teinte : `surface` reste `surface` le jour ou
+ * le fond change. `inline` fait pointer l'utilitaire directement sur la
+ * propriete personnalisee, si bien qu'aucune page n'ecrit `dark:` et qu'une
+ * couleur ne peut plus diverger d'un ecran a l'autre.
  */
 @theme inline {
-  --font-sans: 'Inter var', 'Inter', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-sans: 'Archivo Variable', 'Archivo', ui-sans-serif, system-ui, sans-serif;
   --font-mono: ui-monospace, 'JetBrains Mono', 'Cascadia Code', monospace;
 
   /* Fonds, du plus recule au plus avance. */
@@ -82,153 +96,183 @@
   --color-info-soft: var(--tick-info-soft);
   --color-info-ink: var(--tick-info-ink);
 
-  --radius-card: 0.75rem;
+  /**
+   * Geometrie : presque droite.
+   *
+   * L'echelle entiere est ramenee a quelques pixels, et non le seul rayon des
+   * cartes. Les pages ecrivent `rounded-lg` a des centaines d'endroits : les
+   * reprendre une a une aurait ete long et aurait laisse des oublis, alors que
+   * redefinir l'echelle change tout d'un coup et sans exception.
+   *
+   * `rounded-full` reste rond : les pastilles d'etat et les avatars sont des
+   * points, pas des boites.
+   */
+  --radius-xs: 2px;
+  --radius-sm: 2px;
+  --radius-md: 3px;
+  --radius-lg: 3px;
+  --radius-xl: 4px;
+  --radius-2xl: 8px;
+  --radius-card: 3px;
 
-  --shadow-card: 0 1px 2px 0 rgb(15 23 42 / 0.04), 0 1px 3px 0 rgb(15 23 42 / 0.06);
-  --shadow-raised: 0 4px 6px -1px rgb(15 23 42 / 0.07), 0 2px 4px -2px rgb(15 23 42 / 0.05);
-  --shadow-overlay: 0 10px 15px -3px rgb(15 23 42 / 0.1), 0 4px 6px -4px rgb(15 23 42 / 0.1);
+  /**
+   * Ombres sans flou.
+   *
+   * Un decalage franc d'un pixel, jamais un halo. Le flou fait flotter les
+   * elements les uns au-dessus des autres ; le filet les pose sur la page.
+   */
+  --shadow-card: 0 1px 0 0 var(--tick-ombre);
+  --shadow-raised: 0 2px 0 0 var(--tick-ombre);
+  --shadow-overlay:
+    0 0 0 1px var(--tick-line-strong), 4px 4px 0 0 var(--tick-ombre);
 }
 
 /**
- * Palette claire.
+ * Palette claire : papier et encre.
  *
- * Neutres froids plutot que gris purs : associes a l'indigo de la marque, ils
- * evitent le rendu delave qu'un gris neutre donne des qu'une couleur saturee
- * apparait a cote.
+ * Les neutres sont chauds, jamais bleutes. Un gris froid a cote du vermillon
+ * donnerait l'aspect delave d'une capture d'ecran ; le blanc casse chaud le
+ * tient et le fait paraitre plus profond qu'il n'est.
+ *
+ * Le rouge critique est nettement plus sombre et plus bleu que le vermillon de
+ * marque : ils ne se confondent pas, et le bouton de danger reste cerne plutot
+ * que plein, si bien que deux aplats rouges ne se disputent jamais l'ecran.
  */
 :root {
   color-scheme: light dark;
 
-  --tick-canvas: #f6f7f9;
-  --tick-surface: #ffffff;
-  --tick-sunken: #f1f3f6;
+  --tick-canvas: #f7f4ee;
+  --tick-surface: #fffdf9;
+  --tick-sunken: #efeae1;
   --tick-raised: #ffffff;
 
-  --tick-line: #e3e6eb;
-  --tick-line-strong: #cbd1da;
+  --tick-line: #e2dbcf;
+  --tick-line-strong: #c6bcaa;
+  --tick-ombre: rgb(20 18 15 / 0.07);
 
-  --tick-ink: #10151f;
-  --tick-muted: #5b6572;
-  --tick-faint: #8b95a3;
+  --tick-ink: #14120f;
+  --tick-muted: #5c564c;
+  --tick-faint: #8b8274;
 
-  --tick-brand: #4f46e5;
-  --tick-brand-hover: #4338ca;
-  --tick-brand-soft: #eef0fe;
-  --tick-brand-ink: #3730a3;
-  --tick-on-brand: #ffffff;
+  --tick-brand: #d4451f;
+  --tick-brand-hover: #b53916;
+  --tick-brand-soft: #fbe9e2;
+  --tick-brand-ink: #8f2c11;
+  --tick-on-brand: #fffdf9;
 
-  --tick-positive: #059669;
-  --tick-positive-soft: #e7f6ef;
-  --tick-positive-ink: #05613f;
+  --tick-positive: #2f7a4d;
+  --tick-positive-soft: #e6f0e7;
+  --tick-positive-ink: #1e5334;
 
-  --tick-caution: #d97706;
-  --tick-caution-soft: #fdf2e2;
-  --tick-caution-ink: #92500a;
+  --tick-caution: #b0730b;
+  --tick-caution-soft: #f8eedb;
+  --tick-caution-ink: #7a4d06;
 
-  --tick-critical: #e11d48;
-  --tick-critical-soft: #fdeaef;
-  --tick-critical-ink: #9f1239;
+  --tick-critical: #9b1c1c;
+  --tick-critical-soft: #f6e6e4;
+  --tick-critical-ink: #7a1414;
 
-  --tick-info: #0284c7;
-  --tick-info-soft: #e5f3fb;
-  --tick-info-ink: #075985;
+  --tick-info: #2c5f8a;
+  --tick-info-soft: #e5ecf3;
+  --tick-info-ink: #1e4463;
 }
 
 /**
- * Palette sombre.
+ * Palette sombre : l'atelier le soir.
  *
- * Le fond n'est pas noir : un noir pur fait vibrer le texte clair et fatigue
- * plus vite que l'ardoise tres foncee retenue ici. Les teintes de sens sont
- * remontees en luminosite, sans quoi elles disparaitraient sur ce fond.
+ * Le fond n'est ni noir pur ni ardoise bleue mais un brun tres sombre : c'est
+ * le meme papier, eteint. Un gris bleute aurait renvoye a la console, ce qui
+ * n'est pas l'ecriture retenue.
  */
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme='light']) {
-    --tick-canvas: #0b0f17;
-    --tick-surface: #131926;
-    --tick-sunken: #0f1420;
-    --tick-raised: #1a2231;
+    --tick-canvas: #14120e;
+    --tick-surface: #1c1915;
+    --tick-sunken: #100e0b;
+    --tick-raised: #232019;
 
-    --tick-line: #232c3d;
-    --tick-line-strong: #33405a;
+    --tick-line: #322d25;
+    --tick-line-strong: #4b4437;
+    --tick-ombre: rgb(0 0 0 / 0.5);
 
-    --tick-ink: #e9edf5;
-    --tick-muted: #97a2b6;
-    --tick-faint: #6b7688;
+    --tick-ink: #f0ece3;
+    --tick-muted: #a79f90;
+    --tick-faint: #7b7365;
 
-    --tick-brand: #7c74f0;
-    --tick-brand-hover: #918bf4;
-    --tick-brand-soft: #1e2140;
-    --tick-brand-ink: #b7b2f8;
-    --tick-on-brand: #0b0f17;
+    --tick-brand: #ef6743;
+    --tick-brand-hover: #f4805f;
+    --tick-brand-soft: #35190f;
+    --tick-brand-ink: #f7a288;
+    --tick-on-brand: #14120e;
 
-    --tick-positive: #34d399;
-    --tick-positive-soft: #10291f;
-    --tick-positive-ink: #6ee7b7;
+    --tick-positive: #5fa87a;
+    --tick-positive-soft: #16241a;
+    --tick-positive-ink: #8fc7a3;
 
-    --tick-caution: #fbbf24;
-    --tick-caution-soft: #2b2110;
-    --tick-caution-ink: #fcd34d;
+    --tick-caution: #d29b3c;
+    --tick-caution-soft: #2a2010;
+    --tick-caution-ink: #e5bd76;
 
-    --tick-critical: #fb7185;
-    --tick-critical-soft: #2d1420;
-    --tick-critical-ink: #fda4af;
+    --tick-critical: #d15b52;
+    --tick-critical-soft: #2c1512;
+    --tick-critical-ink: #e59189;
 
-    --tick-info: #38bdf8;
-    --tick-info-soft: #0e2434;
-    --tick-info-ink: #7dd3fc;
+    --tick-info: #6698c2;
+    --tick-info-soft: #14202b;
+    --tick-info-ink: #97bcd9;
   }
 }
 
 [data-theme='dark'] {
-  --tick-canvas: #0b0f17;
-  --tick-surface: #131926;
-  --tick-sunken: #0f1420;
-  --tick-raised: #1a2231;
+  --tick-canvas: #14120e;
+  --tick-surface: #1c1915;
+  --tick-sunken: #100e0b;
+  --tick-raised: #232019;
 
-  --tick-line: #232c3d;
-  --tick-line-strong: #33405a;
+  --tick-line: #322d25;
+  --tick-line-strong: #4b4437;
+  --tick-ombre: rgb(0 0 0 / 0.5);
 
-  --tick-ink: #e9edf5;
-  --tick-muted: #97a2b6;
-  --tick-faint: #6b7688;
+  --tick-ink: #f0ece3;
+  --tick-muted: #a79f90;
+  --tick-faint: #7b7365;
 
-  --tick-brand: #7c74f0;
-  --tick-brand-hover: #918bf4;
-  --tick-brand-soft: #1e2140;
-  --tick-brand-ink: #b7b2f8;
-  --tick-on-brand: #0b0f17;
+  --tick-brand: #ef6743;
+  --tick-brand-hover: #f4805f;
+  --tick-brand-soft: #35190f;
+  --tick-brand-ink: #f7a288;
+  --tick-on-brand: #14120e;
 
-  --tick-positive: #34d399;
-  --tick-positive-soft: #10291f;
-  --tick-positive-ink: #6ee7b7;
+  --tick-positive: #5fa87a;
+  --tick-positive-soft: #16241a;
+  --tick-positive-ink: #8fc7a3;
 
-  --tick-caution: #fbbf24;
-  --tick-caution-soft: #2b2110;
-  --tick-caution-ink: #fcd34d;
+  --tick-caution: #d29b3c;
+  --tick-caution-soft: #2a2010;
+  --tick-caution-ink: #e5bd76;
 
-  --tick-critical: #fb7185;
-  --tick-critical-soft: #2d1420;
-  --tick-critical-ink: #fda4af;
+  --tick-critical: #d15b52;
+  --tick-critical-soft: #2c1512;
+  --tick-critical-ink: #e59189;
 
-  --tick-info: #38bdf8;
-  --tick-info-soft: #0e2434;
-  --tick-info-ink: #7dd3fc;
+  --tick-info: #6698c2;
+  --tick-info-soft: #14202b;
+  --tick-info-ink: #97bcd9;
 }
 
 body {
   @apply bg-canvas text-ink antialiased;
-  font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
 }
 
-/**
- * Anneau de focus unique, pose sur le document.
- *
- * Le poser ici plutot que sur chaque composant garantit qu'aucun controle
- * n'echappe au clavier : un champ ajoute demain le recevra sans que personne
- * n'y pense. `:focus-visible` et non `:focus`, pour ne pas cerner ce que la
- * souris vient de cliquer.
- */
 @layer base {
+  /**
+   * Anneau de focus unique, pose sur le document.
+   *
+   * Le poser ici plutot que sur chaque composant garantit qu'aucun controle
+   * n'echappe au clavier : un champ ajoute demain le recevra sans que personne
+   * n'y pense. `:focus-visible` et non `:focus`, pour ne pas cerner ce que la
+   * souris vient de cliquer.
+   */
   :focus-visible {
     @apply outline-2 outline-offset-2 outline-brand;
   }
@@ -236,6 +280,29 @@ body {
   ::selection {
     background-color: var(--tick-brand-soft);
     color: var(--tick-brand-ink);
+  }
+
+  /**
+   * Chiffres tabulaires dans les tableaux.
+   *
+   * Les chiffres proportionnels font onduler une colonne de numeros ou de
+   * durees : l'oeil ne peut plus comparer deux lignes sans les lire. Un outil
+   * dont le metier est de trier des listes ne peut pas se le permettre.
+   */
+  table {
+    font-variant-numeric: tabular-nums;
+  }
+
+  /**
+   * Titres en graisse marquee et chasse resserree.
+   *
+   * Archivo tient bien le gras ; c'est ce qui donne au titre son autorite sans
+   * qu'on ait besoin de l'agrandir, et donc sans manger la place des donnees.
+   */
+  h1,
+  h2,
+  h3 {
+    letter-spacing: -0.015em;
   }
 
   /* Barres de defilement discretes, accordees au theme. */

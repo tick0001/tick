@@ -34,6 +34,7 @@ import {
   IconUtilisateurs,
   type Icone,
 } from '@/components/ui/icons';
+import { Marque } from '@/components/ui/primitives';
 import { peut, type Droit } from '@/lib/droits';
 import { droitDe } from '@/lib/navigation';
 import { changeLocale } from '@/lib/i18n';
@@ -397,9 +398,7 @@ export function AppShell({
             </NavLink>
           ) : (
             <>
-              <span className="grid size-7 place-items-center rounded-lg bg-brand text-sm font-bold text-on-brand">
-                T
-              </span>
+              <Marque />
               <span className="text-base font-semibold tracking-tight">Tick&amp;</span>
             </>
           )}
