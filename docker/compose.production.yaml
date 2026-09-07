@@ -1,0 +1,136 @@
+# Déploiement Tick&, mono-instance.
+#
+# Cinq services, et l'ordre entre eux compte :
+#
+#   postgres ─┬─> migrate ──> api ──> web
+#   redis ────┘
+#
+# `migrate` tourne **une fois** et rend la main ; `api` attend qu'il ait fini.
+# C'est ce qui évite le défaut classique des images qui migrent au démarrage :
+# deux conteneurs lancés ensemble jouent la même migration en parallèle, et la
+# seconde échoue — ou pire, s'applique à moitié.
+#
+# Démarrage :
+#   cp .env.production.example .env
+#   docker compose -f docker/compose.production.yaml up -d
+#
+# Voir docs/14-installation.md pour ce qu'il faut régler avant.
+
+name: tick
+
+services:
+  postgres:
+    image: postgres:18-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:?renseignez POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?renseignez POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB:-tick}
+      POSTGRES_INITDB_ARGS: '--encoding=UTF8'
+    volumes:
+      # PostgreSQL 18 range ses données dans un sous-dossier par version
+      # majeure : le volume se monte sur le parent, et non sur `.../data`.
+      - postgres-data:/var/lib/postgresql
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB:-tick}']
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:8-alpine
+    restart: unless-stopped
+    # `appendonly` : les files d'attente survivent à un redémarrage. Sans lui,
+    # les notifications en attente d'envoi disparaissent avec le conteneur.
+    command: ['redis-server', '--appendonly', 'yes']
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  # Migrations, jouées une fois.
+  #
+  # Utilise `DATABASE_URL`, le rôle propriétaire : il possède les tables et
+  # échappe au Row-Level Security. Le rôle applicatif ne doit jamais migrer —
+  # une migration s'y appliquerait partiellement, sur les seules lignes que les
+  # politiques laissent voir.
+  migrate:
+    image: ${TICK_IMAGE_API:-ghcr.io/tick/api}:${TICK_VERSION:-latest}
+    restart: 'no'
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: ${DATABASE_URL:?renseignez DATABASE_URL}
+    command: ['node', 'node_modules/@tick/db/dist/migrate.js']
+
+  api:
+    image: ${TICK_IMAGE_API:-ghcr.io/tick/api}:${TICK_VERSION:-latest}
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+    environment:
+      NODE_ENV: production
+      API_PORT: 3000
+      API_URL: ${API_URL:?renseignez API_URL}
+      WEB_URL: ${WEB_URL:?renseignez WEB_URL}
+
+      DATABASE_URL: ${DATABASE_URL:?renseignez DATABASE_URL}
+      DATABASE_APP_URL: ${DATABASE_APP_URL:?renseignez DATABASE_APP_URL}
+      REDIS_URL: ${REDIS_URL:-redis://redis:6379}
+
+      SESSION_SECRET: ${SESSION_SECRET:?renseignez SESSION_SECRET}
+      ENCRYPTION_KEY: ${ENCRYPTION_KEY:?renseignez ENCRYPTION_KEY}
+
+      SMTP_HOST: ${SMTP_HOST:?renseignez SMTP_HOST}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_SECURE: ${SMTP_SECURE:-false}
+      SMTP_USER: ${SMTP_USER:-}
+      SMTP_PASSWORD: ${SMTP_PASSWORD:-}
+      SMTP_FROM: ${SMTP_FROM:?renseignez SMTP_FROM}
+
+      DEFAULT_LOCALE: ${DEFAULT_LOCALE:-fr}
+      LOG_LEVEL: ${LOG_LEVEL:-log}
+      RUN_EVENT_WORKER: 'true'
+      STORAGE_PATH: /app/storage
+      PLUGINS_PATH: /app/plugins
+    volumes:
+      # Les pièces jointes vivent hors du conteneur : sans ce volume, une mise à
+      # jour d'image les emporterait.
+      - storage:/app/storage
+    healthcheck:
+      test:
+        - CMD
+        - node
+        - -e
+        - "fetch('http://127.0.0.1:3000/api/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"
+      interval: 15s
+      timeout: 5s
+      start_period: 30s
+      retries: 5
+
+  web:
+    image: ${TICK_IMAGE_WEB:-ghcr.io/tick/web}:${TICK_VERSION:-latest}
+    restart: unless-stopped
+    depends_on:
+      api:
+        condition: service_healthy
+    ports:
+      # Seul port publié : l'API n'est jointe que par le relais de nginx.
+      # L'exposer aussi ouvrirait un second chemin, sur lequel le cookie de
+      # session ne fonctionnerait pas et que rien ne protégerait de la même
+      # façon.
+      - '${TICK_PORT:-8080}:80'
+
+volumes:
+  postgres-data:
+  redis-data:
+  storage:

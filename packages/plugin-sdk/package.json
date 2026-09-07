@@ -1,5 +1,6 @@
 {
   "name": "@tick/plugin-sdk",
+  "license": "AGPL-3.0-or-later",
   "version": "0.7.0",
   "private": true,
   "type": "module",

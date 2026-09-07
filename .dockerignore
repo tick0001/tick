@@ -1,0 +1,35 @@
+# Ce qui ne doit jamais entrer dans une image.
+#
+# La liste compte autant que le Dockerfile : sans elle, `COPY . .` embarque les
+# `node_modules` de la machine — construits pour un autre système — et le cache
+# de Turbo, ce qui gonfle l'image de plusieurs centaines de mégaoctets et
+# invalide le cache de couches à chaque `pnpm install` local.
+
+node_modules
+**/node_modules
+
+# Artefacts de construction : l'image les reconstruit, et ceux de la machine
+# peuvent venir d'un autre commit.
+dist
+**/dist
+build
+**/build
+coverage
+**/coverage
+.turbo
+**/.turbo
+
+# Secrets et état local. `.env` surtout : il porte les mots de passe de
+# développement, et une image ne doit jamais transporter de secret.
+.env
+.env.*
+!.env.example
+storage
+
+.git
+.github
+
+# Documentation et outillage sans effet à l'exécution.
+docs
+*.md
+!README.md

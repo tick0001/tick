@@ -3,7 +3,7 @@
   "version": "0.0.0",
   "private": true,
   "description": "Tick& - outil de ticketing ITSM open source",
-  "license": "GPL-3.0-or-later",
+  "license": "AGPL-3.0-or-later",
   "packageManager": "pnpm@11.25.0",
   "engines": {
     "node": ">=22"
@@ -21,6 +21,8 @@
     "services:reset": "docker compose -f docker/compose.yaml down -v && pnpm services:up",
     "db:migrate": "pnpm --filter @tick/db db:migrate",
     "db:seed": "pnpm --filter @tick/api db:seed",
+    "db:init": "pnpm --filter @tick/api db:init",
+    "images": "docker build -f docker/api.Dockerfile -t tick-api:local . && docker build -f docker/web.Dockerfile -t tick-web:local .",
     "db:reset": "pnpm services:reset && pnpm db:migrate && pnpm db:seed"
   },
   "devDependencies": {

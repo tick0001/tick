@@ -1,5 +1,6 @@
 {
   "name": "@tick/api",
+  "license": "AGPL-3.0-or-later",
   "version": "0.0.0",
   "private": true,
   "scripts": {
@@ -10,7 +11,8 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "coverage": "vitest run --coverage",
-    "db:seed": "tsc -p tsconfig.build.json && node dist/cli/seed.js"
+    "db:seed": "tsc -p tsconfig.build.json && node dist/cli/seed.js",
+    "db:init": "tsc -p tsconfig.build.json && node dist/cli/initialiser.js"
   },
   "dependencies": {
     "@nestjs/common": "^12.0.1",
