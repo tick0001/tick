@@ -98,6 +98,7 @@ describe('Portées de droits sur les tickets', () => {
         entityPath: path,
         includeSubEntities: recursif,
         locale: 'fr',
+        profileInterface: 'standard',
         scope: recursif
           ? { subtreePaths: [path], exactPaths: [] }
           : { subtreePaths: [], exactPaths: [path] },

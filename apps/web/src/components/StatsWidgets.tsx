@@ -65,7 +65,10 @@ export function Compteurs({ rapport }: { rapport: StatsReport }) {
         libelle={t('statistiques.priseEnCompte')}
         valeur={duree(summary.averageTakeIntoAccount, '—')}
       />
-      <Indicateur libelle={t('statistiques.resolution')} valeur={duree(summary.averageSolve, '—')} />
+      <Indicateur
+        libelle={t('statistiques.resolution')}
+        valeur={duree(summary.averageSolve, '—')}
+      />
       <Indicateur
         libelle={t('statistiques.respectSla')}
         valeur={

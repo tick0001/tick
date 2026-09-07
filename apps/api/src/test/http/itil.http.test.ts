@@ -450,6 +450,64 @@ describe('HTTP — objets ITIL', () => {
     });
   });
 
+  describe('référentiel des catégories', () => {
+    it('énumère les catégories du périmètre', async () => {
+      const reponse = await harnais.admin().get('/api/referentials/itil-categories');
+
+      expect(reponse.status).toBe(200);
+      expect(reponse.body.length).toBeGreaterThan(0);
+      expect(reponse.body[0]).toMatchObject({
+        id: expect.any(Number),
+        name: expect.any(String),
+        completeName: expect.any(String),
+        level: expect.any(Number),
+      });
+    });
+
+    it('donne le nom complet, ancêtres inclus', async () => {
+      const reponse = await harnais.admin().get('/api/referentials/itil-categories');
+
+      // « Installation » seul serait indistinguable d'une branche a l'autre :
+      // c'est le nom complet qu'une liste deroulante doit afficher.
+      const fille = reponse.body.find((c: { parentId: number | null }) => c.parentId !== null);
+
+      expect(fille).toBeDefined();
+      expect(fille.completeName).toContain('>');
+      expect(fille.level).toBeGreaterThan(0);
+    });
+
+    it('restreint aux catégories applicables au type demandé', async () => {
+      const changements = await harnais
+        .admin()
+        .get('/api/referentials/itil-categories')
+        .query({ type: 'change' });
+
+      expect(changements.status).toBe(200);
+
+      // Proposer une categorie de changement a l'ouverture d'un incident
+      // produirait un classement que les rapports ne sauraient pas lire.
+      const tickets = await harnais
+        .admin()
+        .get('/api/referentials/itil-categories')
+        .query({ type: 'ticket' });
+
+      expect(tickets.status).toBe(200);
+    });
+
+    it('refuse un type d’objet inconnu', async () => {
+      const reponse = await harnais
+        .admin()
+        .get('/api/referentials/itil-categories')
+        .query({ type: 'inexistant' });
+
+      expect(reponse.status).toBe(400);
+    });
+
+    it('refuse un visiteur sans session', async () => {
+      expect((await harnais.anonyme().get('/api/referentials/itil-categories')).status).toBe(401);
+    });
+  });
+
   describe('modèles de ticket', () => {
     let modele: number;
 

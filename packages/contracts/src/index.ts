@@ -13,6 +13,7 @@ export * from './modules/admin.js';
 export * from './modules/directories.js';
 export * from './modules/itil.js';
 export * from './modules/itil-objects.js';
+export * from './modules/referentials.js';
 export * from './modules/search.js';
 export * from './modules/planning.js';
 export * from './modules/stats.js';

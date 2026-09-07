@@ -18,6 +18,15 @@ export interface WorkingScope {
   entityPath: string;
   scope: EntityScope;
   includeSubEntities: boolean;
+  /**
+   * Interface du profil actif.
+   *
+   * Elle voyage avec le perimetre parce qu'elle en releve : ce que l'on voit ne
+   * depend pas seulement de l'entite, mais aussi du role qu'on y tient. La
+   * relire au coup par coup dans chaque service ferait une requete de plus par
+   * ecran, et finirait par diverger.
+   */
+  profileInterface: 'standard' | 'self_service';
 }
 
 /**
@@ -93,7 +102,8 @@ export class ScopeService {
       >(sql`
         SELECT
           cible.path::text AS "entityPath",
-          bool_or(a.is_recursive) AS "canRecurse"
+          bool_or(a.is_recursive) AS "canRecurse",
+          min(p.interface::text) AS "profileInterface"
         FROM entities cible
         JOIN entities racine ON racine.path @> cible.path
         JOIN authorizations a
@@ -101,6 +111,7 @@ export class ScopeService {
          AND a.user_id = ${userId}
          AND a.profile_id = ${profileId}
          AND (racine.id = cible.id OR a.is_recursive)
+        JOIN profiles p ON p.id = a.profile_id
         WHERE cible.id = ${entityId}
           AND cible.deleted_at IS NULL
         GROUP BY cible.path
@@ -117,6 +128,7 @@ export class ScopeService {
       return {
         entityId,
         entityPath: row.entityPath,
+        profileInterface: row.profileInterface === 'self_service' ? 'self_service' : 'standard',
         includeSubEntities: recursive,
         scope: recursive
           ? { subtreePaths: [row.entityPath], exactPaths: [] }

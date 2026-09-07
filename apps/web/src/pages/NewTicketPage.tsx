@@ -29,6 +29,19 @@ export function NewTicketPage() {
   const queryClient = useQueryClient();
 
   const gabarits = useQuery({ queryKey: ['templates'], queryFn: api.templates, retry: false });
+
+  /**
+   * Categories du perimetre, filtrees par le serveur.
+   *
+   * `retry: false` : sans categorie definie dans l'entite, la liste revient
+   * vide et le champ disparait -- ce n'est pas une panne, et reessayer
+   * n'inventerait pas de referentiel.
+   */
+  const categories = useQuery({
+    queryKey: ['itil-categories', 'ticket'],
+    queryFn: () => api.itilCategories({ type: 'ticket', selectable: true }),
+    retry: false,
+  });
   const [gabaritId, setGabaritId] = useState<number | null>(null);
   const [saisie, setSaisie] = useState<CreateTicket>(VIDE);
 
@@ -90,7 +103,7 @@ export function NewTicketPage() {
       <div className="grid gap-6 lg:grid-cols-[1fr_16rem]">
         <div className="min-w-0 space-y-4">
           <label className="block space-y-1">
-            <span className="text-sm font-medium">
+            <span className="block text-[11px] font-semibold tracking-wider text-faint uppercase">
               {t('creation.sujet')}
               {requis('name') && <span className="text-brand"> *</span>}
             </span>
@@ -105,7 +118,7 @@ export function NewTicketPage() {
           </label>
 
           <label className="block space-y-1">
-            <span className="text-sm font-medium">
+            <span className="block text-[11px] font-semibold tracking-wider text-faint uppercase">
               {t('creation.description')}
               {requis('content') && <span className="text-brand"> *</span>}
             </span>
@@ -123,7 +136,7 @@ export function NewTicketPage() {
 
         <aside className="space-y-4">
           <label className="block space-y-1">
-            <span className="text-sm font-medium">{t('gabarits.titre')}</span>
+            <span className="block text-[11px] font-semibold tracking-wider text-faint uppercase">{t('gabarits.titre')}</span>
             <select
               value={gabaritId ?? ''}
               onChange={(event) => {
@@ -141,9 +154,45 @@ export function NewTicketPage() {
           </label>
 
           <div className="space-y-4">
+            {/*
+              La categorie precede le type et les severites : c'est elle qui
+              oriente le ticket vers la bonne file, et la choisir en dernier
+              revient a la choisir apres avoir cesse d'y penser.
+
+              Le champ ne parait pas si le perimetre n'a aucune categorie : un
+              selecteur vide se lit comme une panne, alors qu'il n'y a
+              simplement rien a proposer.
+            */}
+            {!masque('categoryId') && (categories.data?.length ?? 0) > 0 && (
+              <label className="block space-y-1">
+                <span className="block text-[11px] font-semibold tracking-wider text-faint uppercase">
+                  {t('tickets.categorie')}
+                  {requis('categoryId') && <span className="text-brand"> *</span>}
+                </span>
+                <select
+                  value={saisie.categoryId ?? ''}
+                  required={requis('categoryId')}
+                  onChange={(event) => {
+                    setSaisie((precedent) => ({
+                      ...precedent,
+                      categoryId: event.target.value ? Number(event.target.value) : null,
+                    }));
+                  }}
+                  className={CONTROLE}
+                >
+                  <option value="">—</option>
+                  {(categories.data ?? []).map((categorie) => (
+                    <option key={categorie.id} value={categorie.id}>
+                      {categorie.completeName}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            )}
+
             {!masque('type') && (
               <label className="block space-y-1">
-                <span className="text-sm font-medium">{t('creation.type')}</span>
+                <span className="block text-[11px] font-semibold tracking-wider text-faint uppercase">{t('creation.type')}</span>
                 <select
                   value={saisie.type}
                   onChange={(event) => {
@@ -163,7 +212,7 @@ export function NewTicketPage() {
             {(['urgency', 'impact'] as const).map((cle) =>
               masque(cle) ? null : (
                 <label key={cle} className="block space-y-1">
-                  <span className="text-sm font-medium">
+                  <span className="block text-[11px] font-semibold tracking-wider text-faint uppercase">
                     {cle === 'urgency' ? t('tickets.detail.urgence') : t('tickets.detail.impact')}
                   </span>
                   <select

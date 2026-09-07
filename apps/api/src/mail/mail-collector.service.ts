@@ -369,6 +369,7 @@ export class MailCollectorService implements OnModuleInit, OnModuleDestroy {
         entityPath: collecteur.entityPath,
         includeSubEntities: false,
         locale: demandeur.locale,
+        profileInterface: 'standard',
         scope: { subtreePaths: [], exactPaths: [collecteur.entityPath] },
       },
       work,

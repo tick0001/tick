@@ -62,6 +62,7 @@ describe('Objets ITIL', () => {
         entityPath: path,
         includeSubEntities: true,
         locale: 'fr',
+        profileInterface: 'standard',
         scope: { subtreePaths: [path], exactPaths: [] },
       },
       work,

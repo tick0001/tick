@@ -14,6 +14,8 @@ export interface TickContext extends RequestContext {
   entityId: number;
   includeSubEntities: boolean;
   locale: string;
+  /** Interface du profil actif : elle decide de ce que l'on propose. */
+  profileInterface: 'standard' | 'self_service';
 }
 
 const storage = new AsyncLocalStorage<TickContext>();

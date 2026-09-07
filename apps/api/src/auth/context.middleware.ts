@@ -43,6 +43,7 @@ export class ContextMiddleware implements NestMiddleware {
       entityId: scope.entityId,
       entityPath: scope.entityPath,
       includeSubEntities: scope.includeSubEntities,
+      profileInterface: scope.profileInterface,
       scope: scope.scope,
       locale: request.acceptsLanguages('fr', 'en') || 'fr',
     };

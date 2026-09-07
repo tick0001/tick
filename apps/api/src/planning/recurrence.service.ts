@@ -485,6 +485,7 @@ export class RecurrenceService implements OnModuleInit, OnModuleDestroy {
         entityPath: echue.entityPath,
         includeSubEntities: false,
         locale: DEFAULT_LOCALE,
+        profileInterface: 'standard',
         scope: { subtreePaths: [], exactPaths: [echue.entityPath] },
       },
       work,

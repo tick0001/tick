@@ -1,4 +1,4 @@
-import type { FormQuestion, Group, UserSummary } from '@tick/contracts';
+import type { FormQuestion, Group, ItilCategory, UserSummary } from '@tick/contracts';
 import { useTranslation } from 'react-i18next';
 import { CONTROLE } from '@/components/ui/primitives';
 
@@ -17,6 +17,7 @@ import { CONTROLE } from '@/components/ui/primitives';
 export interface Referentiels {
   utilisateurs: readonly UserSummary[];
   groupes: readonly Group[];
+  categories: readonly ItilCategory[];
 }
 
 interface Props {
@@ -48,6 +49,15 @@ function optionsDe(
     return (referentiels?.groupes ?? []).map((groupe) => ({
       valeur: String(groupe.id),
       label: groupe.completeName,
+    }));
+  }
+
+  if (question.kind === 'category') {
+    return (referentiels?.categories ?? []).map((categorie) => ({
+      valeur: String(categorie.id),
+      // Le nom complet : « Installation » seul serait indistinguable d'une
+      // branche a l'autre.
+      label: categorie.completeName,
     }));
   }
 
@@ -177,7 +187,7 @@ export function FormField({ question, valeur, onChange, inerte = false, referent
       );
     }
 
-    if (['select', 'urgency', 'user', 'group'].includes(question.kind)) {
+    if (['select', 'urgency', 'user', 'group', 'category'].includes(question.kind)) {
       return (
         <select
           {...commun}

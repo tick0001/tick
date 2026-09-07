@@ -105,6 +105,11 @@ export function CataloguePage() {
     retry: false,
   });
   const groupes = useQuery({ queryKey: ['groups'], queryFn: api.groups, retry: false });
+  const categories = useQuery({
+    queryKey: ['itil-categories', 'ticket'],
+    queryFn: () => api.itilCategories({ type: 'ticket', selectable: true }),
+    retry: false,
+  });
 
   const formulaire = useQuery({
     queryKey: ['catalogue-form', choisi],
@@ -236,6 +241,7 @@ export function CataloguePage() {
                     referentiels={{
                       utilisateurs: comptes.data ?? [],
                       groupes: groupes.data ?? [],
+                      categories: categories.data ?? [],
                     }}
                   />
                 );

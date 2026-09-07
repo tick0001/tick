@@ -1,4 +1,6 @@
 import type {
+  ItilCategory,
+  ItilCategoryFilter,
   AddFollowup,
   Agreement,
   AnswerSolution,
@@ -95,6 +97,7 @@ import type {
   UpsertSatisfactionConfig,
 } from '@tick/contracts';
 import {
+  itilCategorySchema,
   agreementSchema,
   calendarSchema,
   entitySummarySchema,
@@ -518,6 +521,26 @@ export const api = {
 
   createTicket: (body: CreateTicket): Promise<TicketDetail> =>
     request('/tickets', ticketDetailSchema, { method: 'POST', body: JSON.stringify(body) }),
+
+  /**
+   * Categories ITIL du perimetre.
+   *
+   * Le filtre par type est envoye au serveur plutot qu'applique ici : une
+   * categorie declare a quels objets elle s'applique, et trier cote client
+   * obligerait a transporter tout l'arbre pour en jeter la moitie.
+   */
+  itilCategories: (filtre: ItilCategoryFilter = { selectable: true }): Promise<ItilCategory[]> => {
+    const params = new URLSearchParams();
+
+    if (filtre.type) params.set('type', filtre.type);
+
+    const chaine = params.toString();
+
+    return request(
+      `/referentials/itil-categories${chaine ? `?${chaine}` : ''}`,
+      itilCategorySchema.array(),
+    );
+  },
 
   templates: (): Promise<TicketTemplate[]> =>
     request('/ticket-templates', ticketTemplateSchema.array()),

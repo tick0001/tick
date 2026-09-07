@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type {
   Group,
+  ItilCategory,
   UserSummary,
   Form,
   FormMapping,
@@ -34,10 +35,10 @@ import {
  * obligent à lire toute la liste pour trouver « Adresse électronique ». Les
  * familles disent d'emblée dans quelle direction chercher.
  *
- * `location` et `category` sont déclarées au contrat mais absentes d'ici : leur
- * valeur se choisit dans un référentiel que l'API n'expose pas encore en
- * lecture. Les proposer donnerait une liste vide, ce qui se lit comme une
- * panne — mieux vaut ne pas les offrir tant qu'elles ne peuvent pas tenir.
+ * `location` est déclarée au contrat mais absente d'ici : sa valeur se choisit
+ * dans un référentiel que l'API n'expose pas encore en lecture. La proposer
+ * donnerait une liste vide, ce qui se lit comme une panne — mieux vaut ne pas
+ * l'offrir tant qu'elle ne peut pas tenir.
  */
 const FAMILLES: {
   cle: 'saisie' | 'choix' | 'ticket' | 'information';
@@ -86,7 +87,7 @@ const CHAMPS = [
   { champ: 'type', nature: 'type' },
   { champ: 'urgency', nature: 'severite' },
   { champ: 'impact', nature: 'severite' },
-  { champ: 'categoryId', nature: 'identifiant' },
+  { champ: 'categoryId', nature: 'categorie' },
   { champ: 'requestSourceId', nature: 'identifiant' },
   { champ: 'locationId', nature: 'identifiant' },
   { champ: 'assignedGroupId', nature: 'groupe' },
@@ -169,12 +170,14 @@ function ValeurFixe({
   valeur,
   groupes,
   comptes,
+  categories,
   onChange,
 }: {
   nature: Nature;
   valeur: string;
   groupes: readonly Group[];
   comptes: readonly UserSummary[];
+  categories: readonly ItilCategory[];
   onChange: (valeur: string) => void;
 }) {
   const { t } = useTranslation();
@@ -184,11 +187,13 @@ function ValeurFixe({
     onChange(event.target.value);
   };
 
-  if (nature === 'groupe' || nature === 'utilisateur') {
+  if (nature === 'groupe' || nature === 'utilisateur' || nature === 'categorie') {
     const entrees =
       nature === 'groupe'
         ? groupes.map((groupe) => ({ id: groupe.id, label: groupe.completeName }))
-        : comptes.map((compte) => ({ id: compte.id, label: compte.displayName }));
+        : nature === 'categorie'
+          ? categories.map((categorie) => ({ id: categorie.id, label: categorie.completeName }))
+          : comptes.map((compte) => ({ id: compte.id, label: compte.displayName }));
 
     return (
       <select className={classe} value={valeur} onChange={changer}>
@@ -260,6 +265,11 @@ export function FormsPage() {
   // `retry: false` : sans le droit de les lire, la liste reste vide et la
   // saisie retombe sur l'identifiant -- ce n'est pas une panne.
   const groupes = useQuery({ queryKey: ['groups'], queryFn: api.groups, retry: false });
+  const categories = useQuery({
+    queryKey: ['itil-categories', 'ticket'],
+    queryFn: () => api.itilCategories({ type: 'ticket', selectable: true }),
+    retry: false,
+  });
   const comptes = useQuery({
     queryKey: ['users', 'actifs'],
     queryFn: () => api.users({ inactive: false }),
@@ -871,6 +881,7 @@ export function FormsPage() {
                         valeur={mapping.value ?? ''}
                         groupes={groupes.data ?? []}
                         comptes={comptes.data ?? []}
+                        categories={categories.data ?? []}
                         onChange={(valeur) => {
                           majMappings(
                             destination.mappings.map((autre, position) =>
@@ -944,7 +955,14 @@ export function FormsPage() {
             <p className="text-xs text-faint">{t('formulaires.apercuAide')}</p>
 
             <div className="border border-line bg-surface p-4">
-              <FormPreview valeurs={edite.valeurs} />
+              <FormPreview
+                valeurs={edite.valeurs}
+                referentiels={{
+                  utilisateurs: comptes.data ?? [],
+                  groupes: groupes.data ?? [],
+                  categories: categories.data ?? [],
+                }}
+              />
             </div>
           </aside>
         </form>

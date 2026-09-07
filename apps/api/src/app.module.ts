@@ -15,6 +15,7 @@ import { MailModule } from './mail/mail.module.js';
 import { NotificationsModule } from './notifications/notifications.module.js';
 import { PlanningModule } from './planning/planning.module.js';
 import { PluginsModule } from './plugins/plugins.module.js';
+import { ReferentialsModule } from './referentials/referentials.module.js';
 import { RulesModule } from './rules/rules.module.js';
 import { SatisfactionModule } from './satisfaction/satisfaction.module.js';
 import { SearchModule } from './search/search.module.js';
@@ -36,6 +37,7 @@ import { TicketsModule } from './tickets/tickets.module.js';
     AdminModule,
     PluginsModule,
     EntitiesModule,
+    ReferentialsModule,
     RulesModule,
     SlmModule,
     TicketsModule,
