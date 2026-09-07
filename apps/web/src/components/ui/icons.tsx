@@ -192,29 +192,9 @@ export const IconPlus: Icone = (props) => (
   </Trace>
 );
 
-export const IconChevron: Icone = (props) => (
-  <Trace {...props}>
-    <path d="m9 6 6 6-6 6" />
-  </Trace>
-);
-
 export const IconRetour: Icone = (props) => (
   <Trace {...props}>
     <path d="M19 12H5M11 6l-6 6 6 6" />
-  </Trace>
-);
-
-export const IconTelecharger: Icone = (props) => (
-  <Trace {...props}>
-    <path d="M12 3v11M8 10.5l4 4 4-4" />
-    <path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2" />
-  </Trace>
-);
-
-export const IconLien: Icone = (props) => (
-  <Trace {...props}>
-    <path d="M10.5 13.5a4 4 0 0 0 5.7 0l2.3-2.3a4 4 0 0 0-5.7-5.7l-1.3 1.3" />
-    <path d="M13.5 10.5a4 4 0 0 0-5.7 0l-2.3 2.3a4 4 0 0 0 5.7 5.7l1.3-1.3" />
   </Trace>
 );
 

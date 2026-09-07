@@ -157,7 +157,7 @@ import {
 import { z } from 'zod';
 
 /** Piece jointe telle que l'API la renvoie. */
-export const attachmentSchema = z.object({
+const attachmentSchema = z.object({
   id: z.number().int().positive(),
   name: z.string(),
   mimeType: z.string(),
@@ -165,7 +165,7 @@ export const attachmentSchema = z.object({
   createdAt: z.string(),
   uploadedBy: z.string().nullable(),
 });
-export type Attachment = z.infer<typeof attachmentSchema>;
+type Attachment = z.infer<typeof attachmentSchema>;
 import type { ZodType } from 'zod';
 
 /**
@@ -904,7 +904,7 @@ function toStatsQuery(filtre: StatsFilter): string {
   return `?${params.toString()}`;
 }
 
-export interface ItilQuery {
+interface ItilQuery {
   status?: string | undefined;
   search?: string | undefined;
   deleted?: boolean | undefined;
@@ -922,7 +922,7 @@ function toItilQuery(filtre: ItilQuery): string {
   return chaine ? `?${chaine}` : '';
 }
 
-export interface KbFilter {
+interface KbFilter {
   search?: string | undefined;
   categoryId?: number | undefined;
   faqOnly?: boolean | undefined;
@@ -943,7 +943,7 @@ function toKbQuery(filtre: KbFilter): string {
   return chaine ? `?${chaine}` : '';
 }
 
-export interface TicketQuery {
+interface TicketQuery {
   status?: ItilStatus[];
   search?: string;
   mine?: boolean;
