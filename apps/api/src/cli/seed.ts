@@ -1474,7 +1474,20 @@ async function main(): Promise<void> {
   await app.close();
 }
 
-main().catch((error: unknown) => {
+/**
+ * L'amorcage, exporte pour pouvoir etre attendu.
+ *
+ * Le script s'execute au chargement du module, ce qui convient a la ligne de
+ * commande. Mais un `import()` rend la main des que le corps du module est
+ * evalue, pas quand `main()` a fini : sans cette promesse, le test d'amorcage
+ * verifiait une base encore vide -- ou pire, deja peuplee par une execution
+ * precedente, ce qui le faisait passer en verifiant des donnees d'avant.
+ */
+export const amorcage: Promise<void> = main();
+
+// En ligne de commande, l'echec doit sortir en code non nul. Le test, lui,
+// attend `amorcage` et recoit le rejet tel quel.
+amorcage.catch((error: unknown) => {
   console.error(error);
   process.exitCode = 1;
 });

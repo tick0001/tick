@@ -28,8 +28,14 @@ async function compte(table: string): Promise<number> {
 
 describe('Jeu de démonstration', () => {
   beforeAll(async () => {
-    // L'import déclenche l'amorçage : le script s'exécute au chargement.
-    await import('./seed.js');
+    // L'import déclenche l'amorçage, mais rend la main dès que le corps du
+    // module est évalué : c'est la promesse exportée qu'il faut attendre.
+    // Sans elle, les assertions portaient sur une base encore vide en
+    // intégration continue, et sur les données de l'exécution précédente en
+    // local — où le test passait donc sans rien vérifier de ce qu'il croyait.
+    const { amorcage } = await import('./seed.js');
+
+    await amorcage;
 
     base = createDatabase({ connectionString: process.env['DATABASE_URL'] ?? '', max: 2 });
   }, 180_000);
