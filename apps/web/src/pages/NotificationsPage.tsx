@@ -11,6 +11,7 @@ import { useTranslation } from 'react-i18next';
 import { ApiError, api } from '@/lib/api';
 import { usePeut } from '@/lib/session';
 import { ACTION_LIGNE, BOUTON, BOUTON_PRIMAIRE, CARTE, CONTROLE } from '@/components/ui/primitives';
+import { cn } from '@/lib/utils';
 
 const CIBLES: NotificationTarget[] = [
   'requester',
@@ -346,7 +347,7 @@ export function NotificationsPage() {
                   {edite.valeurs.targets.map((cible, index) => (
                     <div key={index} className="flex flex-wrap items-center gap-2">
                       <select
-                        className={`${CONTROLE} w-72`}
+                        className={cn(CONTROLE, 'w-72')}
                         value={cible.target}
                         onChange={(event) => {
                           setEdite({
@@ -373,7 +374,7 @@ export function NotificationsPage() {
                         <input
                           type="email"
                           required
-                          className={`${CONTROLE} w-72`}
+                          className={cn(CONTROLE, 'w-72')}
                           placeholder={t('notifications.adresse')}
                           value={cible.address ?? ''}
                           onChange={(event) => {
@@ -440,7 +441,7 @@ export function NotificationsPage() {
                     <div key={index} className="space-y-2 rounded-lg border border-line p-3">
                       <div className="flex flex-wrap items-center gap-2">
                         <select
-                          className={`${CONTROLE} w-28`}
+                          className={cn(CONTROLE, 'w-28')}
                           value={traduction.locale}
                           onChange={(event) => {
                             setEdite({
@@ -459,7 +460,7 @@ export function NotificationsPage() {
                         </select>
 
                         <input
-                          className={`${CONTROLE} flex-1`}
+                          className={cn(CONTROLE, 'flex-1')}
                           required
                           placeholder={t('notifications.sujet')}
                           value={traduction.subject}
@@ -493,7 +494,7 @@ export function NotificationsPage() {
                       </div>
 
                       <textarea
-                        className={`${CONTROLE} h-28 font-mono`}
+                        className={cn(CONTROLE, 'h-28 font-mono')}
                         required
                         placeholder={t('notifications.corpsTexte')}
                         value={traduction.bodyText}
@@ -557,7 +558,7 @@ export function NotificationsPage() {
               <div className="flex items-center gap-3">
                 <h2 className="text-xl font-semibold tracking-tight">{t('notifications.file')}</h2>
                 <select
-                  className={`${CONTROLE} w-auto`}
+                  className={cn(CONTROLE, 'w-auto')}
                   value={filtre}
                   onChange={(event) => {
                     setFiltre(event.target.value as NotificationState | '');

@@ -612,6 +612,19 @@ export const en: Traductions = {
     source: 'Source',
     question: 'Question',
     valeurFixe: 'Fixed value',
+    destinationTicket: 'One ticket, created on submission.',
+    destinationAide:
+      'Each field takes a fixed value, the answer to a question, or stays as it would be without the form.',
+    modeDefaut: 'Default',
+    modeReponse: 'Answer',
+    sansQuestion: 'Add a question first to draw from it.',
+    champsRemplis: '{{count}} field set',
+    champsRemplis_other: '{{count}} fields set',
+    famillesChamps: {
+      contenu: 'Content',
+      qualification: 'Qualification',
+      acteurs: 'Actors',
+    },
     aucun: 'No form.',
     natures: {
       text: 'Short text',

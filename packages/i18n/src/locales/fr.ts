@@ -615,6 +615,19 @@ export const fr = {
     source: 'Source',
     question: 'Question',
     valeurFixe: 'Valeur fixe',
+    destinationTicket: 'Un ticket, créé à la soumission.',
+    destinationAide:
+      'Chaque champ prend une valeur fixe, la réponse à une question, ou reste tel qu’il serait sans le formulaire.',
+    modeDefaut: 'Par défaut',
+    modeReponse: 'Réponse',
+    sansQuestion: 'Ajoutez une question pour pouvoir y puiser.',
+    champsRemplis: '{{count}} champ rempli',
+    champsRemplis_other: '{{count}} champs remplis',
+    famillesChamps: {
+      contenu: 'Contenu',
+      qualification: 'Qualification',
+      acteurs: 'Acteurs',
+    },
     aucun: 'Aucun formulaire.',
     natures: {
       text: 'Texte court',

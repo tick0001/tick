@@ -6,6 +6,7 @@ import { Link } from 'react-router';
 import { PriorityBadge, StatusBadge } from '@/components/TicketBadges';
 import { ApiError, api } from '@/lib/api';
 import { SectionTitle, CONTROLE } from '@/components/ui/primitives';
+import { cn } from '@/lib/utils';
 
 interface Ligne {
   field: string;
@@ -241,7 +242,7 @@ export function SearchPage() {
                       ),
                     );
                   }}
-                  className={`${CONTROLE} min-w-44`}
+                  className={cn(CONTROLE, 'min-w-44')}
                 >
                   <option value="">—</option>
                   {(champs.data ?? []).map((element) => (
@@ -394,7 +395,7 @@ export function SearchPage() {
                   setValeur(event.target.value);
                 }}
                 placeholder={action === 'setStatus' ? 'assigned' : '1'}
-                className={`${CONTROLE} w-28`}
+                className={cn(CONTROLE, 'w-28')}
               />
             )}
 
@@ -520,7 +521,7 @@ export function SearchPage() {
               setNom(event.target.value);
             }}
             placeholder={t('recherche.nomRecherche')}
-            className={`${CONTROLE} w-full`}
+            className={cn(CONTROLE, 'w-full')}
           />
           <label className="flex items-center gap-1.5 text-xs">
             <input

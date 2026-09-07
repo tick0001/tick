@@ -1,6 +1,7 @@
 import type { FormQuestion, Group, ItilCategory, UserSummary } from '@tick/contracts';
 import { useTranslation } from 'react-i18next';
 import { CONTROLE } from '@/components/ui/primitives';
+import { cn } from '@/lib/utils';
 
 /**
  * Le rendu d'une question, partagé par le catalogue et l'aperçu.
@@ -94,7 +95,7 @@ export function FormField({ question, valeur, onChange, inerte = false, referent
       return (
         <textarea
           {...commun}
-          className={`${CONTROLE} h-24`}
+          className={cn(CONTROLE, 'h-24')}
           value={texte}
           onChange={(event) => {
             onChange(event.target.value);

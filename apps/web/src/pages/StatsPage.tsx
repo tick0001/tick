@@ -9,6 +9,7 @@ import { useTranslation } from 'react-i18next';
 import { Compteurs, Repartition, Tendance, WidgetView } from '@/components/StatsWidgets';
 import { CONTROLE, PageHeader, Tabs } from '@/components/ui/primitives';
 import { ApiError, api } from '@/lib/api';
+import { cn } from '@/lib/utils';
 
 /** Bornes par défaut : les trente derniers jours, ce que la courbe couvre. */
 function fenetreParDefaut(): { from: string; to: string } {
@@ -193,7 +194,7 @@ export function StatsPage() {
                 onChange={(event) => {
                   setNouveau(event.target.value);
                 }}
-                className={`${CONTROLE} w-64`}
+                className={cn(CONTROLE, 'w-64')}
               />
             </label>
             <button

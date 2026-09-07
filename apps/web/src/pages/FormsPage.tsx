@@ -95,6 +95,23 @@ const CHAMPS = [
   { champ: 'observerUserId', nature: 'utilisateur' },
 ] as const;
 
+/**
+ * Les champs du ticket, regroupes comme on les lit.
+ *
+ * Onze listes deroulantes a la suite ne se parcourent pas : on cherche
+ * « groupe attribue » et l'on relit tout. Les trois familles repondent aux
+ * trois questions qu'on se pose en composant une destination -- ce que le
+ * ticket dira, comment il sera classe, et a qui il ira.
+ */
+const FAMILLES_CHAMPS = [
+  { cle: 'contenu', champs: ['name', 'content'] },
+  {
+    cle: 'qualification',
+    champs: ['type', 'urgency', 'impact', 'categoryId', 'requestSourceId', 'locationId'],
+  },
+  { cle: 'acteurs', champs: ['assignedGroupId', 'assignedUserId', 'observerUserId'] },
+] as const;
+
 type Nature = (typeof CHAMPS)[number]['nature'];
 
 function natureDe(champ: string): Nature {
@@ -168,6 +185,7 @@ function aplatir(valeurs: UpsertForm): { rang: number; question: FormQuestion }[
 function ValeurFixe({
   nature,
   valeur,
+  etiquette,
   groupes,
   comptes,
   categories,
@@ -175,13 +193,19 @@ function ValeurFixe({
 }: {
   nature: Nature;
   valeur: string;
+  /** Nom accessible : le champ dont ce controle regle la valeur. */
+  etiquette?: string | undefined;
   groupes: readonly Group[];
   comptes: readonly UserSummary[];
   categories: readonly ItilCategory[];
   onChange: (valeur: string) => void;
 }) {
   const { t } = useTranslation();
-  const classe = `${CONTROLE} w-56`;
+
+  // Le controle occupe la place qui reste sur sa ligne : une largeur fixe le
+  // ferait deborder dans la colonne d'edition, etroite par construction
+  // puisqu'elle partage l'ecran avec l'apercu.
+  const classe = cn(CONTROLE, 'min-w-0 flex-1');
 
   const changer = (event: { target: { value: string } }): void => {
     onChange(event.target.value);
@@ -196,7 +220,7 @@ function ValeurFixe({
           : comptes.map((compte) => ({ id: compte.id, label: compte.displayName }));
 
     return (
-      <select className={classe} value={valeur} onChange={changer}>
+      <select className={classe} aria-label={etiquette} value={valeur} onChange={changer}>
         <option value="">—</option>
         {entrees.map((entree) => (
           <option key={entree.id} value={String(entree.id)}>
@@ -209,11 +233,16 @@ function ValeurFixe({
 
   if (nature === 'severite') {
     return (
-      <select className={classe} value={valeur} onChange={changer}>
+      <select className={classe} aria-label={etiquette} value={valeur} onChange={changer}>
         <option value="">—</option>
         {[1, 2, 3, 4, 5].map((niveau) => (
           <option key={niveau} value={String(niveau)}>
-            {String(niveau)}
+            {/*
+              Le niveau porte son nom, comme partout ailleurs. « 4 » seul
+              obligeait a savoir de tete si l'echelle monte ou descend, et
+              l'apercu du formulaire, lui, affichait deja « Haute ».
+            */}
+            {t(`tickets.priorites.p${String(niveau)}` as 'tickets.priorites.p1')}
           </option>
         ))}
       </select>
@@ -222,7 +251,7 @@ function ValeurFixe({
 
   if (nature === 'type') {
     return (
-      <select className={classe} value={valeur} onChange={changer}>
+      <select className={classe} aria-label={etiquette} value={valeur} onChange={changer}>
         <option value="incident">{t('tickets.types.incident')}</option>
         <option value="request">{t('tickets.types.request')}</option>
       </select>
@@ -232,12 +261,138 @@ function ValeurFixe({
   return (
     <input
       className={classe}
+      aria-label={etiquette}
       value={valeur}
       onChange={changer}
       {...(nature === 'identifiant'
         ? { inputMode: 'numeric' as const, placeholder: t('formulaires.identifiantAttendu') }
         : {})}
     />
+  );
+}
+
+/**
+ * Un champ du ticket, et d'où il tire sa valeur.
+ *
+ * L'écran présente **tous** les champs, plutôt qu'une liste de correspondances
+ * qu'on ajoute une à une. Trois raisons, et la première est la plus lourde :
+ * avec un bouton « ajouter », rien n'empêchait de viser deux fois le même
+ * champ — la seconde correspondance écrasait silencieusement la première à la
+ * soumission, sans que l'écran ne le laisse voir. Ensuite, une liste vide ne
+ * disait pas ce qu'on pouvait remplir. Enfin, on lit d'un coup ce que la
+ * soumission produira, ce qui est la question qu'on vient poser ici.
+ */
+function LigneDestination({
+  champ,
+  mapping,
+  plates,
+  groupes,
+  comptes,
+  categories,
+  onChange,
+}: {
+  champ: string;
+  mapping: FormMapping | undefined;
+  plates: readonly { rang: number; question: FormQuestion }[];
+  groupes: readonly Group[];
+  comptes: readonly UserSummary[];
+  categories: readonly ItilCategory[];
+  onChange: (mapping: FormMapping | null) => void;
+}) {
+  const { t } = useTranslation();
+  const mode = mapping?.source ?? 'defaut';
+  const rempli = mapping !== undefined;
+
+  return (
+    <div
+      className={cn(
+        'flex flex-wrap items-center gap-2 border-l-2 py-1 pl-3',
+        // Le filet dit d'un coup d'oeil ce qui est renseigne : parcourir onze
+        // champs pour retrouver les trois qu'on a regles serait le travail que
+        // cet ecran doit epargner.
+        rempli ? 'border-brand' : 'border-line',
+      )}
+    >
+      <span className="w-full text-[11px] font-semibold tracking-wider text-faint uppercase">
+        {t(`formulaires.champs.${champ}` as 'formulaires.champs.name')}
+      </span>
+
+      <select
+        className={cn(CONTROLE, 'w-32 shrink-0')}
+        aria-label={t(`formulaires.champs.${champ}` as 'formulaires.champs.name')}
+        value={mode}
+        onChange={(event) => {
+          const choisi = event.target.value;
+
+          if (choisi === 'question') {
+            onChange({
+              field: champ,
+              source: 'question',
+              question: plates[0]?.rang ?? 0,
+              value: null,
+            });
+            return;
+          }
+
+          if (choisi === 'literal') {
+            onChange({ field: champ, source: 'literal', question: null, value: '' });
+            return;
+          }
+
+          onChange(null);
+        }}
+      >
+        <option value="defaut">{t('formulaires.modeDefaut')}</option>
+        {/*
+          Sans question, « Réponse » ne mènerait qu'à une liste vide : on la
+          laisse visible pour dire qu'elle existe, et desactivee pour ne pas
+          engager dans une impasse.
+        */}
+        <option value="question" disabled={plates.length === 0}>
+          {t('formulaires.modeReponse')}
+        </option>
+        <option value="literal">{t('formulaires.valeurFixe')}</option>
+      </select>
+
+      {mode === 'question' && (
+        <select
+          className={cn(CONTROLE, 'min-w-0 flex-1')}
+          // Deux listes se suivent sur la ligne : sans nom, la seconde est
+          // annoncee « liste » et rien ne dit de quel champ elle regle la
+          // valeur.
+          aria-label={`${t(`formulaires.champs.${champ}` as 'formulaires.champs.name')} — ${t('formulaires.modeReponse')}`}
+          value={mapping?.question ?? 0}
+          onChange={(event) => {
+            onChange({
+              field: champ,
+              source: 'question',
+              question: Number(event.target.value),
+              value: null,
+            });
+          }}
+        >
+          {plates.map((plate) => (
+            <option key={plate.rang} value={plate.rang}>
+              {String(plate.rang)} — {plate.question.label || t('formulaires.libelle')}
+            </option>
+          ))}
+        </select>
+      )}
+
+      {mode === 'literal' && (
+        <ValeurFixe
+          nature={natureDe(champ)}
+          valeur={mapping?.value ?? ''}
+          etiquette={`${t(`formulaires.champs.${champ}` as 'formulaires.champs.name')} — ${t('formulaires.valeurFixe')}`}
+          groupes={groupes}
+          comptes={comptes}
+          categories={categories}
+          onChange={(valeur) => {
+            onChange({ field: champ, source: 'literal', question: null, value: valeur });
+          }}
+        />
+      )}
+    </div>
   );
 }
 
@@ -332,10 +487,27 @@ export function FormsPage() {
   const plates = edite ? aplatir(edite.valeurs) : [];
   const destination = edite?.valeurs.destinations[0];
 
-  const majMappings = (mappings: FormMapping[]): void => {
+  /**
+   * Correspondance en vigueur pour un champ.
+   *
+   * La **dernière** l'emporte, et non la première : c'est ce que fait le
+   * serveur, qui affecte `sortie[mapping.field]` en parcourant la liste. Un
+   * formulaire enregistre avant cet ecran a pu recevoir deux correspondances
+   * sur un meme champ ; montrer la premiere ferait mentir l'apercu.
+   */
+  const mappingDe = (champ: string): FormMapping | undefined =>
+    destination?.mappings.filter((mapping) => mapping.field === champ).at(-1);
+
+  const majMapping = (champ: string, mapping: FormMapping | null): void => {
     if (!edite || !destination) return;
 
-    maj({ destinations: [{ ...destination, mappings }] });
+    // Les doublons eventuels partent avec : l'ecran ne peut plus en produire,
+    // et en laisser trainer un rendrait l'enregistrement suivant illisible.
+    const autres = destination.mappings.filter((entree) => entree.field !== champ);
+
+    maj({
+      destinations: [{ ...destination, mappings: mapping ? [...autres, mapping] : autres }],
+    });
   };
 
   return (
@@ -578,7 +750,7 @@ export function FormsPage() {
                             </span>
 
                             <input
-                              className={`${CONTROLE} min-w-0 flex-1`}
+                              className={cn(CONTROLE, 'min-w-0 flex-1')}
                               required
                               placeholder={t('formulaires.libelle')}
                               value={question.label}
@@ -590,7 +762,7 @@ export function FormsPage() {
                             />
 
                             <select
-                              className={`${CONTROLE} w-40`}
+                              className={cn(CONTROLE, 'w-40')}
                               value={question.kind}
                               onChange={(event) => {
                                 majQuestion(indexSection, indexQuestion, {
@@ -653,7 +825,7 @@ export function FormsPage() {
                                 {t('formulaires.choix')}
                               </span>
                               <textarea
-                                className={`${CONTROLE} h-20`}
+                                className={cn(CONTROLE, 'h-20')}
                                 placeholder={t('formulaires.choix')}
                                 value={question.options.join('\n')}
                                 onChange={(event) => {
@@ -672,7 +844,7 @@ export function FormsPage() {
                               </span>
 
                               <select
-                                className={`${CONTROLE} w-56`}
+                                className={cn(CONTROLE, 'w-56')}
                                 value={condition.dependsOn}
                                 onChange={(event) => {
                                   majQuestion(indexSection, indexQuestion, {
@@ -694,7 +866,7 @@ export function FormsPage() {
                               </select>
 
                               <select
-                                className={`${CONTROLE} w-40`}
+                                className={cn(CONTROLE, 'w-40')}
                                 value={condition.operator}
                                 onChange={(event) => {
                                   majQuestion(indexSection, indexQuestion, {
@@ -714,7 +886,7 @@ export function FormsPage() {
                               </select>
 
                               <input
-                                className={`${CONTROLE} w-40`}
+                                className={cn(CONTROLE, 'w-40')}
                                 value={condition.value ?? ''}
                                 onChange={(event) => {
                                   majQuestion(indexSection, indexQuestion, {
@@ -813,111 +985,42 @@ export function FormsPage() {
             )}
 
             {onglet === 'destination' && destination && (
-              <div className="space-y-2">
-                <p className="text-xs font-medium text-muted">{t('formulaires.correspondances')}</p>
+              <div className="space-y-5">
+                <div className="space-y-1 border-l-2 border-ink pl-3">
+                  <p className="text-sm font-semibold text-ink">
+                    {t('formulaires.destinationTicket')}
+                  </p>
+                  <p className="text-xs text-muted">{t('formulaires.destinationAide')}</p>
+                  {plates.length === 0 && (
+                    <p className="text-xs text-brand-ink">{t('formulaires.sansQuestion')}</p>
+                  )}
+                </div>
 
-                {destination.mappings.map((mapping, indexMapping) => (
-                  <div key={indexMapping} className="flex flex-wrap items-center gap-2">
-                    <select
-                      className={`${CONTROLE} w-48`}
-                      value={mapping.field}
-                      onChange={(event) => {
-                        majMappings(
-                          destination.mappings.map((autre, position) =>
-                            position === indexMapping
-                              ? { ...autre, field: event.target.value }
-                              : autre,
-                          ),
-                        );
-                      }}
-                    >
-                      {CHAMPS.map((entree) => (
-                        <option key={entree.champ} value={entree.champ}>
-                          {t(`formulaires.champs.${entree.champ}` as 'formulaires.champs.name')}
-                        </option>
-                      ))}
-                    </select>
+                {FAMILLES_CHAMPS.map((famille) => (
+                  <div key={famille.cle} className="space-y-2">
+                    <SectionTitle>
+                      {t(
+                        `formulaires.famillesChamps.${famille.cle}` as
+                          'formulaires.famillesChamps.contenu',
+                      )}
+                    </SectionTitle>
 
-                    <select
-                      className={`${CONTROLE} w-36`}
-                      value={mapping.source}
-                      onChange={(event) => {
-                        majMappings(
-                          destination.mappings.map((autre, position) =>
-                            position === indexMapping
-                              ? { ...autre, source: event.target.value as 'question' | 'literal' }
-                              : autre,
-                          ),
-                        );
-                      }}
-                    >
-                      <option value="question">{t('formulaires.question')}</option>
-                      <option value="literal">{t('formulaires.valeurFixe')}</option>
-                    </select>
-
-                    {mapping.source === 'question' ? (
-                      <select
-                        className={`${CONTROLE} w-56`}
-                        value={mapping.question ?? 0}
-                        onChange={(event) => {
-                          majMappings(
-                            destination.mappings.map((autre, position) =>
-                              position === indexMapping
-                                ? { ...autre, question: Number(event.target.value) }
-                                : autre,
-                            ),
-                          );
-                        }}
-                      >
-                        {plates.map((plate) => (
-                          <option key={plate.rang} value={plate.rang}>
-                            {String(plate.rang)} — {plate.question.label}
-                          </option>
-                        ))}
-                      </select>
-                    ) : (
-                      <ValeurFixe
-                        nature={natureDe(mapping.field)}
-                        valeur={mapping.value ?? ''}
+                    {famille.champs.map((champ) => (
+                      <LigneDestination
+                        key={champ}
+                        champ={champ}
+                        mapping={mappingDe(champ)}
+                        plates={plates}
                         groupes={groupes.data ?? []}
                         comptes={comptes.data ?? []}
                         categories={categories.data ?? []}
-                        onChange={(valeur) => {
-                          majMappings(
-                            destination.mappings.map((autre, position) =>
-                              position === indexMapping ? { ...autre, value: valeur } : autre,
-                            ),
-                          );
+                        onChange={(mapping) => {
+                          majMapping(champ, mapping);
                         }}
                       />
-                    )}
-
-                    <button
-                      type="button"
-                      className={BOUTON}
-                      onClick={() => {
-                        majMappings(
-                          destination.mappings.filter((_, position) => position !== indexMapping),
-                        );
-                      }}
-                    >
-                      {t('recherche.retirer')}
-                    </button>
+                    ))}
                   </div>
                 ))}
-
-                <button
-                  type="button"
-                  className={BOUTON}
-                  onClick={() => {
-                    majMappings([
-                      ...destination.mappings,
-                      { field: 'name', source: 'question', question: 0, value: null },
-                    ]);
-                  }}
-                >
-                  {t('formulaires.ajouterCorrespondance')}
-                </button>
               </div>
             )}
 

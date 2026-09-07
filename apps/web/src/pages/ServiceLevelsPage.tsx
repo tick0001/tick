@@ -14,6 +14,7 @@ import { useTranslation } from 'react-i18next';
 import { ApiError, api } from '@/lib/api';
 import { usePeut } from '@/lib/session';
 import { ACTION_LIGNE, BOUTON, BOUTON_PRIMAIRE, CARTE, CONTROLE } from '@/components/ui/primitives';
+import { cn } from '@/lib/utils';
 
 const JOURS = [1, 2, 3, 4, 5, 6, 0];
 
@@ -330,7 +331,7 @@ export function ServiceLevelsPage() {
               {calendrierEdite.valeurs.segments.map((segment, index) => (
                 <div key={index} className="flex flex-wrap items-center gap-2">
                   <select
-                    className={`${CONTROLE} w-auto`}
+                    className={cn(CONTROLE, 'w-auto')}
                     value={segment.weekday}
                     onChange={(event) => {
                       setCalendrierEdite({
@@ -350,7 +351,7 @@ export function ServiceLevelsPage() {
 
                   <input
                     type="time"
-                    className={`${CONTROLE} w-auto`}
+                    className={cn(CONTROLE, 'w-auto')}
                     value={segment.beginAt}
                     onChange={(event) => {
                       setCalendrierEdite({
@@ -363,7 +364,7 @@ export function ServiceLevelsPage() {
                   />
                   <input
                     type="time"
-                    className={`${CONTROLE} w-auto`}
+                    className={cn(CONTROLE, 'w-auto')}
                     value={segment.endAt}
                     onChange={(event) => {
                       setCalendrierEdite({
@@ -420,7 +421,7 @@ export function ServiceLevelsPage() {
               {calendrierEdite.valeurs.holidays.map((ferie, index) => (
                 <div key={index} className="flex flex-wrap items-center gap-2">
                   <input
-                    className={`${CONTROLE} w-48`}
+                    className={cn(CONTROLE, 'w-48')}
                     value={ferie.name}
                     onChange={(event) => {
                       setCalendrierEdite({
@@ -433,7 +434,7 @@ export function ServiceLevelsPage() {
                   />
                   <input
                     type="date"
-                    className={`${CONTROLE} w-auto`}
+                    className={cn(CONTROLE, 'w-auto')}
                     value={ferie.day}
                     onChange={(event) => {
                       setCalendrierEdite({
@@ -706,7 +707,7 @@ export function ServiceLevelsPage() {
               {engagementEdite.valeurs.levels.map((niveau, index) => (
                 <div key={index} className="flex flex-wrap items-center gap-2">
                   <input
-                    className={`${CONTROLE} w-56`}
+                    className={cn(CONTROLE, 'w-56')}
                     placeholder={t('engagements.nom')}
                     value={niveau.name}
                     onChange={(event) => {
@@ -721,7 +722,7 @@ export function ServiceLevelsPage() {
 
                   <input
                     type="number"
-                    className={`${CONTROLE} w-24`}
+                    className={cn(CONTROLE, 'w-24')}
                     value={Math.round(niveau.offsetSeconds / 3600)}
                     onChange={(event) => {
                       setEngagementEdite({
@@ -740,7 +741,7 @@ export function ServiceLevelsPage() {
                   </span>
 
                   <select
-                    className={`${CONTROLE} w-auto`}
+                    className={cn(CONTROLE, 'w-auto')}
                     value={niveau.actions[0]?.action ?? 'notify'}
                     onChange={(event) => {
                       setEngagementEdite({
@@ -764,7 +765,7 @@ export function ServiceLevelsPage() {
                   </select>
 
                   <input
-                    className={`${CONTROLE} w-24`}
+                    className={cn(CONTROLE, 'w-24')}
                     placeholder="valeur"
                     value={niveau.actions[0]?.value ?? ''}
                     onChange={(event) => {

@@ -165,7 +165,7 @@ export function KnowledgePage({ session }: { session: SessionContext }) {
 
       <FilterBar>
         <input
-          className={`${CONTROLE} w-64`}
+          className={cn(CONTROLE, 'w-64')}
           placeholder={t('connaissance.rechercher')}
           value={recherche}
           onChange={(event) => {
@@ -174,7 +174,7 @@ export function KnowledgePage({ session }: { session: SessionContext }) {
         />
 
         <select
-          className={`${CONTROLE} w-auto`}
+          className={cn(CONTROLE, 'w-auto')}
           value={categorie}
           onChange={(event) => {
             setCategorie(event.target.value === '' ? '' : Number(event.target.value));
@@ -260,7 +260,7 @@ export function KnowledgePage({ session }: { session: SessionContext }) {
               />
 
               <textarea
-                className={`${CONTROLE} h-64`}
+                className={cn(CONTROLE, 'h-64')}
                 required
                 placeholder={t('connaissance.contenu')}
                 value={edite.valeurs.content}
@@ -271,7 +271,7 @@ export function KnowledgePage({ session }: { session: SessionContext }) {
 
               <div className="flex flex-wrap items-center gap-4 text-sm">
                 <select
-                  className={`${CONTROLE} w-auto`}
+                  className={cn(CONTROLE, 'w-auto')}
                   value={edite.valeurs.categoryId ?? ''}
                   onChange={(event) => {
                     maj({

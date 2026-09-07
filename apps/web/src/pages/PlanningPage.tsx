@@ -7,6 +7,7 @@ import { RecurringPanel } from '@/components/RecurringPanel';
 import { CONTROLE, PageHeader, Tabs } from '@/components/ui/primitives';
 import { ApiError, api } from '@/lib/api';
 import { usePeut } from '@/lib/session';
+import { cn } from '@/lib/utils';
 
 type Vue = 'jour' | 'semaine' | 'mois';
 
@@ -276,7 +277,7 @@ export function PlanningPage() {
                   onChange={(event) => {
                     setAbsence((precedent) => ({ ...precedent, reason: event.target.value }));
                   }}
-                  className={`${CONTROLE} w-full`}
+                  className={cn(CONTROLE, 'w-full')}
                 />
               </label>
               <button

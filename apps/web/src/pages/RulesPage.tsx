@@ -13,6 +13,7 @@ import { useTranslation } from 'react-i18next';
 import { ApiError, api } from '@/lib/api';
 import { usePeut } from '@/lib/session';
 import { BOUTON, BOUTON_PRIMAIRE, CARTE, CONTROLE } from '@/components/ui/primitives';
+import { cn } from '@/lib/utils';
 
 const COLLECTIONS: RuleCollection[] = [
   'ticket.create',
@@ -173,7 +174,7 @@ export function RulesPage() {
           <h2 className="text-xl font-semibold tracking-tight">{t('regles.titre')}</h2>
           <p className="max-w-2xl text-sm text-muted">{t('regles.intro')}</p>
           <select
-            className={`${CONTROLE} w-auto`}
+            className={cn(CONTROLE, 'w-auto')}
             value={collection}
             onChange={(event) => {
               setCollection(event.target.value as RuleCollection);
@@ -402,7 +403,7 @@ export function RulesPage() {
               return (
                 <div key={index} className="flex flex-wrap items-center gap-2">
                   <select
-                    className={`${CONTROLE} w-56`}
+                    className={cn(CONTROLE, 'w-56')}
                     value={critere.field}
                     onChange={(event) => {
                       const suivant = definitionDe(event.target.value);
@@ -438,7 +439,7 @@ export function RulesPage() {
                   </select>
 
                   <select
-                    className={`${CONTROLE} w-44`}
+                    className={cn(CONTROLE, 'w-44')}
                     value={critere.operator}
                     onChange={(event) => {
                       setEdite({
@@ -464,7 +465,7 @@ export function RulesPage() {
                   {!SANS_VALEUR.includes(critere.operator) &&
                     (definition?.options ? (
                       <select
-                        className={`${CONTROLE} w-44`}
+                        className={cn(CONTROLE, 'w-44')}
                         value={critere.value ?? ''}
                         onChange={(event) => {
                           setEdite({
@@ -489,7 +490,7 @@ export function RulesPage() {
                       </select>
                     ) : (
                       <input
-                        className={`${CONTROLE} w-56`}
+                        className={cn(CONTROLE, 'w-56')}
                         value={critere.value ?? ''}
                         onChange={(event) => {
                           setEdite({
@@ -567,7 +568,7 @@ export function RulesPage() {
               return (
                 <div key={index} className="flex flex-wrap items-center gap-2">
                   <select
-                    className={`${CONTROLE} w-44`}
+                    className={cn(CONTROLE, 'w-44')}
                     value={action.action}
                     onChange={(event) => {
                       setEdite({
@@ -591,7 +592,7 @@ export function RulesPage() {
                   </select>
 
                   <select
-                    className={`${CONTROLE} w-56`}
+                    className={cn(CONTROLE, 'w-56')}
                     value={action.field}
                     onChange={(event) => {
                       const suivant = definitionDe(event.target.value);
@@ -624,7 +625,7 @@ export function RulesPage() {
 
                   {action.action !== 'clear' && (
                     <input
-                      className={`${CONTROLE} w-56`}
+                      className={cn(CONTROLE, 'w-56')}
                       value={action.value ?? ''}
                       onChange={(event) => {
                         setEdite({
@@ -716,7 +717,7 @@ export function RulesPage() {
         <label className="space-y-1 block">
           <span className="text-xs text-muted">{t('regles.donneesEntree')}</span>
           <textarea
-            className={`${CONTROLE} h-32 font-mono`}
+            className={cn(CONTROLE, 'h-32 font-mono')}
             value={entree}
             onChange={(event) => {
               setEntree(event.target.value);
