@@ -19,15 +19,6 @@ import i18n from '@/lib/i18n';
  * avant de la voir, et finirait par expirer sans que rien ne soit cassé.
  */
 
-/**
- * La langue des tests est fixée au français.
- *
- * Elle est autrement négociée depuis `navigator.language`, qui dépend de la
- * machine : un test comparant un libellé passerait sur un poste et échouerait
- * en intégration continue, pour une raison sans rapport avec ce qu'il vérifie.
- */
-void i18n.changeLanguage('fr');
-
 export function creerClient(): QueryClient {
   return new QueryClient({
     defaultOptions: {

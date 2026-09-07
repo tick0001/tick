@@ -1,6 +1,17 @@
 import '@testing-library/jest-dom/vitest';
 import { cleanup } from '@testing-library/react';
 import { afterEach, vi } from 'vitest';
+import i18n from './src/lib/i18n';
+
+/**
+ * La langue des tests est fixee au francais.
+ *
+ * Elle est autrement negociee depuis `navigator.language`, qui vaut « en » dans
+ * happy-dom et depend de la machine ailleurs : un test comparant un libelle
+ * passerait sur un poste et echouerait sur un autre, pour une raison sans
+ * rapport avec ce qu'il verifie.
+ */
+await i18n.changeLanguage('fr');
 
 /**
  * Demontage entre deux tests.

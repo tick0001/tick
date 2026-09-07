@@ -5,6 +5,7 @@ import { BrowserRouter, Navigate, Route, Routes } from 'react-router';
 import { AppShell } from '@/components/AppShell';
 import { ApiError, api } from '@/lib/api';
 import { loadPluginClients, resetPluginClients } from '@/lib/plugins';
+import { useRetourAccueilALaDeconnexion } from '@/lib/session-navigation';
 import { CataloguePage } from '@/pages/CataloguePage';
 import { DirectoriesPage } from '@/pages/DirectoriesPage';
 import { EntitiesPage } from '@/pages/EntitiesPage';
@@ -70,13 +71,24 @@ function Application() {
     },
   });
 
-  // Les extensions d'interface se chargent une fois la session établie : elles
-  // dépendent du contexte de travail, et l'API refuserait la liste avant.
-  const connecte = Boolean(session.data);
+  /**
+   * Une seule définition de « connecté ».
+   *
+   * Sur un échec de rafraîchissement, TanStack Query **conserve** la dernière
+   * donnée : `session.data` reste renseignée alors que le serveur vient de
+   * répondre 401. Juger la connexion sur la seule présence des données ferait
+   * donc diverger deux décisions qui doivent s'accorder — celle d'afficher
+   * l'écran de connexion, et celle de charger les extensions ou de remettre
+   * l'adresse à zéro.
+   */
+  const expiree = session.error instanceof ApiError && session.error.status === 401;
+  const connecte = Boolean(session.data) && !expiree;
 
   useEffect(() => {
     if (connecte) void loadPluginClients();
   }, [connecte]);
+
+  useRetourAccueilALaDeconnexion(connecte);
 
   if (session.isPending) {
     return (
@@ -86,7 +98,7 @@ function Application() {
     );
   }
 
-  if (!session.data || (session.error instanceof ApiError && session.error.status === 401)) {
+  if (!connecte || !session.data) {
     return <LoginPage />;
   }
 
