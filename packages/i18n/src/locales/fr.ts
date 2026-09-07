@@ -587,7 +587,6 @@ export const fr = {
     valeurDefaut: 'Valeur par défaut',
     conditions: 'Affichée si',
     ajouterCondition: 'Ajouter une condition',
-    destination: 'Ce que la soumission crée',
     champs: {
       name: 'Sujet du ticket',
       content: 'Description',
@@ -609,10 +608,6 @@ export const fr = {
     ongletFormulaire: 'Le formulaire',
     ongletQuestions: 'Questions',
     ongletDestination: 'Destination',
-    correspondances: 'Correspondances',
-    ajouterCorrespondance: 'Ajouter une correspondance',
-    champ: 'Champ du ticket',
-    source: 'Source',
     question: 'Question',
     valeurFixe: 'Valeur fixe',
     destinationTicket: 'Un ticket, créé à la soumission.',
@@ -621,8 +616,6 @@ export const fr = {
     modeDefaut: 'Par défaut',
     modeReponse: 'Réponse',
     sansQuestion: 'Ajoutez une question pour pouvoir y puiser.',
-    champsRemplis: '{{count}} champ rempli',
-    champsRemplis_other: '{{count}} champs remplis',
     famillesChamps: {
       contenu: 'Contenu',
       qualification: 'Qualification',

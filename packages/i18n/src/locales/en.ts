@@ -584,7 +584,6 @@ export const en: Traductions = {
     valeurDefaut: 'Default value',
     conditions: 'Shown if',
     ajouterCondition: 'Add a condition',
-    destination: 'What the submission creates',
     champs: {
       name: 'Ticket subject',
       content: 'Description',
@@ -606,10 +605,6 @@ export const en: Traductions = {
     ongletFormulaire: 'The form',
     ongletQuestions: 'Questions',
     ongletDestination: 'Destination',
-    correspondances: 'Mappings',
-    ajouterCorrespondance: 'Add a mapping',
-    champ: 'Ticket field',
-    source: 'Source',
     question: 'Question',
     valeurFixe: 'Fixed value',
     destinationTicket: 'One ticket, created on submission.',
@@ -618,8 +613,6 @@ export const en: Traductions = {
     modeDefaut: 'Default',
     modeReponse: 'Answer',
     sansQuestion: 'Add a question first to draw from it.',
-    champsRemplis: '{{count}} field set',
-    champsRemplis_other: '{{count}} fields set',
     famillesChamps: {
       contenu: 'Content',
       qualification: 'Qualification',
