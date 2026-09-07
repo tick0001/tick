@@ -92,7 +92,7 @@ export function NewTicketPage() {
           <label className="block space-y-1">
             <span className="text-sm font-medium">
               {t('creation.sujet')}
-              {requis('name') && <span className="text-red-600"> *</span>}
+              {requis('name') && <span className="text-brand"> *</span>}
             </span>
             <input
               value={saisie.name}
@@ -107,7 +107,7 @@ export function NewTicketPage() {
           <label className="block space-y-1">
             <span className="text-sm font-medium">
               {t('creation.description')}
-              {requis('content') && <span className="text-red-600"> *</span>}
+              {requis('content') && <span className="text-brand"> *</span>}
             </span>
             <textarea
               value={saisie.content}

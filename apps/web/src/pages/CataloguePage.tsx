@@ -216,7 +216,7 @@ export function CataloguePage() {
                   <label key={rang} className="block space-y-1">
                     <span className="text-sm">
                       {question.label}
-                      {question.isRequired && <span className="ml-1 text-red-600">*</span>}
+                      {question.isRequired && <span className="ml-1 text-brand">*</span>}
                     </span>
                     {question.description && (
                       <span className="block text-xs text-muted">{question.description}</span>

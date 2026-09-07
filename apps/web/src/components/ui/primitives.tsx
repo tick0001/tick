@@ -101,11 +101,20 @@ export function LinkButton({
 /**
  * Socle commun des contrôles de saisie.
  *
+ * Un rectangle franc, pas une pilule. Le champ est une **zone à remplir** sur un
+ * formulaire : il se pose sur le papier, cerné d'un filet, et le filet s'assombrit
+ * quand on écrit dedans. Le coin arrondi et la bordure qui vire au bleu au focus
+ * sont le réglage par défaut de toutes les bibliothèques — et ne disent rien de
+ * plus que « ceci est un champ ».
+ *
+ * Le focus ne colore pas la bordure : l'anneau vermillon posé sur le document
+ * s'en charge déjà. Doubler le signal en ferait deux, dont aucun ne porte.
+ *
  * Exporté aussi comme chaîne : quelques formulaires composent leurs champs à la
  * main, et leur imposer un composant aurait ajouté une enveloppe pour rien.
  */
 export const CONTROLE =
-  'h-9 w-full rounded-lg border border-line bg-surface px-3 text-sm text-ink placeholder:text-faint transition-colors hover:border-line-strong focus:border-brand disabled:opacity-60';
+  'h-9 w-full rounded-[2px] border border-line bg-surface px-2.5 text-sm text-ink placeholder:text-faint transition-colors hover:border-line-strong focus:border-ink disabled:bg-sunken disabled:opacity-70';
 
 export function Input({ className, ...props }: InputHTMLAttributes<HTMLInputElement>) {
   return <input className={cn(CONTROLE, className)} {...props} />;
@@ -119,7 +128,14 @@ export function Select({ className, ...props }: SelectHTMLAttributes<HTMLSelectE
   return <select className={cn(CONTROLE, 'pr-8', className)} {...props} />;
 }
 
-/** Étiquette et contrôle, avec l'espacement décidé une fois pour toutes. */
+/**
+ * Étiquette et contrôle, avec l'espacement décidé une fois pour toutes.
+ *
+ * L'étiquette est en petites capitales : sur un formulaire dense, elle se
+ * distingue alors de la valeur saisie sans qu'on ait à la mettre en gras ni à
+ * la grossir. C'est la convention des bordereaux et des plans — elle nomme la
+ * case sans se disputer la lecture avec ce qu'on y écrit.
+ */
 export function Field({
   label,
   hint,
@@ -132,8 +148,10 @@ export function Field({
   children: ReactNode;
 }) {
   return (
-    <label className={cn('block space-y-1.5', className)}>
-      <span className="block text-xs font-medium text-muted">{label}</span>
+    <label className={cn('block space-y-1', className)}>
+      <span className="block text-[11px] font-semibold tracking-wider text-faint uppercase">
+        {label}
+      </span>
       {children}
       {hint && <span className="block text-xs text-faint">{hint}</span>}
     </label>
@@ -149,7 +167,7 @@ export function Checkbox({
     <label className={cn('inline-flex cursor-pointer items-center gap-2 text-sm', className)}>
       <input
         type="checkbox"
-        className="size-4 shrink-0 rounded border-line-strong text-brand accent-brand"
+        className="size-4 shrink-0 rounded-[2px] border-line-strong accent-brand"
         {...props}
       />
       <span>{label}</span>

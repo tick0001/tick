@@ -1,5 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type {
+  Group,
+  UserSummary,
   Form,
   FormMapping,
   FormQuestion,
@@ -46,18 +48,37 @@ const OPERATEURS: RuleOperator[] = [
  * La même liste que celle des actions de règle : ce sont les mêmes champs, et
  * deux listes finiraient par diverger sans que rien ne le signale.
  */
+/**
+ * Champs de ticket qu'une correspondance peut écrire, et la nature de leur
+ * valeur.
+ *
+ * La nature décide de ce qu'on présente pour saisir une valeur fixe. Sans elle,
+ * « affecter au groupe Logistique » se saisit en tapant `3` dans un champ
+ * libre : personne ne connaît les identifiants, rien ne valide la frappe, et
+ * l'erreur ne se découvre qu'au premier ticket créé au mauvais endroit.
+ *
+ * Les catégories, sources et lieux restent en saisie libre : l'API ne les
+ * expose pas encore en liste. Le champ l'annonce plutôt que de faire semblant.
+ */
 const CHAMPS = [
-  'name',
-  'content',
-  'type',
-  'urgency',
-  'impact',
-  'categoryId',
-  'requestSourceId',
-  'locationId',
-  'assignedGroupId',
-  'assignedUserId',
-];
+  { champ: 'name', nature: 'texte' },
+  { champ: 'content', nature: 'texte' },
+  { champ: 'type', nature: 'type' },
+  { champ: 'urgency', nature: 'severite' },
+  { champ: 'impact', nature: 'severite' },
+  { champ: 'categoryId', nature: 'identifiant' },
+  { champ: 'requestSourceId', nature: 'identifiant' },
+  { champ: 'locationId', nature: 'identifiant' },
+  { champ: 'assignedGroupId', nature: 'groupe' },
+  { champ: 'assignedUserId', nature: 'utilisateur' },
+  { champ: 'observerUserId', nature: 'utilisateur' },
+] as const;
+
+type Nature = (typeof CHAMPS)[number]['nature'];
+
+function natureDe(champ: string): Nature {
+  return CHAMPS.find((entree) => entree.champ === champ)?.nature ?? 'texte';
+}
 
 function formulaireVide(): UpsertForm {
   return {
@@ -113,6 +134,88 @@ function aplatir(valeurs: UpsertForm): { rang: number; question: FormQuestion }[
  * base, et une condition doit pouvoir viser une question qui vient d'être
  * ajoutée.
  */
+/**
+ * Saisie d'une valeur fixe, adaptée à ce que le champ attend.
+ *
+ * Un groupe et un technicien se **choisissent** dans une liste : ce sont des
+ * lignes de la base, et les désigner par un identifiant tapé à la main revient
+ * à demander à l'administrateur d'aller le lire en SQL. Les sévérités et le
+ * type sont des énumérations fermées, donc des listes elles aussi. Ne reste en
+ * saisie libre que ce dont l'API ne publie pas encore la liste — et le champ
+ * l'annonce, plutôt que de laisser croire à un texte quelconque.
+ */
+function ValeurFixe({
+  nature,
+  valeur,
+  groupes,
+  comptes,
+  onChange,
+}: {
+  nature: Nature;
+  valeur: string;
+  groupes: readonly Group[];
+  comptes: readonly UserSummary[];
+  onChange: (valeur: string) => void;
+}) {
+  const { t } = useTranslation();
+  const classe = `${CONTROLE} w-56`;
+
+  const changer = (event: { target: { value: string } }): void => {
+    onChange(event.target.value);
+  };
+
+  if (nature === 'groupe' || nature === 'utilisateur') {
+    const entrees =
+      nature === 'groupe'
+        ? groupes.map((groupe) => ({ id: groupe.id, label: groupe.completeName }))
+        : comptes.map((compte) => ({ id: compte.id, label: compte.displayName }));
+
+    return (
+      <select className={classe} value={valeur} onChange={changer}>
+        <option value="">—</option>
+        {entrees.map((entree) => (
+          <option key={entree.id} value={String(entree.id)}>
+            {entree.label}
+          </option>
+        ))}
+      </select>
+    );
+  }
+
+  if (nature === 'severite') {
+    return (
+      <select className={classe} value={valeur} onChange={changer}>
+        <option value="">—</option>
+        {[1, 2, 3, 4, 5].map((niveau) => (
+          <option key={niveau} value={String(niveau)}>
+            {String(niveau)}
+          </option>
+        ))}
+      </select>
+    );
+  }
+
+  if (nature === 'type') {
+    return (
+      <select className={classe} value={valeur} onChange={changer}>
+        <option value="incident">{t('tickets.types.incident')}</option>
+        <option value="request">{t('tickets.types.request')}</option>
+      </select>
+    );
+  }
+
+  return (
+    <input
+      className={classe}
+      value={valeur}
+      onChange={changer}
+      {...(nature === 'identifiant'
+        ? { inputMode: 'numeric' as const, placeholder: t('formulaires.identifiantAttendu') }
+        : {})}
+    />
+  );
+}
+
 export function FormsPage() {
   const { t } = useTranslation();
   const peutEcrire = usePeut('form', 'update');
@@ -122,6 +225,16 @@ export function FormsPage() {
   const [erreur, setErreur] = useState<string | null>(null);
 
   const formulaires = useQuery({ queryKey: ['forms'], queryFn: api.forms, retry: false });
+
+  // Groupes et comptes servent aux correspondances qui designent un acteur.
+  // `retry: false` : sans le droit de les lire, la liste reste vide et la
+  // saisie retombe sur l'identifiant -- ce n'est pas une panne.
+  const groupes = useQuery({ queryKey: ['groups'], queryFn: api.groups, retry: false });
+  const comptes = useQuery({
+    queryKey: ['users', 'actifs'],
+    queryFn: () => api.users({ inactive: false }),
+    retry: false,
+  });
 
   const enregistrer = useMutation({
     mutationFn: ({ id, valeurs }: { id?: number; valeurs: UpsertForm }) =>
@@ -610,9 +723,9 @@ export function FormsPage() {
                       );
                     }}
                   >
-                    {CHAMPS.map((nom) => (
-                      <option key={nom} value={nom}>
-                        {nom}
+                    {CHAMPS.map((entree) => (
+                      <option key={entree.champ} value={entree.champ}>
+                        {t(`formulaires.champs.${entree.champ}` as 'formulaires.champs.name')}
                       </option>
                     ))}
                   </select>
@@ -655,15 +768,15 @@ export function FormsPage() {
                       ))}
                     </select>
                   ) : (
-                    <input
-                      className={`${CONTROLE} w-56`}
-                      value={mapping.value ?? ''}
-                      onChange={(event) => {
+                    <ValeurFixe
+                      nature={natureDe(mapping.field)}
+                      valeur={mapping.value ?? ''}
+                      groupes={groupes.data ?? []}
+                      comptes={comptes.data ?? []}
+                      onChange={(valeur) => {
                         majMappings(
                           destination.mappings.map((autre, position) =>
-                            position === indexMapping
-                              ? { ...autre, value: event.target.value }
-                              : autre,
+                            position === indexMapping ? { ...autre, value: valeur } : autre,
                           ),
                         );
                       }}
