@@ -5,5 +5,6 @@ export type { SQL } from 'drizzle-orm';
 
 export * from './client.js';
 export * from './context.js';
+export * from './rendu.js';
 export * from './schema/index.js';
 export * from './types.js';
