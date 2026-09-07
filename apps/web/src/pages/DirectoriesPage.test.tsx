@@ -34,7 +34,7 @@ const ANNUAIRE: LdapDirectory = {
   emailAttribute: 'mail',
   firstNameAttribute: 'givenName',
   lastNameAttribute: 'sn',
-  groupSearchMode: 'memberof',
+  groupSearchMode: 'attribute',
   memberOfAttribute: 'memberOf',
   groupMemberAttribute: 'member',
   groupBaseDn: null,
