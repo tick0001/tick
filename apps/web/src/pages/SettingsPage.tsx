@@ -166,96 +166,108 @@ export function SettingsPage({ session }: { session: SessionContext }) {
           <Card>
             <CardHeader title={t('courriel.titre')} />
             <CardBody className="space-y-4">
-              <Field label={t('administration.reglages.cles.mailFrom')}>
-                <Input
-                  type="email"
-                  value={(valeurDe('mailFrom') as string | null) ?? ''}
-                  onChange={(event) => {
-                    poser('mailFrom', event.target.value || null);
-                  }}
-                />
+              <div className="space-y-1">
+                <Field label={t('administration.reglages.cles.mailFrom')}>
+                  <Input
+                    type="email"
+                    value={(valeurDe('mailFrom') as string | null) ?? ''}
+                    onChange={(event) => {
+                      poser('mailFrom', event.target.value || null);
+                    }}
+                  />
+                </Field>
                 <Origine cle="mailFrom" />
-              </Field>
+              </div>
 
-              <Field label={t('administration.reglages.cles.mailReplyTo')}>
-                <Input
-                  type="email"
-                  value={(valeurDe('mailReplyTo') as string | null) ?? ''}
-                  onChange={(event) => {
-                    poser('mailReplyTo', event.target.value || null);
-                  }}
-                />
+              <div className="space-y-1">
+                <Field label={t('administration.reglages.cles.mailReplyTo')}>
+                  <Input
+                    type="email"
+                    value={(valeurDe('mailReplyTo') as string | null) ?? ''}
+                    onChange={(event) => {
+                      poser('mailReplyTo', event.target.value || null);
+                    }}
+                  />
+                </Field>
                 <Origine cle="mailReplyTo" />
-              </Field>
+              </div>
 
-              <Field label={t('administration.reglages.cles.defaultLocale')}>
-                <Select
-                  value={(valeurDe('defaultLocale') as string | null) ?? ''}
-                  onChange={(event) => {
-                    poser('defaultLocale', event.target.value || null);
-                  }}
-                >
-                  <option value="">—</option>
-                  <option value="fr">Français</option>
-                  <option value="en">English</option>
-                </Select>
+              <div className="space-y-1">
+                <Field label={t('administration.reglages.cles.defaultLocale')}>
+                  <Select
+                    value={(valeurDe('defaultLocale') as string | null) ?? ''}
+                    onChange={(event) => {
+                      poser('defaultLocale', event.target.value || null);
+                    }}
+                  >
+                    <option value="">—</option>
+                    <option value="fr">Français</option>
+                    <option value="en">English</option>
+                  </Select>
+                </Field>
                 <Origine cle="defaultLocale" />
-              </Field>
+              </div>
             </CardBody>
           </Card>
 
           <Card>
             <CardHeader title={t('tickets.titre')} />
             <CardBody className="space-y-4">
-              <Field label={t('administration.reglages.cles.autoCloseDelayDays')}>
-                <Input
-                  type="number"
-                  min={0}
-                  value={(valeurDe('autoCloseDelayDays') as number | null) ?? ''}
-                  onChange={(event) => {
-                    poser(
-                      'autoCloseDelayDays',
-                      event.target.value === '' ? null : Number(event.target.value),
-                    );
-                  }}
-                />
+              <div className="space-y-1">
+                <Field label={t('administration.reglages.cles.autoCloseDelayDays')}>
+                  <Input
+                    type="number"
+                    min={0}
+                    value={(valeurDe('autoCloseDelayDays') as number | null) ?? ''}
+                    onChange={(event) => {
+                      poser(
+                        'autoCloseDelayDays',
+                        event.target.value === '' ? null : Number(event.target.value),
+                      );
+                    }}
+                  />
+                </Field>
                 <Origine cle="autoCloseDelayDays" />
-              </Field>
+              </div>
 
-              <Field label={t('administration.reglages.cles.autoPurgeDelayDays')}>
-                <Input
-                  type="number"
-                  min={0}
-                  value={(valeurDe('autoPurgeDelayDays') as number | null) ?? ''}
-                  onChange={(event) => {
-                    poser(
-                      'autoPurgeDelayDays',
-                      event.target.value === '' ? null : Number(event.target.value),
-                    );
-                  }}
-                />
+              <div className="space-y-1">
+                <Field label={t('administration.reglages.cles.autoPurgeDelayDays')}>
+                  <Input
+                    type="number"
+                    min={0}
+                    value={(valeurDe('autoPurgeDelayDays') as number | null) ?? ''}
+                    onChange={(event) => {
+                      poser(
+                        'autoPurgeDelayDays',
+                        event.target.value === '' ? null : Number(event.target.value),
+                      );
+                    }}
+                  />
+                </Field>
                 <Origine cle="autoPurgeDelayDays" />
-              </Field>
+              </div>
 
-              <Field label={t('administration.reglages.cles.defaultTicketTemplateId')}>
-                <Select
-                  value={(valeurDe('defaultTicketTemplateId') as number | null) ?? ''}
-                  onChange={(event) => {
-                    poser(
-                      'defaultTicketTemplateId',
-                      event.target.value === '' ? null : Number(event.target.value),
-                    );
-                  }}
-                >
-                  <option value="">—</option>
-                  {(gabarits.data ?? []).map((gabarit) => (
-                    <option key={gabarit.id} value={gabarit.id}>
-                      {gabarit.name}
-                    </option>
-                  ))}
-                </Select>
+              <div className="space-y-1">
+                <Field label={t('administration.reglages.cles.defaultTicketTemplateId')}>
+                  <Select
+                    value={(valeurDe('defaultTicketTemplateId') as number | null) ?? ''}
+                    onChange={(event) => {
+                      poser(
+                        'defaultTicketTemplateId',
+                        event.target.value === '' ? null : Number(event.target.value),
+                      );
+                    }}
+                  >
+                    <option value="">—</option>
+                    {(gabarits.data ?? []).map((gabarit) => (
+                      <option key={gabarit.id} value={gabarit.id}>
+                        {gabarit.name}
+                      </option>
+                    ))}
+                  </Select>
+                </Field>
                 <Origine cle="defaultTicketTemplateId" />
-              </Field>
+              </div>
             </CardBody>
           </Card>
 
