@@ -12,7 +12,8 @@
     "test": "vitest run",
     "coverage": "vitest run --coverage",
     "db:seed": "tsc -p tsconfig.build.json && node dist/cli/seed.js",
-    "db:init": "tsc -p tsconfig.build.json && node dist/cli/initialiser.js"
+    "db:init": "tsc -p tsconfig.build.json && node dist/cli/initialiser.js",
+    "openapi": "tsc -p tsconfig.build.json && node dist/cli/openapi.js"
   },
   "dependencies": {
     "@nestjs/common": "^12.0.1",

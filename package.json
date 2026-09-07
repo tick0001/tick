@@ -22,6 +22,7 @@
     "db:migrate": "pnpm --filter @tick/db db:migrate",
     "db:seed": "pnpm --filter @tick/api db:seed",
     "db:init": "pnpm --filter @tick/api db:init",
+    "openapi": "pnpm --filter @tick/api openapi",
     "images": "docker build -f docker/api.Dockerfile -t tick-api:local . && docker build -f docker/web.Dockerfile -t tick-web:local .",
     "db:reset": "pnpm services:reset && pnpm db:migrate && pnpm db:seed"
   },
