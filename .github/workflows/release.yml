@@ -68,6 +68,19 @@ jobs:
       - name: Construction
         run: pnpm --filter @tick/api... build
 
+      # L'interface est un ensemble de fichiers statiques, identique partout :
+      # une seule archive, construite sur le runner Linux.
+      #
+      # Elle est construite ICI, avant `pnpm deploy --prod`, et l'ordre n'est pas
+      # indifferent : `--prod` fait basculer l'espace de travail en mode
+      # production, et la commande pnpm suivante en purge les devDependencies.
+      # Construire l'interface apres, c'est la construire sans TypeScript ni Vite.
+      - name: Interface
+        if: runner.os == 'Linux'
+        run: |
+          pnpm --filter @tick/web build
+          tar czf tick-web-${{ steps.version.outputs.numero }}.tar.gz -C apps/web/dist .
+
       # `pnpm deploy` produit une arborescence autonome : les dépendances
       # d'espace de travail y sont recopiées plutôt que liées, ce qui rend
       # l'ensemble transportable sur une machine qui n'a pas le monorepo.
@@ -92,14 +105,6 @@ jobs:
         # l'arborescence, pour une archive cinq fois plus grosse. `tar` est fourni
         # avec Windows et produit le meme zip en une dizaine de secondes.
         run: tar.exe -a -cf tick-api-${{ steps.version.outputs.numero }}-${{ matrix.cible }}.zip -C deploiement .
-
-      # L'interface est un ensemble de fichiers statiques, identique partout :
-      # une seule archive, construite sur le runner Linux.
-      - name: Interface
-        if: runner.os == 'Linux'
-        run: |
-          pnpm --filter @tick/web build
-          tar czf tick-web-${{ steps.version.outputs.numero }}.tar.gz -C apps/web/dist .
 
       - uses: actions/upload-artifact@v7
         with:
