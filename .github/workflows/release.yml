@@ -57,13 +57,13 @@ jobs:
         id: version
         shell: bash
         # L'étiquette `v0.1.0` désigne la version `0.1.0` : le préfixe sert au
-        # déclenchement, pas au nom des fichiers.
+        # déclenchement, pas au nom des fichiers. Il est retiré des deux sources,
+        # sans quoi un déclenchement manuel produit des archives dont le nom
+        # diffère de celles d'une vraie version.
         run: |
-          if [ -n "${{ inputs.version }}" ]; then
-            echo "numero=${{ inputs.version }}" >> "$GITHUB_OUTPUT"
-          else
-            echo "numero=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
-          fi
+          numero="${{ inputs.version }}"
+          [ -n "$numero" ] || numero="$GITHUB_REF_NAME"
+          echo "numero=${numero#v}" >> "$GITHUB_OUTPUT"
 
       - name: Construction
         run: pnpm --filter @tick/api... build
@@ -84,8 +84,16 @@ jobs:
       # `pnpm deploy` produit une arborescence autonome : les dépendances
       # d'espace de travail y sont recopiées plutôt que liées, ce qui rend
       # l'ensemble transportable sur une machine qui n'a pas le monorepo.
+      #
+      # `node-linker=hoisted` n'est pas un detail de gout. Par defaut, pnpm place
+      # chaque dependance dans `.pnpm/` et pose un lien symbolique a la racine de
+      # `node_modules`. Une archive en contient alors des centaines, et Windows
+      # ne cree pas de lien symbolique sans mode developpeur ni droits
+      # d'administration : l'extraction produit un `node_modules` vide de tout ce
+      # qui compte, et l'API ne demarre pas. Un arbre aplati n'a que des dossiers
+      # reels, donc s'extrait partout.
       - name: Arborescence de déploiement
-        run: pnpm --filter @tick/api --prod deploy --legacy deploiement
+        run: pnpm --filter @tick/api --prod deploy --legacy --config.node-linker=hoisted deploiement
 
       # `pnpm deploy` recopie tout le dossier du paquet, sources comprises. Une
       # installation de production n'a que faire des `.ts`, des tsconfig et de la
