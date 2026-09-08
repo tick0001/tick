@@ -1,5 +1,11 @@
 # Surcouche Traefik.
 #
+# **Ce fichier ne lance pas Traefik.** Il ne declare aucun service : il pose
+# seulement les etiquettes sur le conteneur `web`, le rattache au reseau du
+# Traefik deja en place, et retire le port publie. Le Traefik reste le votre,
+# dans son propre compose, avec sa propre configuration — on ne fait que lui
+# donner un conteneur de plus a router.
+#
 # À superposer au fichier de production, jamais à utiliser seule :
 #
 #   docker compose -f docker/compose.production.yaml \

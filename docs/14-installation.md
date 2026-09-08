@@ -133,7 +133,12 @@ qui permet au cookie de session, `httpOnly` et `SameSite`, de voyager.
 
 Traefik termine le TLS et route un nom de domaine vers le conteneur. Traefik
 devant, nginx dedans, et le fichier [`compose.traefik.yaml`](../docker/compose.traefik.yaml)
-se superpose au fichier de production :
+se superpose au fichier de production.
+
+**Cette surcouche ne lance pas Traefik** : elle ne déclare aucun service. Le
+Traefik reste le vôtre, dans son propre compose, avec sa propre configuration —
+la surcouche ne fait que lui donner un conteneur de plus à router, en posant les
+étiquettes sur `web` et en le rattachant au réseau existant.
 
 ```bash
 docker compose -f docker/compose.production.yaml \
