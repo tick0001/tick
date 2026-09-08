@@ -5,7 +5,7 @@
 
 [Unit]
 Description=Tick& — API
-Documentation=https://github.com/tick0001/tick-
+Documentation=https://github.com/tick0001/tick
 
 # `network-online` et non `network` : l'API ouvre ses connexions à PostgreSQL et
 # à Redis dès le démarrage, et `network` est atteint avant qu'une adresse soit

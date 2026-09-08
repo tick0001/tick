@@ -9,7 +9,7 @@ seul outil, à l'échelle de toute une organisation. La gestion de parc est dél
 périmètre.
 
 [![Licence](https://img.shields.io/badge/licence-AGPL--3.0-blue)](LICENSE)
-[![CI](https://github.com/tick0001/tick-/actions/workflows/ci.yml/badge.svg)](https://github.com/tick0001/tick-/actions/workflows/ci.yml)
+[![CI](https://github.com/tick0001/tick/actions/workflows/ci.yml/badge.svg)](https://github.com/tick0001/tick/actions/workflows/ci.yml)
 
 ![Liste des tickets, filtrée par le profil actif et le contexte de travail](docs/captures/fr/tickets.png)
 
@@ -48,7 +48,7 @@ de traces. Voir le [SDK](docs/15-sdk-plugins.md).
 ## Déployer
 
 ```bash
-git clone https://github.com/tick0001/tick-.git && cd tick-
+git clone https://github.com/tick0001/tick.git && cd tick
 cp .env.production.example docker/.env    # puis remplir : secrets, adresses, SMTP
 docker compose -f docker/compose.production.yaml up -d
 

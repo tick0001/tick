@@ -122,15 +122,15 @@ sans être superutilisateur. Rien à faire de plus.
 
 ## 4. Archives de version
 
-Les archives sont attachées à chaque [version publiée](https://github.com/tick0001/tick-/releases).
+Les archives sont attachées à chaque [version publiée](https://github.com/tick0001/tick/releases).
 Elles sont autonomes : code compilé et dépendances incluses. Le serveur n'a
 donc besoin ni de pnpm, ni d'un compilateur, ni du dépôt.
 
 ```bash
 VERSION=0.1.0
 cd /tmp
-curl -fLO https://github.com/tick0001/tick-/releases/download/v$VERSION/tick-api-$VERSION-linux-x64.tar.gz
-curl -fLO https://github.com/tick0001/tick-/releases/download/v$VERSION/tick-web-$VERSION.tar.gz
+curl -fLO https://github.com/tick0001/tick/releases/download/v$VERSION/tick-api-$VERSION-linux-x64.tar.gz
+curl -fLO https://github.com/tick0001/tick/releases/download/v$VERSION/tick-web-$VERSION.tar.gz
 
 tar xzf tick-api-$VERSION-linux-x64.tar.gz -C /opt/tick/api
 tar xzf tick-web-$VERSION.tar.gz -C /var/www/tick
@@ -296,8 +296,8 @@ systemctl stop tick-api
 
 VERSION=0.2.0
 cd /tmp
-curl -fLO https://github.com/tick0001/tick-/releases/download/v$VERSION/tick-api-$VERSION-linux-x64.tar.gz
-curl -fLO https://github.com/tick0001/tick-/releases/download/v$VERSION/tick-web-$VERSION.tar.gz
+curl -fLO https://github.com/tick0001/tick/releases/download/v$VERSION/tick-api-$VERSION-linux-x64.tar.gz
+curl -fLO https://github.com/tick0001/tick/releases/download/v$VERSION/tick-web-$VERSION.tar.gz
 
 # Remplacement, et non superposition : une archive décompressée par-dessus la
 # précédente laisse en place les fichiers que la nouvelle version a supprimés.

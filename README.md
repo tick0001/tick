@@ -8,7 +8,7 @@ satisfaction surveys and a self-service portal — one tool, across an entire or
 and inventory management is deliberately out of scope.
 
 [![Licence](https://img.shields.io/badge/licence-AGPL--3.0-blue)](LICENSE)
-[![CI](https://github.com/tick0001/tick-/actions/workflows/ci.yml/badge.svg)](https://github.com/tick0001/tick-/actions/workflows/ci.yml)
+[![CI](https://github.com/tick0001/tick/actions/workflows/ci.yml/badge.svg)](https://github.com/tick0001/tick/actions/workflows/ci.yml)
 
 ![Ticket list, filtered by the active profile and working context](docs/captures/en/tickets.png)
 
@@ -46,7 +46,7 @@ manifest, get their own PostgreSQL schema, and uninstall without leaving traces.
 ## Deploy
 
 ```bash
-git clone https://github.com/tick0001/tick-.git && cd tick-
+git clone https://github.com/tick0001/tick.git && cd tick
 cp .env.production.example docker/.env    # then fill in: secrets, URLs, SMTP
 docker compose -f docker/compose.production.yaml up -d
 

@@ -19,7 +19,7 @@ d'environnement.
 l'enregistrement du service Windows, et la configuration IIS. Ces étapes sont
 écrites d'après la documentation de leurs éditeurs respectifs, pas d'après une
 exécution. Si l'une d'elles vous résiste, c'est utile à
-[signaler](https://github.com/tick0001/tick-/issues).
+[signaler](https://github.com/tick0001/tick/issues).
 
 L'[installation Linux](16-installation-linux.md), elle, a été déroulée
 intégralement sur une machine vierge.
@@ -130,13 +130,13 @@ CREATE ROLE tick_app LOGIN PASSWORD 'un-autre-mot-de-passe-solide';
 
 ## 5. Archives de version
 
-Les archives sont attachées à chaque [version publiée](https://github.com/tick0001/tick-/releases).
+Les archives sont attachées à chaque [version publiée](https://github.com/tick0001/tick/releases).
 Elles sont autonomes : code compilé et dépendances incluses. Le serveur n'a donc
 besoin ni de pnpm, ni d'un compilateur, ni du dépôt.
 
 ```powershell
 $version = '0.1.0'
-$base = "https://github.com/tick0001/tick-/releases/download/v$version"
+$base = "https://github.com/tick0001/tick/releases/download/v$version"
 
 Invoke-WebRequest "$base/tick-api-$version-win-x64.zip" -OutFile "$env:TEMP\api.zip"
 Invoke-WebRequest "$base/tick-web-$version.tar.gz"      -OutFile "$env:TEMP\web.tar.gz"
@@ -327,7 +327,7 @@ répond avant que le cloisonnement et les droits aient servi.
 Stop-Service Tick-API
 
 $version = '0.2.0'
-$base = "https://github.com/tick0001/tick-/releases/download/v$version"
+$base = "https://github.com/tick0001/tick/releases/download/v$version"
 Invoke-WebRequest "$base/tick-api-$version-win-x64.zip" -OutFile "$env:TEMP\api.zip"
 Invoke-WebRequest "$base/tick-web-$version.tar.gz"      -OutFile "$env:TEMP\web.tar.gz"
 
