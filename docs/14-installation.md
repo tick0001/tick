@@ -18,15 +18,11 @@ passe en clair.
 
 ## Images
 
-Aucune version n'est étiquetée à ce jour : construisez depuis les sources avec `pnpm images`, ce
-qui produit `tick-api:local` et `tick-web:local`, puis renseignez `TICK_IMAGE_API`,
-`TICK_IMAGE_WEB` et `TICK_VERSION` en conséquence.
-
-À la première étiquette, les images seront publiées sur GitHub Container Registry :
+Les images sont publiées sur GitHub Container Registry à chaque étiquette de version :
 
 ```
-ghcr.io/tick0001/tick-api:1.0.0
-ghcr.io/tick0001/tick-web:1.0.0
+ghcr.io/tick0001/tick-api:0.1.0
+ghcr.io/tick0001/tick-web:0.1.0
 ```
 
 Publiques, donc tirables sans authentification. `TICK_VERSION` choisit la
@@ -34,7 +30,10 @@ version ; `latest` suit la dernière étiquette. Épingler une version précise 
 préférable en production — `latest` change sous vos pieds à la publication
 suivante.
 
-Publiques, donc tirables sans authentification.
+Pour construire depuis les sources plutôt que tirer — audit du contenu, correctif
+local, registre interne — `pnpm images` produit `tick-api:local` et
+`tick-web:local` ; renseignez alors `TICK_IMAGE_API`, `TICK_IMAGE_WEB` et
+`TICK_VERSION` en conséquence.
 
 ## Configuration
 
