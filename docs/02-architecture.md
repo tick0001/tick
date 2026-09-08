@@ -22,6 +22,22 @@ docker/                 Compose, Dockerfiles, initialisation Postgres
 docs/
 ```
 
+### Numérotation des versions
+
+Une seule version désigne le produit, et elle vit dans **`apps/api/package.json`**. Ce choix est
+dicté par l'exécution : `pnpm deploy` produit une arborescence dont ce manifeste est la racine,
+donc c'est le seul que l'API puisse lire à l'exécution — et `/api/health` le lit, pour qu'un
+exploitant sache ce qui tourne chez lui.
+
+Les workflows de publication refusent de s'exécuter si l'étiquette et ce manifeste divergent :
+une image ou une archive qui annonce une version qui n'est pas la sienne est pire qu'une
+publication qui échoue.
+
+Les autres paquets internes restent en `0.0.0` : ils ne sont jamais publiés séparément, et leur
+donner un numéro laisserait croire l'inverse. **`@tick/plugin-sdk` fait exception** et suit son
+propre semver — c'est un contrat public, dont les ruptures ne suivent pas le rythme du produit.
+Voir le [SDK de plugins](15-sdk-plugins.md).
+
 ## Backend — NestJS
 
 ### Découpage en modules
