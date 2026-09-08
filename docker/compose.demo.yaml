@@ -1,0 +1,68 @@
+# Surcouche de démonstration publique.
+#
+# À superposer, jamais à utiliser seule — et **jamais sur une installation
+# réelle** : elle vide la base toutes les heures.
+#
+#   docker compose -f docker/compose.production.yaml \
+#                  -f docker/compose.traefik.yaml \
+#                  -f docker/compose.demo.yaml up -d
+#
+# Elle fait trois choses : elle coupe le courrier sortant, elle recharge le jeu
+# de démonstration à chaque heure ronde, et elle efface les pièces jointes
+# déposées entre-temps.
+
+services:
+  # Puits de courriel.
+  #
+  # Ce n'est pas un confort de développement, c'est une mesure de sécurité. Sur
+  # une démonstration publique, n'importe quel visiteur est administrateur : il
+  # peut composer une notification et déclencher son envoi. Avec un vrai relais
+  # SMTP configuré, la démonstration devient un relais de courrier ouvert, et
+  # c'est le nom de domaine qui finit sur les listes noires.
+  #
+  # Mailpit accepte tout et n'expédie rien.
+  mailpit:
+    image: axllent/mailpit:latest
+    restart: unless-stopped
+    environment:
+      MP_SMTP_AUTH_ACCEPT_ANY: '1'
+      MP_SMTP_AUTH_ALLOW_INSECURE: '1'
+
+  api:
+    environment:
+      # Écrase ce que porte `docker/.env` : sur la démonstration, le courrier ne
+      # sort pas de la machine.
+      SMTP_HOST: mailpit
+      SMTP_PORT: 1025
+      SMTP_SECURE: 'false'
+      SMTP_USER: ''
+      SMTP_PASSWORD: ''
+
+  # Remise à zéro horaire.
+  #
+  # `extends` reprend l'image et l'environnement complet de l'API : le script
+  # d'amorçage démarre l'application pour obtenir sa couche de données, et exige
+  # donc la même configuration. Les recopier ici les aurait laissés diverger au
+  # premier changement.
+  demo-reset:
+    extends:
+      file: compose.production.yaml
+      service: api
+    restart: unless-stopped
+
+    # La sonde héritée interroge le port 3000 du conteneur, où rien n'écoute
+    # ici : sans cette ligne, le conteneur serait marqué malsain en permanence.
+    healthcheck:
+      disable: true
+
+    environment:
+      SMTP_HOST: mailpit
+      SMTP_PORT: 1025
+
+    volumes:
+      # La boucle vit dans un fichier plutôt que dans un champ `command` : une
+      # boucle shell écrite en YAML demande d'échapper chaque `$`, se relit mal,
+      # et Compose la découpe de façon surprenante.
+      - ./demo-reset.sh:/demo-reset.sh:ro
+
+    entrypoint: ['/bin/sh', '/demo-reset.sh']

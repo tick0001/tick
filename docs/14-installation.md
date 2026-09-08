@@ -276,3 +276,43 @@ d'ajouter. Chaque opération porte le droit qu'elle exige, sous
 `x-tick-droit`.
 
 Pour l'obtenir hors ligne : `pnpm openapi > openapi.json`.
+
+## Instance de démonstration publique
+
+Une troisième surcouche, [`compose.demo.yaml`](../docker/compose.demo.yaml),
+transforme le déploiement en vitrine publique. Elle **n'a rien à faire sur une
+installation réelle** : elle vide la base toutes les heures.
+
+```bash
+docker compose -f docker/compose.production.yaml \
+               -f docker/compose.traefik.yaml \
+               -f docker/compose.demo.yaml up -d
+```
+
+Elle fait trois choses, et chacune répond à un problème que pose une
+démonstration ouverte à tous.
+
+**Le courrier ne sort plus.** Sur une démonstration, n'importe quel visiteur est
+administrateur : il peut composer une notification et déclencher son envoi. Avec
+un vrai relais SMTP configuré, la démonstration devient un relais de courrier
+ouvert, et c'est le nom de domaine qui finit sur les listes noires. La surcouche
+écrase `SMTP_HOST` vers un conteneur Mailpit qui accepte tout et n'expédie rien.
+
+**Le jeu de démonstration se recharge à chaque heure ronde**, par le service
+`demo-reset` et le script [`demo-reset.sh`](../docker/demo-reset.sh). L'heure
+ronde plutôt qu'un intervalle depuis le démarrage, pour pouvoir annoncer aux
+visiteurs « remise à zéro à chaque heure » sans mentir.
+
+**Les pièces jointes sont effacées** au même moment. `seed.js` ne tronque que
+les tables ; sans ce nettoyage, le volume grossit sans fin et la démonstration
+finit par héberger durablement des fichiers que personne n'a relus.
+
+Le nettoyage n'a pas lieu si l'amorçage échoue : mieux vaut une démonstration
+figée sur des données cohérentes qu'une démonstration dont les tickets
+référencent des pièces jointes disparues.
+
+Les comptes sont ceux du [README](../README.md), mot de passe commun `tick`.
+L'application ne les affiche nulle part : c'est au lien que vous publiez de les
+porter.
+
+`initialiser` est inutile ici — l'amorçage crée les comptes lui-même.
