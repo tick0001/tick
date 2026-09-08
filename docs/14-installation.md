@@ -120,6 +120,48 @@ C'est ce qui évite le défaut classique des images qui migrent au démarrage : 
 conteneurs lancés ensemble jouent la même migration en parallèle, et la seconde
 échoue — ou pire, s'applique à moitié.
 
+## Derrière Traefik
+
+Si un Traefik tourne déjà sur la machine, il n'y a **rien à fusionner** avec le
+nginx du conteneur `web` : les deux ne font pas le même métier.
+
+Le nginx interne est une pièce de l'application. Il sert les fichiers de
+l'interface, replie les routes du navigateur sur `index.html` — sans quoi
+recharger `/tickets/42` renverrait une 404 — et relaie `/api/` vers l'API, ce
+qui garde l'interface et l'API sur la **même origine**. C'est cette même origine
+qui permet au cookie de session, `httpOnly` et `SameSite`, de voyager.
+
+Traefik termine le TLS et route un nom de domaine vers le conteneur. Traefik
+devant, nginx dedans, et le fichier [`compose.traefik.yaml`](../docker/compose.traefik.yaml)
+se superpose au fichier de production :
+
+```bash
+docker compose -f docker/compose.production.yaml \
+               -f docker/compose.traefik.yaml up -d
+```
+
+Il retire le port publié, attache `web` au réseau de Traefik en plus de celui du
+projet, et pose les étiquettes du routeur. Quatre variables à renseigner dans
+`docker/.env`, en accord avec la stack Traefik existante :
+
+```ini
+TICK_HOST=assistance.exemple.fr
+TRAEFIK_NETWORK=traefik
+TRAEFIK_ENTRYPOINT=websecure
+TRAEFIK_CERTRESOLVER=letsencrypt
+```
+
+Les valeurs par défaut sont les conventions les plus répandues, pas
+nécessairement les vôtres : les trois dernières se lisent dans la configuration
+du Traefik déjà en place. Et `API_URL` comme `WEB_URL` passent en `https://`,
+sinon les liens des notifications pointeront ailleurs que le site.
+
+Le port publié disparaît à dessein. Le garder ouvrirait l'application en clair
+sur un port de l'hôte, à côté du TLS de Traefik — et comme le cookie de session
+porte l'attribut `Secure` en production, une connexion par ce chemin-là
+échouerait **sans message** : le navigateur refuserait simplement d'enregistrer
+le cookie.
+
 ## Premier administrateur
 
 Une base migrée est une base dans laquelle personne ne peut entrer : il n'y a ni

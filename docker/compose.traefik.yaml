@@ -1,0 +1,71 @@
+# Surcouche Traefik.
+#
+# À superposer au fichier de production, jamais à utiliser seule :
+#
+#   docker compose -f docker/compose.production.yaml \
+#                  -f docker/compose.traefik.yaml up -d
+#
+# Il n'y a rien à fusionner avec le nginx du conteneur `web` : les deux ne font
+# pas le même métier. Le nginx interne sert les fichiers de l'interface, replie
+# les routes du navigateur sur `index.html`, et relaie `/api/` vers l'API — ce
+# qui garde l'interface et l'API sur la **même origine**, condition pour que le
+# cookie de session, `httpOnly` et `SameSite`, voyage. Traefik, lui, termine le
+# TLS et route un nom de domaine vers le conteneur. Traefik devant, nginx
+# dedans : chacun à sa place.
+#
+# Variables à renseigner dans `docker/.env`, en accord avec la stack Traefik
+# déjà en place — les valeurs par défaut ci-dessous sont les conventions les
+# plus répandues, pas les vôtres :
+#
+#   TICK_HOST=assistance.exemple.fr
+#   TRAEFIK_NETWORK=traefik
+#   TRAEFIK_ENTRYPOINT=websecure
+#   TRAEFIK_CERTRESOLVER=letsencrypt
+#
+# Et, dans le même fichier, les adresses publiques en `https://` :
+#
+#   API_URL=https://assistance.exemple.fr
+#   WEB_URL=https://assistance.exemple.fr
+
+services:
+  web:
+    # Le port publié disparaît. Le laisser ouvrirait l'application en clair sur
+    # le port de l'hôte, à côté du TLS de Traefik — et comme le cookie de
+    # session est posé avec `Secure` en production, une connexion par ce
+    # chemin-là échouerait sans message : le navigateur refuserait simplement
+    # d'enregistrer le cookie.
+    #
+    # `!reset` demande Compose 2.24 ou plus. Sur une version antérieure,
+    # supprimer cette ligne et poser `TICK_PORT=127.0.0.1:8080` dans
+    # `docker/.env` : le port n'écoute alors que sur la boucle locale.
+    ports: !reset []
+
+    # Deux réseaux, et les deux sont nécessaires : celui de Traefik pour être
+    # joignable depuis le relais, celui du projet pour continuer à joindre
+    # `api`. Déclarer `networks` sur un service remplace l'appartenance
+    # implicite au réseau par défaut, d'où la mention explicite de `default`.
+    networks:
+      - default
+      - traefik
+
+    labels:
+      - traefik.enable=true
+
+      # Obligatoire dès qu'un conteneur est sur plusieurs réseaux : sans cette
+      # ligne, Traefik choisit une adresse au hasard et tombe une fois sur deux
+      # sur celle qu'il ne peut pas joindre.
+      - traefik.docker.network=${TRAEFIK_NETWORK:-traefik}
+
+      - traefik.http.routers.tick.rule=Host(`${TICK_HOST:?renseignez TICK_HOST}`)
+      - traefik.http.routers.tick.entrypoints=${TRAEFIK_ENTRYPOINT:-websecure}
+      - traefik.http.routers.tick.tls=true
+      - traefik.http.routers.tick.tls.certresolver=${TRAEFIK_CERTRESOLVER:-letsencrypt}
+
+      # Le port interne du conteneur, pas celui de l'hôte : il n'y en a plus.
+      - traefik.http.services.tick.loadbalancer.server.port=80
+
+networks:
+  # Créé par la stack Traefik, pas par celle-ci — d'où `external`.
+  traefik:
+    external: true
+    name: ${TRAEFIK_NETWORK:-traefik}
