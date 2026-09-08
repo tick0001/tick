@@ -51,6 +51,21 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
+      # Garde-fou. La route de sante lit sa version dans le manifeste de l'API.
+      # Si l'etiquette et le manifeste divergent, l'installation annonce une
+      # version qui n'est pas la sienne — exactement le defaut que cette lecture
+      # remplace. Mieux vaut refuser de publier que publier un mensonge.
+      - name: Concordance de la version
+        if: startsWith(github.ref, 'refs/tags/v')
+        shell: bash
+        run: |
+          manifeste=$(node -p "require('./apps/api/package.json').version")
+          attendue="${GITHUB_REF_NAME#v}"
+          if [ "$manifeste" != "$attendue" ]; then
+            echo "::error::L'etiquette annonce $attendue, le manifeste apps/api/package.json dit $manifeste."
+            exit 1
+          fi
+
       - uses: docker/setup-buildx-action@v4
 
       - name: Authentification au registre
