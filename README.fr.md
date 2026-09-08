@@ -69,6 +69,10 @@ Tick& attend derrière un terminateur TLS — Caddy, Traefik, nginx — qui pré
 Le [guide d'installation](docs/14-installation.md) détaille les secrets à générer, la rotation
 **obligatoire** du mot de passe du rôle applicatif, les sauvegardes et les mises à jour.
 
+Pas de conteneurs autorisés sur vos serveurs ? Les guides d'installation nue couvrent le même
+déploiement depuis les archives de version, sur [Linux](docs/16-installation-linux.md) et sur
+[Windows Server](docs/17-installation-windows.md).
+
 ## Essayer en local
 
 Prérequis : Node 22 ou plus, pnpm 11, Docker.
@@ -174,23 +178,25 @@ route existante, ni en décrire une disparue. Chaque opération porte le droit q
 
 ## Documentation
 
-| Document                                                                | Contenu                                                       |
-| ----------------------------------------------------------------------- | ------------------------------------------------------------- |
-| [Périmètre fonctionnel](docs/01-perimetre-fonctionnel.md)               | Les 17 modules couverts, au détail près                       |
-| [Architecture](docs/02-architecture.md)                                 | Monorepo, backend, frontend, décisions techniques argumentées |
-| [Entités, droits et sécurité](docs/03-entites-droits-securite.md)       | Le modèle multi-organisation et son application par RLS       |
-| [Système de plugins](docs/04-plugins.md)                                | Manifeste, hooks, cycle de vie, isolation                     |
-| [SDK de plugins](docs/15-sdk-plugins.md)                                | Référence d'écriture d'un plugin, avec exemples               |
-| [Modèle de données](docs/05-modele-de-donnees.md)                       | Tables du cœur et conventions                                 |
-| [Niveaux de service et règles](docs/07-niveaux-de-service-et-regles.md) | Temps ouvré, engagements, escalade, moteur de règles          |
-| [Communication](docs/08-communication.md)                               | Notifications, courriel entrant, enquêtes de satisfaction     |
-| [Self-service](docs/09-self-service.md)                                 | Base de connaissances, formulaires, interface demandeur       |
-| [Problèmes et changements](docs/10-problemes-et-changements.md)         | Socle ITIL commun, liens entre objets, promotion              |
-| [Pilotage](docs/11-pilotage.md)                                         | Planning, statistiques, tableaux de bord, exports             |
-| [Interface](docs/12-interface.md)                                       | Jetons de couleur, navigation, briques communes               |
-| [Administration](docs/13-administration.md)                             | Comptes, groupes, profils et matrice de droits                |
-| [Installation et exploitation](docs/14-installation.md)                 | Déploiement Docker, sauvegardes, mises à jour, diagnostic     |
-| [Feuille de route](docs/06-feuille-de-route.md)                         | Dix jalons, du socle à l'ouverture publique                   |
+| Document                                                                | Contenu                                                           |
+| ----------------------------------------------------------------------- | ----------------------------------------------------------------- |
+| [Périmètre fonctionnel](docs/01-perimetre-fonctionnel.md)               | Les 17 modules couverts, au détail près                           |
+| [Architecture](docs/02-architecture.md)                                 | Monorepo, backend, frontend, décisions techniques argumentées     |
+| [Entités, droits et sécurité](docs/03-entites-droits-securite.md)       | Le modèle multi-organisation et son application par RLS           |
+| [Système de plugins](docs/04-plugins.md)                                | Manifeste, hooks, cycle de vie, isolation                         |
+| [SDK de plugins](docs/15-sdk-plugins.md)                                | Référence d'écriture d'un plugin, avec exemples                   |
+| [Modèle de données](docs/05-modele-de-donnees.md)                       | Tables du cœur et conventions                                     |
+| [Niveaux de service et règles](docs/07-niveaux-de-service-et-regles.md) | Temps ouvré, engagements, escalade, moteur de règles              |
+| [Communication](docs/08-communication.md)                               | Notifications, courriel entrant, enquêtes de satisfaction         |
+| [Self-service](docs/09-self-service.md)                                 | Base de connaissances, formulaires, interface demandeur           |
+| [Problèmes et changements](docs/10-problemes-et-changements.md)         | Socle ITIL commun, liens entre objets, promotion                  |
+| [Pilotage](docs/11-pilotage.md)                                         | Planning, statistiques, tableaux de bord, exports                 |
+| [Interface](docs/12-interface.md)                                       | Jetons de couleur, navigation, briques communes                   |
+| [Administration](docs/13-administration.md)                             | Comptes, groupes, profils et matrice de droits                    |
+| [Installation et exploitation](docs/14-installation.md)                 | Déploiement par conteneurs, sauvegardes, mises à jour, diagnostic |
+| [Installation nue : Linux](docs/16-installation-linux.md)               | Sans conteneur — paquets système, systemd, nginx                  |
+| [Installation nue : Windows](docs/17-installation-windows.md)           | Sans conteneur — service Windows, IIS                             |
+| [Feuille de route](docs/06-feuille-de-route.md)                         | Dix jalons, du socle à l'ouverture publique                       |
 
 ## Licence
 

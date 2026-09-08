@@ -67,6 +67,10 @@ certificate.
 The [installation guide](docs/14-installation.md) covers the secrets to generate, the **mandatory**
 rotation of the application role's password, backups and upgrades.
 
+Containers not allowed on your servers? The bare-metal guides cover the same deployment from
+release archives, on [Linux](docs/16-installation-linux.md) and on
+[Windows Server](docs/17-installation-windows.md).
+
 ## Try it locally
 
 Requirements: Node 22 or later, pnpm 11, Docker.
@@ -188,7 +192,9 @@ The detailed documentation is written in French.
 | [Steering](docs/11-pilotage.md)                                     | Planning, statistics, dashboards, exports                |
 | [Interface](docs/12-interface.md)                                   | Colour tokens, navigation, shared building blocks        |
 | [Administration](docs/13-administration.md)                         | Accounts, groups, profiles and the rights matrix         |
-| [Installation and operations](docs/14-installation.md)              | Docker deployment, backups, upgrades, troubleshooting    |
+| [Installation and operations](docs/14-installation.md)              | Container deployment, backups, upgrades, troubleshooting |
+| [Bare-metal install: Linux](docs/16-installation-linux.md)          | Without containers — system packages, systemd, nginx     |
+| [Bare-metal install: Windows](docs/17-installation-windows.md)      | Without containers — Windows service, IIS                |
 | [Roadmap](docs/06-feuille-de-route.md)                              | Ten milestones, from the foundation to public release    |
 
 ## Licence

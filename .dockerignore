@@ -29,6 +29,10 @@ storage
 .git
 .github
 
+# Fichiers de deploiement hors conteneurs : unite systemd, site nginx,
+# configuration IIS. Ils s'installent sur la machine hote, pas dans l'image.
+deploy
+
 # Documentation et outillage sans effet à l'exécution.
 docs
 *.md

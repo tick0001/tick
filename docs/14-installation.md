@@ -1,8 +1,18 @@
 # Installation et exploitation
 
-Ce document décrit un déploiement de production. Pour développer, voir le
-[README](../README.md) : ce n'est pas la même chose, et confondre les deux mène
-à installer un jeu de démonstration sur une base de production.
+Ce document décrit un déploiement de production **par conteneurs**. Pour
+développer, voir le [README](../README.md) : ce n'est pas la même chose, et
+confondre les deux mène à installer un jeu de démonstration sur une base de
+production.
+
+Beaucoup d'organisations n'autorisent pas de moteur de conteneurs sur un
+serveur. Deux autres chemins existent, à partir des mêmes archives de version :
+
+- [Installation sur Linux, sans conteneur](16-installation-linux.md) — paquets
+  système, `systemd` et nginx. Procédure déroulée intégralement sur une machine
+  vierge.
+- [Installation sur Windows Server](17-installation-windows.md) — service
+  Windows et IIS.
 
 ## Ce qu'il faut
 
@@ -10,6 +20,11 @@ Une machine avec Docker et le plugin Compose. Rien d'autre : PostgreSQL, Redis
 et l'application arrivent en conteneurs. Compter 2 Go de mémoire pour un usage
 de quelques dizaines de techniciens, et de la place disque pour les pièces
 jointes — elles dominent la volumétrie bien avant les tickets.
+
+**Podman** convient aussi, et c'est souvent le moteur autorisé là où Docker ne
+l'est pas — il tourne sans démon privilégié. Remplacer `docker compose` par
+`podman compose` dans toutes les commandes de ce document ; le reste est
+identique.
 
 Tick& n'expose **pas** de TLS. Il attend derrière un terminateur — Caddy, Traefik,
 nginx, un répartiteur d'entreprise — qui présente le certificat et relaie en

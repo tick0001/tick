@@ -1,0 +1,58 @@
+# Unité systemd de l'API Tick&.
+#
+# Installation : /etc/systemd/system/tick-api.service
+# Voir docs/16-installation-linux.md pour la procédure complète.
+
+[Unit]
+Description=Tick& — API
+Documentation=https://github.com/tick0001/tick-
+
+# `network-online` et non `network` : l'API ouvre ses connexions à PostgreSQL et
+# à Redis dès le démarrage, et `network` est atteint avant qu'une adresse soit
+# configurée. Les deux dépendances de service ne valent que si la base et Redis
+# tournent sur la même machine ; sur une base distante, elles sont sans effet et
+# sans dommage.
+After=network-online.target postgresql.service redis-server.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=tick
+Group=tick
+WorkingDirectory=/opt/tick/api
+
+# Les secrets vivent hors de l'unité : un fichier d'unité est lisible par tous,
+# `/etc/tick/tick.env` ne l'est pas (0640, root:tick).
+EnvironmentFile=/etc/tick/tick.env
+Environment=NODE_ENV=production
+
+ExecStart=/usr/bin/node --enable-source-maps dist/main.js
+
+Restart=always
+RestartSec=5
+
+# L'arrêt laisse aux files le temps de finir le travail en cours plutôt que de
+# tuer un envoi de courriel à mi-course.
+KillSignal=SIGTERM
+TimeoutStopSec=30
+
+# --- Durcissement ------------------------------------------------------------
+# Une API de ticketing n'a besoin d'écrire que dans son dossier de pièces
+# jointes. Tout le reste du système lui est inutile, donc lui est retiré.
+NoNewPrivileges=true
+PrivateTmp=true
+PrivateDevices=true
+ProtectSystem=strict
+ProtectHome=true
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+RestrictSUIDSGID=true
+RestrictRealtime=true
+LockPersonality=true
+
+# La seule exception à `ProtectSystem=strict` : les pièces jointes.
+ReadWritePaths=/var/lib/tick/storage
+
+[Install]
+WantedBy=multi-user.target

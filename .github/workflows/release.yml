@@ -1,0 +1,142 @@
+name: Archives
+
+# Archives de version, pour les installations sans conteneur.
+#
+# Les images Docker ne suffisent pas : beaucoup d'environnements d'entreprise
+# interdisent un moteur de conteneurs sur un serveur. Ces archives sont
+# autonomes — code compilé et `node_modules` inclus — pour qu'un serveur de
+# production n'ait jamais besoin de la chaîne de construction.
+#
+# Une archive par plateforme, et ce n'est pas du zèle : `@node-rs/argon2` est un
+# module natif. Un `node_modules` fabriqué sur une plateforme ne démarre pas sur
+# une autre, et l'archive musl d'Alpine échoue sur toute distribution en glibc.
+
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version à empaqueter'
+        required: true
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  construire:
+    name: ${{ matrix.cible }}
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # Runner glibc : couvre Debian, Ubuntu, RHEL, Rocky, SUSE. Les
+          # distributions musl passent par les images Docker, qui sont bâties
+          # sur Alpine.
+          - os: ubuntu-latest
+            cible: linux-x64
+          - os: windows-latest
+            cible: win-x64
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: pnpm/action-setup@v6
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Version
+        id: version
+        shell: bash
+        # L'étiquette `v0.1.0` désigne la version `0.1.0` : le préfixe sert au
+        # déclenchement, pas au nom des fichiers.
+        run: |
+          if [ -n "${{ inputs.version }}" ]; then
+            echo "numero=${{ inputs.version }}" >> "$GITHUB_OUTPUT"
+          else
+            echo "numero=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Construction
+        run: pnpm --filter @tick/api... build
+
+      # `pnpm deploy` produit une arborescence autonome : les dépendances
+      # d'espace de travail y sont recopiées plutôt que liées, ce qui rend
+      # l'ensemble transportable sur une machine qui n'a pas le monorepo.
+      - name: Arborescence de déploiement
+        run: pnpm --filter @tick/api --prod deploy --legacy deploiement
+
+      # `pnpm deploy` recopie tout le dossier du paquet, sources comprises. Une
+      # installation de production n'a que faire des `.ts`, des tsconfig et de la
+      # configuration de test.
+      - name: Élagage
+        shell: bash
+        run: rm -rf deploiement/src deploiement/tsconfig*.json deploiement/*.tsbuildinfo deploiement/vitest.* deploiement/.turbo deploiement/coverage
+
+      - name: Archive (tar.gz)
+        if: runner.os == 'Linux'
+        run: tar czf tick-api-${{ steps.version.outputs.numero }}-${{ matrix.cible }}.tar.gz -C deploiement .
+
+      - name: Archive (zip)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        # `Compress-Archive` met plusieurs minutes sur les 17 000 fichiers de
+        # l'arborescence, pour une archive cinq fois plus grosse. `tar` est fourni
+        # avec Windows et produit le meme zip en une dizaine de secondes.
+        run: tar.exe -a -cf tick-api-${{ steps.version.outputs.numero }}-${{ matrix.cible }}.zip -C deploiement .
+
+      # L'interface est un ensemble de fichiers statiques, identique partout :
+      # une seule archive, construite sur le runner Linux.
+      - name: Interface
+        if: runner.os == 'Linux'
+        run: |
+          pnpm --filter @tick/web build
+          tar czf tick-web-${{ steps.version.outputs.numero }}.tar.gz -C apps/web/dist .
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: archives-${{ matrix.cible }}
+          path: |
+            tick-api-*.tar.gz
+            tick-api-*.zip
+            tick-web-*.tar.gz
+          if-no-files-found: error
+
+  publier:
+    name: Publication
+    needs: construire
+    runs-on: ubuntu-latest
+    # Rien à publier sur un déclenchement manuel : les archives restent
+    # attachées à l'exécution, téléchargeables sans créer de version.
+    if: startsWith(github.ref, 'refs/tags/v')
+
+    permissions:
+      # Seule permission d'écriture accordée : créer la version et y joindre les
+      # archives. Le workflow ne peut pas modifier le dépôt.
+      contents: write
+
+    steps:
+      - uses: actions/download-artifact@v8
+        with:
+          path: archives
+
+      # `gh` est préinstallé sur les runners : pas d'action tierce à auditer ni
+      # à épingler pour une opération que la ligne de commande fait en un appel.
+      - name: Version GitHub
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" \
+            --title "$GITHUB_REF_NAME" \
+            --generate-notes \
+            archives/*/* \
+          || gh release upload "$GITHUB_REF_NAME" archives/*/* --clobber
