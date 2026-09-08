@@ -10,6 +10,9 @@ and inventory management is deliberately out of scope.
 [![Licence](https://img.shields.io/badge/licence-AGPL--3.0-blue)](LICENSE)
 [![CI](https://github.com/tick0001/tick/actions/workflows/ci.yml/badge.svg)](https://github.com/tick0001/tick/actions/workflows/ci.yml)
 
+**[Try the live demo](https://demo.tickand.fr)** — sign in as `sophie` / `tick`. Everything resets
+on the hour.
+
 ![Ticket list, filtered by the active profile and working context](docs/captures/en/tickets.png)
 
 ---
@@ -114,9 +117,9 @@ database that check isolation between entities.
 
 What you should know before relying on it, said plainly:
 
-- **Never deployed in real production.** The Docker deployment is verified end to end —
-  migrations, first account creation, sign-in through the reverse proxy — but on a development
-  machine, not in operation.
+- **Never used by a real service desk.** The public demo runs the released images on a VPS,
+  behind Traefik with TLS, so the deployment path is exercised every day — but nobody has yet run
+  Tick& to handle actual tickets.
 - **`0.1.0` is a first tagged version, not a proven one.** Expect breaking changes between minor
   versions until the interfaces have been exercised by someone other than their author.
 - **The plugin SDK is still `0.x`** and may break between minor versions. It will only freeze once

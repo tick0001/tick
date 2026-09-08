@@ -11,6 +11,9 @@ périmètre.
 [![Licence](https://img.shields.io/badge/licence-AGPL--3.0-blue)](LICENSE)
 [![CI](https://github.com/tick0001/tick/actions/workflows/ci.yml/badge.svg)](https://github.com/tick0001/tick/actions/workflows/ci.yml)
 
+**[Essayer la démonstration](https://demo.tickand.fr)** — connectez-vous avec `sophie` / `tick`.
+Tout est remis à zéro à chaque heure.
+
 ![Liste des tickets, filtrée par le profil actif et le contexte de travail](docs/captures/fr/tickets.png)
 
 ---
@@ -116,9 +119,9 @@ base PostgreSQL qui vérifient l'isolation entre entités.
 
 Ce qu'il faut savoir avant de s'en servir, dit franchement :
 
-- **Jamais déployé en production réelle.** Le déploiement Docker est vérifié de bout en bout —
-  migrations, création du premier compte, connexion à travers le relais — mais sur une machine de
-  développement, pas en exploitation.
+- **Jamais utilisé par un vrai centre de services.** La démonstration publique fait tourner les
+  images publiées sur un VPS, derrière Traefik en TLS : le chemin de déploiement est donc exercé
+  tous les jours — mais personne n'a encore traité de vrais tickets avec Tick&.
 - **`0.1.0` est une première version étiquetée, pas une version éprouvée.** Attendez-vous à des
   ruptures entre versions mineures tant que les interfaces n'auront pas été exercées par quelqu'un
   d'autre que leur auteur.
