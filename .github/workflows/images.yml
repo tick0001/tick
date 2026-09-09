@@ -55,6 +55,14 @@ jobs:
 
     strategy:
       fail-fast: false
+      # Une image a la fois, et ce n'est pas de la prudence excessive : les deux
+      # partent de `node:22-alpine` et partagent donc des couches. Le cache
+      # `type=gha` nomme ses blobs par leur empreinte, `buildkit-blob-1-sha256:…`,
+      # **sans y mettre la portee** — que la portee soit distincte n'y change
+      # rien. Deux constructions simultanees reservent alors la meme cle, et la
+      # seconde echoue. En serie, la seconde trouve les couches deja en cache :
+      # ce qu'on perd en parallelisme, on le regagne en grande partie.
+      max-parallel: 1
       matrix:
         include:
           - image: tick-api
@@ -140,5 +148,10 @@ jobs:
           # clé de cache **en même temps**, et le second échoue sur
           # « failed to reserve cache ». C'est une course, donc elle ne se
           # manifeste pas à tous les coups — elle a fait échouer la 0.1.6.
+          #
+          # `ignore-error` par-dessus : le cache est une optimisation, et son
+          # echec ne doit pas faire echouer une publication. L'image de la 0.1.7
+          # etait deja poussee — avec ses trois etiquettes — quand l'export du
+          # cache a echoue, et le travail s'est declare en echec malgre tout.
           cache-from: type=gha,scope=${{ matrix.image }}
-          cache-to: type=gha,mode=max,scope=${{ matrix.image }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.image }},ignore-error=true
