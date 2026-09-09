@@ -59,9 +59,10 @@ feature/…  ──(pull request, rebase)──>  release  ──(pull request)�
 `release` reste une suite de commits lisibles, sans les allers-retours d'une revue.
 
 **`release` vers `main` se fusionne avec un commit de fusion**, et c'est la seule exception.
-Il marque la frontière entre deux versions, et il laisse `release` en ancêtre direct de
-`main` — donc réalignable par un `git merge --ff-only main`, sans jamais réécrire une branche
-partagée.
+Il marque la frontière entre deux versions, et surtout il garde `release` parmi les ancêtres
+de `main` : la version suivante ne rejoue donc jamais ce qui est déjà publié, et aucune
+branche partagée n'a besoin d'être réécrite ni réalignée. Un _rebase_ ici ferait l'inverse —
+il réécrirait les commits, `release` deviendrait orpheline, et il faudrait la force-pousser.
 
 Dependabot vise `release` pour ses montées de version. Ses correctifs de sécurité, eux,
 visent `main` : GitHub ne permet pas de les rediriger, et il n'y a pas lieu de le vouloir.
