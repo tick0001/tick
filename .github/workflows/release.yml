@@ -176,6 +176,12 @@ jobs:
     steps:
       - uses: actions/download-artifact@v8
         with:
+          # Nommer ce qu'on veut, plutot que tout prendre. Appele par
+          # « Publication », ce travail partage son execution avec la
+          # construction des images, qui y depose ses enregistrements de
+          # construction : sans ce filtre, deux fichiers `.dockerbuild` se
+          # retrouvent joints a la version publiee.
+          pattern: archives-*
           path: archives
 
       # `gh` est préinstallé sur les runners : pas d'action tierce à auditer ni
