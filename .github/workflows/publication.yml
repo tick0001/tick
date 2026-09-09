@@ -1,0 +1,125 @@
+name: Publication
+
+# Publier une version, en fusionnant `release/<version>` dans `main`.
+#
+# Le numéro de version est porté par le **nom de la branche**, et nulle part
+# ailleurs : c'est ce qui permet à une pull request de dire ce qu'elle publie
+# avant d'être fusionnée, et à toute autre — un correctif de sécurité de
+# Dependabot, une retouche de documentation — d'atteindre `main` sans rien
+# publier du tout.
+#
+# Ce workflow n'empaquette rien lui-même. Il vérifie, étiquette, puis appelle
+# « Images » et « Archives ». L'appel plutôt que l'étiquette : une étiquette
+# poussée par un workflow ne déclenche aucun autre workflow, GitHub l'interdit
+# pour éviter les récursions. Publier depuis une fusion exigerait sinon un
+# jeton personnel, c'est-à-dire un secret de plus à faire tourner et à révoquer.
+
+on:
+  pull_request:
+    types: [closed]
+    branches: [main]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.head.ref }}
+  cancel-in-progress: false
+
+jobs:
+  etiqueter:
+    name: Étiquette
+    runs-on: ubuntu-latest
+
+    # Fermée n'est pas fusionnée : une pull request abandonnée passe par le même
+    # événement, et ne publie rien.
+    if: >-
+      github.event.pull_request.merged == true &&
+      startsWith(github.event.pull_request.head.ref, 'release/')
+
+    permissions:
+      # Créer l'étiquette, rien d'autre. Le workflow ne peut pas modifier une
+      # branche, protégée ou non.
+      contents: write
+
+    outputs:
+      etiquette: ${{ steps.version.outputs.etiquette }}
+
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          # Le commit de fusion réellement posé sur `main`, et non la fusion
+          # d'essai que `github.sha` désigne pendant une pull request.
+          ref: ${{ github.event.pull_request.merge_commit_sha }}
+
+      - name: Numéro de version
+        id: version
+        env:
+          BRANCHE: ${{ github.event.pull_request.head.ref }}
+        run: |
+          numero="${BRANCHE#release/}"
+
+          # Un nom de branche est libre : rien n'empêche `release/prochaine`.
+          # Refuser tôt vaut mieux qu'étiqueter `vprochaine`.
+          if ! printf '%s' "$numero" | grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?$'; then
+            echo "::error::« $numero » n'est pas un numéro de version. Nommez la branche release/0.1.7."
+            exit 1
+          fi
+
+          echo "numero=$numero" >> "$GITHUB_OUTPUT"
+          echo "etiquette=v$numero" >> "$GITHUB_OUTPUT"
+
+      # Le manifeste est la source que lit `/api/health`. S'il diverge du nom de
+      # la branche, l'installation annoncera une version qui n'est pas la
+      # sienne — le défaut même que cette lecture remplace.
+      - name: Concordance avec le manifeste
+        env:
+          ATTENDUE: ${{ steps.version.outputs.numero }}
+        run: |
+          manifeste=$(node -p "require('./apps/api/package.json').version")
+          if [ "$manifeste" != "$ATTENDUE" ]; then
+            echo "::error::La branche annonce $ATTENDUE, le manifeste apps/api/package.json dit $manifeste."
+            exit 1
+          fi
+
+      # Réétiqueter en silence ferait pointer une version publiée vers un autre
+      # code : les images et les archives déjà distribuées ne changeraient pas,
+      # et l'étiquette mentirait sur ce qu'elles contiennent.
+      - name: Étiquette encore libre
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+          ETIQUETTE: ${{ steps.version.outputs.etiquette }}
+        run: |
+          if gh api "repos/$GH_REPO/git/ref/tags/$ETIQUETTE" >/dev/null 2>&1; then
+            echo "::error::$ETIQUETTE existe déjà. Une version publiée ne se déplace pas : montez le numéro."
+            exit 1
+          fi
+
+      - name: Poser l'étiquette
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+          ETIQUETTE: ${{ steps.version.outputs.etiquette }}
+          COMMIT: ${{ github.event.pull_request.merge_commit_sha }}
+        run: |
+          gh api -X POST "repos/$GH_REPO/git/refs" \
+            -f ref="refs/tags/$ETIQUETTE" \
+            -f sha="$COMMIT" >/dev/null
+          echo "$ETIQUETTE posée sur $COMMIT."
+
+  images:
+    name: Images
+    needs: etiqueter
+    uses: ./.github/workflows/images.yml
+    permissions:
+      contents: read
+      packages: write
+    with:
+      etiquette: ${{ needs.etiqueter.outputs.etiquette }}
+
+  archives:
+    name: Archives
+    needs: etiqueter
+    uses: ./.github/workflows/release.yml
+    permissions:
+      contents: write
+    with:
+      etiquette: ${{ needs.etiqueter.outputs.etiquette }}

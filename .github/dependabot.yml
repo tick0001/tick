@@ -27,7 +27,7 @@ updates:
       interval: weekly
       day: monday
     # `main` ne recoit que des versions terminees ; tout le reste s'integre ici.
-    target-branch: release
+    target-branch: develop
     open-pull-requests-limit: 3
     commit-message:
       # Les commits du depot sont en francais et prefixes d'un gitmoji.
@@ -50,7 +50,7 @@ updates:
     schedule:
       interval: weekly
       day: monday
-    target-branch: release
+    target-branch: develop
     commit-message:
       prefix: '⬆️'
     ignore:
@@ -70,7 +70,7 @@ updates:
     schedule:
       interval: weekly
       day: monday
-    target-branch: release
+    target-branch: develop
     commit-message:
       prefix: '⬆️'
     ignore:
@@ -85,7 +85,7 @@ updates:
     directory: /
     schedule:
       interval: monthly
-    target-branch: release
+    target-branch: develop
     commit-message:
       prefix: '⬆️'
     ignore:

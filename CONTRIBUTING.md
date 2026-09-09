@@ -47,25 +47,41 @@ c'est son but.
 
 ## Les branches
 
-`main` ne reçoit que des versions terminées. On n'y pousse pas — la branche est protégée, et
-c'est délibéré : tout ce qui s'y trouve a été étiqueté ou est sur le point de l'être, si bien
-qu'un clone de `main` est toujours quelque chose qu'on peut installer.
+`main` ne reçoit que des versions publiées. On n'y pousse pas — la branche est protégée, et
+c'est délibéré : tout ce qui s'y trouve porte une étiquette, si bien qu'un clone de `main` est
+toujours quelque chose qu'on peut installer.
 
 ```
-feature/…  ──(pull request, rebase)──>  release  ──(pull request)──>  main  ──> étiquette
+feature/…  ──(rebase)──>  develop  ──(coupe)──>  release/0.1.7  ──(fusion)──>  main
+                             ↑                                                   │
+                        dependabot                          étiquette, images et archives
 ```
 
-**Une branche par sujet**, partant de `release` et fusionnée par _rebase_ : l'historique de
-`release` reste une suite de commits lisibles, sans les allers-retours d'une revue.
+**Une branche par sujet**, partant de `develop` et fusionnée par _rebase_ : l'historique de
+`develop` reste une suite de commits lisibles, sans les allers-retours d'une revue.
 
-**`release` vers `main` se fusionne avec un commit de fusion**, et c'est la seule exception.
-Il marque la frontière entre deux versions, et surtout il garde `release` parmi les ancêtres
-de `main` : la version suivante ne rejoue donc jamais ce qui est déjà publié, et aucune
-branche partagée n'a besoin d'être réécrite ni réalignée. Un _rebase_ ici ferait l'inverse —
-il réécrirait les commits, `release` deviendrait orpheline, et il faudrait la force-pousser.
+**Une version se publie en fusionnant `release/<version>` dans `main`.** Le numéro vit dans le
+nom de la branche, et nulle part ailleurs : c'est ce qui permet à une pull request d'annoncer
+ce qu'elle publie avant d'être fusionnée, et à toute autre — un correctif de sécurité, une
+retouche de documentation — d'atteindre `main` sans rien publier. La fusion déclenche la
+vérification du manifeste, l'étiquette, puis les images et les archives. Rien à faire à la
+main, et rien à étiqueter soi-même.
 
-Dependabot vise `release` pour ses montées de version. Ses correctifs de sécurité, eux,
-visent `main` : GitHub ne permet pas de les rediriger, et il n'y a pas lieu de le vouloir.
+```bash
+make version V=0.1.7      # coupe release/0.1.7, monte le manifeste, date le journal
+```
+
+Le nom de la branche doit concorder avec `apps/api/package.json` : c'est ce manifeste que lit
+`/api/health`, et une divergence ferait annoncer à l'installation une version qui n'est pas la
+sienne. La publication refuse de partir dans ce cas — comme elle refuse de réétiqueter une
+version déjà publiée.
+
+**`release/<version>` vers `main` se fusionne avec un commit de fusion**, et c'est la seule
+exception au _rebase_. Un _rebase_ réécrirait les commits, et `develop` se retrouverait à
+porter des doublons orphelins de ce qui est déjà sur `main`.
+
+Dependabot vise `develop` pour ses montées de version. Ses correctifs de sécurité, eux, visent
+`main` : GitHub ne permet pas de les rediriger, et il n'y a pas lieu de le vouloir.
 
 ## Avant d'ouvrir une pull request
 
