@@ -5,11 +5,22 @@ export const localeSchema = z.enum(['fr', 'en']);
 export type Locale = z.infer<typeof localeSchema>;
 export const DEFAULT_LOCALE: Locale = 'fr';
 
-/** Reponse du point de sante de l'API. */
+/**
+ * Reponse du point de sante de l'API.
+ *
+ * `checks` dit **laquelle** des dependances manque. Un `degraded` sans detail
+ * oblige a ouvrir les journaux du conteneur pour savoir s'il faut regarder
+ * PostgreSQL ou Redis — ce qui est precisement le moment ou l'on n'a pas le
+ * temps.
+ */
 export const healthSchema = z.object({
   status: z.enum(['ok', 'degraded']),
   version: z.string(),
   uptimeSeconds: z.number().nonnegative(),
+  checks: z.object({
+    database: z.boolean(),
+    queues: z.boolean(),
+  }),
 });
 export type Health = z.infer<typeof healthSchema>;
 

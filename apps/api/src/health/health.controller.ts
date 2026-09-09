@@ -1,7 +1,9 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { Controller, Get } from '@nestjs/common';
+import { Controller, Get, HttpStatus, Res } from '@nestjs/common';
 import type { Health } from '@tick/contracts';
+import type { Response } from 'express';
+import { HealthService } from './health.service.js';
 
 /**
  * Version du produit, lue dans le manifeste.
@@ -20,6 +22,7 @@ import type { Health } from '@tick/contracts';
 function lireVersion(): string {
   try {
     const manifeste = readFileSync(join(__dirname, '..', '..', 'package.json'), 'utf8');
+
     return (JSON.parse(manifeste) as { version?: string }).version ?? '0.0.0';
   } catch {
     // Un manifeste absent ou illisible n'est pas une raison de refuser de
@@ -35,12 +38,28 @@ const VERSION = lireVersion();
 export class HealthController {
   private readonly startedAt = Date.now();
 
+  constructor(private readonly sante: HealthService) {}
+
+  /**
+   * Le code HTTP porte le verdict, pas seulement le corps.
+   *
+   * C'est ce que lit la sonde de l'image — `fetch(...).then(r => r.ok ? 0 : 1)`
+   * — et ce sur quoi Compose s'appuie pour marquer un conteneur malsain. Un 200
+   * accompagne d'un `status: degraded` laisserait le conteneur au vert : le
+   * corps est pour l'humain, le code pour l'outillage.
+   */
   @Get()
-  check(): Health {
+  async check(@Res({ passthrough: true }) reponse: Response): Promise<Health> {
+    const [database, queues] = await Promise.all([this.sante.base(), this.sante.files()]);
+    const sain = database && queues;
+
+    reponse.status(sain ? HttpStatus.OK : HttpStatus.SERVICE_UNAVAILABLE);
+
     return {
-      status: 'ok',
+      status: sain ? 'ok' : 'degraded',
       version: VERSION,
       uptimeSeconds: Math.round((Date.now() - this.startedAt) / 1000),
+      checks: { database, queues },
     };
   }
 }

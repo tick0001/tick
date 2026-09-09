@@ -244,6 +244,25 @@ Options : `--identifiant=`, `--entite=`, `--courriel=`, ou les variables
 N'utilisez **jamais** `db:seed` ici : il vide toutes les tables avant d'écrire un
 jeu de démonstration.
 
+## Sonde de santé
+
+```
+GET /api/health
+```
+
+Elle interroge PostgreSQL et Redis, et **répond 503 si l'une des deux manque** —
+c'est ce code que lit la sonde de l'image, et donc ce qui fait marquer un
+conteneur malsain. Le corps nomme la dépendance fautive, pour ne pas avoir à
+ouvrir les journaux au moment où l'on en a le moins le temps :
+
+```json
+{ "status": "degraded", "version": "0.1.6", "checks": { "database": false, "queues": true } }
+```
+
+Chaque vérification est bornée à deux secondes : une base qui ne répond pas est
+indiscernable d'une base absente, et une sonde qui attend indéfiniment ne répond
+jamais.
+
 ## Vérification
 
 ```bash

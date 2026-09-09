@@ -69,10 +69,12 @@ RUN mkdir -p /app/storage && chown node:node /app/storage
 USER node
 EXPOSE 3000
 
-# La sonde interroge la route de santé. Elle atteste que le processus répond et
-# annonce sa version — pas que la base et Redis sont joignables : la route ne
-# les interroge pas. Un conteneur « healthy » n'est donc pas, à lui seul, la
-# preuve d'un service en état de servir.
+# La sonde interroge la route de santé, qui vérifie réellement PostgreSQL et
+# Redis et répond 503 si l'une des deux manque. Un processus vivant mais sans
+# base n'est pas un service en état de servir, et le conteneur doit le dire.
+#
+# C'est `r.ok` qui compte ici, donc le code HTTP : un 200 accompagné d'un
+# « degraded » dans le corps laisserait le conteneur au vert.
 HEALTHCHECK --interval=15s --timeout=5s --start-period=20s --retries=5 \
   CMD node -e "fetch('http://127.0.0.1:3000/api/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"
 
