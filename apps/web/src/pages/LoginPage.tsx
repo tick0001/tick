@@ -66,9 +66,14 @@ export function LoginPage() {
             configuration affiché sur une page que tout le monde atteint. Le
             traitement est neutre — filet et fond creusé, sans couleur de
             signal, qui reste réservée à ce sur quoi on agit.
+
+            `whitespace-pre-line` conserve les retours à la ligne du message :
+            sans lui le HTML les avale, et un exploitant qui écrit une liste
+            obtient un paragraphe compact. Les espaces multiples, eux, restent
+            réduits — c'est la mise en page qui est respectée, pas l'alignement.
           */}
           {instance.data?.banner ? (
-            <p className="rounded-lg border border-line bg-sunken px-3 py-2 text-sm text-muted">
+            <p className="rounded-lg border border-line bg-sunken px-3 py-2 text-sm whitespace-pre-line text-muted">
               {instance.data.banner}
             </p>
           ) : null}

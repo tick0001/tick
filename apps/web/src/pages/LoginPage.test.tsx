@@ -46,6 +46,18 @@ describe('LoginPage', () => {
     expect(await screen.findByRole('button', { name: /connecter|sign in/i })).toBeEnabled();
   });
 
+  it('conserve les retours a la ligne du message', async () => {
+    // Un exploitant qui ecrit une liste doit obtenir une liste : sans
+    // `whitespace-pre-line`, le HTML replie tout en un paragraphe compact.
+    bandeau('Maintenance dimanche\nSupport ferme');
+
+    rendre(<LoginPage />);
+
+    const message = await screen.findByText(/Maintenance dimanche/);
+    expect(message).toHaveTextContent('Maintenance dimanche Support ferme');
+    expect(message.className).toContain('whitespace-pre-line');
+  });
+
   it('rend le message comme du texte, jamais comme du balisage', async () => {
     bandeau('<img src=x onerror="alert(1)">');
 
