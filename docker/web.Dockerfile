@@ -36,7 +36,7 @@ COPY . .
 RUN pnpm --filter @tick/web... build
 
 # --- Exécution ---------------------------------------------------------------
-FROM nginx:1.29-alpine AS runtime
+FROM nginx:1.31-alpine AS runtime
 
 COPY docker/nginx.conf /etc/nginx/conf.d/default.conf
 COPY --from=build /app/apps/web/dist /usr/share/nginx/html
