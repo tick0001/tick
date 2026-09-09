@@ -352,8 +352,12 @@ Le nettoyage n'a pas lieu si l'amorçage échoue : mieux vaut une démonstration
 figée sur des données cohérentes qu'une démonstration dont les tickets
 référencent des pièces jointes disparues.
 
-**Deux familles d'écriture sont refusées** par une configuration nginx dédiée,
-[`nginx-demo.conf`](../docker/nginx-demo.conf), montée sur le conteneur `web`.
+**Deux familles d'écriture sont refusées** par [`nginx-demo.conf`](../docker/nginx-demo.conf),
+déposé dans le point d'extension de la configuration du conteneur `web` —
+`/etc/nginx/tick-extra/`. Le fichier ne contient que les différences : la
+configuration de base n'est pas recopiée, donc les deux ne peuvent pas diverger.
+Un déploiement ordinaire n'y dépose rien, et `include` ignore un motif qui ne
+correspond à aucun fichier.
 Sur une démonstration les identifiants sont publiés : tout visiteur est
 administrateur, et deux capacités d'administration deviennent dangereuses quand
 celui qui les détient n'est pas de confiance.

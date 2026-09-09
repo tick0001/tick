@@ -28,11 +28,12 @@ services:
       MP_SMTP_AUTH_ACCEPT_ANY: '1'
       MP_SMTP_AUTH_ALLOW_INSECURE: '1'
 
-  # L'interface, avec une configuration nginx qui refuse deux familles
-  # d'ecriture. Voir docker/nginx-demo.conf pour le detail et la raison.
+  # L'interface, augmentee de refus deposes dans le point d'extension de sa
+  # configuration. Voir docker/nginx-demo.conf pour le detail et la raison.
+  # Exige une image 0.1.4 ou plus recente.
   web:
     volumes:
-      - ./nginx-demo.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./nginx-demo.conf:/etc/nginx/tick-extra/demo.conf:ro
 
   api:
     environment:
