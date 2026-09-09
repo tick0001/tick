@@ -165,6 +165,15 @@ demo-locale-arret:
 # branche dans `main` declenche tout le reste : etiquette, images, archives.
 # Cette cible ne fait que preparer la branche, correctement.
 #
+# Elle monte le manifeste et ouvre la section du journal — position, date et
+# ligne de lien, qui se trompent en silence. Le contenu s'ecrit a la main : rien
+# ne devine ce qu'une version change pour ceux qui l'installent.
+#
+# Elle refuse de partir d'un `develop` en retard sur `main`, et ce garde-fou a
+# ete ecrit apres coup : une version coupee d'un `develop` non realigne emporte
+# le journal et le manifeste d'avant la version precedente, et les ramene en
+# arriere en fusionnant dans `main` — sans conflit, donc sans rien pour alerter.
+#
 # Elle ne pousse rien et n'ouvre aucune pull request : relire le journal avant
 # de publier est le dernier moment ou l'on peut encore corriger ce qu'il annonce.
 
@@ -172,9 +181,11 @@ version:
 	@test -n "$(V)" || { echo 'Usage : make version V=0.1.7'; exit 1; }
 	@echo "$(V)" | grep -Eq '^[0-9]+[.][0-9]+[.][0-9]+$$' || { echo "'$(V)' n'est pas un numero de version."; exit 1; }
 	@git rev-parse --verify --quiet release/$(V) >/dev/null && { echo 'La branche release/$(V) existe deja.'; exit 1; } || true
-	git switch -c release/$(V) develop
-	node -e "const f='apps/api/package.json',m=require('./'+f);m.version='$(V)';require('fs').writeFileSync(f,JSON.stringify(m,null,2)+String.fromCharCode(10))"
+	@git fetch -q origin main develop
+	@test -z "$$(git log --oneline origin/develop..origin/main)" || { echo 'develop est en retard sur main. Realignez avant de couper une version :'; echo '  git switch develop && git merge origin/main && git push'; exit 1; }
+	git switch -c release/$(V) origin/develop
+	node scripts/version.mjs $(V)
 	@echo ''
-	@echo 'Branche release/$(V) creee, manifeste monte.'
-	@echo 'Datez la section du CHANGELOG, puis :'
+	@echo 'Branche release/$(V) creee.'
+	@echo 'Remplissez la section $(V) du CHANGELOG, puis :'
 	@echo '  git commit -am ":bookmark: version $(V)" && git push -u origin release/$(V)'

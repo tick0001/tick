@@ -80,6 +80,18 @@ version déjà publiée.
 exception au _rebase_. Un _rebase_ réécrirait les commits, et `develop` se retrouverait à
 porter des doublons orphelins de ce qui est déjà sur `main`.
 
+**Puis `develop` se réaligne**, et cette étape n'est pas facultative :
+
+```bash
+git switch develop && git merge origin/main && git push
+```
+
+Le commit de fusion garde `develop` parmi les ancêtres de `main`, mais l'ancêtre n'est pas le
+contenu : le manifeste monté et la section datée du journal vivent sur la branche de version,
+et `develop` ne les a pas. Couper la version suivante d'un `develop` en retard emporte donc le
+journal et le manifeste d'avant, et les ramène en arrière en fusionnant — sans conflit, donc
+sans rien pour alerter. `make version` refuse de partir dans ce cas.
+
 Dependabot vise `develop` pour ses montées de version. Ses correctifs de sécurité, eux, visent
 `main` : GitHub ne permet pas de les rediriger, et il n'y a pas lieu de le vouloir.
 
