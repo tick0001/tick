@@ -8,7 +8,7 @@ Le format suit [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/), le vers
 [semver](https://semver.org/lang/fr/). Tant que le numéro majeur est `0`, une version mineure
 peut rompre.
 
-## Non publié
+## 0.1.6 — 9 septembre 2026
 
 ### Corrigé
 
@@ -27,6 +27,15 @@ peut rompre.
   intitulés de question acceptent une traduction par langue, saisie sous le libellé d'origine
   plutôt que dans un écran séparé. Le demandeur voit sa langue ; l'administrateur garde la
   saisie d'origine. Sans traduction, c'est l'original qui s'affiche — jamais un libellé vide.
+
+### Modifié
+
+- L'image de l'interface sert désormais nginx 1.31. Rien à faire : la configuration ne
+  change pas.
+- L'intégration continue construit les deux images et démarre la pile complète à chaque
+  proposition de modification. Une montée de `node`, de `nginx` ou de `postgres` ne peut
+  plus passer sans qu'une image ait été assemblée — c'est ainsi qu'a été rattrapée une
+  montée de Node qui rendait la construction impossible.
 
 ### À faire en montant de version
 
