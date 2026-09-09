@@ -10,8 +10,8 @@ and inventory management is deliberately out of scope.
 [![Licence](https://img.shields.io/badge/licence-AGPL--3.0-blue)](LICENSE)
 [![CI](https://github.com/tick0001/tick/actions/workflows/ci.yml/badge.svg)](https://github.com/tick0001/tick/actions/workflows/ci.yml)
 
-**[Try the live demo](https://demo.tickand.fr)** — sign in as `sophie` / `tick`. Everything resets
-on the hour.
+**[tickand.fr](https://tickand.fr)** · **[Try the live demo](https://demo.tickand.fr)** — sign in as
+`sophie` / `tick`. Everything resets on the hour.
 
 ![Ticket list, filtered by the active profile and working context](docs/captures/en/tickets.png)
 

@@ -11,8 +11,8 @@ périmètre.
 [![Licence](https://img.shields.io/badge/licence-AGPL--3.0-blue)](LICENSE)
 [![CI](https://github.com/tick0001/tick/actions/workflows/ci.yml/badge.svg)](https://github.com/tick0001/tick/actions/workflows/ci.yml)
 
-**[Essayer la démonstration](https://demo.tickand.fr)** — connectez-vous avec `sophie` / `tick`.
-Tout est remis à zéro à chaque heure.
+**[tickand.fr](https://tickand.fr)** · **[Essayer la démonstration](https://demo.tickand.fr)** —
+connectez-vous avec `sophie` / `tick`. Tout est remis à zéro à chaque heure.
 
 ![Liste des tickets, filtrée par le profil actif et le contexte de travail](docs/captures/fr/tickets.png)
 
