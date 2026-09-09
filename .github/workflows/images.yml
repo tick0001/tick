@@ -15,10 +15,9 @@ on:
     tags: ['v*']
   workflow_dispatch:
     inputs:
-      version:
-        description: 'Étiquette à poser sur les images'
+      etiquette:
+        description: 'Étiquette à republier, « v » compris'
         required: true
-        default: 'latest'
   # Appelé par « Publication », qui étiquette la fusion d'une branche
   # `release/<version>` dans `main`.
   #
@@ -78,23 +77,14 @@ jobs:
         shell: bash
         run: |
           numero="${{ inputs.etiquette }}"
-          [ -n "$numero" ] || numero="${{ inputs.version }}"
           [ -n "$numero" ] || numero="$GITHUB_REF_NAME"
           echo "numero=${numero#v}" >> "$GITHUB_OUTPUT"
-
-          # Un declenchement manuel construit sans rien designer comme « la »
-          # version : ni `latest`, ni etiquette semver.
-          publication=false
-          case "$GITHUB_REF" in refs/tags/v*) publication=true ;; esac
-          [ -z "${{ inputs.etiquette }}" ] || publication=true
-          echo "publication=$publication" >> "$GITHUB_OUTPUT"
 
       # Garde-fou. La route de sante lit sa version dans le manifeste de l'API.
       # Si l'etiquette et le manifeste divergent, l'installation annonce une
       # version qui n'est pas la sienne — exactement le defaut que cette lecture
       # remplace. Mieux vaut refuser de publier que publier un mensonge.
       - name: Concordance de la version
-        if: steps.version.outputs.publication == 'true'
         shell: bash
         env:
           ATTENDUE: ${{ steps.version.outputs.numero }}
@@ -123,11 +113,14 @@ jobs:
           images: ${{ env.REGISTRE }}/${{ github.repository_owner }}/${{ matrix.image }}
           # `value=` plutot que la lecture du ref : appele depuis une pull
           # request, `github.ref` ne porte aucune version a extraire.
+          #
+          # Les trois declencheurs publient la meme chose, le manuel compris :
+          # il sert a republier une version dont la construction a echoue, et
+          # une republication partielle serait pire qu'aucune.
           tags: |
-            type=semver,pattern={{version}},value=${{ steps.version.outputs.numero }},enable=${{ steps.version.outputs.publication == 'true' }}
-            type=semver,pattern={{major}}.{{minor}},value=${{ steps.version.outputs.numero }},enable=${{ steps.version.outputs.publication == 'true' }}
-            type=raw,value=${{ inputs.version }},enable=${{ github.event_name == 'workflow_dispatch' }}
-            type=raw,value=latest,enable=${{ steps.version.outputs.publication == 'true' }}
+            type=semver,pattern={{version}},value=${{ steps.version.outputs.numero }}
+            type=semver,pattern={{major}}.{{minor}},value=${{ steps.version.outputs.numero }}
+            type=raw,value=latest
 
       - name: Construction et publication
         uses: docker/build-push-action@v7
@@ -140,5 +133,12 @@ jobs:
           # Le cache est porté par le registre : sans lui, chaque publication
           # réinstalle toutes les dépendances depuis zéro, ce qui coûte
           # plusieurs minutes pour un résultat identique.
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          #
+          # Une portée par image, et ce n'est pas cosmétique. Les deux partent
+          # de `node:22-alpine` et partagent donc leurs premières couches : sans
+          # portée distincte, les deux travaux de la matrice réservent la même
+          # clé de cache **en même temps**, et le second échoue sur
+          # « failed to reserve cache ». C'est une course, donc elle ne se
+          # manifeste pas à tous les coups — elle a fait échouer la 0.1.6.
+          cache-from: type=gha,scope=${{ matrix.image }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.image }}
