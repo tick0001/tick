@@ -47,20 +47,17 @@ services:
       # Les identifiants s'affichent sur l'ecran de connexion. Sans cela, un
       # visiteur arrive devant un formulaire sans savoir quoi taper, et repart.
       #
-      # `|-` et non `>-` : le bloc plie replierait les retours a la ligne en
-      # espaces, et la liste redeviendrait un paragraphe.
+      # Un seul compte est nomme, celui qui montre le plus sans etre
+      # administrateur. Enumerer les cinq et ce que chacun demontre encombrerait
+      # l'ecran au moment ou le visiteur veut entrer : le site le fait mieux, et
+      # l'adresse y est cliquable.
       #
-      # Cinq mots par compte, pas davantage : le bandeau dit quoi taper et ce
-      # que chacun change. Ce que chacun demontre vraiment est explique sur
-      # tickand.fr, ou la place ne manque pas.
+      # `|-` et non `>-` : le bloc plie replierait les retours a la ligne en
+      # espaces.
       LOGIN_BANNER: |-
-        Démonstration publique — mot de passe commun : tick
-        admin — accès complet, configuration
-        sophie — une branche entière, récursif
-        thomas — une seule entité, sans descendance
-        lea — deux profils cumulés
-        demandeur — interface simplifiée
-        Remise à zéro chaque heure. · Public demo, password tick, resets hourly.
+        Démonstration — connectez-vous avec sophie / tick.
+        Les cinq comptes et ce que chacun montre : https://tickand.fr/#comptes
+        Remise à zéro chaque heure. · Public demo — sign in with sophie / tick, the five accounts are explained on the site, everything resets on the hour.
 
   # Remise à zéro horaire.
   #

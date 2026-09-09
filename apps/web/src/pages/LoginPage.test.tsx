@@ -58,6 +58,36 @@ describe('LoginPage', () => {
     expect(message.className).toContain('whitespace-pre-line');
   });
 
+  it('fait des adresses des liens cliquables', async () => {
+    bandeau('Les comptes : https://tickand.fr/#comptes');
+
+    rendre(<LoginPage />);
+
+    const lien = await screen.findByRole('link', { name: 'https://tickand.fr/#comptes' });
+    expect(lien).toHaveAttribute('href', 'https://tickand.fr/#comptes');
+    expect(lien).toHaveAttribute('rel', expect.stringContaining('noopener'));
+  });
+
+  it('laisse la ponctuation finale hors du lien', async () => {
+    // Sans cela, « voir https://exemple.fr. » produit un lien vers une adresse
+    // qui se termine par un point, et qui ne mene nulle part.
+    bandeau('Voir https://exemple.fr/aide.');
+
+    rendre(<LoginPage />);
+
+    const lien = await screen.findByRole('link');
+    expect(lien).toHaveAttribute('href', 'https://exemple.fr/aide');
+  });
+
+  it('ne promeut pas un javascript: en lien', async () => {
+    bandeau('javascript:alert(1)');
+
+    rendre(<LoginPage />);
+
+    await screen.findByText('javascript:alert(1)');
+    expect(screen.queryByRole('link')).not.toBeInTheDocument();
+  });
+
   it('rend le message comme du texte, jamais comme du balisage', async () => {
     bandeau('<img src=x onerror="alert(1)">');
 

@@ -1,8 +1,49 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useState, type FormEvent } from 'react';
+import { Fragment, useState, type FormEvent, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button, Field, Input, Marque } from '@/components/ui/primitives';
 import { ApiError, api } from '@/lib/api';
+
+/**
+ * Découpe le message d'accueil en segments, et fait des adresses des liens.
+ *
+ * Le message reste du texte : c'est du contenu de configuration affiché sur une
+ * page que tout le monde atteint, et l'interpréter comme du balisage ouvrirait
+ * une injection. Les seuls éléments promus en lien sont ceux qui commencent par
+ * `http://` ou `https://`, et l'adresse est reconstruite depuis ce qui a été
+ * reconnu — jamais depuis une chaîne fournie telle quelle. Un `javascript:` ne
+ * peut donc pas devenir cliquable.
+ *
+ * Sans cela, un exploitant qui renvoie vers une page d'aide oblige le lecteur à
+ * recopier l'adresse à la main, au moment précis où il cherche à entrer.
+ */
+const ADRESSE = /(https?:\/\/\S+)/g;
+
+/** Ponctuation finale : elle appartient à la phrase, pas à l'adresse. */
+const FIN_DE_PHRASE = /[.,;:!?)]+$/;
+
+function segmenter(message: string): ReactNode[] {
+  return message.split(ADRESSE).map((morceau, index) => {
+    if (!/^https?:\/\//.test(morceau)) return morceau;
+
+    const suffixe = FIN_DE_PHRASE.exec(morceau)?.[0] ?? '';
+    const adresse = suffixe ? morceau.slice(0, -suffixe.length) : morceau;
+
+    return (
+      <Fragment key={index}>
+        <a
+          href={adresse}
+          target="_blank"
+          rel="noreferrer noopener"
+          className="text-brand-ink underline underline-offset-2"
+        >
+          {adresse}
+        </a>
+        {suffixe}
+      </Fragment>
+    );
+  });
+}
 
 /**
  * Écran de connexion.
@@ -74,7 +115,7 @@ export function LoginPage() {
           */}
           {instance.data?.banner ? (
             <p className="rounded-lg border border-line bg-sunken px-3 py-2 text-sm whitespace-pre-line text-muted">
-              {instance.data.banner}
+              {segmenter(instance.data.banner)}
             </p>
           ) : null}
 
