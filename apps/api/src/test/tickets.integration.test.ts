@@ -17,6 +17,7 @@ import {
 import { RightsService, type RightScope } from '../auth/rights.service.js';
 import { runWithContext } from '../common/request-context.js';
 import { DatabaseService } from '../database/database.service.js';
+import { DocumentsService } from '../documents/documents.service.js';
 import { EntitiesService } from '../entities/entities.service.js';
 import { HookBus } from '../plugins/hook-bus.service.js';
 import { RuleCatalogService } from '../rules/rule-catalog.service.js';
@@ -412,5 +413,49 @@ describe('Portées de droits sur les tickets', () => {
 
     // Urgence et impact au minimum, mais la matrice de la racine impose 5.
     expect(cree.priority).toBe(5);
+  });
+
+  /**
+   * Les pieces jointes suivent la portee de l'objet porteur.
+   *
+   * Le Row-Level Security cloisonne les documents par **entite**, ce qui bloque
+   * une autre organisation mais pas un collegue de la meme : un profil en
+   * `ticket:read:own` restait, du point de vue de la base, dans son perimetre.
+   * Il pouvait donc lister les pieces jointes des tickets d'autrui.
+   */
+  describe('Pieces jointes', () => {
+    const documentsPour = (portee: RightScope, userId: number, ticketId: number) => {
+      rights.invalidate();
+
+      return dans(ids.siteA, profils[portee], userId, () =>
+        new DocumentsService(db, new TicketScopeService(db, rights)).listFor('ticket', ticketId),
+      );
+    };
+
+    it('refuse le ticket d autrui a une portee « own »', async () => {
+      await expect(documentsPour('own', ids.technicien, ids.ticketSiteA)).rejects.toThrow(
+        /introuvable/i,
+      );
+    });
+
+    it('accepte son propre ticket a la meme portee', async () => {
+      await expect(documentsPour('own', ids.technicien, ids.ticketSiteADemandeur)).resolves.toEqual(
+        [],
+      );
+    });
+
+    it('accepte le ticket d autrui a une portee « entity »', async () => {
+      await expect(documentsPour('entity', ids.technicien, ids.ticketSiteA)).resolves.toEqual([]);
+    });
+
+    it('refuse un type d objet invente', async () => {
+      rights.invalidate();
+
+      await expect(
+        dans(ids.siteA, profils.all, ids.technicien, () =>
+          new DocumentsService(db, new TicketScopeService(db, rights)).listFor('inexistant', 1),
+        ),
+      ).rejects.toThrow(/Type d'objet inconnu/);
+    });
   });
 });

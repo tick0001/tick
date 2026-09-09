@@ -6,6 +6,8 @@ import { documentItems, documents, sql } from '@tick/db';
 import { appRoot, loadEnv } from '../config/env.js';
 import { requireContext } from '../common/request-context.js';
 import { DatabaseService } from '../database/database.service.js';
+import { ITIL_KINDS } from '../itil/itil-kinds.js';
+import { TicketScopeService } from '../tickets/ticket-scope.service.js';
 import { nomAffiche } from '../common/sql.js';
 
 /** Taille maximale d'une pièce jointe. */
@@ -65,7 +67,53 @@ export class DocumentsService {
     return isAbsolute(configure) ? configure : resolve(appRoot(), configure);
   }
 
-  constructor(private readonly db: DatabaseService) {}
+  constructor(
+    private readonly db: DatabaseService,
+    private readonly scopes: TicketScopeService,
+  ) {}
+
+  /**
+   * Verifie que l'appelant a bien le droit demande **sur l'objet porteur**.
+   *
+   * Le Row-Level Security cloisonne les documents par entite, et c'est ce qui
+   * empeche de lire la piece jointe d'une autre organisation. Mais une portee
+   * de droit n'est pas une entite : un profil en `ticket:read:own` reste, du
+   * point de vue de la base, dans son entite — et pouvait donc lister les
+   * pieces jointes des tickets de ses collegues. La portee se verifie ici, la
+   * ou elle se verifie pour l'objet lui-meme.
+   *
+   * Le type est valide contre `ITIL_KINDS` plutot que pris tel quel : sans
+   * cela, n'importe quelle chaine cree un rattachement d'un type invente, que
+   * plus rien ne relie a un objet reel.
+   */
+  private async assertAcces(
+    itemType: string,
+    itemId: number,
+    action: 'read' | 'update',
+  ): Promise<void> {
+    const descripteur = Object.values(ITIL_KINDS).find((k) => k.kind === itemType);
+
+    if (!descripteur) {
+      throw new BadRequestException(`Type d'objet inconnu : ${itemType}.`);
+    }
+
+    const condition = await this.scopes.conditionFor(descripteur.right, action, descripteur.kind);
+    const table = sql.raw(descripteur.table);
+
+    const [ligne] = await this.db.asUser(async (tx) => {
+      const resultat = await tx.execute<{ un: number }>(sql`
+        SELECT 1 AS un FROM ${table}
+         WHERE ${table}.id = ${itemId} AND ${table}.deleted_at IS NULL
+           ${condition ? sql`AND ${condition}` : sql``}
+      `);
+
+      return resultat.rows;
+    });
+
+    // Meme reponse qu'un objet inexistant : distinguer « il existe mais vous
+    // n'y avez pas droit » de « il n'existe pas » revelerait son existence.
+    if (!ligne) throw new NotFoundException('Objet introuvable dans ce perimetre.');
+  }
 
   /**
    * Enregistre un fichier et le rattache à un objet.
@@ -87,6 +135,10 @@ export class DocumentsService {
     if (!ALLOWED.has(fichier.mimetype)) {
       throw new BadRequestException(`Type de fichier non accepte : ${fichier.mimetype}.`);
     }
+
+    // Deposer une piece jointe modifie l'objet : c'est le droit de mise a jour
+    // qui s'applique, pas celui de lecture.
+    await this.assertAcces(lien.itemType, lien.itemId, 'update');
 
     // L'entite vient de l'objet auquel la piece est rattachee, jamais de
     // l'entite active de l'expediteur : sinon un administrateur travaillant a
@@ -135,6 +187,8 @@ export class DocumentsService {
   }
 
   async listFor(itemType: string, itemId: number): Promise<StoredDocument[]> {
+    await this.assertAcces(itemType, itemId, 'read');
+
     return this.db.asUser(async (tx) => {
       const resultat = await tx.execute<StoredDocument & Record<string, unknown>>(sql`
         SELECT d.id, d.name, d.mime_type AS "mimeType", d.size,
@@ -164,6 +218,8 @@ export class DocumentsService {
    * statique.
    */
   async read(id: number): Promise<{ document: StoredDocument; contenu: Buffer }> {
+    await this.assertAccesParDocument(id, 'read');
+
     const [ligne] = await this.db.asUser(async (tx) => {
       const resultat = await tx.execute<
         StoredDocument & { checksum: string } & Record<string, unknown>
@@ -203,9 +259,46 @@ export class DocumentsService {
    * orphelins est une tâche planifiée distincte.
    */
   async remove(id: number): Promise<void> {
+    await this.assertAccesParDocument(id, 'update');
+
     await this.db.asUser((tx) =>
       tx.execute(sql`UPDATE documents SET deleted_at = now() WHERE id = ${id}`),
     );
+  }
+
+  /**
+   * Meme controle, mais en partant du document.
+   *
+   * Le telechargement et la suppression ne connaissent que l'identifiant du
+   * document : il faut remonter au rattachement pour savoir sur quel objet
+   * verifier la portee. Un document sans rattachement — cas qui ne devrait pas
+   * exister — est refuse plutot qu'accorde.
+   */
+  private async assertAccesParDocument(id: number, action: 'read' | 'update'): Promise<void> {
+    const liens = await this.db.asUser(async (tx) => {
+      const resultat = await tx.execute<{ itemType: string; itemId: number }>(sql`
+        SELECT item_type AS "itemType", item_id AS "itemId"
+          FROM document_items WHERE document_id = ${id}
+      `);
+
+      return resultat.rows;
+    });
+
+    if (liens.length === 0) throw new NotFoundException('Document introuvable dans ce perimetre.');
+
+    // Un document peut etre rattache a plusieurs objets : l'acces a l'un
+    // d'entre eux suffit, puisque le contenu y est deja visible.
+    for (const lien of liens) {
+      try {
+        await this.assertAcces(lien.itemType, Number(lien.itemId), action);
+
+        return;
+      } catch {
+        continue;
+      }
+    }
+
+    throw new NotFoundException('Document introuvable dans ce perimetre.');
   }
 
   /**
