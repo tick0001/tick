@@ -179,3 +179,15 @@ sombre. Le plugin de référence a été corrigé en ce sens, et sert d'exemple.
 Le dossier `plugins/` est déclaré comme source Tailwind (`@source`) : sans cela,
 les classes d'un plugin ne seraient jamais générées, et son badge sortirait sans
 aucun style — une panne que son auteur mettrait longtemps à relier à sa cause.
+
+## Image de prévisualisation sociale
+
+[`apercu-social.png`](apercu-social.png) — 1280 × 640, 58 ko. C'est l'image que
+GitHub affiche quand le lien du dépôt est collé quelque part, et qu'il faut
+déposer dans **Settings → General → Social preview**. Sans elle, le lien
+apparaît en carré gris partout où on le partage.
+
+Elle reprend les jetons de `apps/web/src/index.css` : fond papier, filet
+vermillon, esperluette en filigrane. Une variante 1200 × 630 sert de balise
+`og:image` au site, dans son propre dépôt — les deux formats diffèrent parce que
+GitHub et les réseaux sociaux ne recadrent pas au même endroit.
