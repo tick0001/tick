@@ -30,7 +30,8 @@ DEV         := $(COMPOSE) -f docker/compose.yaml
 .DEFAULT_GOAL := aide
 .PHONY: aide dev dev-services dev-arret dev-remise-a-zero verifier images \
         prod prod-journal prod-arret prod-migrer prod-admin \
-        demo demo-journal demo-arret demo-locale demo-locale-arret
+        demo demo-journal demo-arret demo-locale demo-locale-arret \
+        version
 
 # --- Aide --------------------------------------------------------------------
 
@@ -42,6 +43,9 @@ aide:
 	@echo '  make dev-remise-a-zero    base vierge, migree et amorcee'
 	@echo '  make verifier             lint, typecheck, format et tests'
 	@echo '  make images               construit tick-api:local et tick-web:local'
+	@echo ''
+	@echo 'Publication'
+	@echo '  make version V=0.1.7      coupe release/0.1.7, prete a fusionner dans main'
 	@echo ''
 	@echo 'Production (derriere un Traefik deja en place)'
 	@echo '  make prod                 demarre ou met a jour la pile'
@@ -154,3 +158,23 @@ demo-locale:
 
 demo-locale-arret:
 	$(DEMO_LOCAL) down -v
+
+# --- Publication -------------------------------------------------------------
+#
+# Le numero de version vit dans le nom de la branche, et la fusion de cette
+# branche dans `main` declenche tout le reste : etiquette, images, archives.
+# Cette cible ne fait que preparer la branche, correctement.
+#
+# Elle ne pousse rien et n'ouvre aucune pull request : relire le journal avant
+# de publier est le dernier moment ou l'on peut encore corriger ce qu'il annonce.
+
+version:
+	@test -n "$(V)" || { echo 'Usage : make version V=0.1.7'; exit 1; }
+	@echo "$(V)" | grep -Eq '^[0-9]+[.][0-9]+[.][0-9]+$$' || { echo "'$(V)' n'est pas un numero de version."; exit 1; }
+	@git rev-parse --verify --quiet release/$(V) >/dev/null && { echo 'La branche release/$(V) existe deja.'; exit 1; } || true
+	git switch -c release/$(V) develop
+	node -e "const f='apps/api/package.json',m=require('./'+f);m.version='$(V)';require('fs').writeFileSync(f,JSON.stringify(m,null,2)+String.fromCharCode(10))"
+	@echo ''
+	@echo 'Branche release/$(V) creee, manifeste monte.'
+	@echo 'Datez la section du CHANGELOG, puis :'
+	@echo '  git commit -am ":bookmark: version $(V)" && git push -u origin release/$(V)'

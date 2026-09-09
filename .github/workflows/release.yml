@@ -19,9 +19,18 @@ on:
       version:
         description: 'Version à empaqueter'
         required: true
+  # Appelé par « Publication ». Voir le commentaire de `images.yml` : une
+  # étiquette poussée par un workflow n'en déclenche aucun autre.
+  workflow_call:
+    inputs:
+      etiquette:
+        description: 'Étiquette à publier, « v » compris'
+        type: string
+        required: true
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
+  # Voir `images.yml` : le prefixe separe les deux appels de « Publication ».
+  group: archives-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: false
 
 jobs:
@@ -43,6 +52,10 @@ jobs:
 
     steps:
       - uses: actions/checkout@v7
+        with:
+          # Appelé depuis une pull request, `github.ref` designe la fusion
+          # d'essai, pas l'etiquette qu'on publie.
+          ref: ${{ inputs.etiquette || github.ref }}
 
       - uses: pnpm/action-setup@v6
 
@@ -61,22 +74,31 @@ jobs:
         # sans quoi un déclenchement manuel produit des archives dont le nom
         # diffère de celles d'une vraie version.
         run: |
-          numero="${{ inputs.version }}"
+          numero="${{ inputs.etiquette }}"
+          [ -n "$numero" ] || numero="${{ inputs.version }}"
           [ -n "$numero" ] || numero="$GITHUB_REF_NAME"
           echo "numero=${numero#v}" >> "$GITHUB_OUTPUT"
+
+          # Un declenchement manuel empaquette sans creer de version : les
+          # archives restent attachees a l'execution.
+          publication=false
+          case "$GITHUB_REF" in refs/tags/v*) publication=true ;; esac
+          [ -z "${{ inputs.etiquette }}" ] || publication=true
+          echo "publication=$publication" >> "$GITHUB_OUTPUT"
 
       # Garde-fou. La route de sante lit sa version dans le manifeste de l'API.
       # Si l'etiquette et le manifeste divergent, l'installation annonce une
       # version qui n'est pas la sienne — exactement le defaut que cette lecture
       # remplace. Mieux vaut refuser de publier que publier un mensonge.
       - name: Concordance de la version
-        if: startsWith(github.ref, 'refs/tags/v')
+        if: steps.version.outputs.publication == 'true'
         shell: bash
+        env:
+          ATTENDUE: ${{ steps.version.outputs.numero }}
         run: |
           manifeste=$(node -p "require('./apps/api/package.json').version")
-          attendue="${GITHUB_REF_NAME#v}"
-          if [ "$manifeste" != "$attendue" ]; then
-            echo "::error::L'etiquette annonce $attendue, le manifeste apps/api/package.json dit $manifeste."
+          if [ "$manifeste" != "$ATTENDUE" ]; then
+            echo "::error::L'etiquette annonce $ATTENDUE, le manifeste apps/api/package.json dit $manifeste."
             exit 1
           fi
 
@@ -144,7 +166,7 @@ jobs:
     runs-on: ubuntu-latest
     # Rien à publier sur un déclenchement manuel : les archives restent
     # attachées à l'exécution, téléchargeables sans créer de version.
-    if: startsWith(github.ref, 'refs/tags/v')
+    if: startsWith(github.ref, 'refs/tags/v') || inputs.etiquette
 
     permissions:
       # Seule permission d'écriture accordée : créer la version et y joindre les
@@ -162,9 +184,11 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GH_REPO: ${{ github.repository }}
+          # Appelé depuis une pull request, `github.ref_name` nomme la branche.
+          ETIQUETTE: ${{ inputs.etiquette || github.ref_name }}
         run: |
-          gh release create "$GITHUB_REF_NAME" \
-            --title "$GITHUB_REF_NAME" \
+          gh release create "$ETIQUETTE" \
+            --title "$ETIQUETTE" \
             --generate-notes \
             archives/*/* \
-          || gh release upload "$GITHUB_REF_NAME" archives/*/* --clobber
+          || gh release upload "$ETIQUETTE" archives/*/* --clobber

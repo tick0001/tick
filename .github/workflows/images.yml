@@ -19,9 +19,24 @@ on:
         description: 'Étiquette à poser sur les images'
         required: true
         default: 'latest'
+  # Appelé par « Publication », qui étiquette la fusion d'une branche
+  # `release/<version>` dans `main`.
+  #
+  # Une étiquette poussée par un workflow ne déclenche aucun autre workflow —
+  # GitHub l'interdit pour éviter les récursions, et le jeton par défaut n'y
+  # peut rien. Sans ce point d'entrée, publier depuis une fusion exigerait un
+  # jeton personnel, c'est-à-dire un secret de plus à faire tourner.
+  workflow_call:
+    inputs:
+      etiquette:
+        description: 'Étiquette à publier, « v » compris'
+        type: string
+        required: true
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
+  # Prefixe litteral : appele par un autre workflow, `github.workflow`
+  # nomme l'appelant, et les deux appels tomberaient dans le meme groupe.
+  group: images-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: false
 
 env:
@@ -50,19 +65,43 @@ jobs:
 
     steps:
       - uses: actions/checkout@v7
+        with:
+          # Appelé depuis une pull request, `github.ref` designe la fusion
+          # d'essai, pas l'etiquette qu'on publie.
+          ref: ${{ inputs.etiquette || github.ref }}
+
+      # Trois declencheurs, une seule version. L'etiquette `v0.1.6` designe la
+      # version `0.1.6` : le prefixe sert au declenchement, pas au nom des
+      # images.
+      - name: Version
+        id: version
+        shell: bash
+        run: |
+          numero="${{ inputs.etiquette }}"
+          [ -n "$numero" ] || numero="${{ inputs.version }}"
+          [ -n "$numero" ] || numero="$GITHUB_REF_NAME"
+          echo "numero=${numero#v}" >> "$GITHUB_OUTPUT"
+
+          # Un declenchement manuel construit sans rien designer comme « la »
+          # version : ni `latest`, ni etiquette semver.
+          publication=false
+          case "$GITHUB_REF" in refs/tags/v*) publication=true ;; esac
+          [ -z "${{ inputs.etiquette }}" ] || publication=true
+          echo "publication=$publication" >> "$GITHUB_OUTPUT"
 
       # Garde-fou. La route de sante lit sa version dans le manifeste de l'API.
       # Si l'etiquette et le manifeste divergent, l'installation annonce une
       # version qui n'est pas la sienne — exactement le defaut que cette lecture
       # remplace. Mieux vaut refuser de publier que publier un mensonge.
       - name: Concordance de la version
-        if: startsWith(github.ref, 'refs/tags/v')
+        if: steps.version.outputs.publication == 'true'
         shell: bash
+        env:
+          ATTENDUE: ${{ steps.version.outputs.numero }}
         run: |
           manifeste=$(node -p "require('./apps/api/package.json').version")
-          attendue="${GITHUB_REF_NAME#v}"
-          if [ "$manifeste" != "$attendue" ]; then
-            echo "::error::L'etiquette annonce $attendue, le manifeste apps/api/package.json dit $manifeste."
+          if [ "$manifeste" != "$ATTENDUE" ]; then
+            echo "::error::L'etiquette annonce $ATTENDUE, le manifeste apps/api/package.json dit $manifeste."
             exit 1
           fi
 
@@ -82,11 +121,13 @@ jobs:
         uses: docker/metadata-action@v6
         with:
           images: ${{ env.REGISTRE }}/${{ github.repository_owner }}/${{ matrix.image }}
+          # `value=` plutot que la lecture du ref : appele depuis une pull
+          # request, `github.ref` ne porte aucune version a extraire.
           tags: |
-            type=semver,pattern={{version}}
-            type=semver,pattern={{major}}.{{minor}}
+            type=semver,pattern={{version}},value=${{ steps.version.outputs.numero }},enable=${{ steps.version.outputs.publication == 'true' }}
+            type=semver,pattern={{major}}.{{minor}},value=${{ steps.version.outputs.numero }},enable=${{ steps.version.outputs.publication == 'true' }}
             type=raw,value=${{ inputs.version }},enable=${{ github.event_name == 'workflow_dispatch' }}
-            type=raw,value=latest,enable=${{ startsWith(github.ref, 'refs/tags/v') }}
+            type=raw,value=latest,enable=${{ steps.version.outputs.publication == 'true' }}
 
       - name: Construction et publication
         uses: docker/build-push-action@v7
