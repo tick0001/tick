@@ -134,6 +134,7 @@ Les retours, les rapports d'anomalie et les plugins d'essai sont donc utiles mai
 ## Développer
 
 ```bash
+make             # la liste des cibles de déploiement
 pnpm build       # construit tous les paquets
 pnpm test        # 2 322 tests — nécessite les services démarrés
 pnpm lint        # ESLint avec règles typées

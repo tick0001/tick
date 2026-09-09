@@ -131,6 +131,7 @@ Feedback, bug reports and trial plugins are useful now.
 ## Develop
 
 ```bash
+make             # every deployment target, explained
 pnpm build       # builds every package
 pnpm test        # 2 322 tests — requires the services to be running
 pnpm lint        # ESLint with type-aware rules

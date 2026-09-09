@@ -144,6 +144,19 @@ seul message ne le signale.
 
 ## Démarrage
 
+Le dépôt fournit un [`Makefile`](../Makefile) qui compose les fichiers pour
+vous. Trois `-f` tapés de mémoire, dans le bon ordre, sont une faute qui ne se
+voit pas : un fichier manquant ne provoque aucune erreur, la pile démarre
+simplement sans la surcouche.
+
+```bash
+make          # la liste des cibles
+make prod     # démarre ou met à jour, derrière Traefik
+make demo     # la même, plus la surcouche de démonstration
+```
+
+Sans `make`, la commande complète reste :
+
 ```bash
 docker compose -f docker/compose.production.yaml up -d
 ```
