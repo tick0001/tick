@@ -12,6 +12,9 @@ vulnerability_. La discussion reste invisible jusqu'à publication d'un correcti
 N'ouvrez pas d'issue publique pour quelque chose d'exploitable : le dépôt est public, la
 démonstration aussi, et une issue est indexée dans la minute.
 
+Sans compte GitHub, écrivez à **tick0001@proton.me**. Le signalement par l'onglet _Security_
+reste préférable : il crée l'avis, suit le correctif et publie la divulgation tout seul.
+
 Ce qui aide à traiter vite : la version affichée par `GET /api/health`, le mode
 d'installation, et la manière de reproduire. Une preuve de concept, même approximative, vaut
 mieux qu'une description prudente.

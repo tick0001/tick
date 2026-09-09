@@ -86,6 +86,11 @@ techniques. La documentation et les textes d'interface, eux, sont accentués nor
 - **Un contournement du Row-Level Security.** Le cloisonnement est appliqué par la base, et
   une requête qui passe par le rôle propriétaire pour aller plus vite retire le filet.
 
+## Code de conduite
+
+Le projet suit le [Contributor Covenant](CODE_OF_CONDUCT.md). En clair : les désaccords
+techniques sont bienvenus, les attaques personnelles non.
+
 ## Licence
 
 En contribuant, vous acceptez que votre travail soit distribué sous

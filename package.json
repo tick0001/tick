@@ -3,6 +3,15 @@
   "version": "0.0.0",
   "private": true,
   "description": "Tick& - outil de ticketing ITSM open source",
+  "author": "tick0001 <tick0001@proton.me>",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/tick0001/tick.git"
+  },
+  "bugs": {
+    "url": "https://github.com/tick0001/tick/issues"
+  },
+  "homepage": "https://tickand.fr",
   "license": "AGPL-3.0-or-later",
   "packageManager": "pnpm@11.25.0",
   "engines": {
