@@ -112,7 +112,7 @@ Each one illustrates a case the entity model has to handle.
 
 Milestones J0 to J8 of the [roadmap](docs/06-feuille-de-route.md) are delivered, and J9 all but
 one point. The seventeen functional modules are covered, the API exposes 179 documented
-operations, and the suite runs 2 322 tests — including integration tests against a real PostgreSQL
+operations, and the suite runs 2 327 tests — including integration tests against a real PostgreSQL
 database that check isolation between entities.
 
 What you should know before relying on it, said plainly:
@@ -135,7 +135,7 @@ the codebase and its documentation are in French.
 ```bash
 make             # every deployment target, explained
 pnpm build       # builds every package
-pnpm test        # 2 322 tests — requires the services to be running
+pnpm test        # 2 327 tests — requires the services to be running
 pnpm lint        # ESLint with type-aware rules
 pnpm typecheck   # type checking without emit
 pnpm format      # applies Prettier

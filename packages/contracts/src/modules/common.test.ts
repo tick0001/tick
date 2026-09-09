@@ -9,23 +9,44 @@ import {
 } from './common.js';
 
 describe('healthSchema', () => {
+  const checks = { database: true, queues: true };
+
   it('accepte une reponse valide', () => {
-    const valeur = { status: 'ok', version: '1.2.3', uptimeSeconds: 42 };
+    const valeur = { status: 'ok', version: '1.2.3', uptimeSeconds: 42, checks };
 
     expect(healthSchema.parse(valeur)).toEqual(valeur);
   });
 
   it('refuse un temps de fonctionnement negatif', () => {
     expect(() =>
-      healthSchema.parse({ status: 'ok', version: '1.0.0', uptimeSeconds: -1 }),
+      healthSchema.parse({ status: 'ok', version: '1.0.0', uptimeSeconds: -1, checks }),
     ).toThrow();
   });
 
   it('n’accepte que les deux etats prevus', () => {
-    expect(healthSchema.parse({ status: 'degraded', version: '1', uptimeSeconds: 0 }).status).toBe(
-      'degraded',
-    );
-    expect(() => healthSchema.parse({ status: 'ko', version: '1', uptimeSeconds: 0 })).toThrow();
+    expect(
+      healthSchema.parse({ status: 'degraded', version: '1', uptimeSeconds: 0, checks }).status,
+    ).toBe('degraded');
+    expect(() =>
+      healthSchema.parse({ status: 'ko', version: '1', uptimeSeconds: 0, checks }),
+    ).toThrow();
+  });
+
+  it('exige le detail des dependances', () => {
+    // Un « degraded » sans detail oblige a ouvrir les journaux du conteneur
+    // pour savoir laquelle des deux manque : le champ est obligatoire.
+    expect(() => healthSchema.parse({ status: 'ok', version: '1', uptimeSeconds: 0 })).toThrow();
+  });
+
+  it('nomme la dependance en cause', () => {
+    const valeur = healthSchema.parse({
+      status: 'degraded',
+      version: '1',
+      uptimeSeconds: 0,
+      checks: { database: false, queues: true },
+    });
+
+    expect(valeur.checks).toEqual({ database: false, queues: true });
   });
 });
 
