@@ -101,6 +101,9 @@ services:
       SMTP_PASSWORD: ${SMTP_PASSWORD:-}
       SMTP_FROM: ${SMTP_FROM:?renseignez SMTP_FROM}
 
+      # Vide par defaut : la plupart des installations n'ont rien a afficher
+      # avant la connexion, et un bandeau vide ne doit pas occuper l'ecran.
+      LOGIN_BANNER: ${LOGIN_BANNER:-}
       DEFAULT_LOCALE: ${DEFAULT_LOCALE:-fr}
       LOG_LEVEL: ${LOG_LEVEL:-log}
       RUN_EVENT_WORKER: 'true'

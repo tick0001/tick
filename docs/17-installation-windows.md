@@ -193,6 +193,10 @@ SMTP_USER=
 SMTP_PASSWORD=
 SMTP_FROM=assistance@exemple.fr
 
+# Message affiche sur l'ecran de connexion, avant toute authentification.
+# Vide par defaut, 280 caracteres au plus, rendu comme du texte.
+LOGIN_BANNER=
+
 DEFAULT_LOCALE=fr
 LOG_LEVEL=log
 ```
