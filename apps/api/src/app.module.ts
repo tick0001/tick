@@ -9,6 +9,7 @@ import { DocumentsModule } from './documents/documents.module.js';
 import { EntitiesModule } from './entities/entities.module.js';
 import { FormsModule } from './forms/forms.module.js';
 import { HealthModule } from './health/health.module.js';
+import { InstanceModule } from './instance/instance.module.js';
 import { OpenApiModule } from './openapi/openapi.module.js';
 import { ItilModule } from './itil/itil.module.js';
 import { KnowledgeModule } from './knowledge/knowledge.module.js';
@@ -53,6 +54,7 @@ import { TicketsModule } from './tickets/tickets.module.js';
     FormsModule,
     SatisfactionModule,
     HealthModule,
+    InstanceModule,
     OpenApiModule,
   ],
 })

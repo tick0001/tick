@@ -1,4 +1,4 @@
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState, type FormEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button, Field, Input, Marque } from '@/components/ui/primitives';
@@ -15,6 +15,20 @@ import { ApiError, api } from '@/lib/api';
 export function LoginPage() {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
+
+  /**
+   * Message d'accueil de l'exploitant, s'il en a posé un.
+   *
+   * `retry: false` et aucune gestion d'erreur : c'est une information de
+   * confort, et l'écran de connexion doit rester utilisable si l'API ne répond
+   * pas — c'est même le moment où elle a le plus de chances de ne pas répondre.
+   */
+  const instance = useQuery({
+    queryKey: ['instance'],
+    queryFn: () => api.instance(),
+    retry: false,
+    staleTime: 5 * 60 * 1000,
+  });
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
 
@@ -46,6 +60,18 @@ export function LoginPage() {
             <h1 className="text-3xl font-bold tracking-tight">Tick&amp;</h1>
             <p className="text-sm text-muted">{t('connexion.sousTitre')}</p>
           </div>
+
+          {/*
+            Rendu comme du texte, jamais comme du HTML : c'est du contenu de
+            configuration affiché sur une page que tout le monde atteint. Le
+            traitement est neutre — filet et fond creusé, sans couleur de
+            signal, qui reste réservée à ce sur quoi on agit.
+          */}
+          {instance.data?.banner ? (
+            <p className="rounded-lg border border-line bg-sunken px-3 py-2 text-sm text-muted">
+              {instance.data.banner}
+            </p>
+          ) : null}
 
           <div className="space-y-4">
             <Field label={t('connexion.identifiant')}>

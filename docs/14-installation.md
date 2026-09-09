@@ -78,6 +78,15 @@ part de la base : une sauvegarde qui contient les deux livre les deux d'un coup.
 openssl rand -hex 32   # une fois pour chaque
 ```
 
+**`LOGIN_BANNER`** s'affiche sur l'écran de connexion, avant toute
+authentification — horaires du support, numéro d'astreinte, maintenance
+annoncée. C'est le seul endroit où l'on s'adresse à quelqu'un qui n'est pas
+encore entré. Vide par défaut, 280 caractères au plus, **rendu comme du texte et
+jamais comme du HTML**. Une seule langue, faute de contexte pour en choisir une :
+écrire les deux dans le même message si le besoin existe. Le réglage est celui
+de l'exploitant, pas d'une entité — il précède la connexion, donc aucun profil
+ne peut le porter.
+
 **`API_URL` et `WEB_URL`** sont les adresses telles que les navigateurs les
 voient, pas celles du réseau interne. Elles composent les liens des
 notifications : une valeur fausse produit des courriels dont les liens ne mènent

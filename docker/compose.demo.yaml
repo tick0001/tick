@@ -44,6 +44,14 @@ services:
       SMTP_USER: ''
       SMTP_PASSWORD: ''
 
+      # Les identifiants s'affichent sur l'ecran de connexion. Sans cela, un
+      # visiteur arrive devant un formulaire sans savoir quoi taper, et repart.
+      # Une seule langue disponible : les deux tiennent dans la limite.
+      LOGIN_BANNER: >-
+        Démonstration publique : connectez-vous avec sophie / tick.
+        Remise à zéro chaque heure. — Public demo: sign in with sophie / tick.
+        Everything resets on the hour.
+
   # Remise à zéro horaire.
   #
   # `extends` reprend l'image et l'environnement complet de l'API : le script

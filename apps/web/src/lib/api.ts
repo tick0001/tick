@@ -67,6 +67,7 @@ import type {
   NotificationQueueEntry,
   NotificationState,
   NotificationTemplate,
+  InstanceInfo,
   PublicArticle,
   PublicArticleSummary,
   PublicSurvey,
@@ -137,6 +138,7 @@ import {
   notificationPreferenceSchema,
   notificationQueueEntrySchema,
   notificationTemplateSchema,
+  instanceInfoSchema,
   publicArticleSchema,
   publicArticleSummarySchema,
   publicSurveySchema,
@@ -813,6 +815,14 @@ export const api = {
   deleteKbArticle: async (id: number): Promise<void> => {
     await fetch(`/api/kb/${String(id)}`, { method: 'DELETE', credentials: 'include' });
   },
+
+  // --- Instance, sans session -------------------------------------------------
+
+  /**
+   * Ce que l'instance dit d'elle-meme avant connexion. Le seul appel que
+   * l'ecran de connexion emet de lui-meme.
+   */
+  instance: (): Promise<InstanceInfo> => request('/public/instance', instanceInfoSchema),
 
   // --- FAQ publique, sans session --------------------------------------------
 

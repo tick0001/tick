@@ -14,6 +14,19 @@ export const healthSchema = z.object({
 export type Health = z.infer<typeof healthSchema>;
 
 /**
+ * Ce qu'une instance dit d'elle-meme avant toute authentification.
+ *
+ * Sert l'ecran de connexion, seul endroit ou l'on peut s'adresser a quelqu'un
+ * qui n'est pas encore entre : horaires du support, numero d'astreinte,
+ * maintenance annoncee.
+ */
+export const instanceInfoSchema = z.object({
+  /** `null` quand l'exploitant n'a rien a dire — le cas courant. */
+  banner: z.string().max(280).nullable(),
+});
+export type InstanceInfo = z.infer<typeof instanceInfoSchema>;
+
+/**
  * Portee d'un droit, toujours combinee a l'entite active.
  * Voir docs/03-entites-droits-securite.md.
  */

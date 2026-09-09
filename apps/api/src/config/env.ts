@@ -77,6 +77,19 @@ const envSchema = z.object({
 
   DEFAULT_LOCALE: z.enum(['fr', 'en']).default('fr'),
   STORAGE_PATH: z.string().default('./storage'),
+
+  /**
+   * Message affiche sur l'ecran de connexion, avant toute authentification.
+   *
+   * Reglage d'exploitant et non de metier : il precede la connexion, donc
+   * aucune entite ni aucun profil ne peut le porter. Une seule langue, faute
+   * de contexte pour en choisir une — ecrire les deux dans le meme texte si
+   * necessaire.
+   *
+   * Rendu comme du texte, jamais comme du HTML : c'est du contenu de
+   * configuration affiche sur une page publique.
+   */
+  LOGIN_BANNER: z.string().trim().max(280).optional(),
   /**
    * Racine ou sont cherches les plugins. Relative au repertoire de travail.
    * Les plugins de premier rang vivent dans le depot ; une installation reelle
