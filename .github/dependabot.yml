@@ -53,6 +53,13 @@ updates:
     target-branch: release
     commit-message:
       prefix: '⬆️'
+    ignore:
+      # Meme raison que pour npm, et elle vient d'etre demontree : la montee de
+      # `node` en 26 a casse la construction des deux images, Node ne
+      # distribuant plus corepack depuis la 25. Un majeur de moteur ou de
+      # serveur se lit avant de se prendre.
+      - dependency-name: '*'
+        update-types: ['version-update:semver-major']
 
   # Ecosysteme distinct de `docker`, qui ne lit que les Dockerfile : sans ce
   # bloc, `postgres:18-alpine` et `redis:8-alpine` ne sont suivis nulle part —
@@ -66,6 +73,13 @@ updates:
     target-branch: release
     commit-message:
       prefix: '⬆️'
+    ignore:
+      # Meme raison que pour npm, et elle vient d'etre demontree : la montee de
+      # `node` en 26 a casse la construction des deux images, Node ne
+      # distribuant plus corepack depuis la 25. Un majeur de moteur ou de
+      # serveur se lit avant de se prendre.
+      - dependency-name: '*'
+        update-types: ['version-update:semver-major']
 
   - package-ecosystem: github-actions
     directory: /
@@ -74,3 +88,10 @@ updates:
     target-branch: release
     commit-message:
       prefix: '⬆️'
+    ignore:
+      # Meme raison que pour npm, et elle vient d'etre demontree : la montee de
+      # `node` en 26 a casse la construction des deux images, Node ne
+      # distribuant plus corepack depuis la 25. Un majeur de moteur ou de
+      # serveur se lit avant de se prendre.
+      - dependency-name: '*'
+        update-types: ['version-update:semver-major']

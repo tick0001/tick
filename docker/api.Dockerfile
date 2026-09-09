@@ -16,7 +16,19 @@
 # démarrent ensemble se marchent dessus. C'est le rôle du service `migrate` du
 # compose, qui tourne une fois et rend la main.
 
-FROM node:26-alpine AS base
+# Node 22, et le majeur ne se monte pas tout seul.
+#
+# Deux raisons, dans cet ordre. C'est la version que l'integration continue
+# installe et sur laquelle la suite de tests s'execute : une image batie sur un
+# autre majeur ferait tourner en production un moteur que rien n'a exerce. Et
+# Node 22 est en support long jusqu'en avril 2027, quand 26 est encore la
+# version courante — ce n'est pas ce qu'on demande a une installation chez
+# autrui.
+#
+# Le piege, au passage : Node ne distribue plus corepack depuis la 25. Monter
+# ce majeur exige donc d'installer pnpm autrement, et de monter aussi
+# `node-version` dans les workflows et les prerequis annonces.
+FROM node:22-alpine AS base
 RUN corepack enable
 WORKDIR /app
 
