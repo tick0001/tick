@@ -47,13 +47,16 @@ aide:
 	@echo '  make prod                 demarre ou met a jour la pile'
 	@echo '  make prod-migrer          applique les migrations, sans redemarrer'
 	@echo '  make prod-admin           cree le premier administrateur'
-	@echo '  make prod-journal         suit les journaux'
+	@echo '  make prod-etat            etat et sante des conteneurs'
+	@echo '  make prod-journal         suit les journaux (Ctrl-C pour sortir)'
 	@echo '  make prod-arret           arrete, sans toucher aux donnees'
 	@echo ''
 	@echo 'Demonstration publique'
 	@echo '  make demo                 pile + Traefik + surcouche de demonstration'
 	@echo '  make demo-locale          la meme sans Traefik, sur TICK_PORT'
-	@echo '  make demo-journal         suit le journal de la remise a zero'
+	@echo '  make demo-etat            etat et sante des conteneurs'
+	@echo '  make demo-journal         suit la remise a zero (Ctrl-C pour sortir)'
+	@echo '  make demo-journal-api     suit le journal de l API'
 	@echo '  make demo-arret           arrete'
 	@echo ''
 	@echo 'La configuration se lit dans docker/.env, jamais a la racine :'
@@ -93,6 +96,10 @@ images:
 prod:
 	$(PROD_TLS) up -d
 
+# Lecture seule : rien n'est demarre, arrete ni recree.
+prod-etat:
+	$(PROD_TLS) ps
+
 prod-journal:
 	$(PROD_TLS) logs -f --tail 100
 
@@ -128,8 +135,14 @@ prod-admin:
 demo:
 	$(DEMO) up -d
 
+demo-etat:
+	$(DEMO) ps
+
 demo-journal:
 	$(DEMO) logs -f --tail 50 demo-reset
+
+demo-journal-api:
+	$(DEMO) logs -f --tail 100 api
 
 demo-arret:
 	$(DEMO) down
