@@ -6,11 +6,14 @@ import type {
   Form,
   FormMapping,
   FormQuestion,
+  FormTranslation,
+  Locale,
   FormQuestionKind,
   RuleOperator,
   UpsertForm,
 } from '@tick/contracts';
 import { KINDS_A_OPTIONS } from '@tick/contracts';
+import { negotiateLocale } from '@tick/i18n';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ApiError, api } from '@/lib/api';
@@ -121,12 +124,13 @@ function natureDe(champ: string): Nature {
 function formulaireVide(): UpsertForm {
   return {
     name: '',
+    translations: [],
     description: null,
     category: null,
     isActive: true,
     ranking: 100,
     isRecursive: true,
-    sections: [{ name: 'Questions', description: null, questions: [] }],
+    sections: [{ name: 'Questions', translations: [], description: null, questions: [] }],
     access: [],
     destinations: [{ kind: 'ticket', mappings: [] }],
   };
@@ -135,6 +139,7 @@ function formulaireVide(): UpsertForm {
 function versFormulaire(forme: Form): UpsertForm {
   return {
     name: forme.name,
+    translations: forme.translations,
     description: forme.description,
     category: forme.category,
     isActive: forme.isActive,
@@ -142,6 +147,7 @@ function versFormulaire(forme: Form): UpsertForm {
     isRecursive: forme.isRecursive,
     sections: forme.sections.map((section) => ({
       name: section.name,
+      translations: section.translations,
       description: section.description,
       questions: section.questions.map((question) => ({ ...question })),
     })),
@@ -396,8 +402,45 @@ function LigneDestination({
   );
 }
 
+/**
+ * Noms des langues, en endonymes.
+ *
+ * Comme le selecteur de langue de l'en-tete et celui des comptes : une langue
+ * se nomme dans sa propre langue, sinon c'est justement le lecteur qui ne
+ * comprend pas cette langue qui doit dechiffrer son nom.
+ */
+const LANGUES: Record<Locale, string> = { fr: 'Français', en: 'English' };
+
+/**
+ * Traduction d'un libelle dans une langue, s'il en existe une.
+ *
+ * Les libelles de formulaires sont saisis par un administrateur : sans entree
+ * pour la langue du lecteur, c'est la saisie d'origine qui s'affiche. On ne
+ * traduit donc jamais a vide.
+ */
+function traductionDe(entrees: readonly FormTranslation[], locale: Locale): string {
+  return entrees.find((entree) => entree.locale === locale)?.label ?? '';
+}
+
+/**
+ * Pose ou retire la traduction d'une langue.
+ *
+ * Un champ vide **retire** l'entree au lieu d'enregistrer une chaine vide : une
+ * traduction vide ferait afficher un libelle blanc, quand l'absence fait
+ * retomber sur la saisie d'origine.
+ */
+function poserTraduction(
+  entrees: readonly FormTranslation[],
+  locale: Locale,
+  label: string,
+): FormTranslation[] {
+  const autres = entrees.filter((entree) => entree.locale !== locale);
+
+  return label.trim() ? [...autres, { locale, label: label.trim(), description: null }] : autres;
+}
+
 export function FormsPage() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const peutEcrire = usePeut('form', 'update');
   const queryClient = useQueryClient();
 
@@ -456,6 +499,23 @@ export function FormsPage() {
       </p>
     );
   }
+
+  /**
+   * Langue dont on affiche les traductions, ou `null` pour ne rien afficher.
+   *
+   * Masquee par defaut : la plupart des formulaires n'existent que dans une
+   * langue, et doubler chaque champ de saisie encombrerait l'editeur pour tout
+   * le monde au profit de quelques-uns.
+   */
+  const [langueTraduite, setLangueTraduite] = useState<Locale | null>(null);
+
+  /**
+   * Langue a proposer : l'autre que celle du lecteur.
+   *
+   * L'administrateur saisit le libelle d'origine dans sa propre langue — c'est
+   * celle dans laquelle il travaille. Ce qu'il lui manque, c'est l'autre.
+   */
+  const langueCible: Locale = negotiateLocale(i18n.language) === 'fr' ? 'en' : 'fr';
 
   const maj = (patch: Partial<UpsertForm>): void => {
     if (!edite) return;
@@ -610,6 +670,22 @@ export function FormsPage() {
 
             {onglet === 'formulaire' && (
               <div className="grid gap-3 md:grid-cols-4">
+                {/*
+                  Une seule bascule pour tout l'editeur : la traduction se saisit
+                  sous le libelle qu'elle traduit, et non dans un ecran separe ou
+                  l'on perdrait de vue ce que l'on traduit.
+                */}
+                <label className="flex items-center gap-2 md:col-span-4">
+                  <input
+                    type="checkbox"
+                    checked={langueTraduite !== null}
+                    onChange={(event) => {
+                      setLangueTraduite(event.target.checked ? langueCible : null);
+                    }}
+                  />
+                  <span className="text-sm text-muted">{t('formulaires.afficherTraductions')}</span>
+                </label>
+
                 <label className="space-y-1 md:col-span-2">
                   <span className="block text-[11px] font-semibold tracking-wider text-faint uppercase">
                     {t('formulaires.nom')}
@@ -622,6 +698,23 @@ export function FormsPage() {
                       maj({ name: event.target.value });
                     }}
                   />
+                  {langueTraduite && (
+                    <input
+                      className={cn(CONTROLE, 'mt-1')}
+                      lang={langueTraduite}
+                      placeholder={t('formulaires.traduction', { langue: LANGUES[langueTraduite] })}
+                      value={traductionDe(edite.valeurs.translations, langueTraduite)}
+                      onChange={(event) => {
+                        maj({
+                          translations: poserTraduction(
+                            edite.valeurs.translations,
+                            langueTraduite,
+                            event.target.value,
+                          ),
+                        });
+                      }}
+                    />
+                  )}
                 </label>
 
                 <label className="space-y-1">
@@ -716,6 +809,32 @@ export function FormsPage() {
                           });
                         }}
                       />
+                      {langueTraduite && (
+                        <input
+                          className={cn(CONTROLE, 'min-w-0 flex-1')}
+                          lang={langueTraduite}
+                          placeholder={t('formulaires.traduction', {
+                            langue: LANGUES[langueTraduite],
+                          })}
+                          value={traductionDe(section.translations, langueTraduite)}
+                          onChange={(event) => {
+                            maj({
+                              sections: edite.valeurs.sections.map((autre, position) =>
+                                position === indexSection
+                                  ? {
+                                      ...autre,
+                                      translations: poserTraduction(
+                                        autre.translations,
+                                        langueTraduite,
+                                        event.target.value,
+                                      ),
+                                    }
+                                  : autre,
+                              ),
+                            });
+                          }}
+                        />
+                      )}
                       <button
                         type="button"
                         className={ACTION_LIGNE_DANGER}
@@ -760,6 +879,26 @@ export function FormsPage() {
                                 });
                               }}
                             />
+
+                            {langueTraduite && (
+                              <input
+                                className={cn(CONTROLE, 'min-w-0 flex-1')}
+                                lang={langueTraduite}
+                                placeholder={t('formulaires.traduction', {
+                                  langue: LANGUES[langueTraduite],
+                                })}
+                                value={traductionDe(question.translations, langueTraduite)}
+                                onChange={(event) => {
+                                  majQuestion(indexSection, indexQuestion, {
+                                    translations: poserTraduction(
+                                      question.translations,
+                                      langueTraduite,
+                                      event.target.value,
+                                    ),
+                                  });
+                                }}
+                              />
+                            )}
 
                             <select
                               className={cn(CONTROLE, 'w-40')}
@@ -950,6 +1089,7 @@ export function FormsPage() {
                                     {
                                       kind: 'text' as const,
                                       label: '',
+                                      translations: [],
                                       description: null,
                                       isRequired: false,
                                       options: [],
@@ -974,7 +1114,7 @@ export function FormsPage() {
                     maj({
                       sections: [
                         ...edite.valeurs.sections,
-                        { name: '', description: null, questions: [] },
+                        { name: '', translations: [], description: null, questions: [] },
                       ],
                     });
                   }}

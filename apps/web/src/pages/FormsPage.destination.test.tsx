@@ -30,14 +30,17 @@ const FORMULAIRE: Form = {
   entityId: 1,
   entityName: 'Racine',
   isRecursive: true,
+  translations: [],
   sections: [
     {
       name: 'Votre besoin',
+      translations: [],
       description: null,
       questions: [
         {
           kind: 'select',
           label: 'Quel materiel ?',
+          translations: [],
           description: null,
           isRequired: true,
           options: ['Ecran', 'Clavier'],
@@ -47,6 +50,7 @@ const FORMULAIRE: Form = {
         {
           kind: 'urgency',
           label: 'Dans quel delai ?',
+          translations: [],
           description: null,
           isRequired: false,
           options: [],

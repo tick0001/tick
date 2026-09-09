@@ -557,6 +557,8 @@ export const fr = {
     questions: 'Questions',
     ajouterQuestion: 'Ajouter une question',
     libelle: 'Libellé',
+    afficherTraductions: 'Afficher les traductions',
+    traduction: 'Traduction ({{langue}})',
     nature: 'Nature',
     obligatoire: 'Obligatoire',
     choix: 'Choix (un par ligne)',

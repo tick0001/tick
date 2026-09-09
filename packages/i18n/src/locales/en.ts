@@ -552,6 +552,8 @@ export const en: Traductions = {
     questions: 'Questions',
     ajouterQuestion: 'Add a question',
     libelle: 'Label',
+    afficherTraductions: 'Show translations',
+    traduction: 'Translation ({{langue}})',
     nature: 'Kind',
     obligatoire: 'Required',
     choix: 'Choices (one per line)',

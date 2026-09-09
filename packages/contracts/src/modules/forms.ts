@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { localeSchema } from './common.js';
 import { ruleOperatorSchema } from './slm.js';
 
 /**
@@ -75,11 +76,33 @@ export const formConditionSchema = z.object({
 });
 export type FormCondition = z.infer<typeof formConditionSchema>;
 
+/**
+ * Traduction d'un libelle, dans une langue.
+ *
+ * `label` porte le libelle quelle que soit la nature de l'objet — le nom d'un
+ * formulaire ou d'une section, l'intitule d'une question. Un nom par nature
+ * aurait impose trois fois le meme code de lecture pour la meme chose.
+ *
+ * Les libelles de formulaires sont saisis par un administrateur, pas traduits
+ * par le produit : sans traduction, c'est la saisie d'origine qui s'affiche,
+ * quelle que soit la langue du lecteur.
+ */
+export const formTranslationSchema = z.object({
+  locale: localeSchema,
+  label: z.string().trim().min(1).max(200),
+  description: z.string().trim().max(1000).nullable().default(null),
+});
+export type FormTranslation = z.infer<typeof formTranslationSchema>;
+
+/** Au plus une entree par langue prise en charge. */
+const traductions = z.array(formTranslationSchema).max(4).default([]);
+
 export const formQuestionSchema = z.object({
   id: z.number().int().positive().optional(),
   kind: formQuestionKindSchema,
   label: z.string().min(1).max(255),
   description: z.string().max(2000).nullish(),
+  translations: traductions,
   isRequired: z.boolean().default(false),
   options: z.array(z.string().max(200)).max(100).default([]),
   defaultValue: z.string().max(500).nullish(),
@@ -91,6 +114,7 @@ export const formSectionSchema = z.object({
   id: z.number().int().positive().optional(),
   name: z.string().min(1).max(200),
   description: z.string().max(2000).nullish(),
+  translations: traductions,
   questions: z.array(formQuestionSchema).max(100).default([]),
 });
 export type FormSection = z.infer<typeof formSectionSchema>;
@@ -126,6 +150,7 @@ export const formSchema = z.object({
   entityId: z.number().int(),
   entityName: z.string(),
   isRecursive: z.boolean(),
+  translations: z.array(formTranslationSchema),
   sections: z.array(formSectionSchema),
   access: z.array(z.object({ targetType: formTargetTypeSchema, targetId: z.number().int() })),
   destinations: z.array(formDestinationSchema),
@@ -148,6 +173,7 @@ export const upsertFormSchema = z.object({
   isActive: z.boolean().default(true),
   ranking: z.number().int().min(0).max(100_000).default(100),
   isRecursive: z.boolean().default(true),
+  translations: traductions,
   sections: z.array(formSectionSchema).min(1).max(20),
   access: z
     .array(z.object({ targetType: formTargetTypeSchema, targetId: z.number().int().positive() }))

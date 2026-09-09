@@ -47,7 +47,12 @@ describe('Self-service', () => {
   };
 
   /** Exécute le travail comme le ferait une requête, avec le profil choisi. */
-  const dans = async <T>(profileId: number, userId: number, work: () => Promise<T>): Promise<T> => {
+  const dans = async <T>(
+    profileId: number,
+    userId: number,
+    work: () => Promise<T>,
+    locale: 'fr' | 'en' = 'fr',
+  ): Promise<T> => {
     const path = fixture.paths['siteA'] as string;
 
     return runWithContext(
@@ -58,7 +63,7 @@ describe('Self-service', () => {
         entityId: fixture.entityIds['siteA'] as number,
         entityPath: path,
         includeSubEntities: true,
-        locale: 'fr',
+        locale,
         profileInterface: 'standard',
         scope: { subtreePaths: [path], exactPaths: [] },
       },
@@ -349,10 +354,12 @@ describe('Self-service', () => {
           ranking: 10,
           isRecursive: true,
           access: [],
+          translations: [],
           sections: [
             {
               name: 'Questions',
               description: null,
+              translations: [],
               questions: [
                 {
                   kind: 'select',
@@ -361,6 +368,7 @@ describe('Self-service', () => {
                   isRequired: true,
                   options: ['Standard', 'Autre'],
                   defaultValue: null,
+                  translations: [],
                   conditions: [],
                 },
                 {
@@ -372,6 +380,7 @@ describe('Self-service', () => {
                   defaultValue: null,
                   // Ne s'affiche que si « Autre » : exiger une reponse a une
                   // question cachee bloquerait la soumission sans rien montrer.
+                  translations: [],
                   conditions: [{ dependsOn: 0, operator: 'is', value: 'Autre' }],
                 },
                 {
@@ -381,6 +390,7 @@ describe('Self-service', () => {
                   isRequired: false,
                   options: [],
                   defaultValue: '3',
+                  translations: [],
                   conditions: [],
                 },
               ],
@@ -409,10 +419,12 @@ describe('Self-service', () => {
           ranking: 20,
           isRecursive: true,
           access: [{ targetType: 'profile', targetId: ids.profilTechnicien }],
+          translations: [],
           sections: [
             {
               name: 'Questions',
               description: null,
+              translations: [],
               questions: [
                 {
                   kind: 'text',
@@ -421,6 +433,7 @@ describe('Self-service', () => {
                   isRequired: false,
                   options: [],
                   defaultValue: null,
+                  translations: [],
                   conditions: [],
                 },
               ],
@@ -515,6 +528,172 @@ describe('Self-service', () => {
         '1': 'Un cas particulier',
         '2': '2',
       });
+    });
+  });
+
+  describe('Traductions des libelles', () => {
+    it("sert la langue du lecteur, et l'original a l'editeur", async () => {
+      const cree = await commeTechnicien(() =>
+        formsService.save({
+          name: 'Demande de materiel',
+          description: 'Ecran, clavier, souris',
+          category: 'Materiel',
+          isActive: true,
+          ranking: 0,
+          isRecursive: true,
+          access: [],
+          destinations: [],
+          translations: [
+            { locale: 'en', label: 'Hardware request', description: 'Screen, keyboard, mouse' },
+          ],
+          sections: [
+            {
+              name: 'Votre besoin',
+              description: null,
+              translations: [{ locale: 'en', label: 'What you need', description: null }],
+              questions: [
+                {
+                  kind: 'text',
+                  label: 'Quel materiel ?',
+                  description: null,
+                  isRequired: true,
+                  options: [],
+                  defaultValue: null,
+                  translations: [{ locale: 'en', label: 'Which hardware?', description: null }],
+                  conditions: [],
+                },
+              ],
+            },
+          ],
+        }),
+      );
+
+      // L'editeur voit la saisie d'origine, et la traduction a cote. Servir la
+      // traduction ici la ferait reenregistrer a la place de l'original au
+      // premier enregistrement.
+      const pourEditeur = await commeTechnicien(() => formsService.findById(cree.id));
+
+      expect(pourEditeur.name).toBe('Demande de materiel');
+      expect(pourEditeur.translations).toEqual([
+        { locale: 'en', label: 'Hardware request', description: 'Screen, keyboard, mouse' },
+      ]);
+      expect(pourEditeur.sections[0]?.questions[0]?.label).toBe('Quel materiel ?');
+
+      // Le demandeur anglophone recoit les libelles traduits.
+      const enAnglais = await dans(
+        ids.profilDemandeur,
+        ids.demandeur,
+        () => formsService.render(cree.id),
+        'en',
+      );
+
+      expect(enAnglais.name).toBe('Hardware request');
+      expect(enAnglais.sections[0]?.name).toBe('What you need');
+      expect(enAnglais.sections[0]?.questions[0]?.label).toBe('Which hardware?');
+
+      // Le francophone garde la saisie d'origine.
+      const enFrancais = await commeDemandeur(() => formsService.render(cree.id));
+
+      expect(enFrancais.name).toBe('Demande de materiel');
+      expect(enFrancais.sections[0]?.questions[0]?.label).toBe('Quel materiel ?');
+    });
+
+    it('retombe sur la saisie quand la langue manque', async () => {
+      const cree = await commeTechnicien(() =>
+        formsService.save({
+          name: 'Sans traduction',
+          description: null,
+          category: null,
+          isActive: true,
+          ranking: 1,
+          isRecursive: true,
+          access: [],
+          destinations: [],
+          translations: [],
+          sections: [
+            {
+              name: 'Section',
+              description: null,
+              translations: [],
+              questions: [
+                {
+                  kind: 'text',
+                  label: 'Question',
+                  description: null,
+                  isRequired: false,
+                  options: [],
+                  defaultValue: null,
+                  translations: [],
+                  conditions: [],
+                },
+              ],
+            },
+          ],
+        }),
+      );
+
+      // Afficher un vide serait pire que d'afficher l'autre langue : ces
+      // libelles sont ecrits par un administrateur, pas traduits par le produit.
+      const enAnglais = await dans(
+        ids.profilDemandeur,
+        ids.demandeur,
+        () => formsService.render(cree.id),
+        'en',
+      );
+
+      expect(enAnglais.name).toBe('Sans traduction');
+      expect(enAnglais.sections[0]?.questions[0]?.label).toBe('Question');
+    });
+
+    it('ne laisse pas de traduction orpheline apres un enregistrement', async () => {
+      const cree = await commeTechnicien(() =>
+        formsService.save({
+          name: 'A remplacer',
+          description: null,
+          category: null,
+          isActive: true,
+          ranking: 2,
+          isRecursive: true,
+          access: [],
+          destinations: [],
+          translations: [{ locale: 'en', label: 'To replace', description: null }],
+          sections: [
+            {
+              name: 'Section',
+              description: null,
+              translations: [{ locale: 'en', label: 'Section EN', description: null }],
+              questions: [],
+            },
+          ],
+        }),
+      );
+
+      // La table est polymorphe, donc sans cle etrangere : rien ne supprime ses
+      // lignes en cascade quand les sections sont remplacees.
+      await commeTechnicien(() =>
+        formsService.save(
+          {
+            name: 'A remplacer',
+            description: null,
+            category: null,
+            isActive: true,
+            ranking: 2,
+            isRecursive: true,
+            access: [],
+            destinations: [],
+            translations: [],
+            sections: [
+              { name: 'Nouvelle section', description: null, translations: [], questions: [] },
+            ],
+          },
+          cree.id,
+        ),
+      );
+
+      const relu = await commeTechnicien(() => formsService.findById(cree.id));
+
+      expect(relu.translations).toEqual([]);
+      expect(relu.sections[0]?.translations).toEqual([]);
     });
   });
 });

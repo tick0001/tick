@@ -23,6 +23,10 @@ peut rompre.
 - [`CONTRIBUTING.md`](CONTRIBUTING.md), [`SECURITY.md`](SECURITY.md),
   [`CODE_OF_CONDUCT.md`](CODE_OF_CONDUCT.md) et les gabarits d'issues.
 - Dependabot, groupé et hebdomadaire.
+- **Les libellés de formulaires se traduisent.** Nom du formulaire, titres de section et
+  intitulés de question acceptent une traduction par langue, saisie sous le libellé d'origine
+  plutôt que dans un écran séparé. Le demandeur voit sa langue ; l'administrateur garde la
+  saisie d'origine. Sans traduction, c'est l'original qui s'affiche — jamais un libellé vide.
 
 ### À faire en montant de version
 

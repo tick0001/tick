@@ -5,6 +5,7 @@ import type {
   FormQuestion,
   FormSubmissionResult,
   FormSummary,
+  FormTranslation,
   SubmitForm,
   TicketActorInput,
   UpsertForm,
@@ -17,9 +18,11 @@ import {
   formQuestions,
   formSections,
   formSubmissions,
+  formTranslations,
   forms,
   sql,
   type SQL,
+  type Transaction,
 } from '@tick/db';
 import { entityNames } from '../common/entity-names.js';
 import { requireContext } from '../common/request-context.js';
@@ -107,6 +110,45 @@ export class FormsService {
     });
   }
 
+  /**
+   * Applique les traductions a la langue du lecteur.
+   *
+   * Sans traduction dans cette langue, la saisie d'origine reste : les libelles
+   * de formulaires sont ecrits par un administrateur, pas traduits par le
+   * produit, et afficher un vide serait pire que d'afficher l'autre langue.
+   */
+  private static traduire(formulaire: Form, locale: string): Form {
+    const choisir = <T extends { translations: readonly FormTranslation[] }>(
+      objet: T,
+    ): FormTranslation | undefined => objet.translations.find((t) => t.locale === locale);
+
+    const traduction = choisir(formulaire);
+
+    return {
+      ...formulaire,
+      name: traduction?.label ?? formulaire.name,
+      description: traduction?.description ?? formulaire.description,
+      sections: formulaire.sections.map((section) => {
+        const pourSection = choisir(section);
+
+        return {
+          ...section,
+          name: pourSection?.label ?? section.name,
+          description: pourSection?.description ?? section.description,
+          questions: section.questions.map((question) => {
+            const pourQuestion = choisir(question);
+
+            return {
+              ...question,
+              label: pourQuestion?.label ?? question.label,
+              description: pourQuestion?.description ?? question.description,
+            };
+          }),
+        };
+      }),
+    };
+  }
+
   /** Formulaire à remplir, refusé si la politique d'accès l'exclut. */
   async render(id: number): Promise<Form> {
     const rows = await this.db.asUser(async (tx) => {
@@ -123,7 +165,7 @@ export class FormsService {
 
     if (!formulaire) throw new NotFoundException('Formulaire introuvable ou non accessible.');
 
-    return formulaire;
+    return FormsService.traduire(formulaire, requireContext().locale);
   }
 
   async save(input: UpsertForm, id?: number): Promise<Form> {
@@ -166,9 +208,16 @@ export class FormsService {
 
       // Sections et questions sont remplacees en bloc : la cascade emporte
       // conditions et traductions, qui n'ont pas de sens sans leur question.
+      // `form_translations` est polymorphe, donc sans cle etrangere : rien ne
+      // supprime ses lignes en cascade. Sans ce nettoyage, chaque enregistrement
+      // laisserait derriere lui les traductions des sections et des questions
+      // qu'il vient de remplacer, rattachees a des identifiants disparus.
+      await this.oublierTraductions(tx, cible);
       await tx.execute(sql`DELETE FROM form_sections WHERE form_id = ${cible}`);
       await tx.execute(sql`DELETE FROM form_access WHERE form_id = ${cible}`);
       await tx.execute(sql`DELETE FROM form_destinations WHERE form_id = ${cible}`);
+
+      await this.ecrireTraductions(tx, 'form', cible, input.translations);
 
       // Les questions sont numerotees a plat, dans l'ordre du formulaire : c'est
       // ce rang que les conditions et les correspondances designent, et non un
@@ -189,6 +238,8 @@ export class FormsService {
 
         if (!ligneSection) continue;
 
+        await this.ecrireTraductions(tx, 'section', ligneSection.id, section.translations);
+
         for (const [indexQuestion, question] of section.questions.entries()) {
           const [ligneQuestion] = await tx
             .insert(formQuestions)
@@ -204,7 +255,11 @@ export class FormsService {
             })
             .returning({ id: formQuestions.id });
 
-          if (ligneQuestion) parRang.set(rang, ligneQuestion.id);
+          if (ligneQuestion) {
+            parRang.set(rang, ligneQuestion.id);
+            await this.ecrireTraductions(tx, 'question', ligneQuestion.id, question.translations);
+          }
+
           rang += 1;
         }
       }
@@ -447,11 +502,111 @@ export class FormsService {
   }
 
   /** Le nom de l'entite est resolu a part : voir `entityNames`. */
+  /**
+   * Ecrit les traductions d'un objet, apres que son identifiant existe.
+   *
+   * Rien n'est ecrit quand la liste est vide, ce qui est le cas courant : la
+   * plupart des formulaires n'existent que dans la langue ou ils ont ete
+   * saisis.
+   */
+  private async ecrireTraductions(
+    tx: Transaction,
+    itemType: 'form' | 'section' | 'question',
+    itemId: number,
+    entrees: readonly FormTranslation[] | undefined,
+  ): Promise<void> {
+    if (!entrees || entrees.length === 0) return;
+
+    await tx.insert(formTranslations).values(
+      entrees.map((entree) => ({
+        itemType,
+        itemId,
+        locale: entree.locale,
+        label: entree.label,
+        description: entree.description,
+      })),
+    );
+  }
+
+  /** Toutes les traductions d'un formulaire, y compris celles de ses enfants. */
+  private async oublierTraductions(tx: Transaction, formId: number): Promise<void> {
+    await tx.execute(sql`
+      DELETE FROM form_translations
+       WHERE (item_type = 'form' AND item_id = ${formId})
+          OR (item_type = 'section' AND item_id IN (
+                SELECT id FROM form_sections WHERE form_id = ${formId}))
+          OR (item_type = 'question' AND item_id IN (
+                SELECT q.id FROM form_questions q
+                  JOIN form_sections s ON s.id = q.section_id
+                 WHERE s.form_id = ${formId}))
+    `);
+  }
+
+  /**
+   * Traductions d'un formulaire, indexees par nature et identifiant.
+   *
+   * Une seule requete pour tout l'arbre : une par objet ferait autant d'allers
+   * qu'un formulaire a de questions.
+   */
+  private async lireTraductions(
+    formIds: readonly number[],
+  ): Promise<Map<string, FormTranslation[]>> {
+    if (formIds.length === 0) return new Map();
+
+    const ids = sql.join(
+      formIds.map((valeur) => sql`${valeur}`),
+      sql`, `,
+    );
+
+    const lignes = await this.db.asUser(async (tx) => {
+      const resultat = await tx.execute<{
+        itemType: string;
+        itemId: number;
+        locale: string;
+        label: string;
+        description: string | null;
+      }>(sql`
+        SELECT t.item_type AS "itemType", t.item_id AS "itemId",
+               t.locale, t.label, t.description
+          FROM form_translations t
+         WHERE (t.item_type = 'form' AND t.item_id IN (${ids}))
+            OR (t.item_type = 'section' AND t.item_id IN (
+                  SELECT id FROM form_sections WHERE form_id IN (${ids})))
+            OR (t.item_type = 'question' AND t.item_id IN (
+                  SELECT q.id FROM form_questions q
+                    JOIN form_sections s ON s.id = q.section_id
+                   WHERE s.form_id IN (${ids})))
+      `);
+
+      return resultat.rows;
+    });
+
+    const par = new Map<string, FormTranslation[]>();
+
+    for (const ligne of lignes) {
+      const cle = `${ligne.itemType}:${String(ligne.itemId)}`;
+      const liste = par.get(cle) ?? [];
+
+      liste.push({
+        locale: ligne.locale as FormTranslation['locale'],
+        label: ligne.label,
+        description: ligne.description,
+      });
+      par.set(cle, liste);
+    }
+
+    return par;
+  }
+
   private async nommer(rows: readonly FormRow[]): Promise<Form[]> {
     const noms = await entityNames(
       this.db,
       rows.map((row) => row.entityId),
     );
+
+    const traductions = await this.lireTraductions(rows.map((row) => row.id));
+    const pour = (nature: string, id: number | undefined): FormTranslation[] =>
+      id === undefined ? [] : (traductions.get(`${nature}:${String(id)}`) ?? []);
 
     return rows.map((row) => ({
       id: row.id,
@@ -463,7 +618,20 @@ export class FormsService {
       entityId: row.entityId,
       entityName: noms.get(row.entityId) ?? '',
       isRecursive: row.isRecursive,
-      sections: enRangs(Array.isArray(row.sections) ? (row.sections as Form['sections']) : []),
+      // Les traductions sont exposees telles quelles, jamais substituees ici :
+      // `nommer` sert l'editeur, qui doit voir la saisie d'origine. Substituer
+      // ici lui ferait reenregistrer la traduction a la place de l'original.
+      translations: pour('form', row.id),
+      sections: enRangs(
+        (Array.isArray(row.sections) ? (row.sections as Form['sections']) : []).map((section) => ({
+          ...section,
+          translations: pour('section', section.id),
+          questions: section.questions.map((question) => ({
+            ...question,
+            translations: pour('question', question.id),
+          })),
+        })),
+      ),
       access: Array.isArray(row.access) ? (row.access as Form['access']) : [],
       destinations: Array.isArray(row.destinations)
         ? (row.destinations as Form['destinations'])

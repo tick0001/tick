@@ -40,16 +40,19 @@ const FORMULAIRE: Form = {
   entityId: 1,
   entityName: 'Racine',
   isRecursive: true,
+  translations: [],
   access: [],
   destinations: [{ kind: 'ticket', mappings: [] }],
   sections: [
     {
       name: 'Votre besoin',
+      translations: [],
       description: null,
       questions: [
         {
           kind: 'select',
           label: 'Quel matériel ?',
+          translations: [],
           description: null,
           isRequired: true,
           options: ['Écran', 'Autre'],
@@ -60,6 +63,7 @@ const FORMULAIRE: Form = {
           // Ne s'affiche que si la premiere reponse vaut « Autre ».
           kind: 'text',
           label: 'Précisez',
+          translations: [],
           description: null,
           isRequired: false,
           options: [],
@@ -69,6 +73,7 @@ const FORMULAIRE: Form = {
         {
           kind: 'user',
           label: 'Pour qui ?',
+          translations: [],
           description: null,
           isRequired: false,
           options: [],
