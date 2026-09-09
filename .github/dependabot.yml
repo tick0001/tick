@@ -1,0 +1,48 @@
+# Mises a jour de dependances.
+#
+# Le projet publie des images deployees sur les serveurs d'autrui : une faille
+# dans une dependance transitive y arrive telle quelle. Sans ce fichier, elle
+# n'est decouverte que le jour ou quelqu'un pense a regarder.
+#
+# Regroupees et hebdomadaires, a dessein. Une pull request par dependance
+# produit un bruit que plus personne ne lit au bout de trois semaines, et une
+# alerte qu'on ignore ne protege de rien.
+
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    open-pull-requests-limit: 3
+    commit-message:
+      # Les commits du depot sont en francais et prefixes d'un gitmoji.
+      prefix: '⬆️'
+    groups:
+      # Les correctifs de securite arrivent seuls et immediatement : ce sont
+      # les seuls qui meritent d'interrompre.
+      mineures:
+        patterns: ['*']
+        update-types: ['minor', 'patch']
+    ignore:
+      # Les majeures se traitent a la main : elles demandent de lire les notes
+      # de version, pas d'accepter une pull request.
+      - dependency-name: '*'
+        update-types: ['version-update:semver-major']
+
+  - package-ecosystem: docker
+    directories:
+      - /docker
+    schedule:
+      interval: weekly
+      day: monday
+    commit-message:
+      prefix: '⬆️'
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: monthly
+    commit-message:
+      prefix: '⬆️'
