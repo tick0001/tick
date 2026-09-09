@@ -14,7 +14,6 @@ packages/
   contracts/            Types et schémas Zod partagés API ↔ web ↔ plugins
   db/                   Schéma Drizzle du cœur, migrations, helpers RLS
   plugin-sdk/           @tick/plugin-sdk — surface publique offerte aux plugins
-  ui/                   @tick/ui — design system, exposé aux plugins
   i18n/                 Ressources de traduction et outillage
 plugins/
   exemple-bonjour/      Plugin de référence, sert aussi de test d'intégration
