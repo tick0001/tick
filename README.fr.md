@@ -202,6 +202,7 @@ route existante, ni en décrire une disparue. Chaque opération porte le droit q
 | [Installation et exploitation](docs/14-installation.md)                 | Déploiement par conteneurs, sauvegardes, mises à jour, diagnostic |
 | [Installation nue : Linux](docs/16-installation-linux.md)               | Sans conteneur — paquets système, systemd, nginx                  |
 | [Installation nue : Windows](docs/17-installation-windows.md)           | Sans conteneur — service Windows, IIS                             |
+| [Journal des versions](CHANGELOG.md)                                    | Ce que chaque version change, et ce qu'elle exige de vous         |
 | [Feuille de route](docs/06-feuille-de-route.md)                         | Dix jalons, du socle à l'ouverture publique                       |
 
 ## Licence

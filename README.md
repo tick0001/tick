@@ -201,6 +201,7 @@ The detailed documentation is written in French.
 | [Installation and operations](docs/14-installation.md)              | Container deployment, backups, upgrades, troubleshooting |
 | [Bare-metal install: Linux](docs/16-installation-linux.md)          | Without containers — system packages, systemd, nginx     |
 | [Bare-metal install: Windows](docs/17-installation-windows.md)      | Without containers — Windows service, IIS                |
+| [Changelog](CHANGELOG.md)                                           | What each release changes, and what it asks of you       |
 | [Roadmap](docs/06-feuille-de-route.md)                              | Ten milestones, from the foundation to public release    |
 
 ## Licence
