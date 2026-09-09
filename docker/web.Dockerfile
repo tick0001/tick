@@ -12,7 +12,7 @@
 # différents. Le même chemin en développement — le proxy de Vite — et en
 # production garantit qu'on ne découvre pas le problème à la mise en ligne.
 
-FROM node:22-alpine AS base
+FROM node:26-alpine AS base
 RUN corepack enable
 WORKDIR /app
 
