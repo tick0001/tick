@@ -2,12 +2,18 @@ name: CI
 
 on:
   push:
-    branches: [main]
+    branches: [main, release, 'release/**']
   pull_request:
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
+
+# Rien de ce workflow n'ecrit dans le depot. Le declarer ici plutot que de s'en
+# remettre au reglage par defaut de l'organisation : une pull request venue d'un
+# fork — ou de Dependabot — s'execute alors avec un jeton qui ne peut rien.
+permissions:
+  contents: read
 
 jobs:
   verifier:
@@ -84,3 +90,111 @@ jobs:
 
       - name: Tests
         run: pnpm test
+
+  # Verification des images, sans publication.
+  #
+  # Le travail « Verification » compile et teste le code, jamais les images. Or
+  # ce qui part chez l'exploitant, c'est une image : sa base, son nginx, ses
+  # migrations jouees dans un conteneur, ses services joints par leur nom. Une
+  # montee de `node`, de `nginx` ou de `postgres` peut casser tout cela sans
+  # qu'une seule ligne de TypeScript change — c'est exactement ce que proposent
+  # les pull requests de Dependabot.
+  #
+  # La publication, elle, reste au workflow « Images », declenche par une
+  # etiquette de version : une image ne doit jamais atteindre le registre parce
+  # qu'une pull request est passee.
+  conteneurs:
+    name: Conteneurs
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: docker/setup-buildx-action@v4
+
+      # `push: false` et `load: true` : les images restent sur la machine du
+      # travail, ou le compose les reprend telles quelles.
+      - name: Image de l'API
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          file: docker/api.Dockerfile
+          push: false
+          load: true
+          tags: tick-api:ci
+          # Portees distinctes : sans elles, les deux constructions se
+          # partagent une entree de cache et s'invalident l'une l'autre.
+          cache-from: type=gha,scope=api
+          cache-to: type=gha,mode=max,scope=api
+
+      - name: Image de l'interface
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          file: docker/web.Dockerfile
+          push: false
+          load: true
+          tags: tick-web:ci
+          cache-from: type=gha,scope=web
+          cache-to: type=gha,mode=max,scope=web
+
+      # Valeurs jetables, et qui n'ont pas a etre autre chose : ce sont les
+      # valeurs minimales que le compose exige pour demarrer. Les variables
+      # marquees `:?` refusent une chaine vide autant qu'une absence, donc
+      # recopier `.env.production.example` ne suffirait pas.
+      - name: Environnement de verification
+        run: |
+          cat > docker/.env <<'FIN'
+          TICK_IMAGE_API=tick-api
+          TICK_IMAGE_WEB=tick-web
+          TICK_VERSION=ci
+          TICK_PORT=8080
+          API_URL=http://localhost:8080
+          WEB_URL=http://localhost:8080
+          POSTGRES_USER=tick
+          POSTGRES_PASSWORD=tick
+          POSTGRES_DB=tick
+          DATABASE_URL=postgres://tick:tick@postgres:5432/tick
+          DATABASE_APP_URL=postgres://tick_app:tick_app@postgres:5432/tick
+          REDIS_URL=redis://redis:6379
+          SESSION_SECRET=verification-jetable-sans-valeur
+          ENCRYPTION_KEY=0000000000000000000000000000000000000000000000000000000000000000
+          SMTP_HOST=localhost
+          SMTP_PORT=1025
+          SMTP_SECURE=false
+          SMTP_FROM=verification@exemple.invalid
+          DEFAULT_LOCALE=fr
+          LOG_LEVEL=warn
+          FIN
+
+      - name: Demarrage de la pile
+        run: docker compose -f docker/compose.production.yaml up -d
+
+      # Ce qu'aucun test unitaire ne peut voir : que les migrations passent dans
+      # le conteneur, que l'API joint PostgreSQL et Redis sous leurs noms de
+      # service, et que la sonde repond depuis l'interieur du reseau compose.
+      #
+      # La sonde interroge reellement ses dependances et repond 503 quand l'une
+      # manque : `curl -f` echoue alors de lui-meme. Le corps est verifie malgre
+      # tout, pour que l'etape dise laquelle a manque.
+      - name: Sonde de sante
+        run: |
+          for _ in $(seq 1 60); do
+            if reponse=$(curl -fsS http://localhost:8080/api/health); then
+              echo "$reponse"
+              case "$reponse" in *'"status":"ok"'*) exit 0 ;; esac
+            fi
+            sleep 5
+          done
+          echo "::error::La pile n'a pas repondu « ok » en cinq minutes."
+          exit 1
+
+      # nginx sert l'interface, et non seulement le relais vers l'API : une
+      # image web construite sans son etape de compilation repondrait 404 ici
+      # tout en laissant la sonde au vert.
+      - name: Interface servie
+        run: curl -fsS http://localhost:8080/ | grep -q '<div id="root"></div>'
+
+      - name: Journaux
+        if: failure()
+        run: docker compose -f docker/compose.production.yaml logs --no-color --tail 200

@@ -45,6 +45,27 @@ make dev              # services, API et interface
 Sans `make`, les commandes équivalentes sont dans le [Makefile](Makefile) — il est lisible,
 c'est son but.
 
+## Les branches
+
+`main` ne reçoit que des versions terminées. On n'y pousse pas — la branche est protégée, et
+c'est délibéré : tout ce qui s'y trouve a été étiqueté ou est sur le point de l'être, si bien
+qu'un clone de `main` est toujours quelque chose qu'on peut installer.
+
+```
+feature/…  ──(pull request, rebase)──>  release  ──(pull request)──>  main  ──> étiquette
+```
+
+**Une branche par sujet**, partant de `release` et fusionnée par _rebase_ : l'historique de
+`release` reste une suite de commits lisibles, sans les allers-retours d'une revue.
+
+**`release` vers `main` se fusionne avec un commit de fusion**, et c'est la seule exception.
+Il marque la frontière entre deux versions, et il laisse `release` en ancêtre direct de
+`main` — donc réalignable par un `git merge --ff-only main`, sans jamais réécrire une branche
+partagée.
+
+Dependabot vise `release` pour ses montées de version. Ses correctifs de sécurité, eux,
+visent `main` : GitHub ne permet pas de les rediriger, et il n'y a pas lieu de le vouloir.
+
 ## Avant d'ouvrir une pull request
 
 ```bash

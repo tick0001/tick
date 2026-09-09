@@ -7,6 +7,17 @@
 # Regroupees et hebdomadaires, a dessein. Une pull request par dependance
 # produit un bruit que plus personne ne lit au bout de trois semaines, et une
 # alerte qu'on ignore ne protege de rien.
+#
+# Deux choses ne se reglent pas ici, et mieux vaut les savoir que les chercher :
+#
+#   - **Le corps des messages reste en anglais.** Seul `prefix` se configure ;
+#     le « Bumps foo from 1.2 to 1.3 » est ecrit par GitHub. Le fusionner en
+#     ecrasement permet de retitrer en francais, si le titre compte plus que
+#     l'uniformite.
+#   - **`target-branch` ne vaut que pour les montees de version.** Les
+#     correctifs de securite visent toujours la branche par defaut, quoi qu'on
+#     ecrive ici — et c'est le bon comportement : un correctif de securite n'a
+#     rien a attendre dans un train de version.
 
 version: 2
 updates:
@@ -15,6 +26,8 @@ updates:
     schedule:
       interval: weekly
       day: monday
+    # `main` ne recoit que des versions terminees ; tout le reste s'integre ici.
+    target-branch: release
     open-pull-requests-limit: 3
     commit-message:
       # Les commits du depot sont en francais et prefixes d'un gitmoji.
@@ -37,6 +50,20 @@ updates:
     schedule:
       interval: weekly
       day: monday
+    target-branch: release
+    commit-message:
+      prefix: '⬆️'
+
+  # Ecosysteme distinct de `docker`, qui ne lit que les Dockerfile : sans ce
+  # bloc, `postgres:18-alpine` et `redis:8-alpine` ne sont suivis nulle part —
+  # ce sont pourtant les deux images que porte une installation.
+  - package-ecosystem: docker-compose
+    directories:
+      - /docker
+    schedule:
+      interval: weekly
+      day: monday
+    target-branch: release
     commit-message:
       prefix: '⬆️'
 
@@ -44,5 +71,6 @@ updates:
     directory: /
     schedule:
       interval: monthly
+    target-branch: release
     commit-message:
       prefix: '⬆️'
