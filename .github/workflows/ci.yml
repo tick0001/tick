@@ -1,8 +1,18 @@
 name: CI
 
+# Deux declencheurs, sans doublon.
+#
+# `release/**` n'est PAS listee ici, et c'est le point : une branche de version
+# existe pour porter une pull request. La lister ferait passer chaque commit
+# deux fois — une execution sur la branche, une sur la fusion d'essai — pour un
+# resultat identique et deux fois le temps de construction des images.
+#
+# `main` et `develop` y restent : elles ne portent pas de pull request, et leur
+# execution apres fusion verifie les commits tels que le rebase les a reecrits,
+# ce que la fusion d'essai n'avait pas exactement teste.
 on:
   push:
-    branches: [main, develop, 'release/**']
+    branches: [main, develop]
   pull_request:
 
 concurrency:
