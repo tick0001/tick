@@ -159,6 +159,13 @@ export const formQuestionConditions = pgTable(
  * Polymorphe sur trois natures d'objet plutôt qu'une table par objet : une
  * traduction n'a ni logique ni contrainte propre, et trois tables jumelles
  * imposeraient trois fois le même code de lecture.
+ *
+ * **Aucun code ne lit ni n'écrit cette table à ce jour.** Le schéma est posé,
+ * l'usage ne l'est pas : les libellés de formulaires s'affichent encore dans la
+ * langue de leur saisie, quelle que soit celle de l'utilisateur. Elle est
+ * conservée plutôt que supprimée parce que le besoin est réel sur un produit
+ * bilingue, et qu'un aller-retour de migrations coûterait plus que ces lignes.
+ * Qui la câblera trouvera la structure déjà en place.
  */
 export const formTranslations = pgTable(
   'form_translations',
