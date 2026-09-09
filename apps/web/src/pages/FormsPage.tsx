@@ -428,6 +428,11 @@ function traductionDe(entrees: readonly FormTranslation[], locale: Locale): stri
  * Un champ vide **retire** l'entree au lieu d'enregistrer une chaine vide : une
  * traduction vide ferait afficher un libelle blanc, quand l'absence fait
  * retomber sur la saisie d'origine.
+ *
+ * Le libelle est stocke tel qu'il est saisi. Le rogner ici reviendrait a le
+ * faire a chaque frappe : le champ etant controle, l'espace que l'on vient de
+ * taper disparaitrait avant le mot suivant, et « Equipment request » ne
+ * pourrait pas s'ecrire. C'est le contrat qui rogne, a l'enregistrement.
  */
 function poserTraduction(
   entrees: readonly FormTranslation[],
@@ -436,7 +441,7 @@ function poserTraduction(
 ): FormTranslation[] {
   const autres = entrees.filter((entree) => entree.locale !== locale);
 
-  return label.trim() ? [...autres, { locale, label: label.trim(), description: null }] : autres;
+  return label.trim() ? [...autres, { locale, label, description: null }] : autres;
 }
 
 export function FormsPage() {

@@ -114,7 +114,7 @@ Chacun illustre un cas que le modèle d'entités doit savoir traiter.
 
 Les jalons J0 à J8 de la [feuille de route](docs/06-feuille-de-route.md) sont livrés, et J9 l'est
 à un point près. Les dix-sept modules du périmètre fonctionnel sont couverts, l'API compte 179
-opérations documentées, et la suite fait 2 333 tests — dont des tests d'intégration sur une vraie
+opérations documentées, et la suite fait 2 337 tests — dont des tests d'intégration sur une vraie
 base PostgreSQL qui vérifient l'isolation entre entités.
 
 Ce qu'il faut savoir avant de s'en servir, dit franchement :
@@ -138,7 +138,7 @@ issue publique : [SECURITY](SECURITY.md).
 ```bash
 make             # la liste des cibles de déploiement
 pnpm build       # construit tous les paquets
-pnpm test        # 2 333 tests — nécessite les services démarrés
+pnpm test        # 2 337 tests — nécessite les services démarrés
 pnpm lint        # ESLint avec règles typées
 pnpm typecheck   # vérification de types sans émission
 pnpm format      # applique Prettier
