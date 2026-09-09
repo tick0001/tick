@@ -16,7 +16,7 @@
 # démarrent ensemble se marchent dessus. C'est le rôle du service `migrate` du
 # compose, qui tourne une fois et rend la main.
 
-FROM node:22-alpine AS base
+FROM node:26-alpine AS base
 RUN corepack enable
 WORKDIR /app
 
