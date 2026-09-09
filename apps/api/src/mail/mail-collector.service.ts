@@ -7,6 +7,7 @@ import { simpleParser, type ParsedMail } from 'mailparser';
 import { loadEnv } from '../config/env.js';
 import { runWithContext } from '../common/request-context.js';
 import { SecretsService } from '../common/secrets.service.js';
+import { verifierHoteSortant } from '../common/reseau.js';
 import { DatabaseService } from '../database/database.service.js';
 import { DocumentsService } from '../documents/documents.service.js';
 import { TimelineService } from '../tickets/timeline.service.js';
@@ -179,6 +180,11 @@ export class MailCollectorService implements OnModuleInit, OnModuleDestroy {
    * celles qui répondent.
    */
   private async collect(collecteur: Collecteur): Promise<number> {
+    // Verifie juste avant d'ouvrir la connexion. Un collecteur enregistre avant
+    // l'activation du controle ne doit pas continuer a joindre un reseau
+    // interne au seul motif qu'il existait deja.
+    await verifierHoteSortant(collecteur.host);
+
     const client = new ImapFlow({
       host: collecteur.host,
       port: collecteur.port,

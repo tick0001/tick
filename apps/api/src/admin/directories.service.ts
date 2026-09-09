@@ -4,6 +4,7 @@ import { ldapDirectories, sql } from '@tick/db';
 import { Client } from 'ldapts';
 import { SecretsService } from '../common/secrets.service.js';
 import { DatabaseService } from '../database/database.service.js';
+import { verifierHoteSortant } from '../common/reseau.js';
 import { toIso, toText } from '../common/sql.js';
 
 /**
@@ -75,6 +76,10 @@ export class DirectoriesService {
   }
 
   async save(input: UpsertLdapDirectory, id?: number): Promise<LdapDirectory> {
+    // Verifie a l'enregistrement, pour que le refus se lise dans le formulaire
+    // plutot qu'a la premiere connexion.
+    await verifierHoteSortant(input.host);
+
     if (id === undefined && !input.bindPassword && input.bindDn) {
       throw new BadRequestException('Un compte de service exige son mot de passe a la creation.');
     }
@@ -207,6 +212,10 @@ export class DirectoriesService {
     const annuaire = (await this.list()).find((valeur) => valeur.id === id);
 
     if (!annuaire) throw new NotFoundException('Annuaire introuvable.');
+
+    // Verifie une seconde fois : l'enregistrement peut precede l'activation du
+    // controle, et c'est ici que la connexion s'ouvre reellement.
+    await verifierHoteSortant(annuaire.host);
 
     const [secret] = await this.db.asOwner(async (tx) => {
       const resultat = await tx.execute<{ chiffre: string | null }>(

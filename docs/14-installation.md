@@ -90,6 +90,30 @@ bien qu'un `javascript:` ne peut pas le devenir. Une seule langue, faute de cont
 de l'exploitant, pas d'une entité — il précède la connexion, donc aucun profil
 ne peut le porter.
 
+**`ALLOW_PRIVATE_OUTBOUND`** décide si le serveur accepte de joindre un réseau
+interne. Deux fonctionnalités laissent un administrateur choisir librement
+l'hôte et le port d'une connexion émise par l'application : les annuaires LDAP
+et les collecteurs de courriel. Toutes deux se déclenchent à la demande — c'est
+donc, telle quelle, une requête sortante arbitraire, de quoi cartographier le
+réseau de la machine depuis l'extérieur.
+
+Vrai par défaut, et ce n'est pas de la négligence : dans une installation
+ordinaire l'annuaire visé **est** interne, et l'administrateur y est de
+confiance. Refuser par défaut casserait le cas courant au profit d'une menace
+qui ne s'y présente pas.
+
+Passer à `false` partout où le compte d'administration est distribué plus
+largement que la confiance : démonstration publique, instance mutualisée. Les
+plages privées, de bouclage et de lien-local sont alors refusées — dont
+`169.254.169.254`, qui porte les identifiants d'instance chez la plupart des
+hébergeurs et reste la cible la plus rentable de ce genre d'attaque.
+
+Le contrôle ne prétend pas être infaillible : un nom peut pointer vers une
+adresse publique à la validation puis vers une adresse privée à la connexion.
+S'en prémunir demanderait d'épingler l'adresse résolue jusqu'à l'ouverture de la
+connexion, ce que les bibliothèques utilisées n'exposent pas. Il élève le coût
+de l'attaque, il ne la rend pas impossible.
+
 **`API_URL` et `WEB_URL`** sont les adresses telles que les navigateurs les
 voient, pas celles du réseau interne. Elles composent les liens des
 notifications : une valeur fausse produit des courriels dont les liens ne mènent

@@ -5,6 +5,7 @@ import { entityNames } from '../common/entity-names.js';
 import { requireContext } from '../common/request-context.js';
 import { SecretsService } from '../common/secrets.service.js';
 import { DatabaseService } from '../database/database.service.js';
+import { verifierHoteSortant } from '../common/reseau.js';
 
 interface CollectorRow extends Record<string, unknown> {
   id: number;
@@ -66,6 +67,8 @@ export class MailCollectorsService {
   }
 
   async save(input: UpsertMailCollector, id?: number): Promise<MailCollector> {
+    await verifierHoteSortant(input.host);
+
     if (input.afterRead === 'move' && !input.targetFolder) {
       throw new BadRequestException('Deplacer un message exige un dossier de destination.');
     }

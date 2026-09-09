@@ -38,6 +38,12 @@ services:
     environment:
       # Écrase ce que porte `docker/.env` : sur la démonstration, le courrier ne
       # sort pas de la machine.
+      # Sur une demonstration publique, tout visiteur est administrateur : les
+      # annuaires et collecteurs deviennent une requete sortante arbitraire vers
+      # le reseau de la machine. Le refus nginx couvre l'ecriture ; celui-ci
+      # couvre aussi ce qui aurait ete enregistre autrement.
+      ALLOW_PRIVATE_OUTBOUND: 'false'
+
       SMTP_HOST: mailpit
       SMTP_PORT: 1025
       SMTP_SECURE: 'false'

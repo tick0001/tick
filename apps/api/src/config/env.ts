@@ -95,6 +95,20 @@ const envSchema = z.object({
    * probleme de redaction, pas une raison de refuser de servir.
    */
   LOGIN_BANNER: z.string().trim().max(500).optional(),
+
+  /**
+   * Autorise les connexions sortantes vers les reseaux internes.
+   *
+   * Concerne les deux fonctionnalites ou un administrateur choisit librement
+   * l'hote joint par le serveur : annuaires LDAP et collecteurs de courriel.
+   *
+   * Vrai par defaut, et ce n'est pas de la negligence : dans une installation
+   * ordinaire l'annuaire vise **est** interne, et refuser casserait le cas
+   * courant au profit d'une menace qui ne s'y presente pas — l'administrateur y
+   * est de confiance. Passer a `false` la ou il ne l'est pas : demonstration
+   * publique, instance mutualisee, compte d'administration largement distribue.
+   */
+  ALLOW_PRIVATE_OUTBOUND: envBoolean.default(true),
   /**
    * Racine ou sont cherches les plugins. Relative au repertoire de travail.
    * Les plugins de premier rang vivent dans le depot ; une installation reelle

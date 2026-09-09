@@ -103,6 +103,9 @@ services:
 
       # Vide par defaut : la plupart des installations n'ont rien a afficher
       # avant la connexion, et un bandeau vide ne doit pas occuper l'ecran.
+      # Vrai par defaut : dans une installation ordinaire l'annuaire vise est
+      # interne, et l'administrateur est de confiance. Voir docs/14-installation.
+      ALLOW_PRIVATE_OUTBOUND: ${ALLOW_PRIVATE_OUTBOUND:-true}
       LOGIN_BANNER: ${LOGIN_BANNER:-}
       DEFAULT_LOCALE: ${DEFAULT_LOCALE:-fr}
       LOG_LEVEL: ${LOG_LEVEL:-log}
