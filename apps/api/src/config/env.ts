@@ -88,8 +88,13 @@ const envSchema = z.object({
    *
    * Rendu comme du texte, jamais comme du HTML : c'est du contenu de
    * configuration affiche sur une page publique.
+   *
+   * La limite depasse largement ce qu'un ecran de connexion doit porter, et
+   * c'est voulu : la depasser fait echouer le demarrage de l'API, ce qui serait
+   * disproportionne pour un champ decoratif. Un message trop long est un
+   * probleme de redaction, pas une raison de refuser de servir.
    */
-  LOGIN_BANNER: z.string().trim().max(280).optional(),
+  LOGIN_BANNER: z.string().trim().max(500).optional(),
   /**
    * Racine ou sont cherches les plugins. Relative au repertoire de travail.
    * Les plugins de premier rang vivent dans le depot ; une installation reelle

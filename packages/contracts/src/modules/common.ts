@@ -22,7 +22,7 @@ export type Health = z.infer<typeof healthSchema>;
  */
 export const instanceInfoSchema = z.object({
   /** `null` quand l'exploitant n'a rien a dire — le cas courant. */
-  banner: z.string().max(280).nullable(),
+  banner: z.string().max(500).nullable(),
 });
 export type InstanceInfo = z.infer<typeof instanceInfoSchema>;
 

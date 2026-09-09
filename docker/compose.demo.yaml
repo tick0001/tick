@@ -47,10 +47,18 @@ services:
       # Les identifiants s'affichent sur l'ecran de connexion. Sans cela, un
       # visiteur arrive devant un formulaire sans savoir quoi taper, et repart.
       # Une seule langue disponible : les deux tiennent dans la limite.
+      # Les identifiants s'affichent sur l'ecran de connexion. Sans cela, un
+      # visiteur arrive devant un formulaire sans savoir quoi taper, et repart.
+      #
+      # Les cinq comptes du jeu de demonstration sont nommes : chacun illustre une
+      # portee differente, et n'en montrer qu'un cacherait le modele d'entites,
+      # qui est l'argument principal. Ce que chacun demontre ne tient pas ici —
+      # c'est explique sur tickand.fr.
       LOGIN_BANNER: >-
-        Démonstration publique : connectez-vous avec sophie / tick.
-        Remise à zéro chaque heure. — Public demo: sign in with sophie / tick.
-        Everything resets on the hour.
+        Démonstration publique — sophie / tick, ou admin, thomas, lea, demandeur :
+        même mot de passe, portées différentes. Remise à zéro chaque heure. ·
+        Public demo — sophie / tick, or admin, thomas, lea, demandeur: same
+        password, different scopes. Resets on the hour.
 
   # Remise à zéro horaire.
   #
