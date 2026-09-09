@@ -316,6 +316,27 @@ Le nettoyage n'a pas lieu si l'amorçage échoue : mieux vaut une démonstration
 figée sur des données cohérentes qu'une démonstration dont les tickets
 référencent des pièces jointes disparues.
 
+**Deux familles d'écriture sont refusées** par une configuration nginx dédiée,
+[`nginx-demo.conf`](../docker/nginx-demo.conf), montée sur le conteneur `web`.
+Sur une démonstration les identifiants sont publiés : tout visiteur est
+administrateur, et deux capacités d'administration deviennent dangereuses quand
+celui qui les détient n'est pas de confiance.
+
+- **Le téléversement de pièces jointes.** Le contrôle de type accepte les
+  images — ce qu'il faut pour un ticket, et exactement le vecteur d'un contenu
+  proscrit déposé sur un service ouvert à tous. La remise à zéro efface le
+  fichier, mais une adresse partagée pendant l'heure fonctionne, et l'exposition
+  juridique porte sur le nom de domaine.
+- **Les annuaires LDAP et les collecteurs de courriel.** Les deux se configurent
+  avec un hôte et un port libres, puis se déclenchent à la demande. C'est une
+  requête sortante arbitraire émise par le serveur : de quoi sonder son réseau
+  interne — les autres conteneurs, les services d'administration, les adresses
+  de métadonnées.
+
+La lecture reste ouverte dans les deux cas : les écrans se visitent, seule
+l'écriture est refusée. Créer un ticket, le commenter, le résoudre, poser une
+règle ou un engagement — tout le reste fonctionne.
+
 Les comptes sont ceux du [README](../README.md), mot de passe commun `tick`.
 L'application ne les affiche nulle part : c'est au lien que vous publiez de les
 porter.
