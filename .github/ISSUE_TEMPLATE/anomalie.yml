@@ -1,0 +1,74 @@
+name: Anomalie
+description: Quelque chose ne fonctionne pas comme annoncé
+labels: ['anomalie']
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Merci. Les rapports en anglais sont les bienvenus — répondez dans la langue qui
+        vous arrange.
+
+  - type: dropdown
+    id: demonstration
+    attributes:
+      label: Reproduit sur la démonstration publique ?
+      description: >-
+        La question la plus utile du formulaire : elle sépare d'emblée un défaut du produit
+        d'un problème de déploiement. https://demo.tickand.fr — sophie / tick
+      options:
+        - Oui, reproduit sur demo.tickand.fr
+        - Non, seulement sur mon installation
+        - Pas essayé
+        - Sans objet
+    validations:
+      required: true
+
+  - type: input
+    id: version
+    attributes:
+      label: Version
+      description: Celle qu'annonce `GET /api/health`, pas celle que vous pensez avoir déployée.
+      placeholder: '0.1.5'
+    validations:
+      required: true
+
+  - type: dropdown
+    id: installation
+    attributes:
+      label: Mode d'installation
+      options:
+        - Conteneurs (Docker ou Podman)
+        - Linux sans conteneur (systemd + nginx)
+        - Windows Server (IIS)
+        - Développement (pnpm dev)
+        - La démonstration publique
+    validations:
+      required: true
+
+  - type: textarea
+    id: attendu
+    attributes:
+      label: Ce qui devait se passer, et ce qui s'est passé
+      description: Les deux, même si le second paraît évident.
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduire
+    attributes:
+      label: Comment le reproduire
+      placeholder: |
+        1. Se connecter comme thomas
+        2. Ouvrir le ticket #3
+        3. …
+    validations:
+      required: true
+
+  - type: textarea
+    id: journaux
+    attributes:
+      label: Journaux
+      description: >-
+        `make demo-journal-api`, `docker compose logs api`, ou `journalctl -u tick-api`
+        selon l'installation. Retirez les mots de passe et les adresses internes.
+      render: text

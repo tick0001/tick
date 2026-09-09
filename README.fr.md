@@ -129,7 +129,9 @@ Ce qu'il faut savoir avant de s'en servir, dit franchement :
   qu'une fois chaque point d'extension exercé par un usage réel ; le plugin de référence n'y suffit
   pas seul.
 
-Les retours, les rapports d'anomalie et les plugins d'essai sont donc utiles maintenant.
+Les retours, les rapports d'anomalie et les plugins d'essai sont donc utiles maintenant —
+voir [CONTRIBUTING](CONTRIBUTING.md). Les failles se signalent en privé, jamais par une
+issue publique : [SECURITY](SECURITY.md).
 
 ## Développer
 

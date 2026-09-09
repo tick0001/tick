@@ -1,0 +1,13 @@
+# Les issues vierges restent autorisées : sur un projet jeune, la friction d'un
+# formulaire coûte plus qu'un rapport mal rangé.
+blank_issues_enabled: true
+contact_links:
+  - name: Essayer avant de signaler
+    url: https://demo.tickand.fr
+    about: 'Démonstration publique — sophie / tick, remise à zéro chaque heure.'
+  - name: Documentation
+    url: https://github.com/tick0001/tick/tree/main/docs
+    about: Périmètre, architecture, entités et droits, installation, SDK de plugins.
+  - name: Signaler une faille de sécurité
+    url: https://github.com/tick0001/tick/security/advisories/new
+    about: En privé, jamais par une issue publique.

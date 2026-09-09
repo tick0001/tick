@@ -126,7 +126,9 @@ What you should know before relying on it, said plainly:
   every extension point has been exercised by real use; the reference plugin is not enough on its
   own.
 
-Feedback, bug reports and trial plugins are useful now.
+Feedback, bug reports and trial plugins are useful now — see
+[CONTRIBUTING](CONTRIBUTING.md), which opens with what you should know before cloning:
+the codebase and its documentation are in French.
 
 ## Develop
 

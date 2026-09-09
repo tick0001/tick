@@ -1,0 +1,56 @@
+name: Problème d'installation
+description: Le guide ne mène pas au résultat annoncé
+labels: ['installation']
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Deux des quatre chemins d'installation n'ont jamais été déroulés sur une machine
+        vierge — le guide Windows le dit lui-même. Un blocage y est **attendu**, et le
+        signaler est la contribution la plus utile au projet aujourd'hui.
+
+  - type: dropdown
+    id: chemin
+    attributes:
+      label: Quel guide
+      options:
+        - Conteneurs — docs/14-installation.md
+        - Linux sans conteneur — docs/16-installation-linux.md
+        - Windows Server — docs/17-installation-windows.md
+    validations:
+      required: true
+
+  - type: input
+    id: etape
+    attributes:
+      label: À quelle étape
+      description: Le titre ou le numéro de la section où ça bloque.
+      placeholder: '6. Migrations'
+    validations:
+      required: true
+
+  - type: input
+    id: systeme
+    attributes:
+      label: Système
+      placeholder: 'Debian 12, Rocky 9, Windows Server 2022…'
+    validations:
+      required: true
+
+  - type: textarea
+    id: message
+    attributes:
+      label: Le message d'erreur, en entier
+      description: Y compris la partie qui semble n'avoir aucun rapport.
+      render: text
+    validations:
+      required: true
+
+  - type: textarea
+    id: ecart
+    attributes:
+      label: Écart avec le guide
+      description: >-
+        Avez-vous adapté une commande ? Une base gérée, un PostgreSQL déjà présent, un
+        proxy d'entreprise ? Ce sont souvent ces écarts qui expliquent le blocage — et
+        souvent une lacune du guide.
