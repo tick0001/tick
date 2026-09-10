@@ -113,7 +113,8 @@ Each one illustrates a case the entity model has to handle.
 Milestones J0 to J8 of the [roadmap](docs/06-feuille-de-route.md) are delivered, and J9 all but
 one point. The seventeen functional modules are covered, the API exposes 179 documented
 operations, and the suite runs 2 338 tests — including integration tests against a real PostgreSQL
-database that check isolation between entities.
+database that check isolation between entities. On top of those, 35 end-to-end journeys run in a
+real browser against the real API: sign-in, tenant isolation, the ticket lifecycle, self-service.
 
 What you should know before relying on it, said plainly:
 
@@ -140,6 +141,7 @@ pnpm lint        # ESLint with type-aware rules
 pnpm typecheck   # type checking without emit
 pnpm format      # applies Prettier
 pnpm db:reset    # back to a clean database, migrated and seeded
+make parcours    # 35 end-to-end journeys, in a real browser
 pnpm openapi     # exports the API description
 ```
 
