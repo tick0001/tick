@@ -28,7 +28,7 @@ DEMO_LOCAL  := $(COMPOSE) -p tick-demo-locale -f docker/compose.production.yaml 
 DEV         := $(COMPOSE) -f docker/compose.yaml
 
 .DEFAULT_GOAL := aide
-.PHONY: aide dev dev-services dev-arret dev-remise-a-zero verifier images \
+.PHONY: aide dev dev-services dev-arret dev-remise-a-zero verifier images parcours parcours-ui parcours-installer \
         prod prod-journal prod-arret prod-migrer prod-admin \
         demo demo-journal demo-arret demo-locale demo-locale-arret \
         version
@@ -43,6 +43,7 @@ aide:
 	@echo '  make dev-remise-a-zero    base vierge, migree et amorcee'
 	@echo '  make verifier             lint, typecheck, format et tests'
 	@echo '  make images               construit tick-api:local et tick-web:local'
+	@echo '  make parcours             tests de bout en bout (remet les donnees a zero)'
 	@echo ''
 	@echo 'Publication'
 	@echo '  make version V=0.1.7      coupe release/0.1.7, prete a fusionner dans main'
@@ -87,6 +88,24 @@ verifier:
 	pnpm typecheck
 	pnpm format:check
 	pnpm test
+
+# --- Parcours ----------------------------------------------------------------
+#
+# Les tests de bout en bout, dans un vrai navigateur. Ils demarrent l'API et
+# l'interface eux-memes, et **remettent les donnees de developpement a zero**
+# avant de commencer : c'est ce qui les rend repetables.
+#
+# Les services doivent tourner (`make dev-services`), et le navigateur doit
+# avoir ete installe une fois : `make parcours-installer`.
+
+parcours:
+	pnpm --filter @tick/e2e exec playwright test
+
+parcours-ui:
+	pnpm --filter @tick/e2e exec playwright test --ui
+
+parcours-installer:
+	pnpm --filter @tick/e2e exec playwright install chromium
 
 images:
 	pnpm images
