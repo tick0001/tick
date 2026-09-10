@@ -43,19 +43,41 @@ sont partagées et irrégulières ; des seuils absolus y clignoteraient sans rie
 ## Ce qu'elle a déjà trouvé
 
 À cinquante mille tickets, la liste — l'écran le plus ouvert du produit — balayait la table
-entière puis triait par tas. Aucun index ne servait `ORDER BY date_opened DESC` avec
-`deleted_at IS NULL` : le seul candidat commençait par `status`.
+entière puis triait par tas. Deux causes, et il fallait les deux :
+
+**Aucun index ne servait le tri.** La liste ordonne par `(date_opened DESC, id DESC)` avec
+`deleted_at IS NULL` ; le seul index candidat commençait par `status`. Corrigé par la migration
+`0032_index_ouverture_tickets` — et il lui faut ses **deux** colonnes : un index sur la seule
+date ne satisfait pas ce tri, et le premier jet, à une colonne, n'a rien changé.
+
+**L'index ne suffisait pas.** Tant que la requête joignait `entities` et `itil_categories`, le
+planificateur préférait joindre les cinquante mille lignes puis trier, plutôt que de parcourir
+l'index. Les deux jointures sont devenues des sous-requêtes scalaires, évaluées cinquante et une
+fois au lieu de cinquante mille. La jointure sur `entities` était interne, mais le Row-Level
+Security garantit déjà qu'un ticket visible a son entité dans le périmètre : les lignes rendues
+sont exactement les mêmes.
+
+Mesuré sous Row-Level Security, avec le rôle applicatif, sur la requête réelle :
 
 ```
-sans l'index   Seq Scan sur 50 007 lignes, puis top-N heapsort   18,4 ms
-avec l'index   Index Scan, cinquante lignes lues                  0,35 ms
+avec les jointures      Nested Loop sur 50 017 lignes, top-N heapsort   74,0 ms
+avec les sous-requêtes  Index Scan, 51 lignes lues                       0,4 ms
 ```
 
-Corrigé par la migration `0032_index_ouverture_tickets`.
+Et de bout en bout, `GET /api/tickets?limit=50`, médiane sur douze appels, même machine :
+
+```
+avant   95 ms
+après   31 ms          (témoin : /api/health, 5 ms)
+```
+
+Ce qui restait à expliquer l'est donc : le coût fixe de la route était sa requête SQL, et non le
+côté Node. Les trente millisecondes qui subsistent sont le reste de la route — session,
+sérialisation, boucle d'évènements — et se comparent aux cinq de la sonde de santé.
 
 ## Ce que la mesure a **infirmé**
 
-Trois soupçons formés en lisant le code, et démentis par la mesure. Ils sont notés ici pour que
+Cinq soupçons formés en lisant le code, et démentis par la mesure. Ils sont notés ici pour que
 personne ne les reprenne :
 
 - **Les sous-requêtes corrélées** qui comptent suivis et tâches ne coûtent rien : 0,007 ms par
@@ -66,14 +88,8 @@ personne ne les reprenne :
 - **La taille du pool de connexions** ne limitait pas : la doubler n'a rien changé au débit.
   Elle a tout de même été rendue réglable (`DATABASE_POOL_MAX`), parce qu'elle était le seul
   paramètre figé dans le code — mais ce n'est pas un correctif de performance.
-
-## Ce qui reste inexpliqué
-
-Sur un poste de développement, `/api/tickets` répond en **≈ 180 ms** alors que sa requête SQL
-coûte **0,5 ms** sous Row-Level Security, et que la route ne déclenche que cinq transactions.
-Le coût est **fixe** — identique pour une ligne et pour cinquante — et propre à cette route :
-`/api/entities` répond en 25 ms, la sonde de santé en 2 ms.
-
-Ont été éliminés par la mesure : le coût SQL, le Row-Level Security, la taille du pool, la
-sérialisation par ligne, le middleware d'authentification, et un plan de requête figé. Il reste
-à profiler le côté Node.
+- **Le réseau entre Node et PostgreSQL** : un aller-retour coûte 0,45 ms, et la route n'en fait
+  que cinq.
+- **Un plan de requête figé** : `ANALYZE` puis `DISCARD PLANS` ne changent rien. Le plan était
+  le bon plan pour la requête telle qu'elle était écrite ; c'est la requête qu'il fallait
+  changer.
