@@ -198,10 +198,22 @@ la même fonction `matchesOperator`, extraite du moteur de règles : deux implé
 par ne plus répondre pareil au même opérateur, et une question cachée d'un côté mais exigée de
 l'autre produirait un refus impossible à comprendre.
 
-**Tests dès le socle.** Le moteur de règles, le calcul SLA sur calendrier ouvré et la résolution
-des droits sont trois domaines où un bug est silencieux et coûteux. Vitest pour l'unitaire,
-Testcontainers pour l'intégration sur une vraie base PostgreSQL (le RLS ne se teste pas en SQLite),
-Playwright pour les parcours critiques.
+**Trois suites, qui ne se recouvrent pas.** Le moteur de règles, le calcul SLA sur calendrier
+ouvré et la résolution des droits sont trois domaines où un bug est silencieux et coûteux.
+
+- **Vitest** pour l'unitaire, et pour l'interface avec l'API bouchonnée : le rendu est vérifié,
+  jamais que l'appel existe côté serveur.
+- **Vitest encore, sur une vraie base PostgreSQL** pour l'intégration — le Row-Level Security ne
+  se teste pas en SQLite, et la base vient du même `docker compose` que le développement, avec
+  `DATABASE_URL` pour toute configuration.
+- **Playwright** pour les parcours, dans un vrai navigateur contre la vraie API et la vraie base.
+  C'est la seule suite qui prend la chaîne entière, et donc la seule qui voit les défauts
+  d'assemblage : un cookie de session mal posé, un droit vérifié à l'écran mais pas au serveur,
+  un écran d'administration qu'une adresse tapée à la main ouvre quand même.
+
+Les parcours remettent les **données** à zéro avant chaque exécution — jamais les conteneurs —
+et s'appuient sur les cinq comptes du jeu de démonstration, dont les portées sont volontairement
+différentes : c'est ce qui permet de vérifier le cloisonnement autrement qu'en théorie.
 
 ## Environnement de développement
 
