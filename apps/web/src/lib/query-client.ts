@@ -34,6 +34,15 @@ function surErreur(client: QueryClient, erreur: unknown, cleSession: boolean): v
   if (cleSession) return;
   if (!(erreur instanceof ApiError) || erreur.status !== 401) return;
 
+  // On ne perd pas une session qu'on n'a pas.
+  //
+  // C'est le cas de l'ecran de connexion : le 401 y signifie « mauvais mot de
+  // passe », pas « session expiree ». Redemander la session y relance la
+  // requete, remonte le formulaire, et **reinitialise l'etat de la mutation** —
+  // le message d'erreur disparait avant d'avoir ete affiche, et l'utilisateur
+  // qui se trompe de mot de passe ne voit rien se passer du tout.
+  if (client.getQueryData(CLE_SESSION) === undefined) return;
+
   // `invalidateQueries` et non `removeQueries` : retirer la requête la sort du
   // cache sans que l'observateur monté la redemande, et l'application resterait
   // affichée sur des données périmées jusqu'à la prochaine navigation. Invalider

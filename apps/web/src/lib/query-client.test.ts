@@ -191,6 +191,49 @@ describe('perte de session', () => {
     stop();
   });
 
+  /**
+   * La session **observée mais absente** : exactement l'écran de connexion.
+   *
+   * La requête part, revient en 401, et l'application affiche le formulaire.
+   * L'observateur existe, mais il n'y a aucune donnée à perdre.
+   */
+  function sessionAbsente(client: ReturnType<typeof creerQueryClient>) {
+    const lecture = vi.fn().mockRejectedValue(new ApiError(401, 'Authentification requise.'));
+    const observateur = new QueryObserver(client, {
+      queryKey: [...CLE_SESSION],
+      queryFn: lecture,
+    });
+    const stop = observateur.subscribe(() => undefined);
+
+    return { lecture, stop };
+  }
+
+  it('ne redemande pas la session quand une connexion est refusée', async () => {
+    const client = creerQueryClient();
+    const { lecture, stop } = sessionAbsente(client);
+
+    await waitFor(() => {
+      expect(lecture).toHaveBeenCalledTimes(1);
+    });
+
+    // Le 401 d'une connexion dit « mauvais mot de passe », pas « session
+    // expiree » : il n'y a pas de session a perdre. Redemander la session
+    // remonte l'ecran de connexion, ce qui reinitialise l'etat de la mutation
+    // et efface le message d'erreur avant que quiconque ait pu le lire.
+    await client
+      .getMutationCache()
+      .build(client, {
+        mutationFn: () => Promise.reject(new ApiError(401, 'Identifiants invalides.')),
+      })
+      .execute(undefined)
+      .catch(() => undefined);
+
+    await new Promise((resoudre) => setTimeout(resoudre, 50));
+
+    expect(lecture).toHaveBeenCalledTimes(1);
+    stop();
+  });
+
   it('ne se relance pas sur l’échec de la requête de session elle-même', async () => {
     const client = creerQueryClient();
     const requete = vi.fn().mockRejectedValue(new ApiError(401, 'Authentification requise.'));
