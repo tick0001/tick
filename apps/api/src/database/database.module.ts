@@ -18,8 +18,17 @@ export interface Connections {
         const env = loadEnv();
 
         return {
+          // Le pool proprietaire reste petit, et volontairement : il ne sert
+          // qu'aux migrations, a l'amorcage et a la sonde de sante. Lui donner
+          // de la place prendrait des connexions au trafic reel.
           owner: createDatabase({ connectionString: env.DATABASE_URL, max: 4 }),
-          app: createDatabase({ connectionString: env.DATABASE_APP_URL, max: 20 }),
+          // Le pool applicatif porte tout le reste. Reglable, parce qu'un
+          // serveur de collectivite et un serveur de PME n'ont pas la meme
+          // marge — et parce que c'etait le seul reglage fige dans le code.
+          app: createDatabase({
+            connectionString: env.DATABASE_APP_URL,
+            max: env.DATABASE_POOL_MAX,
+          }),
         };
       },
     },

@@ -57,6 +57,24 @@ const envSchema = z.object({
   DATABASE_URL: z.string().url(),
   // Role applicatif : tout le trafic normal, soumis au Row-Level Security.
   DATABASE_APP_URL: z.string().url(),
+  /**
+   * Connexions simultanees du pool applicatif.
+   *
+   * C'etait le seul reglage de l'application fige dans le code, alors que tout
+   * le reste se pose par l'environnement. Un serveur de collectivite et un
+   * serveur de PME n'ont pas la meme marge, et rien ne justifiait qu'ils
+   * partagent la meme valeur sans recours.
+   *
+   * La mesure de charge, elle, n'a **pas** montre que ce plafond limitait : le
+   * doubler n'a rien change au debit. Ce n'est donc pas un correctif de
+   * performance, c'est un reglage rendu accessible.
+   *
+   * Vingt par defaut, ce qui convient a un service de quelques dizaines
+   * d'agents. L'augmenter n'a de sens que si PostgreSQL suit : `max_connections`
+   * doit rester au-dessus de la somme des pools de toutes les instances, sinon
+   * le gain se transforme en refus de connexion.
+   */
+  DATABASE_POOL_MAX: z.coerce.number().int().min(1).max(200).default(20),
 
   REDIS_URL: z.string().url(),
   SESSION_SECRET: z.string().min(16),
