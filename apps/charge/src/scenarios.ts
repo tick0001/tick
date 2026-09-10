@@ -36,10 +36,12 @@ export interface Scenario {
    *
    * Ces valeurs ne sont pas des promesses de performance : ce sont des
    * garde-fous de non-regression. Chacune vaut environ **deux fois** le p95
-   * mesure a cinquante connexions simultanees sur un i7-1260P, a cinquante
-   * mille tickets. Assez lache pour ne pas clignoter, assez serre pour qu'un
-   * depassement signifie quelque chose — les seuils precedents, poses au juge
-   * avant toute mesure, laissaient passer un facteur trois sans broncher.
+   * mesure a cinquante connexions simultanees sur un i7-1260P.
+   *
+   * **Ils sont calibres sur le palier `collectivite`** — cinquante mille
+   * tickets. Au palier `grand-compte`, dix fois plus gros, `recherche-titre`
+   * les depasse : ce n'est pas un seuil trop serre, c'est le constat que la
+   * recherche textuelle ne passe pas cette echelle. Voir le README.
    */
   readonly seuilP95: number;
 }
@@ -101,10 +103,47 @@ export const SCENARIOS: readonly Scenario[] = [
 ];
 
 /**
- * Les paliers de simultaneite.
+ * Les paliers de simultaneite, et ce qu'un palier represente vraiment.
  *
- * Un centre de services n'a pas mille agents qui cliquent en meme temps : dix
- * connexions simultanees represente deja une equipe entiere en action. Monter
- * au-dela sert a voir ou la courbe se casse, pas a simuler un usage credible.
+ * **Une connexion n'est pas un utilisateur.** `autocannon` maintient N requetes
+ * en vol en permanence : des qu'une reponse arrive, la suivante part. Aucun
+ * temps de reflexion, aucune lecture d'ecran, aucune frappe au clavier. Un
+ * agent reel, lui, ouvre une liste, la lit, clique, ecrit — une quinzaine de
+ * requetes par minute quand il travaille sans lever les yeux.
+ *
+ * La conversion se fait par la loi de Little. A 250 requetes par seconde
+ * soutenues, soit 15 000 par minute, cinquante connexions saturees
+ * representent donc de l'ordre de **mille agents en pleine activite**.
+ *
+ * Ce rapport de mille a cinquante n'est pas une licence a mesurer petit : il
+ * dit seulement qu'un palier eleve modelise une **rafale** — un incident
+ * majeur ou tout le monde ouvre un ticket en meme temps, sans temps de
+ * reflexion — plutot qu'un effectif.
+ *
+ * D'ou deux familles de paliers, aux roles distincts.
+ */
+
+/**
+ * Les paliers de service : ceux ou l'application doit **tenir ses seuils**.
+ *
+ * Un depassement ici est une regression, et le banc echoue.
  */
 export const SIMULTANEITE: readonly number[] = [1, 5, 20, 50];
+
+/**
+ * Les paliers de rupture : ceux ou l'on cherche **ou la courbe se casse**.
+ *
+ * Aucun seuil de latence ne s'y applique — a cinq cents connexions saturees,
+ * une latence elevee est le comportement attendu d'un systeme sature, pas un
+ * defaut. Ce qu'on lit ici est ailleurs :
+ *
+ *   - **Le debit s'effondre-t-il, ou plafonne-t-il ?** Un plateau est sain :
+ *     le systeme fait file d'attente. Une chute est un ecroulement.
+ *   - **Des requetes echouent-elles ?** Une grande organisation a le droit
+ *     d'attendre ; elle n'a pas a recevoir des erreurs.
+ *
+ * Les echecs y sont signales sans faire echouer le banc : a ces niveaux, le
+ * poste de mesure epuise ses propres ports avant l'application, et une panne
+ * du mesureur n'est pas une panne du mesure.
+ */
+export const SIMULTANEITE_RUPTURE: readonly number[] = [100, 200, 500];
