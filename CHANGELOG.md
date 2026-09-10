@@ -12,6 +12,27 @@ peut rompre.
 Ce qui ne concerne que le dépôt — intégration continue, outillage de publication, fichiers de
 communauté — n'y figure pas. Ce journal s'adresse à qui exploite Tick&, pas à qui y contribue.
 
+## [0.1.8] — 10 septembre 2026
+
+### Corrigé
+
+- **Le catalogue servait le nom d'origine à un lecteur anglophone.** La traduction du nom d'un
+  formulaire s'appliquait à l'ouverture, mais pas dans la liste où le demandeur choisit : il
+  parcourait une liste dans une langue, cliquait, et le titre changeait de langue. C'est
+  pourtant le seul endroit où ce nom lui sert.
+- **Un mot de passe faux n'affichait aucun message.** L'écran de connexion restait muet : qui
+  se trompait n'avait aucune indication, et pouvait croire l'application en panne.
+- **`pnpm db:seed` échouait au deuxième passage.** La table des traductions de formulaires est
+  polymorphe, donc sans clé étrangère : la remise à zéro ne l'atteignait pas, et ses lignes
+  survivantes heurtaient les identifiants recréés. Sans conséquence sur une installation en
+  service — l'amorçage ne sert qu'à monter un jeu de démonstration.
+- Le formulaire de création de compte annonce la longueur minimale du mot de passe, au lieu de
+  la refuser après coup sur un « Données invalides » qui ne disait pas quel champ corriger.
+
+### À faire en montant
+
+Rien. Aucune de ces corrections ne touche à la configuration ni aux données.
+
 ## [0.1.7] — 9 septembre 2026
 
 **Rien ne change pour une installation.** Cette version ne corrige que la publication
@@ -123,6 +144,7 @@ déploiement par conteneurs ou par archives, licence AGPL-3.0-or-later.
 **Jamais utilisé par un vrai centre de services** — voir le [README](README.md), qui dit
 franchement ce qu'il faut savoir avant de s'en servir.
 
+[0.1.8]: https://github.com/tick0001/tick/releases/tag/v0.1.8
 [0.1.7]: https://github.com/tick0001/tick/releases/tag/v0.1.7
 [0.1.6]: https://github.com/tick0001/tick/releases/tag/v0.1.6
 [0.1.5]: https://github.com/tick0001/tick/releases/tag/v0.1.5

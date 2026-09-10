@@ -883,6 +883,7 @@ export const fr = {
       courriel: 'Courriel',
       motDePasse: 'Mot de passe',
       motDePasseAide: 'Laisser vide pour conserver le mot de passe actuel.',
+      motDePasseLongueur: 'Huit caractères au minimum.',
       actif: 'Compte actif',
       inactifs: 'Inclure les comptes désactivés',
       source: 'Origine',

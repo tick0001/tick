@@ -98,10 +98,29 @@ export class FormsService {
    * politique SQL parce qu'il dépend des groupes, que la session ne porte pas.
    */
   async catalogue(): Promise<FormSummary[]> {
+    const locale = requireContext().locale;
+
     return this.db.asUser(async (tx) => {
+      // La traduction s'applique **ici aussi**, et pas seulement au rendu du
+      // formulaire. C'est la liste du catalogue que le demandeur parcourt pour
+      // choisir : servir le nom d'origine ici et le nom traduit apres le clic
+      // fait changer le titre de langue sous ses yeux, et laisse un lecteur
+      // anglophone chercher dans une liste en francais.
+      //
+      // `COALESCE` et non un `CASE` : sans traduction dans cette langue, la
+      // saisie d'origine reste. Les libelles sont ecrits par un administrateur,
+      // pas traduits par le produit, et un vide serait pire que l'autre langue.
+      //
+      // Le tri garde `f.name` : ordonner sur le libelle traduit ferait changer
+      // l'ordre du catalogue d'une langue a l'autre, pour un gain nul.
       const resultat = await tx.execute<FormSummary & Record<string, unknown>>(sql`
-        SELECT f.id, f.name, f.description, f.category
+        SELECT f.id,
+               COALESCE(t.label, f.name) AS name,
+               COALESCE(t.description, f.description) AS description,
+               f.category
           FROM forms f
+          LEFT JOIN form_translations t
+                 ON t.item_type = 'form' AND t.item_id = f.id AND t.locale = ${locale}
          WHERE f.deleted_at IS NULL AND f.is_active AND ${this.accessCondition()}
          ORDER BY f.category NULLS FIRST, f.ranking, f.name
       `);

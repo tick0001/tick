@@ -596,6 +596,23 @@ describe('Self-service', () => {
 
       expect(enFrancais.name).toBe('Demande de materiel');
       expect(enFrancais.sections[0]?.questions[0]?.label).toBe('Quel materiel ?');
+
+      // Et la **liste** du catalogue traduit elle aussi. C'est le seul endroit
+      // ou le demandeur lit ce nom pour choisir : servir l'original ici et la
+      // traduction apres le clic fait changer le titre de langue sous ses yeux,
+      // et laisse un lecteur anglophone chercher dans une liste en francais.
+      const catalogueAnglais = await dans(
+        ids.profilDemandeur,
+        ids.demandeur,
+        () => formsService.catalogue(),
+        'en',
+      );
+
+      expect(catalogueAnglais.find((f) => f.id === cree.id)?.name).toBe('Hardware request');
+
+      const catalogueFrancais = await commeDemandeur(() => formsService.catalogue());
+
+      expect(catalogueFrancais.find((f) => f.id === cree.id)?.name).toBe('Demande de materiel');
     });
 
     it('retombe sur la saisie quand la langue manque', async () => {

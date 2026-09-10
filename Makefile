@@ -28,7 +28,7 @@ DEMO_LOCAL  := $(COMPOSE) -p tick-demo-locale -f docker/compose.production.yaml 
 DEV         := $(COMPOSE) -f docker/compose.yaml
 
 .DEFAULT_GOAL := aide
-.PHONY: aide dev dev-services dev-arret dev-remise-a-zero verifier images \
+.PHONY: aide dev dev-services dev-arret dev-remise-a-zero verifier images parcours parcours-ui parcours-installer \
         prod prod-journal prod-arret prod-migrer prod-admin \
         demo demo-journal demo-arret demo-locale demo-locale-arret \
         version
@@ -43,6 +43,7 @@ aide:
 	@echo '  make dev-remise-a-zero    base vierge, migree et amorcee'
 	@echo '  make verifier             lint, typecheck, format et tests'
 	@echo '  make images               construit tick-api:local et tick-web:local'
+	@echo '  make parcours             tests de bout en bout (remet les donnees a zero)'
 	@echo ''
 	@echo 'Publication'
 	@echo '  make version V=0.1.7      coupe release/0.1.7, prete a fusionner dans main'
@@ -87,6 +88,24 @@ verifier:
 	pnpm typecheck
 	pnpm format:check
 	pnpm test
+
+# --- Parcours ----------------------------------------------------------------
+#
+# Les tests de bout en bout, dans un vrai navigateur. Ils demarrent l'API et
+# l'interface eux-memes, et **remettent les donnees de developpement a zero**
+# avant de commencer : c'est ce qui les rend repetables.
+#
+# Les services doivent tourner (`make dev-services`), et le navigateur doit
+# avoir ete installe une fois : `make parcours-installer`.
+
+parcours:
+	pnpm --filter @tick/e2e exec playwright test
+
+parcours-ui:
+	pnpm --filter @tick/e2e exec playwright test --ui
+
+parcours-installer:
+	pnpm --filter @tick/e2e exec playwright install chromium
 
 images:
 	pnpm images
@@ -165,6 +184,15 @@ demo-locale-arret:
 # branche dans `main` declenche tout le reste : etiquette, images, archives.
 # Cette cible ne fait que preparer la branche, correctement.
 #
+# Elle monte le manifeste et ouvre la section du journal — position, date et
+# ligne de lien, qui se trompent en silence. Le contenu s'ecrit a la main : rien
+# ne devine ce qu'une version change pour ceux qui l'installent.
+#
+# Elle refuse de partir d'un `develop` en retard sur `main`, et ce garde-fou a
+# ete ecrit apres coup : une version coupee d'un `develop` non realigne emporte
+# le journal et le manifeste d'avant la version precedente, et les ramene en
+# arriere en fusionnant dans `main` — sans conflit, donc sans rien pour alerter.
+#
 # Elle ne pousse rien et n'ouvre aucune pull request : relire le journal avant
 # de publier est le dernier moment ou l'on peut encore corriger ce qu'il annonce.
 
@@ -172,9 +200,11 @@ version:
 	@test -n "$(V)" || { echo 'Usage : make version V=0.1.7'; exit 1; }
 	@echo "$(V)" | grep -Eq '^[0-9]+[.][0-9]+[.][0-9]+$$' || { echo "'$(V)' n'est pas un numero de version."; exit 1; }
 	@git rev-parse --verify --quiet release/$(V) >/dev/null && { echo 'La branche release/$(V) existe deja.'; exit 1; } || true
-	git switch -c release/$(V) develop
-	node -e "const f='apps/api/package.json',m=require('./'+f);m.version='$(V)';require('fs').writeFileSync(f,JSON.stringify(m,null,2)+String.fromCharCode(10))"
+	@git fetch -q origin main develop
+	@test -z "$$(git log --oneline origin/develop..origin/main)" || { echo 'develop est en retard sur main. Realignez avant de couper une version :'; echo '  git switch develop && git merge origin/main && git push'; exit 1; }
+	git switch -c release/$(V) origin/develop
+	node scripts/version.mjs $(V)
 	@echo ''
-	@echo 'Branche release/$(V) creee, manifeste monte.'
-	@echo 'Datez la section du CHANGELOG, puis :'
+	@echo 'Branche release/$(V) creee.'
+	@echo 'Remplissez la section $(V) du CHANGELOG, puis :'
 	@echo '  git commit -am ":bookmark: version $(V)" && git push -u origin release/$(V)'
