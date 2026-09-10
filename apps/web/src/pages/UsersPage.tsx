@@ -191,12 +191,20 @@ export function UsersPage() {
                 label={t('administration.utilisateurs.motDePasse')}
                 hint={
                   edite.id === undefined
-                    ? undefined
+                    ? t('administration.utilisateurs.motDePasseLongueur')
                     : t('administration.utilisateurs.motDePasseAide')
                 }
               >
+                {/*
+                  La longueur minimale est declaree ici, et pas seulement dans
+                  le contrat. Sans elle, un mot de passe trop court part au
+                  serveur, revient en « Donnees invalides. » — un message qui ne
+                  dit pas quel champ est en cause — et l'administrateur cherche
+                  sans savoir quoi corriger.
+                */}
                 <Input
                   type="password"
+                  minLength={8}
                   autoComplete="new-password"
                   value={edite.valeurs.password ?? ''}
                   onChange={(event) => {
