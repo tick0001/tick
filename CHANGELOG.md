@@ -12,6 +12,29 @@ peut rompre.
 Ce qui ne concerne que le dépôt — intégration continue, outillage de publication, fichiers de
 communauté — n'y figure pas. Ce journal s'adresse à qui exploite Tick&, pas à qui y contribue.
 
+## Non publié
+
+### Corrigé
+
+- **La liste des tickets s'effondrait sur les grandes installations.** Pour afficher le nom de
+  l'entité, la requête joignait la table des entités — ce qui interdisait au planificateur
+  d'utiliser l'index de tri : il assemblait toutes les lignes visibles avant d'en garder
+  cinquante. À cinquante mille tickets, l'écran le plus ouvert du produit passait de 95 ms à
+  31 ms une fois la jointure remplacée par une lecture ciblée. Aucun changement de
+  comportement : les lignes affichées sont exactement les mêmes.
+
+### Changé
+
+- **PostgreSQL est désormais lancé avec `random_page_cost=1.1`.** Sa valeur par défaut, `4`,
+  suppose un disque à plateaux où une lecture au hasard coûte quatre fois une lecture
+  séquentielle ; sur un SSD elle pousse le planificateur à balayer des tables entières plutôt
+  qu'à suivre un index. Mesuré à cinquante mille tickets et cinquante connexions simultanées,
+  les six scénarios du banc d'essai gagnent entre 25 % et 145 % de débit, aucun ne régresse.
+
+  **Si vos données vivent sur un disque à plateaux**, retirez la ligne `command:` du service
+  `postgres` de votre fichier Compose : la valeur par défaut est alors la bonne. C'est le seul
+  paramètre PostgreSQL que Tick& règle pour vous.
+
 ## [0.1.8] — 10 septembre 2026
 
 ### Corrigé
