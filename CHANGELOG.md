@@ -23,6 +23,11 @@ communauté — n'y figure pas. Ce journal s'adresse à qui exploite Tick&, pas 
   31 ms une fois la jointure remplacée par une lecture ciblée. Aucun changement de
   comportement : les lignes affichées sont exactement les mêmes.
 
+- **La recherche par statut ou par type balayait toute la table.** Le champ était comparé après
+  conversion en texte, ce qui rendait tout index inutilisable. À cinq cent mille tickets, une
+  recherche filtrée sur le statut passait de 406 ms à 22 ms. Les résultats sont inchangés, et une
+  valeur invalide est toujours refusée.
+
 ### Changé
 
 - **PostgreSQL est désormais lancé avec `random_page_cost=1.1`.** Sa valeur par défaut, `4`,
