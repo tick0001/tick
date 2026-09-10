@@ -23,6 +23,28 @@ function refuser(raison) {
   process.exit(1);
 }
 
+/** La date du jour, telle que le journal l'ecrit. */
+function maintenant() {
+  return new Intl.DateTimeFormat('fr-FR', {
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+  }).format(new Date());
+}
+
+/** La ligne de lien du bas, sans laquelle le titre de la section pointe dans le vide. */
+function poserLeLien(journal) {
+  const premierLien = journal.indexOf('\n[0.');
+
+  if (premierLien === -1) {
+    refuser("Le journal n'a aucun bloc de liens « [x.y.z]: … » ou inserer celui de la version.");
+  }
+
+  const lien = `[${version}]: https://github.com/tick0001/tick/releases/tag/v${version}\n`;
+
+  return journal.slice(0, premierLien + 1) + lien + journal.slice(premierLien + 1);
+}
+
 /** Le manifeste que lit la route de sante, et sur lequel la publication verifie la concordance. */
 function monterLeManifeste() {
   const chemin = 'apps/api/package.json';
@@ -49,16 +71,26 @@ function ouvrirLaSection() {
     refuser(`Le journal a deja une section ${version}.`);
   }
 
-  const date = new Intl.DateTimeFormat('fr-FR', {
-    day: 'numeric',
-    month: 'long',
-    year: 'numeric',
-  }).format(new Date());
+  // Une section « Non publié » deja ouverte est **datee**, pas doublee.
+  //
+  // C'est la facon normale de tenir ce journal : les corrections s'y accumulent
+  // au fil des semaines, et la version leur donne un numero et une date. Sans
+  // ce cas, la nouvelle section s'inserait au-dessus et laissait les entrees
+  // orphelines dans un « Non publié » qui ne se publiait jamais.
+  const enAttente = '\n## Non publié\n';
+
+  if (journal.includes(enAttente)) {
+    const ecrit = journal.replace(enAttente, `\n## [${version}] — ${maintenant()}\n`);
+
+    return () => {
+      writeFileSync(chemin, poserLeLien(ecrit));
+    };
+  }
 
   // Les rubriques restent en commentaire : oubliee, une rubrique vide se voit
   // a la relecture, alors qu'un commentaire non retire ne s'affiche nulle part.
   const section = [
-    `## [${version}] — ${date}`,
+    `## [${version}] — ${maintenant()}`,
     '',
     '<!--',
     'Rubriques utiles seulement, dans cet ordre :',
@@ -73,26 +105,16 @@ function ouvrirLaSection() {
   ].join('\n');
 
   const premiereVersion = journal.indexOf('\n## [');
-  const premierLien = journal.indexOf('\n[0.');
 
-  if (premiereVersion === -1 || premierLien === -1) {
-    refuser(
-      "Le journal n'a pas la forme attendue : une section « ## [x.y.z] » et un bloc de liens" +
-        ' « [x.y.z]: … » sont requis pour savoir ou inserer.',
-    );
+  if (premiereVersion === -1) {
+    refuser("Le journal n'a aucune section « ## [x.y.z] » au-dessus de laquelle inserer.");
   }
 
-  // La ligne de lien, sans laquelle le titre pointe dans le vide.
-  const lien = `[${version}]: https://github.com/tick0001/tick/releases/tag/v${version}\n`;
   const ecrit =
-    journal.slice(0, premiereVersion + 1) +
-    section +
-    journal.slice(premiereVersion + 1, premierLien + 1) +
-    lien +
-    journal.slice(premierLien + 1);
+    journal.slice(0, premiereVersion + 1) + section + journal.slice(premiereVersion + 1);
 
   return () => {
-    writeFileSync(chemin, ecrit);
+    writeFileSync(chemin, poserLeLien(ecrit));
   };
 }
 
