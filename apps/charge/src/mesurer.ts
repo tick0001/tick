@@ -16,7 +16,7 @@ import { SCENARIOS, SIMULTANEITE, SIMULTANEITE_RUPTURE, type Scenario } from './
  *   1. **Trouver ou ca plie.** Les seuils sont laches ; ce qui compte est la
  *      forme de la courbe quand la simultaneite monte.
  *   2. **Empecher les regressions.** Une requete qui double de duree entre deux
- *      versions ne se voit dans aucun des 2 347 tests : ils verifient ce que
+ *      versions ne se voit dans aucun des 2 350 tests : ils verifient ce que
  *      l'application repond, jamais en combien de temps.
  */
 
