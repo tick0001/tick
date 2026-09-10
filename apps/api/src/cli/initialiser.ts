@@ -8,10 +8,9 @@ import 'reflect-metadata';
  */
 import { Logger } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
-import type { RightScope } from '@tick/contracts';
 import { entities, profileRights, profiles, sql, users, type Transaction } from '@tick/db';
 import { AppModule } from '../app.module.js';
-import { RIGHT_CATALOGUE } from '../admin/right-catalogue.js';
+import { droitsAdministrateur, lireOptions } from './initialisation.js';
 import { PasswordService } from '../auth/password.service.js';
 import { loadEnvFiles } from '../config/env.js';
 import { DatabaseService } from '../database/database.service.js';
@@ -35,29 +34,6 @@ import { DatabaseService } from '../database/database.service.js';
  * personne n'attend l'existence.
  */
 
-/** Portée la plus large que l'objet accepte : « all » quand il l'admet. */
-function porteeMaximale(portees: readonly RightScope[]): RightScope {
-  return portees.includes('all') ? 'all' : (portees.at(-1) ?? 'entity');
-}
-
-/**
- * Droits du profil d'administration, dérivés du catalogue.
- *
- * Dérivés et non recopiés : un droit ajouté au cœur doit revenir à
- * l'administrateur sans que personne y pense. Une liste tenue à la main aurait
- * dérivé au premier objet ajouté, et le premier symptôme serait un écran
- * inaccessible à celui qui est censé tout pouvoir.
- */
-function droitsAdministrateur(): { object: string; action: string; scope: RightScope }[] {
-  return RIGHT_CATALOGUE.flatMap((entree) =>
-    entree.actions.map((action) => ({
-      object: entree.object,
-      action,
-      scope: porteeMaximale(entree.scopes),
-    })),
-  );
-}
-
 async function creerRacine(tx: Transaction, nom: string): Promise<number> {
   const [ligne] = await tx
     .insert(entities)
@@ -69,44 +45,6 @@ async function creerRacine(tx: Transaction, nom: string): Promise<number> {
   if (!ligne) throw new Error("Création de l'entité racine impossible.");
 
   return ligne.id;
-}
-
-interface Options {
-  identifiant: string;
-  motDePasse: string;
-  courriel: string | null;
-  entite: string;
-}
-
-/**
- * Lit les options, de la ligne de commande ou de l'environnement.
- *
- * Le mot de passe est accepté par variable d'environnement en plus de
- * l'argument : sur un serveur, un argument de ligne de commande est visible de
- * tout le monde dans `ps`, ce qui livre le compte d'administration à quiconque
- * a un terminal sur la machine.
- */
-function lireOptions(argv: readonly string[]): Options {
-  const valeur = (nom: string): string | undefined => {
-    const prefixe = `--${nom}=`;
-
-    return argv.find((argument) => argument.startsWith(prefixe))?.slice(prefixe.length);
-  };
-
-  const identifiant = valeur('identifiant') ?? process.env['TICK_ADMIN_USERNAME'] ?? 'admin';
-  const motDePasse = valeur('mot-de-passe') ?? process.env['TICK_ADMIN_PASSWORD'] ?? '';
-  const courriel = valeur('courriel') ?? process.env['TICK_ADMIN_EMAIL'] ?? null;
-  const entite = valeur('entite') ?? process.env['TICK_ROOT_ENTITY'] ?? 'Racine';
-
-  if (motDePasse.length < 12) {
-    throw new Error(
-      'Mot de passe absent ou trop court (12 caractères au minimum).\n' +
-        'Passez-le par TICK_ADMIN_PASSWORD, de préférence à --mot-de-passe : ' +
-        'un argument de ligne de commande se lit dans `ps`.',
-    );
-  }
-
-  return { identifiant, motDePasse, courriel, entite };
 }
 
 async function main(): Promise<void> {
