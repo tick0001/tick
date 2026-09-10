@@ -12,6 +12,22 @@ peut rompre.
 Ce qui ne concerne que le dépôt — intégration continue, outillage de publication, fichiers de
 communauté — n'y figure pas. Ce journal s'adresse à qui exploite Tick&, pas à qui y contribue.
 
+## Non publié
+
+### Corrigé
+
+- **Le catalogue servait le nom d'origine à un lecteur anglophone.** La traduction du nom d'un
+  formulaire s'appliquait à l'ouverture, mais pas dans la liste où le demandeur choisit :
+  il parcourait une liste dans une langue, cliquait, et le titre changeait de langue.
+- **Un mot de passe faux n'affichait aucun message.** L'écran de connexion restait muet, sans
+  rien indiquer à qui s'était trompé.
+- Le formulaire de création de compte annonce désormais la longueur minimale du mot de passe,
+  au lieu de la refuser après coup sur un « Données invalides » qui ne disait pas quel champ.
+
+### À faire en montant
+
+Rien. Ces trois corrections ne changent ni configuration ni données.
+
 ## [0.1.7] — 9 septembre 2026
 
 **Rien ne change pour une installation.** Cette version ne corrige que la publication
