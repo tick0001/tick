@@ -227,6 +227,14 @@ async function main(): Promise<void> {
                unavailabilities, problems, changes, tickets,
                ticket_template_fields, ticket_templates, suppliers, locations,
                solution_types, task_categories, request_sources, itil_categories,
+               -- form_translations est nommee explicitement, et il le faut :
+               -- la table est polymorphe, donc **sans cle etrangere**, et le
+               -- CASCADE ne l'atteint pas. Omise, ses lignes survivent au
+               -- RESTART IDENTITY qui remet les identifiants a 1 : la premiere
+               -- section recreee heurte alors la traduction d'une section
+               -- disparue, sur la cle (item_type, item_id, locale). L'amorcage
+               -- echoue au deuxieme passage, pas au premier.
+               form_translations,
                form_submissions, form_destinations, form_access,
                form_question_conditions, form_questions, form_sections, forms,
                kb_favorites, kb_article_targets, kb_article_revisions,
