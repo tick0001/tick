@@ -23,6 +23,18 @@ test.describe('Catalogue et demande', () => {
   test('une demande envoyee devient un ticket que le demandeur retrouve', async ({ page }) => {
     const motif = `Poste de travail a remplacer ${String(Date.now())}`;
 
+    // Compter avant : le ticket produit porte le nom du formulaire, pas le
+    // motif saisi. C'est l'apparition d'une ligne de plus qui prouve que la
+    // demande a abouti, et elle le prouve quel que soit son libelle.
+    const combienDeTickets = async (): Promise<number> => {
+      const reponse = await page.request.get('/api/tickets');
+      const corps = (await reponse.json()) as { items: unknown[] };
+
+      return corps.items.length;
+    };
+
+    const avantTotal = await combienDeTickets();
+
     await page.goto('/catalogue');
     await page.getByRole('button', { name: /Demande de materiel/ }).click();
 
@@ -33,10 +45,10 @@ test.describe('Catalogue et demande', () => {
     // La demande doit se retrouver dans « Mes demandes » : un formulaire qui
     // aboutit sans rien montrer laisse le demandeur croire qu'il a echoue, et
     // il recommence — ou il appelle.
+    await expect.poll(combienDeTickets, { timeout: 15_000 }).toBe(avantTotal + 1);
+
     await page.goto('/tickets');
-    await expect(page.getByText(motif).or(page.getByText(/Demande de materiel/))).toBeVisible({
-      timeout: 15_000,
-    });
+    await expect(page.getByText(/Demande de materiel/).first()).toBeVisible();
   });
 
   test('un champ obligatoire non rempli retient la demande', async ({ page }) => {
