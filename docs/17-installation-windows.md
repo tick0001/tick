@@ -128,6 +128,25 @@ vous-même avant de migrer — la migration le laisse en place s'il existe déj�
 CREATE ROLE tick_app LOGIN PASSWORD 'un-autre-mot-de-passe-solide';
 ```
 
+### Un réglage, et un seul
+
+```powershell
+psql -U postgres -c "ALTER DATABASE tick SET random_page_cost = 1.1"
+```
+
+PostgreSQL fixe `random_page_cost` à `4` par défaut, ce qui suppose un disque à
+plateaux où une lecture au hasard coûte quatre fois une lecture séquentielle. Sur
+un SSD le rapport est proche de `1`, et la valeur par défaut pousse le
+planificateur à balayer des tables entières plutôt qu'à suivre un index. Mesuré à
+cinquante mille tickets et cinquante connexions simultanées, les six scénarios du
+banc d'essai gagnent entre 25 % et 145 % de débit, aucun ne régresse.
+
+**Sur un disque à plateaux, ne le posez pas** : la valeur par défaut est la bonne.
+
+C'est le seul paramètre que Tick& vous demande de régler. `shared_buffers`,
+`work_mem` et les autres dépendent de votre machine et de votre charge : les
+recopier d'un guide générique fait plus de mal que de bien.
+
 ## 5. Archives de version
 
 Les archives sont attachées à chaque [version publiée](https://github.com/tick0001/tick/releases).
