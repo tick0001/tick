@@ -70,10 +70,24 @@ export default defineConfig({
 
   webServer: [
     {
-      command: 'pnpm --filter @tick/api dev',
+      // Construire puis demarrer, et non `dev`. Le script `dev` de l'API lance
+      // `tsc --watch` et `node --watch dist/main.js` **en parallele** : sur une
+      // arborescence fraiche, Node cherche un fichier que TypeScript n'a pas
+      // encore ecrit, meurt, et plus rien n'ecoute. Le defaut ne se voit pas
+      // sur un poste ou `dist/` traine d'une compilation precedente — il a
+      // fallu l'integration continue pour le reveler.
+      //
+      // Le filtre `@tick/api...` prend l'API **et ses dependances** : sans
+      // elles, Vite ne resout pas `@tick/contracts` non plus.
+      //
+      // Et `start` plutot que `dev` : une suite de tests n'a pas besoin d'un
+      // observateur de fichiers, qui ne ferait qu'ajouter des redemarrages au
+      // milieu des scenarios.
+      command: 'pnpm --filter "@tick/api..." build && pnpm --filter @tick/api start',
       cwd: '../..',
       // La sonde, et non le port : l'API ecoute avant d'etre prete, et un
-      // scenario lance trop tot echoue sur une base injoignable.
+      // scenario lance trop tot echoue sur une base injoignable. C'est aussi ce
+      // qui garantit qu'aucun test ne part avant la fin de la construction.
       url: 'http://localhost:3000/api/health',
       reuseExistingServer: !process.env.CI,
       timeout: 180_000,
