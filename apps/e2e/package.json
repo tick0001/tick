@@ -1,0 +1,19 @@
+{
+  "name": "@tick/e2e",
+  "license": "AGPL-3.0-or-later",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "e2e": "playwright test",
+    "e2e:ui": "playwright test --ui",
+    "e2e:rapport": "playwright show-report",
+    "lint": "eslint tests",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.56.0",
+    "@tick/contracts": "workspace:*",
+    "typescript": "^6.0.3"
+  }
+}

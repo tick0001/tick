@@ -2,3 +2,9 @@ dist/
 coverage/
 .turbo/
 pnpm-lock.yaml
+
+# Sorties des tests de bout en bout : sessions ouvertes, traces, rapports.
+# Ce sont des artefacts d'execution, pas du code a mettre en forme.
+apps/e2e/.sessions/
+apps/e2e/test-results/
+apps/e2e/playwright-report/
