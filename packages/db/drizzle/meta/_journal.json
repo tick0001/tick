@@ -225,6 +225,13 @@
       "when": 1788708737293,
       "tag": "0031_natures_de_question",
       "breakpoints": true
+    },
+    {
+      "idx": 32,
+      "version": "7",
+      "when": 1789043015459,
+      "tag": "0032_index_ouverture_tickets",
+      "breakpoints": true
     }
   ]
 }
