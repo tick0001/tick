@@ -111,6 +111,113 @@ simultanées, i7-1260P :
 
 Six scénarios sur six progressent, aucun ne régresse. Une ligne de configuration.
 
+### Troisième trouvaille : la recherche castait sa colonne
+
+Le registre des champs interrogeables déclarait `tickets.status::text`. Un cast sur la colonne
+interdit tout index : PostgreSQL balaie puis trie. Le cast ne protégeait de rien — le compilateur
+refuse déjà toute valeur hors des choix déclarés, et une valeur invalide n'atteint jamais SQL.
+
+```
+avec ::text   Seq Scan sur 500 014 lignes, top-N heapsort   325 ms
+sans          Index Scan, 51 lignes lues                      1,9 ms
+```
+
+De bout en bout, `POST /api/search/tickets` filtré par statut : **406 ms → 22 ms**. Le scénario
+`recherche-statut` est passé d'un plafond de 8 requêtes par seconde, cassé dès cent connexions, à
+la même courbe que la liste — 156 req/s, tenu jusqu'à cinq cents.
+
+Un test le retient : `search-registry.service.test.ts` refuse tout cast sur une colonne du
+registre. Remis en place, le cast le fait échouer.
+
+## Ce que le banc a trouvé sur lui-même
+
+Trois défauts de l'instrument, tous découverts en montant à cinq cent mille tickets, et tous
+capables d'inventer des résultats. Ils sont notés parce qu'un banc d'essai qui ment est pire
+qu'un banc absent.
+
+**Il affichait des échecs comme des zéros.** Quand chaque requête est plus lente que la fenêtre
+de mesure, `autocannon` rend zéro partout : zéro requête, zéro erreur, zéro milliseconde. La
+première version imprimait `p50 0 ms · 0 req/s` — ce qui se lit comme « instantané » et signifie
+l'inverse. Le compte des requêtes abouties est désormais lu, et un palier muet est un échec.
+
+**Il mesurait le disque.** Sans échauffement, le premier appel à la liste sur une table de
+584 Mio a pris **82 secondes**, le deuxième 117, le troisième 2 — puis 20 millisecondes une fois
+la table en mémoire. La campagne entière ne mesurait que la lecture d'un fichier. Chaque scénario
+est maintenant précédé d'un échauffement qui n'est pas compté.
+
+**Il mesurait la traîne du palier précédent.** Après un palier à cinq cents connexions, la sonde
+de santé a mis 120 secondes à répondre. Les scénarios suivants n'ont rien rendu — non qu'ils
+soient lents, mais parce qu'ils attendaient derrière. Le banc attend désormais le retour au calme
+entre chaque palier, **par une sonde qui passe par le pool de connexions** : la sonde de santé ne
+convenait pas, elle répondait vite pendant que PostgreSQL avalait encore cinq cents balayages.
+Le temps de retour au calme est imprimé — c'est la réponse à « combien de temps ce service
+met-il à se remettre d'une rafale ».
+
+Et il ne monte plus les paliers au-delà du point de rupture : une fois le p95 au-delà de cinq
+secondes, les paliers suivants n'apprennent rien et ne font qu'empiler une file qui fausse le
+scénario d'après.
+
+## Ce qui plie, et où
+
+Campagne complète à **cinq cent mille tickets**, i7-1260P, 16 Gio, PostgreSQL 18 en conteneur.
+
+Les trois écrans de lecture — liste, liste filtrée, détail — **ne cassent pas**. Ils plafonnent
+entre 166 et 209 requêtes par seconde dès vingt connexions, puis la latence croît linéairement
+sans que le débit s'effondre, et sans une seule erreur jusqu'à cinq cents connexions saturées.
+La file se vide en trois à quatre secondes. C'est la dégradation qu'on veut : on attend, on ne
+tombe pas.
+
+| scénario         | 1 conn. | plafond   | rupture        | retour au calme à 500 |
+| ---------------- | ------: | --------- | -------------- | --------------------: |
+| liste            |   17 ms | 166 req/s | aucune         |                 3,6 s |
+| liste filtrée    |   18 ms | 172 req/s | aucune         |                 3,8 s |
+| détail           |   12 ms | 209 req/s | aucune         |                 3,2 s |
+| recherche statut |   18 ms | 156 req/s | aucune         |                 4,0 s |
+| recherche titre  |  599 ms | 4 req/s   | 100 connexions |                     — |
+| indicateurs      |  917 ms | 3 req/s   | 20 connexions  |                     — |
+
+**Le mur n'est pas la simultanéité, ce sont deux routes.**
+
+### La recherche textuelle, et pourquoi un index ne la sauve pas
+
+`ILIKE '%mot%'` balaie les cinq cent mille lignes : 599 ms à une seule connexion, un plafond de
+quatre requêtes par seconde. Un index trigramme GIN corrigerait cela — **et il ne peut pas
+servir ici**.
+
+Mesuré, pas supposé. Même requête, mêmes données, seul le rôle change :
+
+```
+rôle propriétaire, sans RLS   Bitmap Index Scan sur l'index trigramme   0,32 ms
+rôle applicatif, sous RLS     Seq Scan sur 500 014 lignes             467 ms
+```
+
+La cause est structurelle. PostgreSQL refuse d'évaluer un prédicat **non _leakproof_** avant le
+prédicat de sécurité d'une politique RLS — sinon un message d'erreur ou une différence de durée
+pourrait révéler une ligne qu'on n'a pas le droit de voir. Or aucun opérateur de recherche
+textuelle ne l'est :
+
+| opérateur          | fonction        | _leakproof_ |
+| ------------------ | --------------- | ----------- |
+| `=` (texte)        | `texteq`        | oui         |
+| `LIKE` / `ILIKE`   | `textlike`      | **non**     |
+| `@@` (plein texte) | `ts_match_vq`   | **non**     |
+| `%` (similarité)   | `similarity_op` | **non**     |
+
+Le cloisonnement par RLS et l'indexation de la recherche textuelle sont donc **mutuellement
+exclusifs** dans PostgreSQL. Sortir de là est un arbitrage, pas un correctif : il faudrait
+appliquer la portée hors de RLS pour ce chemin, ou marquer un opérateur `LEAKPROOF` — ce que la
+documentation de PostgreSQL présente comme un risque de fuite. Aucune des deux ne se décide dans
+un commentaire de code.
+
+En attendant, la recherche par titre est utilisable jusqu'au palier `collectivite` et cesse de
+l'être bien avant `grand-compte`.
+
+### Les indicateurs
+
+`/api/stats` agrège tout le périmètre : 917 ms à une connexion, plafond à trois requêtes par
+seconde, rupture dès vingt. C'est le coût d'un agrégat sur cinq cent mille lignes, et il n'a pas
+encore été travaillé.
+
 ## Ce que la mesure a **infirmé**
 
 Six soupçons formés en lisant le code, et démentis par la mesure. Ils sont notés ici pour que
