@@ -28,7 +28,7 @@ DEMO_LOCAL  := $(COMPOSE) -p tick-demo-locale -f docker/compose.production.yaml 
 DEV         := $(COMPOSE) -f docker/compose.yaml
 
 .DEFAULT_GOAL := aide
-.PHONY: aide dev dev-services dev-arret dev-remise-a-zero verifier images parcours parcours-ui parcours-installer \
+.PHONY: aide dev dev-services dev-arret dev-remise-a-zero verifier images parcours parcours-ui parcours-installer charge mesurer \
         prod prod-journal prod-arret prod-migrer prod-admin \
         demo demo-journal demo-arret demo-locale demo-locale-arret \
         version
@@ -44,6 +44,8 @@ aide:
 	@echo '  make verifier             lint, typecheck, format et tests'
 	@echo '  make images               construit tick-api:local et tick-web:local'
 	@echo '  make parcours             tests de bout en bout (remet les donnees a zero)'
+	@echo '  make charge P=pme         jeu de donnees a l echelle (pme, collectivite, grand-compte)'
+	@echo '  make mesurer              banc d essai sur l API en cours'
 	@echo ''
 	@echo 'Publication'
 	@echo '  make version V=0.1.7      coupe release/0.1.7, prete a fusionner dans main'
@@ -208,3 +210,19 @@ version:
 	@echo 'Branche release/$(V) creee.'
 	@echo 'Remplissez la section $(V) du CHANGELOG, puis :'
 	@echo '  git commit -am ":bookmark: version $(V)" && git push -u origin release/$(V)'
+
+# --- Banc d'essai -------------------------------------------------------------
+#
+# Deux gestes distincts. `charge` fabrique le volume, `mesurer` l'eprouve.
+#
+# Les chiffres obtenus ne valent que pour la machine qui les produit : ce ne
+# sont pas des proprietes de Tick&. Les publier sans nommer le processeur, le
+# volume et le scenario serait malhonnete — l'outil imprime les trois pour
+# cette raison.
+
+charge:
+	@test -n "$(P)" || { echo 'Usage : make charge P=pme|collectivite|grand-compte'; exit 1; }
+	pnpm --filter @tick/api db:charge $(P)
+
+mesurer:
+	pnpm --filter @tick/charge charge
