@@ -461,10 +461,13 @@ export class TicketsService {
    *
    * De bout en bout, `GET /api/tickets?limit=50` : 95 ms avant, 31 ms apres.
    *
-   * La jointure sur `entities` etait interne : un ticket dont l'entite serait
-   * invisible en aurait disparu. Le Row-Level Security garantit deja qu'un
-   * ticket visible a son entite dans le perimetre, si bien que la sous-requete
-   * rend exactement les memes lignes.
+   * La jointure sur `entities` etait interne, donc filtrante : un ticket dont
+   * l'entite serait invisible en aurait disparu. Elle ne filtrait rien, et pas
+   * par chance — le ticket porte `entity_path`, que le declencheur
+   * `entities_propagate_path_trg` maintient egal a `entities.path` dans la
+   * transaction meme du deplacement. Les deux politiques de securite evaluent
+   * donc `tick_in_scope` sur la meme valeur : un ticket visible a toujours son
+   * entite visible, et la sous-requete rend exactement les memes lignes.
    */
   private async paginate(
     conditions: SQL[],

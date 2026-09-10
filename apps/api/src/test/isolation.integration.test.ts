@@ -126,6 +126,71 @@ describe('Isolation entre entites', () => {
     );
   });
 
+  /**
+   * L'invariant dont depend la liste des tickets.
+   *
+   * `TicketsService.paginate` lit le nom de l'entite par une sous-requete
+   * scalaire et non par une jointure interne, parce que la jointure empechait
+   * l'usage de l'index de tri. Le changement n'est correct que si aucun ticket
+   * visible n'a d'entite invisible : sinon la liste montrerait une ligne au nom
+   * d'entite vide la ou l'ancienne requete l'ecartait.
+   *
+   * La garantie vient de `entities_propagate_path_trg`, qui recopie le chemin
+   * de l'entite sur ses tickets dans la transaction meme du deplacement. Ce
+   * test l'exerce la ou elle risque le plus de ceder : pendant un deplacement
+   * de sous-arbre.
+   */
+  it('ne laisse jamais un ticket visible avec une entite invisible', async () => {
+    const siteA = fixture.entityIds['siteA'] as number;
+
+    await fixture.owner.db.execute(sql`
+      INSERT INTO tickets (entity_id, entity_path, name)
+      VALUES (${siteA}, 'temporaire', 'Ticket de controle')
+    `);
+
+    const orphelins = async (chemin: string): Promise<number> => {
+      const lignes = await withRequestContext(fixture.app.db, withSubtree(chemin), (tx) =>
+        tx.execute<{ orphelins: number }>(sql`
+          SELECT count(*)::int AS orphelins
+            FROM tickets
+           WHERE tickets.deleted_at IS NULL
+             AND (SELECT e.id FROM entities e WHERE e.id = tickets.entity_id) IS NULL
+        `),
+      );
+
+      return Number(lignes.rows[0]?.orphelins ?? -1);
+    };
+
+    expect(await orphelins(fixture.paths['nord'] as string)).toBe(0);
+
+    // Site A passe de Filiale Nord au Siege : les tickets doivent suivre.
+    await fixture.owner.db.execute(
+      sql`UPDATE entities SET parent_id = ${fixture.entityIds['siege']} WHERE id = ${siteA}`,
+    );
+
+    expect(await orphelins(fixture.paths['nord'] as string)).toBe(0);
+    expect(await orphelins(fixture.paths['siege'] as string)).toBe(0);
+
+    // Et le ticket est bien passe d'un perimetre a l'autre, sans disparaitre.
+    const compter = async (chemin: string): Promise<number> => {
+      const lignes = await withRequestContext(fixture.app.db, withSubtree(chemin), (tx) =>
+        tx.execute<{ total: number }>(
+          sql`SELECT count(*)::int AS total FROM tickets WHERE name = 'Ticket de controle'`,
+        ),
+      );
+
+      return Number(lignes.rows[0]?.total ?? -1);
+    };
+
+    expect(await compter(fixture.paths['nord'] as string)).toBe(0);
+    expect(await compter(fixture.paths['siege'] as string)).toBe(1);
+
+    await fixture.owner.db.execute(
+      sql`UPDATE entities SET parent_id = ${fixture.entityIds['nord']} WHERE id = ${siteA}`,
+    );
+    await fixture.owner.db.execute(sql`DELETE FROM tickets WHERE name = 'Ticket de controle'`);
+  });
+
   it('refuse une ecriture hors du perimetre', async () => {
     await expect(
       withRequestContext(fixture.app.db, exactly(fixture.paths['siteA'] as string), (tx) =>
