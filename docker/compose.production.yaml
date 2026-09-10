@@ -26,6 +26,22 @@ services:
   postgres:
     image: postgres:18-alpine
     restart: unless-stopped
+    # `random_page_cost` : PostgreSQL suppose par defaut un disque a plateaux,
+    # ou une lecture au hasard coute quatre fois une lecture sequentielle. Sur
+    # un SSD le rapport est proche de un, et la valeur par defaut pousse le
+    # planificateur a balayer des tables entieres plutot qu'a suivre un index.
+    #
+    # Mesure sur cinquante mille tickets, banc d'essai complet, 50 connexions
+    # simultanees (voir apps/charge) :
+    #
+    #   liste filtree par statut   p95 663 ms -> 247 ms,  95 -> 233 req/s
+    #   recherche par titre        p95 1182 ms -> 796 ms, 52 -> 76 req/s
+    #   indicateurs                p95 1384 ms -> 1000 ms, 42 -> 60 req/s
+    #
+    # Les six scenarios progressent, aucun ne regresse. **A remonter a 4 si les
+    # donnees vivent sur un disque a plateaux**, ou la valeur par defaut est la
+    # bonne.
+    command: ['postgres', '-c', 'random_page_cost=1.1']
     environment:
       POSTGRES_USER: ${POSTGRES_USER:?renseignez POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?renseignez POSTGRES_PASSWORD}

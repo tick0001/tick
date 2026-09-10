@@ -75,9 +75,45 @@ Ce qui restait à expliquer l'est donc : le coût fixe de la route était sa req
 côté Node. Les trente millisecondes qui subsistent sont le reste de la route — session,
 sérialisation, boucle d'évènements — et se comparent aux cinq de la sonde de santé.
 
+### Deuxième trouvaille : le planificateur croyait le disque lent
+
+La liste **filtrée par statut** — le premier geste d'un agent qui arrive le matin — était deux
+fois plus lente que la liste complète. Contre-intuitif : ajouter un filtre devrait réduire le
+travail.
+
+En cause, une estimation, pas un chemin d'accès. Le Row-Level Security compare des `ltree`, et
+PostgreSQL ne sait pas estimer la sélectivité de `<@` : il applique une constante. Sur
+`status = 'new'` il prévoyait **83** lignes là où il y en a **7 145**, en concluait qu'il
+faudrait parcourir presque tout l'index pour en trouver cinquante et une, et préférait balayer.
+
+Aucun index ne corrige cela — j'en ai créé un sur `(status, date_opened, id)` pour le vérifier :
+il n'est jamais choisi, parce que c'est l'estimation qui décide, pas la forme de l'index. Il a
+été supprimé.
+
+Ce qui corrige, c'est **`random_page_cost`**. PostgreSQL le fixe à `4` par défaut, ce qui
+suppose un disque à plateaux où une lecture au hasard coûte quatre fois une lecture séquentielle.
+Sur un SSD le rapport est proche de `1`. À `1.1`, la même requête passe de **26,8 ms à 0,33 ms**.
+
+Le réglage est désormais posé dans `docker/compose.yaml` et `docker/compose.production.yaml`,
+avec la consigne de le remonter à `4` si les données vivent sur un disque à plateaux.
+
+Il ne profite pas qu'à la liste. Banc complet, cinquante mille tickets, 50 connexions
+simultanées, i7-1260P :
+
+| scénario         | p95 avant | p95 après | débit avant → après |
+| ---------------- | --------: | --------: | ------------------: |
+| liste            |    369 ms |    246 ms |     165 → 247 req/s |
+| liste filtrée    |    663 ms |    247 ms |      95 → 233 req/s |
+| détail           |    288 ms |    204 ms |     206 → 291 req/s |
+| recherche titre  |   1182 ms |    796 ms |       52 → 76 req/s |
+| recherche statut |    777 ms |    585 ms |      83 → 109 req/s |
+| indicateurs      |   1384 ms |   1000 ms |       42 → 60 req/s |
+
+Six scénarios sur six progressent, aucun ne régresse. Une ligne de configuration.
+
 ## Ce que la mesure a **infirmé**
 
-Cinq soupçons formés en lisant le code, et démentis par la mesure. Ils sont notés ici pour que
+Six soupçons formés en lisant le code, et démentis par la mesure. Ils sont notés ici pour que
 personne ne les reprenne :
 
 - **Les sous-requêtes corrélées** qui comptent suivis et tâches ne coûtent rien : 0,007 ms par
@@ -93,3 +129,5 @@ personne ne les reprenne :
 - **Un plan de requête figé** : `ANALYZE` puis `DISCARD PLANS` ne changent rien. Le plan était
   le bon plan pour la requête telle qu'elle était écrite ; c'est la requête qu'il fallait
   changer.
+- **Un index manquant sur `(status, date_opened, id)`** pour la liste filtrée : créé, mesuré,
+  jamais choisi par le planificateur, supprimé. Le défaut était dans l'estimation.
