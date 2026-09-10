@@ -89,6 +89,9 @@ services:
 
       DATABASE_URL: ${DATABASE_URL:?renseignez DATABASE_URL}
       DATABASE_APP_URL: ${DATABASE_APP_URL:?renseignez DATABASE_APP_URL}
+      # Plafond de connexions du pool applicatif. Ne l'augmenter que si
+      # `max_connections` de PostgreSQL reste au-dessus de la somme des pools.
+      DATABASE_POOL_MAX: ${DATABASE_POOL_MAX:-20}
       REDIS_URL: ${REDIS_URL:-redis://redis:6379}
 
       SESSION_SECRET: ${SESSION_SECRET:?renseignez SESSION_SECRET}
