@@ -246,6 +246,13 @@ jobs:
           --health-interval 5s
           --health-timeout 5s
           --health-retries 10
+      # Boite aux lettres jetable, avec une API HTTP sur 8025. Un scenario y
+      # verifie qu'un ticket cree part reellement en notification : sans
+      # destinataire observable, on ne teste que l'absence d'erreur, ce qui
+      # n'est pas la meme chose que « quelqu'un a ete prevenu ».
+      mailpit:
+        image: axllent/mailpit:latest
+        ports: ['1025:1025', '8025:8025']
 
     env:
       DATABASE_URL: postgres://tick:tick@localhost:5432/tick
