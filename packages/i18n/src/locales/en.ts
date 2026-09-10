@@ -877,6 +877,7 @@ export const en: Traductions = {
       courriel: 'Email',
       motDePasse: 'Password',
       motDePasseAide: 'Leave empty to keep the current password.',
+      motDePasseLongueur: 'Eight characters minimum.',
       actif: 'Active account',
       inactifs: 'Include deactivated accounts',
       source: 'Origin',
