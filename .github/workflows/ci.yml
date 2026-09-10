@@ -208,3 +208,88 @@ jobs:
       - name: Journaux
         if: failure()
         run: docker compose -f docker/compose.production.yaml logs --no-color --tail 200
+
+  # Les parcours reels, dans un vrai navigateur.
+  #
+  # Ce travail couvre ce qu'aucun des deux autres ne peut couvrir. « Verification »
+  # bouchonne l'API cote interface et n'ouvre aucun navigateur ; « Conteneurs »
+  # demarre la pile mais ne fait qu'appeler la sonde. Entre les deux vivent les
+  # defauts d'assemblage : un cookie mal pose, un droit verifie a l'ecran mais
+  # pas au serveur, un ecran d'administration qu'une adresse tapee a la main
+  # ouvre quand meme.
+  #
+  # Le premier defaut trouve par cette suite : un mot de passe faux n'affichait
+  # aucun message, le gestionnaire global de 401 remontant le formulaire avant
+  # que l'erreur ait pu s'afficher.
+  parcours:
+    name: Parcours
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:18-alpine
+        env:
+          POSTGRES_USER: tick
+          POSTGRES_PASSWORD: tick
+          POSTGRES_DB: tick
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U tick -d tick"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+      redis:
+        image: redis:8-alpine
+        ports: ['6379:6379']
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    env:
+      DATABASE_URL: postgres://tick:tick@localhost:5432/tick
+      DATABASE_APP_URL: postgres://tick_app:tick_app@localhost:5432/tick
+      REDIS_URL: redis://localhost:6379
+      SESSION_SECRET: secret-de-test-parcours
+      ENCRYPTION_KEY: '0000000000000000000000000000000000000000000000000000000000000000'
+      SMTP_HOST: localhost
+      SMTP_PORT: '1025'
+      SMTP_FROM: parcours@exemple.invalid
+      API_URL: http://localhost:5173
+      WEB_URL: http://localhost:5173
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: pnpm/action-setup@v6
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Migrations
+        run: pnpm db:migrate
+
+      # Chromium seul, et sans les autres navigateurs : ces scenarios verifient
+      # des regles metier et des droits, pas des differences de moteur de rendu.
+      - name: Navigateur
+        run: pnpm --filter @tick/e2e exec playwright install --with-deps chromium
+
+      # Playwright demarre lui-meme l'API et l'interface, et remet les donnees
+      # a zero avant de commencer. Voir `playwright.config.ts`.
+      - name: Parcours
+        run: pnpm --filter @tick/e2e exec playwright test
+
+      - name: Rapport
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: parcours-rapport
+          path: |
+            apps/e2e/playwright-report/
+            apps/e2e/test-results/
+          retention-days: 7
