@@ -275,6 +275,27 @@ sonde de santé du conteneur s'appuie dessus.
 
 Puis ouvrir l'interface et se connecter avec le compte créé.
 
+## Un réglage PostgreSQL, et un seul
+
+Le fichier Compose lance PostgreSQL avec `random_page_cost=1.1`.
+
+PostgreSQL fixe ce paramètre à `4` par défaut, ce qui suppose un disque à plateaux
+où une lecture au hasard coûte quatre fois une lecture séquentielle. Sur un SSD le
+rapport est proche de `1`, et la valeur par défaut pousse le planificateur à
+balayer des tables entières plutôt qu'à suivre un index.
+
+Mesuré sur cinquante mille tickets, à cinquante connexions simultanées : les six
+scénarios du banc d'essai gagnent entre 25 % et 145 % de débit, aucun ne régresse.
+
+**Si les données vivent sur un disque à plateaux**, retirer la ligne `command:` du
+service `postgres` : la valeur par défaut est alors la bonne.
+
+Aucun autre paramètre n'est modifié. Ceux qui traînent dans les guides de
+« tuning » — `shared_buffers`, `work_mem`, `effective_cache_size` — dépendent de la
+machine et de la charge réelle ; les figer dans un fichier livré ferait plus de mal
+que de bien. Le banc d'essai est là pour ceux qui veulent les régler chez eux :
+voir `apps/charge/README.md`.
+
 ## Sauvegarde
 
 Trois choses, et les trois sont nécessaires — restaurer deux sur trois donne une

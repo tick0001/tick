@@ -5,16 +5,19 @@
  * Les scenarios retenus sont ceux qu'un centre de services execute des
  * milliers de fois par jour, et ceux dont on soupconne qu'ils plieront.
  *
- * Deux soupcons, formes en lisant le schema avant de mesurer :
+ * **Deux soupcons formes en lisant le schema, et tranches par la mesure :**
  *
- *   - La recherche par titre compile un `contains` en `ILIKE '%…%'`. L'extension
- *     `pg_trgm` est activee depuis la premiere migration, mais **aucun index
- *     GIN n'existe sur les tickets** — le seul porte sur la base de
- *     connaissances. On attend donc un balayage sequentiel qui grandit avec le
- *     volume.
+ *   - La recherche par titre compile un `contains` en `ILIKE '%...%'` sans
+ *     index GIN sur les tickets. Le balayage a bien lieu — mais il coute
+ *     moins que prevu : a cinquante mille lignes, comparable au temoin
+ *     indexe. **Soupcon infirme**, aucun index ajoute.
  *   - La liste compte suivis et taches par sous-requetes correlees, une paire
- *     par ligne. Indexees, donc pas catastrophiques, mais c'est le genre de
- *     cout qui se degrade non lineairement.
+ *     par ligne. **Soupcon infirme** : 0,007 ms par ligne, elles sont
+ *     correctement indexees.
+ *
+ * Ce que la mesure a trouve, elle, n'avait ete soupconne par personne : la
+ * liste joignait `entities` pour en lire le nom, ce qui interdisait au
+ * planificateur d'utiliser l'index de tri. Voir le README.
  *
  * Un scenario qui infirme un soupcon vaut autant qu'un qui le confirme : c'est
  * pour cela que la liste et le detail sont mesures aussi, comme temoins.
@@ -32,9 +35,11 @@ export interface Scenario {
    * Seuil de latence au 95e centile, en millisecondes.
    *
    * Ces valeurs ne sont pas des promesses de performance : ce sont des
-   * garde-fous de non-regression. Elles sont deliberement laches — le but est
-   * qu'elles ne clignotent pas, et qu'un depassement signifie vraiment quelque
-   * chose.
+   * garde-fous de non-regression. Chacune vaut environ **deux fois** le p95
+   * mesure a cinquante connexions simultanees sur un i7-1260P, a cinquante
+   * mille tickets. Assez lache pour ne pas clignoter, assez serre pour qu'un
+   * depassement signifie quelque chose — les seuils precedents, poses au juge
+   * avant toute mesure, laissaient passer un facteur trois sans broncher.
    */
   readonly seuilP95: number;
 }
@@ -45,21 +50,21 @@ export const SCENARIOS: readonly Scenario[] = [
     intention: 'La liste des tickets, premiere page — l ecran le plus ouvert de tous',
     methode: 'GET',
     chemin: '/api/tickets',
-    seuilP95: 800,
+    seuilP95: 500,
   },
   {
     nom: 'liste-filtree',
     intention: 'La meme, restreinte aux tickets ouverts',
     methode: 'GET',
     chemin: '/api/tickets?status=new',
-    seuilP95: 800,
+    seuilP95: 500,
   },
   {
     nom: 'detail',
     intention: 'Un ticket et sa chronologie',
     methode: 'GET',
     chemin: '/api/tickets/1/timeline',
-    seuilP95: 500,
+    seuilP95: 450,
   },
   {
     nom: 'recherche-titre',
@@ -74,7 +79,7 @@ export const SCENARIOS: readonly Scenario[] = [
         value: 'imprimante',
       },
     },
-    seuilP95: 1500,
+    seuilP95: 1600,
   },
   {
     nom: 'recherche-statut',
@@ -84,7 +89,7 @@ export const SCENARIOS: readonly Scenario[] = [
     corps: {
       criteria: { kind: 'criterion', field: 'ticket.status', operator: 'eq', value: 'new' },
     },
-    seuilP95: 800,
+    seuilP95: 1200,
   },
   {
     nom: 'statistiques',
