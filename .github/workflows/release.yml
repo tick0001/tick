@@ -59,10 +59,19 @@ jobs:
 
       - uses: pnpm/action-setup@v6
 
+      # **Sans cache, deliberement.** Appele par « Publication », ce travail a
+      # un jeton de cache en lecture seule (`Cache mode: read`) : la sauvegarde
+      # echouait a chaque version et laissait un avertissement. La lecture ne
+      # sert guere plus — `main` ne garde que le cache de la version precedente,
+      # dont le verrou des dependances differe presque toujours, et aucun
+      # travail n'en ecrit jamais pour Windows.
+      #
+      # Ce que le cache ferait gagner, mesure sur la 0.1.9 : l'installation
+      # prend 7 s sous Linux et 16 s sous Windows. Le prechauffer couterait plus
+      # que cela.
       - uses: actions/setup-node@v7
         with:
           node-version: 22
-          cache: pnpm
 
       - run: pnpm install --frozen-lockfile
 
