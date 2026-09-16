@@ -315,6 +315,48 @@ docker compose -f docker/compose.production.yaml exec -T postgres \
 Redis n'a pas besoin d'être sauvegardé : il ne porte que des files d'attente.
 Le perdre fait au pire repartir des notifications non encore envoyées.
 
+## Restauration
+
+Sur un serveur neuf, **dans cet ordre** :
+
+```bash
+# 1. La base seule, encore vide
+docker compose -f docker/compose.production.yaml up -d --wait postgres redis
+
+# 2. Le rôle applicatif, avec le mot de passe de DATABASE_APP_URL
+docker compose -f docker/compose.production.yaml exec -T postgres \
+  psql -U tick -d tick -c "CREATE ROLE tick_app LOGIN PASSWORD 'le-mot-de-passe'"
+
+# 3. La sauvegarde
+docker compose -f docker/compose.production.yaml exec -T postgres \
+  pg_restore -U tick -d tick --exit-on-error < tick-2026-09-16.dump
+
+# 4. Le reste de la pile
+docker compose -f docker/compose.production.yaml up -d
+```
+
+Puis remettre le volume `storage`, avec la **même** `ENCRYPTION_KEY` qu'avant. Si
+la sauvegarde vient d'une version plus ancienne, le service `migrate` joue au
+passage les migrations manquantes.
+
+**Le rôle d'abord.** `pg_dump` ne sauvegarde pas les rôles : ils appartiennent au
+serveur PostgreSQL, pas à la base. Or chaque politique de Row-Level Security est
+déclarée pour `tick_app` : sans lui, la restauration échoue sur chacune.
+
+**`--exit-on-error`, toujours.** Sans cette option, `pg_restore` ignore les échecs
+et poursuit. Mesuré sur le jeu de démonstration : 191 erreurs ignorées, toutes les
+données présentes — et une installation où plus aucune connexion n'aboutit, parce
+que ni le rôle applicatif, ni ses droits, ni les politiques de cloisonnement n'ont
+été recréés.
+
+**Vérifier en se connectant.** Une fois la pile démarrée, ouvrir une session et la
+liste des tickets. La sonde de santé interroge la base par les deux rôles et
+tombe si le rôle applicatif ne se connecte pas, mais elle ne lit aucune donnée.
+
+Cette procédure est jouée telle quelle à chaque modification du code, par
+`scripts/montee-de-version.sh` : la dernière version publiée est amorcée,
+sauvegardée, détruite, puis restaurée sur la nouvelle.
+
 ## Mise à jour
 
 ```bash
@@ -325,6 +367,10 @@ docker compose -f docker/compose.production.yaml up -d
 Le service `migrate` rejoue au passage les migrations en attente, et l'API
 n'est recréée qu'après. **Sauvegarder la base avant** : les migrations ne se
 défont pas.
+
+La montée depuis la dernière version publiée est vérifiée à chaque modification,
+sur une installation qui a des données : chaque table doit garder toutes ses
+lignes, et l'on doit pouvoir s'y connecter ensuite.
 
 ## Plugins
 
