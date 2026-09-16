@@ -47,7 +47,7 @@ mon-plugin/
   "id": "mon-plugin",
   "name": "Mon plugin",
   "version": "1.0.0",
-  "sdk": "^0.7.0",
+  "sdk": "^0.8.0",
   "description": "Ce que le plugin fait, en une phrase.",
   "license": "AGPL-3.0-or-later",
   "permissions": ["schema:own", "hooks", "events", "search"],

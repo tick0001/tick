@@ -56,6 +56,61 @@ describe('pluginManifestSchema', () => {
   });
 });
 
+describe('reglages declares', () => {
+  const avec = (settings: unknown[]) => pluginManifestSchema.parse({ ...minimal, settings });
+
+  it('accepte chaque type, et place les reglages a l instance par defaut', () => {
+    const manifeste = avec([
+      { key: 'titre', label: 'Titre', type: 'text', default: 'Tick&' },
+      { key: 'jeton', label: 'Jeton', type: 'secret', scope: 'entity' },
+      { key: 'actif', label: 'Actif', type: 'boolean', default: true },
+      { key: 'seuil', label: 'Seuil', type: 'number', min: 1, max: 5, default: 3 },
+      { key: 'format', label: 'Format', type: 'enum', options: ['a', 'b'], default: 'b' },
+    ]);
+
+    expect(manifeste.settings.map((r) => r.type)).toEqual([
+      'text',
+      'secret',
+      'boolean',
+      'number',
+      'enum',
+    ]);
+    expect(manifeste.settings[0]?.scope).toBe('instance');
+    expect(manifeste.settings[1]?.scope).toBe('entity');
+  });
+
+  it('refuse une valeur par defaut pour un secret', () => {
+    // Un secret ecrit dans un manifeste public n'en est pas un. Le schema
+    // strict le rejette plutot que de l'ignorer en silence.
+    expect(() =>
+      avec([{ key: 'jeton', label: 'Jeton', type: 'secret', default: 'abc' }]),
+    ).toThrow();
+  });
+
+  it('refuse une cle mal orthographiee', () => {
+    expect(() => avec([{ key: 'actif', label: 'Actif', type: 'boolean', defaut: true }])).toThrow();
+  });
+
+  it('refuse une valeur par defaut absente des options', () => {
+    expect(() =>
+      avec([{ key: 'format', label: 'Format', type: 'enum', options: ['a'], default: 'z' }]),
+    ).toThrow();
+  });
+
+  it('refuse deux reglages de meme cle', () => {
+    expect(() =>
+      avec([
+        { key: 'jeton', label: 'Jeton', type: 'secret' },
+        { key: 'jeton', label: 'Autre', type: 'text' },
+      ]),
+    ).toThrow(/même clé/);
+  });
+
+  it('refuse une cle qui ne ferait pas un nom de champ', () => {
+    expect(() => avec([{ key: 'Mon Jeton', label: 'Jeton', type: 'secret' }])).toThrow();
+  });
+});
+
 describe('pluginSchemaName', () => {
   it('derive un nom de schema valide depuis un identifiant a tirets', () => {
     // Les tirets sont legaux dans un identifiant mais imposeraient des

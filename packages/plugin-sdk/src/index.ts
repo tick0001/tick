@@ -33,12 +33,81 @@ export interface PluginDatabase {
   query<T = Record<string, unknown>>(sql: string, params?: unknown[]): Promise<T[]>;
 }
 
+/** Valeur d'un réglage, selon son type déclaré. */
+export type PluginSettingValue = string | number | boolean;
+
+/**
+ * Réglages déclarés dans le manifeste, renseignés par l'administrateur.
+ *
+ * Le plugin lit ; le cœur affiche, valide, stocke et chiffre.
+ */
+export interface PluginSettings {
+  /**
+   * Valeur effective d'un réglage.
+   *
+   * Pour un réglage d'entité, `entityId` désigne l'entité concernée — celle du
+   * ticket, le plus souvent. La valeur est celle posée sur cette entité ou, à
+   * défaut, sur son plus proche ancêtre ; puis la valeur par défaut du
+   * manifeste ; sinon `null`. Sans `entityId`, seule la valeur de la racine
+   * compte.
+   *
+   * Un secret est rendu **déchiffré** : c'est au plugin de ne jamais le
+   * journaliser. Une clé non déclarée lève une erreur plutôt que de rendre
+   * `null` — une faute de frappe ne doit pas passer pour un réglage vide.
+   */
+  get(key: string, options?: { entityId?: number }): Promise<PluginSettingValue | null>;
+}
+
+export interface PluginHttpRequest {
+  method?: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
+  headers?: Record<string, string>;
+  body?: string;
+  /** Défaut : 10 s. Plafonné à 30 s. */
+  timeoutMs?: number;
+}
+
+export interface PluginHttpResponse {
+  status: number;
+  headers: Record<string, string>;
+  /** Corps en texte, tronqué au-delà d'un mégaoctet. */
+  body: string;
+}
+
+/**
+ * Requêtes sortantes, pour les plugins qui déclarent `http:outbound`.
+ *
+ * **Le seul chemin sortant qu'un plugin devrait emprunter.** Il applique la
+ * politique de l'instance sur les réseaux internes (`ALLOW_PRIVATE_OUTBOUND`),
+ * en épinglant l'adresse vérifiée jusqu'à la connexion. Il ne suit pas les
+ * redirections : une redirection pourrait mener là où la vérification a dit
+ * non. Il refuse tout schéma autre que `http:` et `https:`.
+ *
+ * Un plugin s'exécute dans le processus de l'API et pourrait appeler `fetch`
+ * directement : rien ne l'en empêche techniquement. Il contournerait alors la
+ * politique de l'instance, et c'est un motif de refus à la relecture.
+ */
+export interface PluginHttp {
+  request(url: string, init?: PluginHttpRequest): Promise<PluginHttpResponse>;
+}
+
+/** Ce que le plugin sait de l'installation qui l'héberge. */
+export interface PluginInstance {
+  /**
+   * Adresse de l'interface, telle que les navigateurs la voient. Sert à
+   * composer des liens — vers un ticket, par exemple.
+   */
+  readonly webUrl: string;
+}
+
 export interface PluginContext {
   readonly id: string;
   readonly version: string;
   readonly schema: string;
   readonly logger: PluginLogger;
   readonly db: PluginDatabase;
+  readonly settings: PluginSettings;
+  readonly http: PluginHttp;
+  readonly instance: PluginInstance;
 }
 
 /**

@@ -120,6 +120,15 @@ export class EventBus implements OnModuleInit, OnModuleDestroy {
           error: () => undefined,
         },
         db: { query: () => Promise.resolve([]) },
+        // Un module du coeur a ses propres services : ces acces-la sont ceux
+        // d'un plugin, et n'ont pas a lui servir.
+        settings: {
+          get: () => Promise.reject(new Error('Reglages de plugin inaccessibles au coeur.')),
+        },
+        http: {
+          request: () => Promise.reject(new Error('Sortie de plugin inaccessible au coeur.')),
+        },
+        instance: { webUrl: '' },
       },
     });
     this.registrations.set(name, liste);

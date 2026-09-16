@@ -1,5 +1,6 @@
 import { readFile } from 'node:fs/promises';
 import {
+  Body,
   Controller,
   Delete,
   Get,
@@ -8,12 +9,23 @@ import {
   NotFoundException,
   Param,
   Post,
+  Put,
+  Query,
   UseGuards,
 } from '@nestjs/common';
+import {
+  pluginSettingsQuerySchema,
+  updatePluginSettingsSchema,
+  type PluginSettingsQuery,
+  type PluginSettingsView,
+  type PluginStatus,
+  type UpdatePluginSettings,
+} from '@tick/contracts';
 import { AuthenticatedGuard } from '../auth/guards/authenticated.guard.js';
 import { RequireRight, RightsGuard } from '../auth/guards/rights.guard.js';
 import { PluginRegistry } from './plugin-registry.service.js';
-import { PluginsService, type PluginStatus } from './plugins.service.js';
+import { ZodValidationPipe } from '../common/zod-validation.pipe.js';
+import { PluginsService } from './plugins.service.js';
 
 @Controller('plugins')
 @UseGuards(AuthenticatedGuard, RightsGuard)
@@ -27,6 +39,38 @@ export class PluginsController {
   @RequireRight('plugin', 'read')
   async list(): Promise<PluginStatus[]> {
     return this.plugins.list();
+  }
+
+  /**
+   * Plugins dont l'interface doit se charger, pour tout utilisateur connecte.
+   *
+   * Voir `PluginsService.clients` : la liste complete exige le droit
+   * d'administration, et l'interface des plugins ne se chargeait que pour lui.
+   */
+  @Get('clients')
+  async clients(): Promise<string[]> {
+    return this.plugins.clients();
+  }
+
+  @Get(':id/settings')
+  @RequireRight('plugin', 'read')
+  async settings(
+    @Param('id') id: string,
+    @Query(new ZodValidationPipe(pluginSettingsQuerySchema)) query: PluginSettingsQuery,
+  ): Promise<PluginSettingsView> {
+    const entityId = query.entityId ?? null;
+
+    return { pluginId: id, entityId, settings: await this.plugins.reglagesDe(id, entityId) };
+  }
+
+  @Put(':id/settings')
+  @HttpCode(204)
+  @RequireRight('plugin', 'update')
+  async updateSettings(
+    @Param('id') id: string,
+    @Body(new ZodValidationPipe(updatePluginSettingsSchema)) body: UpdatePluginSettings,
+  ): Promise<void> {
+    await this.plugins.enregistrerReglages(id, body.entityId, body.values);
   }
 
   @Post(':id/install')

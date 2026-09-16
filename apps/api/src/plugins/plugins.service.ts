@@ -6,6 +6,7 @@ import {
   NotFoundException,
   type OnApplicationBootstrap,
 } from '@nestjs/common';
+import type { PluginSettingValue, PluginSettingView, PluginStatus } from '@tick/contracts';
 import { eq, plugins as pluginsTable, sql } from '@tick/db';
 import type {
   EventHandler,
@@ -19,6 +20,7 @@ import type {
   PluginDashboardWidget,
   PluginSearchField,
 } from '@tick/plugin-sdk';
+import { loadEnv } from '../config/env.js';
 import { SearchRegistry } from '../search/search-registry.service.js';
 import { WidgetRegistry } from '../stats/widget-registry.service.js';
 import { DatabaseService } from '../database/database.service.js';
@@ -27,22 +29,13 @@ import { emitEvent } from './event-buffer.js';
 import { HookBus } from './hook-bus.service.js';
 import { PluginMigrator } from './plugin-migrator.service.js';
 import { PluginRegistry, type DiscoveredPlugin } from './plugin-registry.service.js';
+import { PluginSettingsService } from './plugin-settings.service.js';
+import { requeteSortante } from './sortie-http.js';
 
 /** Au-delà, le plugin est désactivé automatiquement. */
 const FAILURE_THRESHOLD = 3;
 
-export type PluginState = 'decouvert' | 'installe' | 'actif' | 'inactif' | 'erreur';
-
-export interface PluginStatus {
-  id: string;
-  name: string;
-  version: string;
-  state: PluginState;
-  sdkRange: string;
-  compatible: boolean;
-  hasClient: boolean;
-  lastError: string | null;
-}
+export type PluginState = PluginStatus['state'];
 
 @Injectable()
 export class PluginsService implements OnApplicationBootstrap {
@@ -58,6 +51,7 @@ export class PluginsService implements OnApplicationBootstrap {
     private readonly events: EventBus,
     private readonly search: SearchRegistry,
     private readonly widgets: WidgetRegistry,
+    private readonly reglages: PluginSettingsService,
   ) {}
 
   async onApplicationBootstrap(): Promise<void> {
@@ -115,6 +109,7 @@ export class PluginsService implements OnApplicationBootstrap {
 
     return lignes.map((ligne) => {
       const decouvert = this.discovered.get(ligne.id);
+      const manifeste = decouvert?.manifest;
 
       return {
         id: ligne.id,
@@ -122,11 +117,70 @@ export class PluginsService implements OnApplicationBootstrap {
         version: ligne.version,
         state: ligne.state,
         sdkRange: ligne.sdkRange,
-        compatible: decouvert ? this.registry.isCompatible(decouvert.manifest) : false,
-        hasClient: Boolean(decouvert?.manifest.client),
+        compatible: manifeste ? this.registry.isCompatible(manifeste) : false,
+        hasClient: Boolean(manifeste?.client),
         lastError: ligne.lastError,
+        description: manifeste?.description ?? null,
+        permissions: manifeste?.permissions ?? [],
+        hasSettings: (manifeste?.settings.length ?? 0) > 0,
       };
     });
+  }
+
+  /**
+   * Plugins actifs qui ont une partie interface.
+   *
+   * Sans droit particulier, a la difference de `list` : l'interface de chaque
+   * utilisateur doit savoir quels modules charger. Elle passait par `list`, que
+   * seul l'administrateur peut lire — un technicien ne voyait donc jamais
+   * l'interface d'aucun plugin, quand bien meme le serveur la lui servait.
+   */
+  async clients(): Promise<string[]> {
+    const statuts = await this.list();
+
+    return statuts
+      .filter((statut) => statut.state === 'actif' && statut.hasClient)
+      .map((statut) => statut.id);
+  }
+
+  /** Reglages d'un plugin, pour l'instance ou pour une entite. */
+  async reglagesDe(id: string, entityId: number | null): Promise<PluginSettingView[]> {
+    const plugin = this.require(id);
+
+    if (entityId !== null) await this.entiteVisible(entityId);
+
+    return this.reglages.vue(plugin.manifest, entityId);
+  }
+
+  async enregistrerReglages(
+    id: string,
+    entityId: number | null,
+    valeurs: Record<string, PluginSettingValue | null>,
+  ): Promise<void> {
+    const plugin = this.require(id);
+
+    if (entityId !== null) await this.entiteVisible(entityId);
+
+    await this.reglages.enregistrer(plugin.manifest, entityId, valeurs);
+  }
+
+  /**
+   * L'entite doit etre dans le perimetre de l'administrateur.
+   *
+   * Les reglages sont lus et ecrits par le role proprietaire, hors Row-Level
+   * Security : sans cette verification, un administrateur de filiale pourrait
+   * lire ou poser les reglages de n'importe quelle entite en devinant son
+   * identifiant. La lecture passe donc par le role applicatif, qui ne voit que
+   * le perimetre.
+   */
+  private async entiteVisible(entityId: number): Promise<void> {
+    const resultat = await this.db.asUser((tx) =>
+      tx.execute(sql`SELECT 1 FROM entities WHERE id = ${entityId}`),
+    );
+
+    if (resultat.rows.length === 0) {
+      throw new NotFoundException(`Entite ${String(entityId)} introuvable.`);
+    }
   }
 
   /** Installe : schéma dédié, migrations, puis crochet `install` du plugin. */
@@ -275,6 +329,15 @@ export class PluginsService implements OnApplicationBootstrap {
     return definition;
   }
 
+  /** Refuse ce que le manifeste n'a pas annonce. */
+  private exiger(plugin: DiscoveredPlugin, permission: string): void {
+    if (!(plugin.manifest.permissions as string[]).includes(permission)) {
+      throw new Error(
+        `Le plugin « ${plugin.manifest.id} » n'a pas déclaré la permission « ${permission} ».`,
+      );
+    }
+  }
+
   private createContext(plugin: DiscoveredPlugin): PluginContext {
     const prefixe = `plugin:${plugin.manifest.id}`;
     const logger = new Logger(prefixe);
@@ -306,6 +369,27 @@ export class PluginsService implements OnApplicationBootstrap {
 
             return resultat.rows as T[];
           }),
+      },
+      settings: {
+        get: (cle, options) => this.reglages.valeur(plugin.manifest, cle, options?.entityId),
+      },
+      http: {
+        request: async (url, init) => {
+          this.exiger(plugin, 'http:outbound');
+
+          const reponse = await requeteSortante(url, init);
+
+          // L'hote et le code, jamais l'adresse complete : elle porte souvent
+          // le jeton d'un webhook.
+          logger.debug(
+            `${init?.method ?? 'GET'} ${new URL(url).host} -> ${String(reponse.status)}`,
+          );
+
+          return reponse;
+        },
+      },
+      instance: {
+        webUrl: loadEnv().WEB_URL,
       },
     };
   }
@@ -340,13 +424,8 @@ export class PluginsService implements OnApplicationBootstrap {
   }
 
   private createApi(plugin: DiscoveredPlugin, context: PluginContext): PluginApi {
-    const permissions = new Set<string>(plugin.manifest.permissions);
     const exiger = (permission: string): void => {
-      if (!permissions.has(permission)) {
-        throw new Error(
-          `Le plugin « ${plugin.manifest.id} » n'a pas déclaré la permission « ${permission} ».`,
-        );
-      }
+      this.exiger(plugin, permission);
     };
 
     return {
@@ -381,7 +460,7 @@ export class PluginsService implements OnApplicationBootstrap {
       },
       dashboards: {
         registerWidget: (widget: PluginDashboardWidget) => {
-          exiger('search');
+          exiger('dashboards');
           this.widgets.register({
             kind: `plugin:${plugin.manifest.id}:${widget.key}`,
             labelKey: widget.label,

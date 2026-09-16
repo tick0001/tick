@@ -1,5 +1,16 @@
 import { relations } from 'drizzle-orm';
-import { integer, jsonb, pgEnum, pgTable, primaryKey, text, timestamp } from 'drizzle-orm/pg-core';
+import {
+  bigint,
+  integer,
+  jsonb,
+  pgEnum,
+  pgTable,
+  primaryKey,
+  text,
+  timestamp,
+  unique,
+} from 'drizzle-orm/pg-core';
+import { entities } from './entities.js';
 
 /**
  * Etat d'un plugin.
@@ -61,6 +72,39 @@ export const pluginMigrations = pgTable(
     appliedAt: timestamp('applied_at', { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [primaryKey({ columns: [t.pluginId, t.filename] })],
+);
+
+/**
+ * Reglages des plugins, tels que declares dans leur manifeste.
+ *
+ * Une ligne par valeur posee : `entity_id` nul pour un reglage d'instance, ou
+ * pour la valeur racine d'un reglage d'entite. Un reglage sans ligne prend la
+ * valeur de l'ancetre le plus proche, puis celle du manifeste.
+ *
+ * `value` est du texte : clair pour un reglage ordinaire, chiffre par
+ * `SecretsService` pour un secret. Le type declare est relu dans le manifeste a
+ * chaque lecture, pas stocke ici : un plugin qui change le type d'un reglage
+ * doit le migrer, pas le decouvrir mal interprete.
+ *
+ * **Le role applicatif n'y a aucun acces.** Un plugin execute du SQL brut avec
+ * ce role : sans la revocation de la migration, il lirait et reecrirait les
+ * reglages des autres, validation comprise.
+ */
+export const pluginSettings = pgTable(
+  'plugin_settings',
+  {
+    id: bigint({ mode: 'number' }).primaryKey().generatedAlwaysAsIdentity(),
+    pluginId: text('plugin_id')
+      .notNull()
+      .references(() => plugins.id, { onDelete: 'cascade' }),
+    entityId: bigint('entity_id', { mode: 'number' }).references(() => entities.id, {
+      onDelete: 'cascade',
+    }),
+    key: text('key').notNull(),
+    value: text('value').notNull(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [unique('plugin_settings_cle').on(t.pluginId, t.entityId, t.key).nullsNotDistinct()],
 );
 
 export const pluginsRelations = relations(plugins, ({ many }) => ({
