@@ -356,6 +356,35 @@ complète de la base sans la clé laisse les secrets d'annuaire et de collecteur
 illisibles ; la clé rangée à côté de la base annule l'intérêt de les avoir
 chiffrés.
 
+### Restauration
+
+Sur un serveur neuf, reprendre les étapes 1 à 3 — paquets, utilisateur, rôle
+`tick` et base vide — puis, **dans cet ordre** :
+
+```bash
+# Le rôle applicatif, avec le mot de passe de DATABASE_APP_URL
+su - postgres -c "psql -c \"CREATE ROLE tick_app LOGIN PASSWORD 'le-mot-de-passe'\""
+
+# La base
+su - postgres -c "pg_restore -d tick --exit-on-error" < /sauvegardes/tick-2026-09-16.dump
+
+# Les pièces jointes
+tar xzf /sauvegardes/storage-2026-09-16.tar.gz -C /var/lib/tick
+chown -R tick:tick /var/lib/tick/storage
+```
+
+Puis les étapes 4 à 6, avec la **même** `ENCRYPTION_KEY` qu'avant, et le service.
+
+**Le rôle d'abord.** `pg_dump` ne sauvegarde pas les rôles : ils appartiennent au
+serveur PostgreSQL, pas à la base. Or chaque politique de Row-Level Security est
+déclarée pour `tick_app` : sans lui, la restauration échoue sur chacune.
+
+**`--exit-on-error`, toujours.** Sans cette option, `pg_restore` ignore ces échecs
+et poursuit, et l'on obtient une installation dont les données sont là mais où
+aucune connexion n'aboutit. Ce comportement a été mesuré sur l'installation par
+conteneurs, dont la procédure équivalente est vérifiée à chaque modification du
+code ; voir [installation](14-installation.md#restauration).
+
 ## Diagnostic
 
 ```bash

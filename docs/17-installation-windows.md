@@ -379,14 +379,49 @@ l'envers.
 
 ```powershell
 $jour = Get-Date -Format 'yyyy-MM-dd'
-pg_dump -U tick -Fc tick > "D:\Sauvegardes\tick-$jour.dump"
+pg_dump -U tick -Fc -f "D:\Sauvegardes\tick-$jour.dump" tick
 Compress-Archive C:\Tick\storage "D:\Sauvegardes\storage-$jour.zip"
 ```
+
+**`-f`, et jamais `>`.** Windows PowerShell 5.1, celui livré avec Windows, traite
+la sortie d'un programme comme du texte : une redirection y ajoute une marque
+d'ordre des octets et réencode le reste. Vérifié : le fichier redirigé commence par
+`EF BB BF` au lieu de `PGDMP`, et `pg_restore` le refuse. La sauvegarde a l'air
+d'exister, et ne se restaure pas. Avec `-f`, `pg_dump` écrit le fichier lui-même,
+quel que soit le shell.
 
 Et `ENCRYPTION_KEY`, **ailleurs que les deux précédentes**. Une sauvegarde
 complète de la base sans la clé laisse les secrets d'annuaire et de collecteur
 illisibles ; la clé rangée à côté de la base annule l'intérêt de les avoir
 chiffrés.
+
+### Restauration
+
+Sur un serveur neuf, reprendre les étapes 1 à 4 — Node.js, PostgreSQL,
+arborescence, compte de service, rôle `tick` et base vide — puis, **dans cet
+ordre** :
+
+```powershell
+# Le rôle applicatif, avec le mot de passe de DATABASE_APP_URL
+psql -U postgres -c "CREATE ROLE tick_app LOGIN PASSWORD 'le-mot-de-passe'"
+
+# La base
+pg_restore -U postgres -d tick --exit-on-error "D:\Sauvegardes\tick-2026-09-16.dump"
+
+# Les pièces jointes
+Expand-Archive "D:\Sauvegardes\storage-2026-09-16.zip" C:\Tick -Force
+```
+
+Puis les étapes suivantes, avec la **même** `ENCRYPTION_KEY` qu'avant.
+
+**Le rôle d'abord.** `pg_dump` ne sauvegarde pas les rôles : ils appartiennent au
+serveur PostgreSQL, pas à la base. Or chaque politique de Row-Level Security est
+déclarée pour `tick_app` : sans lui, la restauration échoue sur chacune.
+
+**`--exit-on-error`, toujours.** Sans cette option, `pg_restore` ignore ces échecs
+et poursuit, et l'on obtient une installation dont les données sont là mais où
+aucune connexion n'aboutit. Voir [installation](14-installation.md#restauration),
+où la procédure équivalente est vérifiée à chaque modification du code.
 
 ## Diagnostic
 

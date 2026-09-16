@@ -12,6 +12,35 @@ peut rompre.
 Ce qui ne concerne que le dépôt — intégration continue, outillage de publication, fichiers de
 communauté — n'y figure pas. Ce journal s'adresse à qui exploite Tick&, pas à qui y contribue.
 
+## Non publié
+
+### Corrigé
+
+- **La sonde de santé restait au vert quand le rôle applicatif ne pouvait plus se connecter.**
+  Elle n'interrogeait la base que par le rôle propriétaire, alors que tout le trafic passe par
+  `tick_app`. Un mot de passe applicatif mal reporté après sa rotation donnait une installation
+  qui se déclarait saine et refusait chaque requête — sans que Compose ne redémarre rien. La
+  sonde interroge désormais la base par les deux rôles.
+- **Le guide d'installation Windows produisait des sauvegardes impossibles à restaurer.**
+  `pg_dump … > fichier` passe, sous Windows PowerShell 5.1 — celui livré avec Windows —, par un
+  flux texte réencodé : le fichier obtenu est refusé par `pg_restore`. Le guide utilise
+  désormais `pg_dump -f`, qui écrit le fichier lui-même quel que soit le shell.
+
+  **Si vous avez suivi ce guide, vérifiez vos sauvegardes** avec `pg_restore -l` : si la
+  commande les refuse, refaites-en une avec la nouvelle commande.
+
+### Ajouté
+
+- **Une procédure de restauration**, pour les trois modes d'installation. Le guide expliquait
+  comment sauvegarder, jamais comment restaurer — et la restauration a deux pièges : recréer le
+  rôle applicatif avant, parce que `pg_dump` ne sauvegarde pas les rôles, et arrêter à la
+  première erreur, sans quoi `pg_restore` produit une installation dont les données sont là mais
+  où aucune connexion n'aboutit.
+- **La montée de version et la restauration sont vérifiées à chaque modification.** La dernière
+  version publiée est amorcée, montée vers le nouveau code, puis détruite et restaurée depuis sa
+  sauvegarde ; chaque table doit garder toutes ses lignes. `make montee` joue la même chose sur
+  un poste.
+
 ## [0.1.9] — 10 septembre 2026
 
 ### Corrigé
