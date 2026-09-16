@@ -131,7 +131,7 @@ registre. Remis en place, le cast le fait échouer.
 
 ## Ce que le banc a trouvé sur lui-même
 
-Trois défauts de l'instrument, tous découverts en montant à cinq cent mille tickets, et tous
+Quatre défauts de l'instrument, tous découverts en montant à cinq cent mille tickets, et tous
 capables d'inventer des résultats. Ils sont notés parce qu'un banc d'essai qui ment est pire
 qu'un banc absent.
 
@@ -153,6 +153,12 @@ convenait pas, elle répondait vite pendant que PostgreSQL avalait encore cinq c
 Le temps de retour au calme est imprimé — c'est la réponse à « combien de temps ce service
 met-il à se remettre d'une rafale ».
 
+**Il ne compactait pas.** Effacer un palier ne rend pas la place : passer de cinq cent mille
+tickets à cinquante mille laissait une table de 244 Mio et un index trigramme de 48 Mio — 12 et
+2,5 Mio une fois compactés. Les parcours lisaient des pages presque vides, et la recherche
+mesurée prenait 132 ms au lieu de 33 : tout palier mesuré après un plus gros était faux. Le
+générateur compacte désormais les tables qu'il remplit.
+
 Et il ne monte plus les paliers au-delà du point de rupture : une fois le p95 au-delà de cinq
 secondes, les paliers suivants n'apprennent rien et ne font qu'empiler une file qui fausse le
 scénario d'après.
@@ -173,28 +179,32 @@ tombe pas.
 | liste filtrée    |   18 ms | 172 req/s | aucune         |                 3,8 s |
 | détail           |   12 ms | 209 req/s | aucune         |                 3,2 s |
 | recherche statut |   18 ms | 156 req/s | aucune         |                 4,0 s |
-| recherche titre  |  599 ms | 4 req/s   | 100 connexions |                     — |
+| recherche titre  |   50 ms | 78 req/s  | 500 connexions |                 4,3 s |
+| recherche rare   |   19 ms | 151 req/s | aucune         |                 4,1 s |
+| recherche rapide |   49 ms | 74 req/s  | 500 connexions |                 5,5 s |
 | indicateurs      |  917 ms | 3 req/s   | 20 connexions  |                     — |
 
-**Le mur n'est pas la simultanéité, ce sont deux routes.**
+Les trois lignes `recherche` titre, rare et rapide viennent d'une campagne ultérieure, sur la
+même machine, une fois la recherche textuelle servie par l'index ; avant, la recherche par titre
+tenait 599 ms à une connexion et plafonnait à 4 requêtes par seconde.
 
-### La recherche textuelle, et pourquoi un index ne la sauve pas
+**Le mur n'est pas la simultanéité.** Il en restait deux routes : la recherche textuelle, réglée
+depuis — voir ci-dessous —, et les indicateurs.
 
-`ILIKE '%mot%'` balaie les cinq cent mille lignes : 599 ms à une seule connexion, un plafond de
-quatre requêtes par seconde. Un index trigramme GIN corrigerait cela — **et il ne peut pas
-servir ici**.
+### La recherche textuelle, et comment l'index la sert malgré tout
 
-Mesuré, pas supposé. Même requête, mêmes données, seul le rôle change :
+`ILIKE '%mot%'` balayait les cinq cent mille lignes : plus d'une demi-seconde à une seule
+connexion, un plafond de quatre requêtes par seconde. Un index trigramme GIN corrigerait cela —
+**et il ne pouvait pas servir**. Même requête, mêmes données, seul le rôle change :
 
 ```
 rôle propriétaire, sans RLS   Bitmap Index Scan sur l'index trigramme   0,32 ms
 rôle applicatif, sous RLS     Seq Scan sur 500 014 lignes             467 ms
 ```
 
-La cause est structurelle. PostgreSQL refuse d'évaluer un prédicat **non _leakproof_** avant le
-prédicat de sécurité d'une politique RLS — sinon un message d'erreur ou une différence de durée
-pourrait révéler une ligne qu'on n'a pas le droit de voir. Or aucun opérateur de recherche
-textuelle ne l'est :
+PostgreSQL refuse d'évaluer un prédicat **non _leakproof_** avant le prédicat de sécurité d'une
+politique RLS — sinon un message d'erreur ou une différence de durée pourrait révéler une ligne
+qu'on n'a pas le droit de voir. Or aucun opérateur de recherche textuelle ne l'est :
 
 | opérateur          | fonction        | _leakproof_ |
 | ------------------ | --------------- | ----------- |
@@ -203,14 +213,50 @@ textuelle ne l'est :
 | `@@` (plein texte) | `ts_match_vq`   | **non**     |
 | `%` (similarité)   | `similarity_op` | **non**     |
 
-Le cloisonnement par RLS et l'indexation de la recherche textuelle sont donc **mutuellement
-exclusifs** dans PostgreSQL. Sortir de là est un arbitrage, pas un correctif : il faudrait
-appliquer la portée hors de RLS pour ce chemin, ou marquer un opérateur `LEAKPROOF` — ce que la
-documentation de PostgreSQL présente comme un risque de fuite. Aucune des deux ne se décide dans
-un commentaire de code.
+Et pour la même raison, le planificateur **s'interdit les statistiques** de la colonne : il
+estimait _une_ ligne là où il y en a 62 501 — 60 608 sans RLS, une estimation juste.
 
-En attendant, la recherche par titre est utilisable jusqu'au palier `collectivite` et cesse de
-l'être bien avant `grand-compte`.
+**La réponse tient en une phrase : l'index trouve les candidats, le RLS garde le dernier mot.**
+`tick_tickets_semblables` lit l'index en tant que propriétaire, applique elle-même le prédicat
+exact de la politique, et ne rend que des identifiants ; la requête visible filtre dessus par une
+égalité, toujours sous RLS. Le raisonnement de sécurité est dans
+[03 — Entités, droits et sécurité](../../docs/03-entites-droits-securite.md).
+
+Aucune forme de requête unique ne gagne partout, et la mesure l'a montré à chaque essai :
+
+| forme essayée                          | terme rare | terme dense |  pire cas |
+| -------------------------------------- | ---------: | ----------: | --------: |
+| `ILIKE` seul, avant                    |     867 ms |      824 ms |     88 ms |
+| identifiants en semi-jointure          |     1,1 ms |    1 070 ms |         — |
+| identifiants en tableau                |     0,5 ms |      334 ms |         — |
+| parcours ordonné forcé par bascule     |          — |      801 ms |    317 ms |
+| **sonde plafonnée, puis deux régimes** | **2,6 ms** |  **3,7 ms** | **93 ms** |
+
+D'où deux temps. **La sonde** interroge l'index, plafonnée à deux mille identifiants — entre
+1 et 24 ms. **Sous le plafond**, la page filtre sur ces identifiants, sans lâcher le filtre
+textuel : la sonde et la page ne lisent pas le même instantané. **Au plafond**, les
+correspondances sont denses, et parcourir la liste dans l'ordre jusqu'au premier écran est
+imbattable — mais le planificateur ne le choisit pas, faute d'estimation. Une bascule globale
+(`enable_seqscan = off`) l'y poussait parfois et le trompait ailleurs : parcours bitmap à
+801 ms, pire cas à 317 ms. L'opérateur `~~~*` fait exactement ce que fait `ILIKE`, avec un
+estimateur qui ne suppose pas qu'aucune ligne ne correspond ; le planificateur choisit alors seul
+le parcours ordonné, et continue de raisonner sur les autres filtres.
+
+Campagne sur cinq cent mille tickets, ancienne et nouvelle API côte à côte sur la même base :
+
+| scénario           | avant, 1 conn. | avant, plafond | après, 1 conn. | après, plafond |
+| ------------------ | -------------: | -------------: | -------------: | -------------: |
+| `recherche-titre`  |         728 ms |        3 req/s |      **50 ms** |   **78 req/s** |
+| `recherche-rare`   |         639 ms |        4 req/s |      **19 ms** |  **151 req/s** |
+| `recherche-rapide` |       1 051 ms |        3 req/s |      **49 ms** |   **74 req/s** |
+
+Les mêmes résultats, ticket pour ticket, sur les quatre recherches comparées. Les autres
+scénarios ne bougent pas au-delà du bruit de mesure.
+
+Ce que cela coûte : deux index de 27 et 24 Mio pour une table de 234 Mio, et des écritures plus
+lentes — l'index trigramme se met à jour à chaque titre ou description modifiés. Le temps de
+régénérer cinquante mille tickets est passé de quelques secondes à deux minutes et demie ; pour
+une saisie humaine, un ticket à la fois, la différence ne se mesure pas.
 
 ### Les indicateurs
 
