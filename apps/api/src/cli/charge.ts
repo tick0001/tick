@@ -19,9 +19,9 @@ import 'reflect-metadata';
  */
 import { Logger } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
-import { sql, type Transaction } from '@tick/db';
+import { createDatabase, sql, type Transaction } from '@tick/db';
 import { AppModule } from '../app.module.js';
-import { loadEnvFiles } from '../config/env.js';
+import { loadEnv, loadEnvFiles } from '../config/env.js';
 import { DatabaseService } from '../database/database.service.js';
 
 interface Palier {
@@ -301,12 +301,32 @@ async function main(): Promise<void> {
       logger.log('Acteurs et suivis.');
     });
 
-    // Sans cela, le planificateur travaille sur des statistiques d'avant le
-    // remplissage : il choisit des plans faits pour sept lignes, et la mesure
-    // porte sur une situation qui n'existe pas.
-    await db.asOwner(async (tx) => {
-      await tx.execute(sql`ANALYZE tickets, itil_followups, itil_actors, entities, users`);
-    });
+    // Compacter, puis recalculer les statistiques.
+    //
+    // Les statistiques d'abord : sans elles, le planificateur travaille sur
+    // celles d'avant le remplissage, choisit des plans faits pour sept lignes,
+    // et la mesure porte sur une situation qui n'existe pas.
+    //
+    // Le compactage ensuite, et il a manque : effacer un palier ne rend pas la
+    // place. Passer de cinq cent mille tickets a cinquante mille laissait une
+    // table de 244 Mio et un index trigramme de 48 Mio — pour 12 et 2,5 Mio une
+    // fois compactes. Les parcours lisaient des pages presque vides, et la
+    // recherche mesuree prenait 132 ms au lieu de 33. Tout palier mesure apres
+    // un plus gros etait faux.
+    //
+    // `VACUUM FULL` verrouille les tables le temps de les reecrire : cet outil
+    // prepare un banc d'essai, pas une installation en service. Il ne s'execute
+    // pas dans une transaction, d'ou une connexion a part.
+    const compactage = createDatabase({ connectionString: loadEnv().DATABASE_URL, max: 1 });
+
+    try {
+      await compactage.db.execute(
+        sql`VACUUM (FULL, ANALYZE) tickets, itil_followups, itil_actors, entities, users`,
+      );
+    } finally {
+      await compactage.close();
+    }
+    logger.log('Tables compactees, statistiques a jour.');
 
     logger.log(`Jeu de charge « ${palier.nom} » pret en ${String(Date.now() - debut)} ms.`);
   } finally {
