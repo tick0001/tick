@@ -30,6 +30,9 @@ import { HistoryService } from '../tickets/history.service.js';
 import { PriorityService } from '../tickets/priority.service.js';
 import { TicketScopeService } from '../tickets/ticket-scope.service.js';
 import { TicketTemplatesService } from '../tickets/ticket-templates.service.js';
+import { SearchCompiler } from '../search/search-compiler.service.js';
+import { SearchRegistry } from '../search/search-registry.service.js';
+import { SondeTextuelle } from '../tickets/sonde-textuelle.service.js';
 import { TicketsService } from '../tickets/tickets.service.js';
 
 /**
@@ -46,6 +49,8 @@ describe('Portées de droits sur les tickets', () => {
   let db: DatabaseService;
   let service: TicketsService;
   let rights: RightsService;
+  /** Le meme service, avec une sonde textuelle choisie par le test. */
+  let avecSonde: (sonde: SondeTextuelle) => TicketsService;
 
   const ids = {
     racine: 0,
@@ -122,17 +127,21 @@ describe('Portées de droits sur les tickets', () => {
     rights = new RightsService(db);
     const historique = new HistoryService();
 
-    service = new TicketsService(
-      db,
-      hooks,
-      historique,
-      new PriorityService(entiteService),
-      new TicketScopeService(db, rights),
-      new TicketTemplatesService(db, entiteService),
-      new RulesService(db, new RuleCatalogService(), new RuleEngineService()),
-      new SlaService(db, new SlmService(db)),
-      new ActorsService(db, historique),
-    );
+    avecSonde = (sonde) =>
+      new TicketsService(
+        db,
+        hooks,
+        historique,
+        new PriorityService(entiteService),
+        new TicketScopeService(db, rights),
+        new TicketTemplatesService(db, entiteService),
+        new RulesService(db, new RuleCatalogService(), new RuleEngineService()),
+        new SlaService(db, new SlmService(db)),
+        new ActorsService(db, historique),
+        new SearchCompiler(new SearchRegistry()),
+        sonde,
+      );
+    service = avecSonde(new SondeTextuelle(db));
 
     const creerEntite = async (nom: string, parent: number | null): Promise<number> => {
       const [ligne] = await owner.db
@@ -296,6 +305,105 @@ describe('Portées de droits sur les tickets', () => {
 
     return page.items.map((ticket) => ticket.name).sort();
   };
+
+  /**
+   * La recherche textuelle, servie par l'index malgre le Row-Level Security.
+   *
+   * Voir la migration `0033_recherche_textuelle`. Deux chemins selon ce que la
+   * sonde trouve, et une exigence commune : rendre exactement ce que rendait
+   * l'`ILIKE` seul, sous le meme perimetre.
+   */
+  describe('Recherche textuelle', () => {
+    const critere = (field: string, operator: 'contains' | 'startsWith', value: string) =>
+      ({ kind: 'criterion', field, operator, value }) as const;
+
+    const cherche = async (
+      entityId: number,
+      criteres: Parameters<TicketsService['search']>[0],
+      par: TicketsService = service,
+    ): Promise<string[]> => {
+      rights.invalidate();
+
+      const page = await dans(entityId, profils.all, ids.technicien, () =>
+        par.search(criteres, {
+          limit: 50,
+          deleted: false,
+          sort: 'dateOpened',
+          direction: 'desc',
+        }),
+      );
+
+      return page.items.map((ticket) => ticket.name).sort();
+    };
+
+    it('trouve par le titre, en passant par la sonde', async () => {
+      expect(await cherche(ids.racine, critere('ticket.name', 'contains', 'tiers'))).toEqual([
+        'TKT Site A tiers',
+      ]);
+    });
+
+    it('trouve par « commence par »', async () => {
+      expect(await cherche(ids.racine, critere('ticket.name', 'startsWith', 'TKT Site'))).toEqual([
+        'TKT Site A du technicien',
+        'TKT Site A tiers',
+        'TKT Site B',
+      ]);
+    });
+
+    it('sert aussi la recherche rapide de la liste', async () => {
+      rights.invalidate();
+
+      const page = await dans(ids.racine, profils.all, ids.technicien, () =>
+        service.list({
+          limit: 50,
+          deleted: false,
+          sort: 'dateOpened',
+          direction: 'desc',
+          search: 'technicien',
+        }),
+      );
+
+      expect(page.items.map((ticket) => ticket.name)).toEqual(['TKT Site A du technicien']);
+    });
+
+    it('reste dans le perimetre : la sonde ne rend rien d une autre entite', async () => {
+      expect(await cherche(ids.siteB, critere('ticket.name', 'contains', 'Site'))).toEqual([
+        'TKT Site B',
+      ]);
+    });
+
+    it('garde la recherche d avant pour un motif trop court pour l index', async () => {
+      expect(await cherche(ids.racine, critere('ticket.name', 'contains', 'ge'))).toEqual([
+        'TKT Siege',
+      ]);
+    });
+
+    it('rend la meme chose par le chemin des correspondances denses', async () => {
+      // Forcer le chemin : il n'est pris qu'au-dela de deux mille tickets
+      // semblables, ce qu'un jeu de test n'a pas a fabriquer. Le parcours
+      // ordonne ne change que le plan, jamais le resultat.
+      const dense = avecSonde({
+        sonder: () => Promise.resolve({ dense: true }),
+      } as unknown as SondeTextuelle);
+
+      expect(await cherche(ids.racine, critere('ticket.name', 'contains', 'tiers'), dense)).toEqual(
+        ['TKT Site A tiers'],
+      );
+    });
+
+    it('ne rend jamais un identifiant qui ne correspond plus', async () => {
+      // La sonde et la page ne lisent pas le meme instantane. Un ticket renomme
+      // entre les deux figure parmi les identifiants, et doit etre ecarte.
+      const perimee = avecSonde({
+        sonder: () =>
+          Promise.resolve({ dense: false, identifiants: [ids.ticketSiteA, ids.ticketSiteB] }),
+      } as unknown as SondeTextuelle);
+
+      expect(
+        await cherche(ids.racine, critere('ticket.name', 'contains', 'tiers'), perimee),
+      ).toEqual(['TKT Site A tiers']);
+    });
+  });
 
   it('portee « all » : tout le perimetre de travail', async () => {
     const vus = await titresVus('all', ids.racine, ids.technicien);

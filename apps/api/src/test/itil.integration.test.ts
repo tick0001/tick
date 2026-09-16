@@ -17,6 +17,9 @@ import { HistoryService } from '../tickets/history.service.js';
 import { PriorityService } from '../tickets/priority.service.js';
 import { TicketScopeService } from '../tickets/ticket-scope.service.js';
 import { TicketTemplatesService } from '../tickets/ticket-templates.service.js';
+import { SearchCompiler } from '../search/search-compiler.service.js';
+import { SearchRegistry } from '../search/search-registry.service.js';
+import { SondeTextuelle } from '../tickets/sonde-textuelle.service.js';
 import { TicketsService } from '../tickets/tickets.service.js';
 import { TimelineService } from '../tickets/timeline.service.js';
 import { createFixture, type Fixture } from './fixtures.js';
@@ -103,6 +106,8 @@ describe('Objets ITIL', () => {
       new RulesService(db, new RuleCatalogService(), new RuleEngineService()),
       new SlaService(db, new SlmService(db)),
       acteurs,
+      new SearchCompiler(new SearchRegistry()),
+      new SondeTextuelle(db),
     );
 
     const creerProfil = async (

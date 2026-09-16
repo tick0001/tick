@@ -20,6 +20,9 @@ import { HistoryService } from '../tickets/history.service.js';
 import { PriorityService } from '../tickets/priority.service.js';
 import { TicketScopeService } from '../tickets/ticket-scope.service.js';
 import { TicketTemplatesService } from '../tickets/ticket-templates.service.js';
+import { SearchCompiler } from '../search/search-compiler.service.js';
+import { SearchRegistry } from '../search/search-registry.service.js';
+import { SondeTextuelle } from '../tickets/sonde-textuelle.service.js';
 import { TicketsService } from '../tickets/tickets.service.js';
 import { TimelineService } from '../tickets/timeline.service.js';
 import { createFixture, type Fixture } from './fixtures.js';
@@ -102,6 +105,8 @@ describe('Pilotage', () => {
       new RulesService(db, new RuleCatalogService(), new RuleEngineService()),
       new SlaService(db, new SlmService(db)),
       new ActorsService(db, history),
+      new SearchCompiler(new SearchRegistry()),
+      new SondeTextuelle(db),
     );
     timeline = new TimelineService(db, hooks, history, scopes);
     planning = new PlanningService(db, scopes);

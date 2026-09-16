@@ -232,6 +232,13 @@
       "when": 1789043015459,
       "tag": "0032_index_ouverture_tickets",
       "breakpoints": true
+    },
+    {
+      "idx": 33,
+      "version": "7",
+      "when": 1789043015460,
+      "tag": "0033_recherche_textuelle",
+      "breakpoints": true
     }
   ]
 }

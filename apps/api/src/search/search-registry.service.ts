@@ -17,6 +17,15 @@ export interface SearchableField {
    */
   column: SQL;
   options?: readonly string[];
+  /**
+   * Recherche textuelle servie par un index, pour `contains` et `startsWith`.
+   *
+   * Sous Row-Level Security, un `ILIKE` ne peut pas utiliser d'index : voir la
+   * migration `0033_recherche_textuelle`. Un champ qui declare `semblable` est
+   * d'abord sonde par `tick_tickets_semblables`, qui rend des identifiants ;
+   * `identifiant` est la colonne comparee a ces identifiants.
+   */
+  semblable?: { readonly cible: 'titre' | 'description'; readonly identifiant: SQL };
   /** Plugin déclarant, pour retirer ses champs à la désactivation. */
   pluginId?: string;
 }
@@ -93,6 +102,7 @@ export class SearchRegistry {
         type: 'text',
         operators: TEXTE,
         column: sql`tickets.name`,
+        semblable: { cible: 'titre', identifiant: sql`tickets.id` },
       },
       {
         key: 'ticket.content',
@@ -100,6 +110,7 @@ export class SearchRegistry {
         type: 'text',
         operators: TEXTE,
         column: sql`tickets.content`,
+        semblable: { cible: 'description', identifiant: sql`tickets.id` },
       },
       {
         key: 'ticket.status',

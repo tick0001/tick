@@ -31,7 +31,6 @@ import { AuthenticatedGuard } from '../auth/guards/authenticated.guard.js';
 import { RequireRight, RightsGuard } from '../auth/guards/rights.guard.js';
 import { currentContext } from '../common/request-context.js';
 import { ZodValidationPipe } from '../common/zod-validation.pipe.js';
-import { SearchCompiler } from '../search/search-compiler.service.js';
 import { translate } from '../search/search-labels.js';
 import { TicketsService } from '../tickets/tickets.service.js';
 import { DashboardsService } from './dashboards.service.js';
@@ -68,7 +67,6 @@ export class StatsController {
     private readonly stats: StatsService,
     private readonly dashboards: DashboardsService,
     private readonly widgets: WidgetRegistry,
-    private readonly compiler: SearchCompiler,
     private readonly tickets: TicketsService,
   ) {}
 
@@ -148,7 +146,7 @@ export class StatsController {
     @Body(new ZodValidationPipe(searchRequestSchema)) body: SearchRequest,
     @Res() response: Response,
   ): Promise<void> {
-    const page = await this.tickets.search(this.compiler.compile(body.criteria), {
+    const page = await this.tickets.search(body.criteria, {
       sort: body.sort,
       direction: body.direction,
       limit: Math.min(body.limit, EXPORT_MAX),
