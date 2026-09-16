@@ -60,6 +60,57 @@ export function adresseInterne(adresse: string): boolean {
   return INTERNES.check(adresse, version === 4 ? 'ipv4' : 'ipv6');
 }
 
+/** Adresse resolue, prete a etre epinglee sur la connexion. */
+export interface AdresseSortante {
+  readonly address: string;
+  readonly family: 4 | 6;
+}
+
+/**
+ * Resout un hote une fois, verifie **toutes** ses adresses, et les rend.
+ *
+ * A la difference de `verifierHoteSortant`, les adresses sont rendues pour etre
+ * epinglees jusqu'a la connexion : c'est ce qui ferme le « DNS rebinding » que
+ * `ldapts` et `imapflow` laissent ouvert. Un nom qui resout a la fois vers une
+ * adresse publique et une adresse interne est refuse — rien ne garantirait
+ * laquelle servirait.
+ *
+ * Le controle suit `ALLOW_PRIVATE_OUTBOUND` ; la resolution, elle, a toujours
+ * lieu.
+ */
+export async function resoudreSortant(hote: string): Promise<AdresseSortante[]> {
+  const brut = hote.trim().replace(/^\[|\]$/g, '');
+  const controle = !loadEnv().ALLOW_PRIVATE_OUTBOUND;
+  const version = isIP(brut);
+
+  const adresses =
+    version !== 0
+      ? [{ address: brut, family: version }]
+      : await lookup(brut, { all: true }).catch((erreur: unknown) => {
+          throw new BadRequestException(`L'hote ${brut} ne resout pas : ${String(erreur)}`);
+        });
+
+  if (adresses.length === 0) {
+    throw new BadRequestException(`L'hote ${brut} ne resout vers aucune adresse.`);
+  }
+
+  if (controle) {
+    const interdite = adresses.find((a) => adresseInterne(a.address));
+
+    if (interdite) {
+      throw new BadRequestException(
+        `L'hote ${brut} resout vers ${interdite.address}, sur un reseau interne, ` +
+          `refuse par ALLOW_PRIVATE_OUTBOUND=false.`,
+      );
+    }
+  }
+
+  // Toutes, et pas seulement la premiere : `localhost` resout vers `::1` puis
+  // `127.0.0.1`, et Node essaie l'une apres l'autre. N'en garder qu'une
+  // supprimait ce repli — constate sur un serveur qui n'ecoutait qu'en IPv4.
+  return adresses.map((a) => ({ address: a.address, family: a.family === 6 ? 6 : 4 }));
+}
+
 /**
  * Refuse un hote qui resout vers une adresse interne.
  *

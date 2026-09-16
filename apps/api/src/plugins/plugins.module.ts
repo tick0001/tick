@@ -4,6 +4,7 @@ import { EventBus } from './event-bus.service.js';
 import { HookBus } from './hook-bus.service.js';
 import { PluginMigrator } from './plugin-migrator.service.js';
 import { PluginRegistry } from './plugin-registry.service.js';
+import { PluginSettingsService } from './plugin-settings.service.js';
 import { PluginsController } from './plugins.controller.js';
 import { PluginsService } from './plugins.service.js';
 
@@ -18,7 +19,14 @@ import { PluginsService } from './plugins.service.js';
 @Module({
   imports: [AuthModule],
   controllers: [PluginsController],
-  providers: [PluginRegistry, PluginMigrator, HookBus, EventBus, PluginsService],
+  providers: [
+    PluginRegistry,
+    PluginMigrator,
+    PluginSettingsService,
+    HookBus,
+    EventBus,
+    PluginsService,
+  ],
   exports: [HookBus, EventBus, PluginsService],
 })
 export class PluginsModule {}

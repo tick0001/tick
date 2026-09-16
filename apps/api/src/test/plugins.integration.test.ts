@@ -4,12 +4,14 @@ import { join } from 'node:path';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { createDatabase, entities, eq, sql, type Connection } from '@tick/db';
 import { runWithContext } from '../common/request-context.js';
+import { SecretsService } from '../common/secrets.service.js';
 import { DatabaseService } from '../database/database.service.js';
 import { EntitiesService } from '../entities/entities.service.js';
 import { EventBus } from '../plugins/event-bus.service.js';
 import { HookBus } from '../plugins/hook-bus.service.js';
 import { PluginMigrator } from '../plugins/plugin-migrator.service.js';
 import { PluginRegistry, SDK_VERSION } from '../plugins/plugin-registry.service.js';
+import { PluginSettingsService } from '../plugins/plugin-settings.service.js';
 import { PluginsService } from '../plugins/plugins.service.js';
 import { SearchRegistry } from '../search/search-registry.service.js';
 import { WidgetRegistry } from '../stats/widget-registry.service.js';
@@ -34,6 +36,8 @@ describe("Substrat d'extension", () => {
   let entites: EntitiesService;
   let db: DatabaseService;
   let entiteRacineId = 0;
+  /** Hors du perimetre de travail des tests : une racine a part. */
+  let entiteAilleursId = 0;
 
   const ecrirePlugin = async (version: string): Promise<void> => {
     await writeFile(
@@ -46,7 +50,12 @@ describe("Substrat d'extension", () => {
           // Derive de la version reelle : le test suit les montees du SDK au lieu
           // d'echouer a chacune.
           sdk: `^${SDK_VERSION}`,
+          // Sans `http:outbound`, a dessein : la sortie doit etre refusee.
           permissions: ['schema:own', 'hooks', 'events'],
+          settings: [
+            { key: 'suffixe', label: 'Suffixe', type: 'text', default: '' },
+            { key: 'etiquette', label: 'Etiquette', type: 'text', scope: 'entity' },
+          ],
           server: './server.js',
           migrations: './migrations',
         },
@@ -87,11 +96,22 @@ describe("Substrat d'extension", () => {
           ]);
         },
         register(api) {
-          api.hooks.on("entity.beforeCreate", (payload) => {
+          api.hooks.on("entity.beforeCreate", async (payload, context) => {
             if (payload.name.includes("interdit")) {
               throw new Error("nom refuse par le plugin");
             }
-            return { ...payload, name: payload.name.trim() };
+            if (payload.name.includes("sortie")) {
+              await context.http.request("http://127.0.0.1:9/");
+            }
+            let nom = payload.name.trim();
+            if (nom.includes("reglage")) {
+              nom += await context.settings.get("suffixe");
+              const etiquette = await context.settings.get("etiquette", {
+                entityId: payload.parentId,
+              });
+              if (etiquette) nom += " " + etiquette;
+            }
+            return { ...payload, name: nom };
           });
           api.events.on("entity.created", async (payload, context) => {
             await context.db.query("INSERT INTO journal (evenement, detail) VALUES ($1, $2)", [
@@ -128,6 +148,7 @@ describe("Substrat d'extension", () => {
       events,
       new SearchRegistry(),
       new WidgetRegistry(),
+      new PluginSettingsService(db, new SecretsService()),
     );
     entites = new EntitiesService(db, hooks);
 
@@ -140,12 +161,21 @@ describe("Substrat d'extension", () => {
         .returning({ id: entities.id }),
     );
     entiteRacineId = (racineEntite as { id: number }).id;
+
+    const [ailleurs] = await db.asOwner((tx) =>
+      tx
+        .insert(entities)
+        .values({ name: 'PLUGIN Ailleurs', parentId: null, path: 'temporaire', completeName: 'x' })
+        .returning({ id: entities.id }),
+    );
+    entiteAilleursId = (ailleurs as { id: number }).id;
   }, 60_000);
 
   afterAll(async () => {
     await plugins.uninstall(PLUGIN_ID).catch(() => undefined);
     await db.asOwner((tx) => tx.delete(entities).where(eq(entities.parentId, entiteRacineId)));
     await db.asOwner((tx) => tx.delete(entities).where(eq(entities.id, entiteRacineId)));
+    await db.asOwner((tx) => tx.delete(entities).where(eq(entities.id, entiteAilleursId)));
     await Promise.all([owner.close(), appDb.close()]);
     await rm(racine, { recursive: true, force: true });
   });
@@ -193,6 +223,9 @@ describe("Substrat d'extension", () => {
 
     expect(trouve?.state).toBe('decouvert');
     expect(trouve?.compatible).toBe(true);
+    // Ce que l'ecran montre avant d'installer : les intentions du plugin.
+    expect(trouve?.permissions).toEqual(['schema:own', 'hooks', 'events']);
+    expect(trouve?.hasSettings).toBe(true);
 
     // Rien ne doit exister avant l'installation : decouvrir n'est pas installer.
     const schemas = await db.asOwner((tx) =>
@@ -240,6 +273,44 @@ describe("Substrat d'extension", () => {
       ),
     );
     expect(restantes.rows[0]?.total).toBe(0);
+  });
+
+  it('lit ses reglages, d instance et d entite, depuis un hook', async () => {
+    await plugins.enregistrerReglages(PLUGIN_ID, null, { suffixe: ' [ok]' });
+    await dansLeContexte(() =>
+      plugins.enregistrerReglages(PLUGIN_ID, entiteRacineId, { etiquette: 'fil' }),
+    );
+
+    const creee = await dansLeContexte(() =>
+      entites.create({ name: 'avec reglage', parentId: entiteRacineId }),
+    );
+
+    expect(creee.name).toBe('avec reglage [ok] fil');
+  });
+
+  it('refuse la sortie HTTP a un plugin qui ne l a pas declaree', async () => {
+    await expect(
+      dansLeContexte(() => entites.create({ name: 'sortie', parentId: entiteRacineId })),
+    ).rejects.toThrow(/http:outbound/);
+  });
+
+  it('ne montre pas les reglages d une entite hors du perimetre', async () => {
+    // Les reglages se lisent en proprietaire, hors Row-Level Security : sans
+    // verification du perimetre, un administrateur de filiale lirait ceux de
+    // n'importe quelle entite en devinant son identifiant.
+    await expect(
+      dansLeContexte(() => plugins.reglagesDe(PLUGIN_ID, entiteAilleursId)),
+    ).rejects.toThrow(/introuvable/);
+    await expect(
+      dansLeContexte(() =>
+        plugins.enregistrerReglages(PLUGIN_ID, entiteAilleursId, { etiquette: 'intrus' }),
+      ),
+    ).rejects.toThrow(/introuvable/);
+
+    const dansLePerimetre = await dansLeContexte(() =>
+      plugins.reglagesDe(PLUGIN_ID, entiteRacineId),
+    );
+    expect(dansLePerimetre.map((r) => [r.key, r.value])).toEqual([['etiquette', 'fil']]);
   });
 
   it('desactive : les hooks sont retires, les donnees conservees', async () => {
@@ -305,6 +376,13 @@ describe("Substrat d'extension", () => {
       ),
     );
     expect(migrations.rows[0]?.total).toBe(0);
+
+    const reglages = await db.asOwner((tx) =>
+      tx.execute<{ total: number } & Record<string, unknown>>(
+        sql`SELECT count(*)::int AS total FROM plugin_settings WHERE plugin_id = ${PLUGIN_ID}`,
+      ),
+    );
+    expect(reglages.rows[0]?.total).toBe(0);
 
     const restant = (await plugins.list()).find((ligne) => ligne.id === PLUGIN_ID);
     expect(restant).toBeUndefined();
