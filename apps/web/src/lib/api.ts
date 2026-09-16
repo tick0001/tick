@@ -1,4 +1,7 @@
 import type {
+  PluginSettingsView,
+  PluginStatus,
+  UpdatePluginSettings,
   ItilCategory,
   ItilCategoryDetail,
   ItilCategoryFilter,
@@ -100,6 +103,8 @@ import type {
   UpsertSatisfactionConfig,
 } from '@tick/contracts';
 import {
+  pluginSettingsViewSchema,
+  pluginStatusSchema,
   itilCategoryDetailSchema,
   itilCategorySchema,
   agreementSchema,
@@ -347,6 +352,31 @@ export const api = {
 
   deleteDirectory: async (id: number): Promise<void> => {
     await send(`/admin/directories/${String(id)}`, 'DELETE');
+  },
+
+  plugins: (): Promise<PluginStatus[]> => request('/plugins', pluginStatusSchema.array()),
+
+  /** Cycle de vie d'un plugin. Désinstaller supprime ses données : voir `uninstallPlugin`. */
+  pluginAction: async (
+    id: string,
+    action: 'install' | 'activate' | 'deactivate',
+  ): Promise<void> => {
+    await send(`/plugins/${encodeURIComponent(id)}/${action}`, 'POST');
+  },
+
+  uninstallPlugin: async (id: string): Promise<void> => {
+    await send(`/plugins/${encodeURIComponent(id)}`, 'DELETE');
+  },
+
+  pluginSettings: (id: string, entityId: number | null): Promise<PluginSettingsView> =>
+    request(
+      `/plugins/${encodeURIComponent(id)}/settings` +
+        (entityId === null ? '' : `?entityId=${String(entityId)}`),
+      pluginSettingsViewSchema,
+    ),
+
+  savePluginSettings: async (id: string, body: UpdatePluginSettings): Promise<void> => {
+    await send(`/plugins/${encodeURIComponent(id)}/settings`, 'PUT', body);
   },
 
   testDirectory: (id: number): Promise<DirectoryTest> =>
