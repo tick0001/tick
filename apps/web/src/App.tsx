@@ -11,6 +11,7 @@ import { SessionProvider } from '@/lib/session';
 import { CategoriesPage } from '@/pages/CategoriesPage';
 import { CataloguePage } from '@/pages/CataloguePage';
 import { DirectoriesPage } from '@/pages/DirectoriesPage';
+import { PluginsPage } from '@/pages/PluginsPage';
 import { EntitiesPage } from '@/pages/EntitiesPage';
 import { FaqPage } from '@/pages/FaqPage';
 import { FormsPage } from '@/pages/FormsPage';
@@ -167,6 +168,7 @@ function Application() {
           <Route path="/settings/groups" element={<GroupsPage />} />
           <Route path="/settings/profiles" element={<ProfilesPage />} />
           <Route path="/settings/directories" element={<DirectoriesPage />} />
+          <Route path="/settings/extensions" element={<PluginsPage />} />
           <Route path="/settings/general" element={<SettingsPage session={session.data} />} />
 
           {/* Anciennes adresses : un signet ne doit pas tomber sur une page

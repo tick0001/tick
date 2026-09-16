@@ -230,6 +230,12 @@ export const IconAnnuaire: Icone = (props) => (
   </Trace>
 );
 
+/** Une pièce de puzzle : ce qui s'ajoute à l'ensemble sans en faire partie. */
+export const IconExtension: Icone = (props) => (
+  <Trace {...props}>
+    <path d="M9 4.5a2 2 0 1 1 4 0V6h3a1 1 0 0 1 1 1v3h1.5a2 2 0 1 1 0 4H17v3a1 1 0 0 1-1 1h-3v-1.5a2 2 0 1 0-4 0V18H6a1 1 0 0 1-1-1v-3h1.5a2 2 0 1 0 0-4H5V7a1 1 0 0 1 1-1h3Z" />
+  </Trace>
+);
 export const IconReglages: Icone = (props) => (
   <Trace {...props}>
     <circle cx="12" cy="12" r="3" />

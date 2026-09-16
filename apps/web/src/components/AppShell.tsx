@@ -6,6 +6,7 @@ import { ContextSwitcher } from '@/components/ContextSwitcher';
 import { PluginSlot } from '@/components/PluginSlot';
 import {
   IconAnnuaire,
+  IconExtension,
   IconCatalogue,
   IconChangement,
   IconConnaissance,
@@ -348,6 +349,12 @@ export function AppShell({
           label: t('administration.annuaires.titre'),
           icone: IconAnnuaire,
           droit: droitDe('/settings/directories'),
+        },
+        {
+          to: '/settings/extensions',
+          label: t('administration.extensions.titre'),
+          icone: IconExtension,
+          droit: droitDe('/settings/extensions'),
         },
         {
           to: '/settings/general',
