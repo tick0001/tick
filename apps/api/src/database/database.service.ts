@@ -40,6 +40,24 @@ export class DatabaseService implements OnModuleDestroy {
   }
 
   /**
+   * Verifie que les deux roles joignent la base.
+   *
+   * Le role applicatif porte tout le trafic ; le proprietaire ne sert qu'a
+   * l'authentification, au perimetre et aux migrations. La sonde de sante ne
+   * sondait que le second : elle restait au vert quand le premier ne pouvait
+   * plus se connecter, et l'installation repondait « ok » en refusant toutes
+   * les requetes. Deux causes l'ont montre — un mot de passe applicatif mal
+   * reporte apres la rotation que le guide demande, et une sauvegarde
+   * restauree sans recreer le role.
+   *
+   * `SELECT 1`, hors transaction et hors contexte : aucune table n'est lue, le
+   * Row-Level Security n'a rien a filtrer.
+   */
+  async joindre(): Promise<void> {
+    await Promise.all([this.owner.execute(sql`SELECT 1`), this.app.execute(sql`SELECT 1`)]);
+  }
+
+  /**
    * Transaction pour le compte d'un plugin, restreinte a son schema.
    *
    * Le `search_path` place le schema du plugin en premier : une requete sans
