@@ -56,7 +56,7 @@ export class EventBus implements OnModuleInit, OnModuleDestroy {
     this.worker = new Worker(
       EVENT_QUEUE,
       async (job: Job<PendingEvent>) => {
-        await this.dispatch(job.data);
+        await this.dispatch(job);
       },
       { connection },
     );
@@ -159,7 +159,22 @@ export class EventBus implements OnModuleInit, OnModuleDestroy {
    * les autres gestionnaires ont déjà été servis : un plugin défaillant ne prive
    * pas les autres de l'événement.
    */
-  private async dispatch(event: PendingEvent): Promise<void> {
+  /**
+   * Distribue un evenement a ses abonnes.
+   *
+   * **Un abonne qui a reussi n'est pas rappele quand un autre echoue.** La
+   * file reessaie le travail entier : sans cette memoire, un seul abonne en
+   * echec rejouait tous les autres a chaque tentative. Les notifications du
+   * coeur, qui s'interdisent d'echouer precisement pour ne pas produire de
+   * doublons, repartaient alors cinq fois — il suffisait qu'un plugin joigne
+   * un webhook momentanement injoignable.
+   *
+   * Un abonne se reconnait a son plugin et a son rang parmi les abonnements de
+   * ce plugin a cet evenement. L'ordre d'enregistrement est celui de
+   * l'activation, stable d'un demarrage a l'autre.
+   */
+  private async dispatch(job: Pick<Job<PendingEvent>, 'data' | 'updateData'>): Promise<void> {
+    const event = job.data;
     const liste = this.registrations.get(event.name);
 
     this.logger.debug(
@@ -170,16 +185,29 @@ export class EventBus implements OnModuleInit, OnModuleDestroy {
     if (!liste || liste.length === 0) return;
 
     const echecs: string[] = [];
+    const traites = new Set(event.traites ?? []);
+    const rangs = new Map<string, number>();
 
     for (const registration of liste) {
+      const rang = rangs.get(registration.pluginId) ?? 0;
+      const cle = `${registration.pluginId}#${String(rang)}`;
+
+      rangs.set(registration.pluginId, rang + 1);
+
+      if (traites.has(cle)) continue;
+
       try {
         await registration.handler(event.payload, registration.context);
+        traites.add(cle);
       } catch (error) {
         echecs.push(`${registration.pluginId} : ${String(error)}`);
       }
     }
 
     if (echecs.length > 0) {
+      // Retenu avant de lever : la tentative suivante lira ces donnees.
+      await job.updateData({ ...event, traites: [...traites] });
+
       throw new Error(`Traitement partiel de ${event.name} — ${echecs.join(' ; ')}`);
     }
   }

@@ -4,6 +4,12 @@ import type { EventName, EventPayloads } from '@tick/plugin-sdk';
 export interface PendingEvent {
   name: EventName;
   payload: EventPayloads[EventName];
+  /**
+   * Abonnés qui ont déjà traité l'événement, lors d'une tentative précédente.
+   *
+   * Tenu par le bus, jamais par l'émetteur. Voir `EventBus.dispatch`.
+   */
+  traites?: string[];
 }
 
 /**
