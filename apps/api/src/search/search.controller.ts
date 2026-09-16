@@ -25,7 +25,6 @@ import { currentContext } from '../common/request-context.js';
 import { ZodValidationPipe } from '../common/zod-validation.pipe.js';
 import { TicketsService } from '../tickets/tickets.service.js';
 import { SavedSearchesService } from './saved-searches.service.js';
-import { SearchCompiler } from './search-compiler.service.js';
 import { SearchRegistry } from './search-registry.service.js';
 import { translate } from './search-labels.js';
 
@@ -34,7 +33,6 @@ import { translate } from './search-labels.js';
 export class SearchController {
   constructor(
     private readonly registry: SearchRegistry,
-    private readonly compiler: SearchCompiler,
     private readonly tickets: TicketsService,
     private readonly saved: SavedSearchesService,
   ) {}
@@ -66,7 +64,7 @@ export class SearchController {
   async searchTickets(
     @Body(new ZodValidationPipe(searchRequestSchema)) body: SearchRequest,
   ): Promise<TicketPage> {
-    return this.tickets.search(this.compiler.compile(body.criteria), {
+    return this.tickets.search(body.criteria, {
       sort: body.sort,
       direction: body.direction,
       limit: body.limit,
