@@ -209,6 +209,62 @@ jobs:
         if: failure()
         run: docker compose -f docker/compose.production.yaml logs --no-color --tail 200
 
+  # Une installation qui a vecu, montee vers ce code, puis restauree.
+  #
+  # « Conteneurs » demarre la pile sur une base vide. Ce qu'un exploitant fait
+  # reellement est autre chose : il monte une installation en service, avec ses
+  # donnees, vers la version suivante — et un jour il restaure sa sauvegarde sur
+  # un serveur neuf. Une migration qui passe sur une base vide et casse sur des
+  # donnees reelles n'est visible qu'ici.
+  #
+  # Tout le deroule vit dans le script, executable a l'identique sur un poste :
+  # `make montee`.
+  montee:
+    name: Montee de version
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: docker/setup-buildx-action@v4
+
+      # Lecture du cache seulement. « Conteneurs » ecrit les memes portees au
+      # meme moment, et deux reservations simultanees de la meme cle font
+      # echouer la seconde.
+      - name: Image de l'API
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          file: docker/api.Dockerfile
+          push: false
+          load: true
+          tags: tick-api:ci
+          cache-from: type=gha,scope=api
+
+      - name: Image de l'interface
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          file: docker/web.Dockerfile
+          push: false
+          load: true
+          tags: tick-web:ci
+          cache-from: type=gha,scope=web
+
+      # La derniere version **publiee**, et non la derniere etiquette : c'est
+      # elle qu'un exploitant a en service.
+      - name: Version publiee
+        id: publiee
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          etiquette=$(gh release view --repo "$GITHUB_REPOSITORY" --json tagName --jq .tagName)
+          echo "version=${etiquette#v}" >> "$GITHUB_OUTPUT"
+
+      - name: Montee et restauration
+        run: bash scripts/montee-de-version.sh "${{ steps.publiee.outputs.version }}" ci
+
   # Les parcours reels, dans un vrai navigateur.
   #
   # Ce travail couvre ce qu'aucun des deux autres ne peut couvrir. « Verification »
