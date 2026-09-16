@@ -1,5 +1,4 @@
 import { Injectable, Logger, type OnModuleDestroy } from '@nestjs/common';
-import { sql } from '@tick/db';
 import { Redis } from 'ioredis';
 import { loadEnv } from '../config/env.js';
 import { DatabaseService } from '../database/database.service.js';
@@ -74,8 +73,9 @@ export class HealthService implements OnModuleDestroy {
     }
   }
 
+  /** Les deux roles, et non le seul proprietaire. Voir `DatabaseService.joindre`. */
   async base(): Promise<boolean> {
-    return this.borne(this.db.asOwner((tx) => tx.execute(sql`SELECT 1`)));
+    return this.borne(this.db.joindre());
   }
 
   async files(): Promise<boolean> {
