@@ -167,8 +167,36 @@ La politique de configuration couvre deux besoins qu'il serait tentant de confon
 puis-je choisir depuis l'entité active). Le premier terme répond au premier, le second au
 deuxième — et c'est bien l'union des deux que GLPI présente.
 
-Deux rôles PostgreSQL : un rôle applicatif soumis au RLS pour tout le trafic normal, et un rôle
-de migration qui en est exempté. L'API n'utilise jamais le second en dehors des migrations.
+Deux rôles PostgreSQL. Le **rôle applicatif**, soumis au RLS, porte tout le trafic des
+utilisateurs. Le **rôle propriétaire** en est exempté : il joue les migrations, et sert à ce qui
+précède une requête d'utilisateur ou la dépasse — authentification et sessions, travaux de fond
+qui parcourent toutes les entités (escalades, récurrences, collecte de courriel, notifications,
+enquêtes), gestion des plugins. Aucun code ne le reçoit avec un contexte d'utilisateur.
+
+### Une exception, et une seule : la recherche textuelle
+
+Sous RLS, aucune recherche textuelle ne peut utiliser d'index. PostgreSQL refuse d'évaluer un
+prédicat non _leakproof_ avant le prédicat de sécurité d'une politique — une durée ou un message
+d'erreur pourrait trahir une ligne interdite — et ni `ILIKE`, ni `@@`, ni `%` ne le sont. Pour la
+même raison, il s'interdit les statistiques de la colonne et estime une ligne là où il y en a
+des dizaines de milliers. Chercher un mot dans cinq cent mille tickets balayait la table entière.
+
+`tick_tickets_semblables` lit donc l'index trigramme **en tant que propriétaire**, et c'est une
+exception délibérée à la règle ci-dessus. Elle est tenue par quatre choses :
+
+- elle applique elle-même `tick_in_scope(entity_path)`, le prédicat exact de la politique de la
+  table : elle ne rend que ce que le RLS laisserait voir à l'appelant, et **rien** sans contexte ;
+- elle ne rend **que des identifiants**, que la requête visible filtre ensuite par une égalité —
+  _leakproof_ — et toujours sous RLS ;
+- l'appelant ne fournit qu'un motif. Il ne choisit ni la colonne, prise dans une liste fermée, ni
+  les conditions : une vue sans barrière de sécurité l'aurait laissé évaluer ses propres
+  fonctions sur les lignes interdites ;
+- son `search_path` est figé, et seul le rôle applicatif peut l'exécuter.
+
+Ce qui fuit encore : la **durée**. L'index remonte les correspondances de toutes les entités
+avant le filtre de périmètre, si bien que le temps d'exécution croît avec le nombre de tickets
+semblables ailleurs. Le canal ne révèle ni un titre ni un identifiant, et la requête précédente,
+qui balayait toute la table, en ouvrait un du même ordre.
 
 ### Le périmètre habilité n'est pas le périmètre de travail
 
@@ -212,6 +240,10 @@ conteneur, que l'intégration continue n'exécuterait pas.
    et bascule immédiatement les visibilités.
 6. Une écriture visant une entité hors périmètre est refusée.
 7. Une connexion sans contexte établi voit un périmètre **vide**, jamais un périmètre total.
+8. La recherche textuelle, appelée en SQL brut avec le rôle applicatif, ne rend que les tickets du
+   périmètre, et rien sans contexte. Ce test porte sur la fonction seule : la requête de la liste,
+   restée sous RLS, réparerait une fonction qui oublierait le périmètre — et les tests du service
+   resteraient verts. Vérifié en retirant le filtre : seuls les tests de la fonction échouent.
 
 Deux cas supplémentaires relèvent des services et non des politiques :
 

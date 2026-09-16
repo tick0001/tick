@@ -29,6 +29,14 @@ communauté — n'y figure pas. Ce journal s'adresse à qui exploite Tick&, pas 
   **Si vous avez suivi ce guide, vérifiez vos sauvegardes** avec `pg_restore -l` : si la
   commande les refuse, refaites-en une avec la nouvelle commande.
 
+- **La recherche dans les tickets balayait toute la table.** Sous Row-Level Security,
+  PostgreSQL ne peut utiliser aucun index pour une recherche textuelle — ni `ILIKE`, ni la
+  recherche plein texte. À cinq cent mille tickets, chercher un mot prenait plus d'une
+  demi-seconde et plafonnait à quatre requêtes par seconde. La recherche interroge désormais un
+  index trigramme sans rien céder du cloisonnement : de 19 à 50 ms, et de 74 à 151 requêtes par
+  seconde selon que le terme est rare ou fréquent. Les résultats sont identiques. Cela vaut pour
+  la recherche multicritères, son export, et la recherche rapide de la liste.
+
 ### Ajouté
 
 - **Une procédure de restauration**, pour les trois modes d'installation. Le guide expliquait
@@ -40,6 +48,12 @@ communauté — n'y figure pas. Ce journal s'adresse à qui exploite Tick&, pas 
   version publiée est amorcée, montée vers le nouveau code, puis détruite et restaurée depuis sa
   sauvegarde ; chaque table doit garder toutes ses lignes. `make montee` joue la même chose sur
   un poste.
+
+### À faire en montant
+
+La migration construit deux index sur les tickets : trois secondes chacun à cinq cent mille
+tickets, pendant lesquelles les écritures sur les tickets attendent. Comme toute migration, elle
+se joue à l'arrêt de l'API — ce que fait déjà le service `migrate`.
 
 ## [0.1.9] — 10 septembre 2026
 
