@@ -28,7 +28,7 @@ DEMO_LOCAL  := $(COMPOSE) -p tick-demo-locale -f docker/compose.production.yaml 
 DEV         := $(COMPOSE) -f docker/compose.yaml
 
 .DEFAULT_GOAL := aide
-.PHONY: aide dev dev-services dev-arret dev-remise-a-zero verifier images parcours parcours-ui parcours-installer charge mesurer \
+.PHONY: aide dev dev-services dev-arret dev-remise-a-zero verifier images parcours parcours-ui parcours-installer charge mesurer montee \
         prod prod-journal prod-arret prod-migrer prod-admin \
         demo demo-journal demo-arret demo-locale demo-locale-arret \
         version
@@ -46,6 +46,8 @@ aide:
 	@echo '  make parcours             tests de bout en bout (remet les donnees a zero)'
 	@echo '  make charge P=pme         jeu de donnees a l echelle (pme, collectivite, grand-compte)'
 	@echo '  make mesurer              banc d essai sur l API en cours'
+	@echo '  make montee               la derniere version publiee, montee vers les images locales'
+	@echo '                            puis restauree depuis sa sauvegarde (A=0.1.9 pour une autre)'
 	@echo ''
 	@echo 'Publication'
 	@echo '  make version V=0.1.7      coupe release/0.1.7, prete a fusionner dans main'
@@ -226,3 +228,15 @@ charge:
 
 mesurer:
 	pnpm --filter @tick/charge charge
+
+# --- Montee de version ---------------------------------------------------------
+#
+# Une installation publiee, avec des donnees, montee vers les images locales,
+# puis detruite et restauree depuis sa sauvegarde. Le script est celui de
+# l'integration continue : ce qui passe ici passe la-bas.
+#
+# Sans A, la derniere etiquette de version : chacune est publiee a sa creation.
+
+montee: images
+	@git fetch -q --tags origin
+	bash scripts/montee-de-version.sh $(or $(A),$$(git tag --list 'v*' --sort=-v:refname | head -1 | sed 's/^v//')) local
