@@ -12,7 +12,7 @@ peut rompre.
 Ce qui ne concerne que le dépôt — intégration continue, outillage de publication, fichiers de
 communauté — n'y figure pas. Ce journal s'adresse à qui exploite Tick&, pas à qui y contribue.
 
-## Non publié
+## [0.1.11] — 17 septembre 2026
 
 ### Sécurité
 
@@ -61,6 +61,9 @@ communauté — n'y figure pas. Ce journal s'adresse à qui exploite Tick&, pas 
   réseaux privés, convient au déploiement par Docker comme aux installations fournies.
 
 ### À faire en montant
+
+Aucune migration. Par Docker, tirer les nouvelles images suffit : les en-têtes de sécurité
+arrivent avec l'image `web`.
 
 Sans conteneur, pour déposer des plugins : ajouter `PLUGINS_PATH` au fichier de configuration,
 avec un chemin absolu hors du dossier de l'API, et créer ce dossier.
@@ -318,6 +321,7 @@ déploiement par conteneurs ou par archives, licence AGPL-3.0-or-later.
 **Jamais utilisé par un vrai centre de services** — voir le [README](README.md), qui dit
 franchement ce qu'il faut savoir avant de s'en servir.
 
+[0.1.11]: https://github.com/tick0001/tick/releases/tag/v0.1.11
 [0.1.10]: https://github.com/tick0001/tick/releases/tag/v0.1.10
 [0.1.9]: https://github.com/tick0001/tick/releases/tag/v0.1.9
 [0.1.8]: https://github.com/tick0001/tick/releases/tag/v0.1.8
