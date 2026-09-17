@@ -1,4 +1,9 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ForbiddenException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import type { Group, GroupMember, UpsertGroup, UpsertMember } from '@tick/contracts';
 import { groupMembers, groups, sql } from '@tick/db';
 import { entityNames } from '../common/entity-names.js';
@@ -165,7 +170,7 @@ export class GroupsService {
   }
 
   async addMember(groupId: number, input: UpsertMember): Promise<Group> {
-    await this.requireGroup(groupId);
+    await this.requireGroupModifiable(groupId);
 
     await this.db.asUser(async (tx) => {
       await tx
@@ -188,7 +193,7 @@ export class GroupsService {
   }
 
   async removeMember(groupId: number, userId: number): Promise<Group> {
-    await this.requireGroup(groupId);
+    await this.requireGroupModifiable(groupId);
 
     await this.db.asUser(async (tx) => {
       await tx.execute(
@@ -197,6 +202,26 @@ export class GroupsService {
     });
 
     return this.requireGroup(groupId);
+  }
+
+  /**
+   * Un groupe dont on peut gérer les membres : celui de l'entité active.
+   *
+   * Un groupe récursif d'une entité parente est visible, et assignable, depuis
+   * ses sous-entités ; il ne s'y modifie pas, et ses membres non plus. La base
+   * le refuse de toute façon — ce contrôle en fait un refus qui s'explique.
+   */
+  private async requireGroupModifiable(id: number): Promise<Group> {
+    const groupe = await this.requireGroup(id);
+
+    if (groupe.entityId !== requireContext().entityId) {
+      throw new ForbiddenException(
+        `Le groupe « ${groupe.name} » est defini dans l'entite « ${groupe.entityName} » : ` +
+          'ses membres se gerent depuis celle-ci.',
+      );
+    }
+
+    return groupe;
   }
 
   private async requireGroup(id: number): Promise<Group> {

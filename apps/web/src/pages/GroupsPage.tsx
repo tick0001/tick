@@ -21,7 +21,7 @@ import {
   Select,
 } from '@/components/ui/primitives';
 import { ApiError, api } from '@/lib/api';
-import { usePeut } from '@/lib/session';
+import { usePeut, useSession } from '@/lib/session';
 import { cn } from '@/lib/utils';
 
 const VIDE: UpsertGroup = {
@@ -41,6 +41,7 @@ const VIDE: UpsertGroup = {
  */
 export function GroupsPage() {
   const { t } = useTranslation();
+  const session = useSession();
   const peutSupprimer = usePeut('group', 'delete');
   const peutEcrire = usePeut('group', 'create');
   const queryClient = useQueryClient();
@@ -199,105 +200,124 @@ export function GroupsPage() {
       )}
 
       <div className="divide-y divide-line border-y border-line">
-        {(liste.data ?? []).map((groupe) => (
-          <div key={groupe.id}>
-            <div className="space-y-3 px-1 py-3.5">
-              <div className="flex flex-wrap items-center gap-2">
-                <h3 className="text-sm font-semibold">{groupe.name}</h3>
-                <Badge ton="neutre">{groupe.entityName}</Badge>
-                {groupe.isRecursive && (
-                  <Badge ton="marque">{t('administration.groupes.recursif')}</Badge>
-                )}
-              </div>
+        {(liste.data ?? []).map((groupe) => {
+          // Un groupe récursif d'une entité parente est visible et assignable
+          // ici, mais se gère là où il est défini : le serveur refuserait.
+          const local = groupe.entityId === session.entity.id;
 
-              {groupe.comment && <p className="text-sm text-muted">{groupe.comment}</p>}
+          return (
+            <div key={groupe.id}>
+              <div className="space-y-3 px-1 py-3.5">
+                <div className="flex flex-wrap items-center gap-2">
+                  <h3 className="text-sm font-semibold">{groupe.name}</h3>
+                  <Badge ton="neutre">{groupe.entityName}</Badge>
+                  {groupe.isRecursive && (
+                    <Badge ton="marque">{t('administration.groupes.recursif')}</Badge>
+                  )}
+                </div>
 
-              <div className="space-y-1.5">
-                <p className="text-xs font-medium text-faint">
-                  {t('administration.groupes.membres')}
-                </p>
+                {groupe.comment && <p className="text-sm text-muted">{groupe.comment}</p>}
 
-                {groupe.members.length === 0 ? (
-                  <p className="text-sm text-muted">{t('administration.groupes.aucunMembre')}</p>
-                ) : (
-                  <ul className="flex flex-wrap gap-1.5">
-                    {groupe.members.map((membreGroupe) => (
-                      <li
-                        key={membreGroupe.userId}
-                        className="inline-flex items-center gap-1.5 rounded-lg border border-line px-2 py-1 text-xs"
-                      >
-                        {membreGroupe.displayName}
-                        {membreGroupe.isManager && (
-                          <span className="text-brand">
-                            · {t('administration.groupes.responsable')}
-                          </span>
-                        )}
-                        <button
-                          type="button"
-                          aria-label={t('administration.utilisateurs.retirer')}
-                          onClick={() => {
-                            retirer.mutate({ groupId: groupe.id, userId: membreGroupe.userId });
-                          }}
-                          className="text-faint transition-colors hover:text-critical"
+                <div className="space-y-1.5">
+                  <p className="text-xs font-medium text-faint">
+                    {t('administration.groupes.membres')}
+                  </p>
+
+                  {groupe.members.length === 0 ? (
+                    <p className="text-sm text-muted">{t('administration.groupes.aucunMembre')}</p>
+                  ) : (
+                    <ul className="flex flex-wrap gap-1.5">
+                      {groupe.members.map((membreGroupe) => (
+                        <li
+                          key={membreGroupe.userId}
+                          className="inline-flex items-center gap-1.5 rounded-lg border border-line px-2 py-1 text-xs"
                         >
-                          ×
-                        </button>
-                      </li>
-                    ))}
-                  </ul>
+                          {membreGroupe.displayName}
+                          {membreGroupe.isManager && (
+                            <span className="text-brand">
+                              · {t('administration.groupes.responsable')}
+                            </span>
+                          )}
+                          {local && (
+                            <button
+                              type="button"
+                              aria-label={t('administration.utilisateurs.retirer')}
+                              onClick={() => {
+                                retirer.mutate({ groupId: groupe.id, userId: membreGroupe.userId });
+                              }}
+                              className="text-faint transition-colors hover:text-critical"
+                            >
+                              ×
+                            </button>
+                          )}
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+
+                {!local && (
+                  <p className="border-t border-line pt-3 text-xs text-muted">
+                    {t('administration.groupes.herite', { entite: groupe.entityName })}
+                  </p>
                 )}
-              </div>
 
-              <div className="flex flex-wrap items-center gap-2 border-t border-line pt-3">
-                <Select
-                  value={membre[groupe.id] ?? ''}
-                  onChange={(event) => {
-                    setMembre((precedent) => ({ ...precedent, [groupe.id]: event.target.value }));
-                  }}
-                  className="w-48"
-                >
-                  <option value="">—</option>
-                  {(utilisateurs.data ?? [])
-                    .filter(
-                      (utilisateur) =>
-                        !groupe.members.some((existant) => existant.userId === utilisateur.id),
-                    )
-                    .map((utilisateur) => (
-                      <option key={utilisateur.id} value={utilisateur.id}>
-                        {utilisateur.displayName}
-                      </option>
-                    ))}
-                </Select>
+                {local && (
+                  <div className="flex flex-wrap items-center gap-2 border-t border-line pt-3">
+                    <Select
+                      value={membre[groupe.id] ?? ''}
+                      onChange={(event) => {
+                        setMembre((precedent) => ({
+                          ...precedent,
+                          [groupe.id]: event.target.value,
+                        }));
+                      }}
+                      className="w-48"
+                    >
+                      <option value="">—</option>
+                      {(utilisateurs.data ?? [])
+                        .filter(
+                          (utilisateur) =>
+                            !groupe.members.some((existant) => existant.userId === utilisateur.id),
+                        )
+                        .map((utilisateur) => (
+                          <option key={utilisateur.id} value={utilisateur.id}>
+                            {utilisateur.displayName}
+                          </option>
+                        ))}
+                    </Select>
 
-                <Button
-                  taille="sm"
-                  disabled={!membre[groupe.id]}
-                  onClick={() => {
-                    ajouter.mutate({
-                      groupId: groupe.id,
-                      userId: Number(membre[groupe.id]),
-                    });
-                    setMembre((precedent) => ({ ...precedent, [groupe.id]: '' }));
-                  }}
-                >
-                  {t('administration.groupes.ajouterMembre')}
-                </Button>
+                    <Button
+                      taille="sm"
+                      disabled={!membre[groupe.id]}
+                      onClick={() => {
+                        ajouter.mutate({
+                          groupId: groupe.id,
+                          userId: Number(membre[groupe.id]),
+                        });
+                        setMembre((precedent) => ({ ...precedent, [groupe.id]: '' }));
+                      }}
+                    >
+                      {t('administration.groupes.ajouterMembre')}
+                    </Button>
 
-                {peutSupprimer && (
-                  <button
-                    type="button"
-                    className={cn(ACTION_LIGNE_DANGER, 'ml-auto')}
-                    onClick={() => {
-                      supprimer.mutate(groupe.id);
-                    }}
-                  >
-                    {t('entites.supprimer')}
-                  </button>
+                    {peutSupprimer && (
+                      <button
+                        type="button"
+                        className={cn(ACTION_LIGNE_DANGER, 'ml-auto')}
+                        onClick={() => {
+                          supprimer.mutate(groupe.id);
+                        }}
+                      >
+                        {t('entites.supprimer')}
+                      </button>
+                    )}
+                  </div>
                 )}
               </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
 
       <FieldError>{supprimer.error?.message ?? ajouter.error?.message}</FieldError>

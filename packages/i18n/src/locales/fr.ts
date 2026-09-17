@@ -966,6 +966,7 @@ export const fr = {
       aucunMembre: 'Aucun membre.',
       ajouterMembre: 'Ajouter',
       responsable: 'Responsable',
+      herite: 'Défini dans {{entite}} : ses membres se gèrent depuis cette entité.',
     },
     profils: {
       titre: 'Profils et droits',

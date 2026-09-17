@@ -191,4 +191,29 @@ describe('GroupsPage', () => {
 
     expect(await screen.findByText(/ne permet pas/i)).toBeInTheDocument();
   });
+
+  it('ne propose pas de gérer les membres d’un groupe hérité d’une entité parente', async () => {
+    // Visible et assignable ici, il se gère là où il est défini : le serveur
+    // refuserait l'ajout comme le retrait.
+    vi.spyOn(api, 'groups').mockResolvedValue([
+      {
+        ...(GROUPES[0] as Group),
+        id: 3,
+        name: 'Équipe réseau',
+        completeName: 'Équipe réseau',
+        entityId: 7,
+        entityName: 'Siège',
+      },
+    ]);
+
+    monterPage(<GroupsPage />, { droits: DROITS });
+
+    expect(
+      await screen.findByText('Défini dans Siège : ses membres se gèrent depuis cette entité.'),
+    ).toBeInTheDocument();
+    expect(screen.getByText('Léa Moreau')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Ajouter' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /retirer/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /supprimer/i })).not.toBeInTheDocument();
+  });
 });
