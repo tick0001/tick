@@ -97,9 +97,9 @@ export class PluginsService implements OnApplicationBootstrap {
         // La ligne dit « actif » mais rien n'est enregistre dans ce processus :
         // c'est un redemarrage. On recharge, en montant de version si besoin.
         await this.upgradeIfNeeded(plugin);
-        await this.activate(plugin.manifest.id).catch((error: unknown) => {
-          this.logger.error(`Activation de ${plugin.manifest.id} impossible : ${String(error)}`);
-        });
+        // L'echec est journalise et consigne par `activate` : un plugin casse
+        // ne doit pas empecher les suivants de demarrer.
+        await this.activate(plugin.manifest.id).catch(() => undefined);
       }
     }
   }
@@ -187,11 +187,7 @@ export class PluginsService implements OnApplicationBootstrap {
   async install(id: string): Promise<void> {
     const plugin = this.require(id);
 
-    if (!this.registry.isCompatible(plugin.manifest)) {
-      throw new BadRequestException(
-        `Le plugin « ${id} » demande un SDK ${plugin.manifest.sdk}, incompatible avec cette instance.`,
-      );
-    }
+    this.exigerCompatible(plugin);
 
     await this.migrator.createSchema(plugin);
     await this.migrator.migrate(plugin);
@@ -209,17 +205,31 @@ export class PluginsService implements OnApplicationBootstrap {
   /** Active : charge le module et lui laisse enregistrer ce qu'il veut. */
   async activate(id: string): Promise<void> {
     const plugin = this.require(id);
-    const definition = await this.load(plugin);
-    const context = this.createContext(plugin);
 
     // Retrait avant enregistrement : une reactivation ne doit pas empiler deux
     // fois les mêmes hooks.
-    this.hooks.unregisterPlugin(id);
-    this.events.unregisterPlugin(id);
-    this.search.unregisterPlugin(id);
-    this.widgets.unregisterPlugin(id);
+    this.retirer(id);
 
-    await definition.register(this.createApi(plugin, context));
+    try {
+      // Verifie ici aussi, et pas seulement a l'installation : au redemarrage
+      // qui suit une montee du SDK, un plugin actif peut ne plus l'etre.
+      this.exigerCompatible(plugin);
+
+      const definition = await this.load(plugin);
+
+      await definition.register(this.createApi(plugin, this.createContext(plugin)));
+    } catch (error) {
+      // Tout ou rien : un enregistrement interrompu laisserait actifs les hooks
+      // deja poses, sur un plugin que l'ecran ne dit pas actif.
+      this.retirer(id);
+      this.loaded.delete(id);
+      await this.setState(id, 'erreur', {
+        lastError: error instanceof Error ? error.message : String(error),
+      });
+      this.logger.error(`Activation de ${id} impossible : ${String(error)}`);
+
+      throw error;
+    }
 
     await this.setState(id, 'actif', { activatedAt: new Date(), lastError: null, failureCount: 0 });
     emitEvent('plugin.activated', { pluginId: id });
@@ -228,10 +238,7 @@ export class PluginsService implements OnApplicationBootstrap {
 
   /** Désactive : retire les enregistrements, conserve les données. */
   async deactivate(id: string): Promise<void> {
-    this.hooks.unregisterPlugin(id);
-    this.events.unregisterPlugin(id);
-    this.search.unregisterPlugin(id);
-    this.widgets.unregisterPlugin(id);
+    this.retirer(id);
     this.loaded.delete(id);
 
     await this.setState(id, 'inactif', {});
@@ -253,8 +260,7 @@ export class PluginsService implements OnApplicationBootstrap {
       await definition?.uninstall?.(this.createContext(plugin));
     }
 
-    this.hooks.unregisterPlugin(id);
-    this.events.unregisterPlugin(id);
+    this.retirer(id);
     this.loaded.delete(id);
 
     if (plugin) await this.migrator.dropSchema(plugin);
@@ -266,8 +272,7 @@ export class PluginsService implements OnApplicationBootstrap {
 
   /** Bascule un plugin en erreur après des échecs répétés. */
   async disable(id: string, error: unknown): Promise<void> {
-    this.hooks.unregisterPlugin(id);
-    this.events.unregisterPlugin(id);
+    this.retirer(id);
     this.loaded.delete(id);
 
     await this.setState(id, 'erreur', { lastError: String(error) });
@@ -290,6 +295,29 @@ export class PluginsService implements OnApplicationBootstrap {
     this.logger.log(
       `Plugin « ${plugin.manifest.id} » : ${ligne.version} → ${plugin.manifest.version}.`,
     );
+  }
+
+  /**
+   * Retire tout ce qu'un plugin a enregistre, dans chaque registre.
+   *
+   * Un seul endroit pour les quatre : la desactivation automatique et la
+   * desinstallation en oubliaient deux, et un plugin eteint gardait ses champs
+   * de recherche et ses widgets.
+   */
+  private retirer(id: string): void {
+    this.hooks.unregisterPlugin(id);
+    this.events.unregisterPlugin(id);
+    this.search.unregisterPlugin(id);
+    this.widgets.unregisterPlugin(id);
+  }
+
+  private exigerCompatible(plugin: DiscoveredPlugin): void {
+    if (!this.registry.isCompatible(plugin.manifest)) {
+      throw new BadRequestException(
+        `Le plugin « ${plugin.manifest.id} » demande un SDK ${plugin.manifest.sdk}, ` +
+          'incompatible avec cette instance.',
+      );
+    }
   }
 
   private require(id: string): DiscoveredPlugin {

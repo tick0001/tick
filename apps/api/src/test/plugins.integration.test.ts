@@ -19,6 +19,8 @@ import { WidgetRegistry } from '../stats/widget-registry.service.js';
 
 const PLUGIN_ID = 'essai-substrat';
 const SCHEMA = 'plugin_essai_substrat';
+/** Plugin qui echoue au milieu de son enregistrement. */
+const BANCAL_ID = 'essai-bancal';
 
 /**
  * Cycle de vie complet du substrat d'extension — critere de sortie du jalon J2.
@@ -127,6 +129,31 @@ describe("Substrat d'extension", () => {
       };`,
     );
 
+    // Un hook pose, puis un widget sans la permission `dashboards` : l'echec
+    // survient apres un premier enregistrement reussi.
+    const bancal = join(racine, BANCAL_ID);
+    await mkdir(join(bancal, 'migrations'), { recursive: true });
+    await writeFile(
+      join(bancal, 'tick.plugin.json'),
+      JSON.stringify({
+        id: BANCAL_ID,
+        name: 'Essai bancal',
+        version: '1.0.0',
+        sdk: `^${SDK_VERSION}`,
+        permissions: ['hooks'],
+        server: './server.js',
+      }),
+    );
+    await writeFile(
+      join(bancal, 'server.js'),
+      `export default {
+        register(api) {
+          api.hooks.on("ticket.beforeCreate", (payload) => payload);
+          api.dashboards.registerWidget({ key: "k", label: "l", description: "d" });
+        },
+      };`,
+    );
+
     process.env.PLUGINS_PATH = racine;
     process.env.ENCRYPTION_KEY ??= '0'.repeat(64);
 
@@ -179,6 +206,7 @@ describe("Substrat d'extension", () => {
 
   afterAll(async () => {
     await plugins.uninstall(PLUGIN_ID).catch(() => undefined);
+    await plugins.uninstall(BANCAL_ID).catch(() => undefined);
     await db.asOwner((tx) => tx.delete(entities).where(eq(entities.parentId, entiteRacineId)));
     await db.asOwner((tx) => tx.delete(entities).where(eq(entities.id, entiteRacineId)));
     await db.asOwner((tx) => tx.delete(entities).where(eq(entities.id, entiteAilleursId)));
@@ -296,6 +324,18 @@ describe("Substrat d'extension", () => {
     // a la voir, sans attendre qu'elle ait fini.
     expect(hooks.count('entity.beforeCreate')).toBe(1);
     expect((await plugins.list()).find((p) => p.id === PLUGIN_ID)?.state).toBe('actif');
+  });
+
+  it('n active rien d un plugin dont l enregistrement echoue en route', async () => {
+    await plugins.install(BANCAL_ID);
+
+    await expect(plugins.activate(BANCAL_ID)).rejects.toThrow(/dashboards/);
+
+    // Le hook pose avant l'echec a ete retire, et l'ecran dit pourquoi.
+    expect(hooks.count('ticket.beforeCreate')).toBe(0);
+    const ligne = (await plugins.list()).find((p) => p.id === BANCAL_ID);
+    expect(ligne?.state).toBe('erreur');
+    expect(ligne?.lastError).toMatch(/dashboards/);
   });
 
   it('lit ses reglages, d instance et d entite, depuis un hook', async () => {
