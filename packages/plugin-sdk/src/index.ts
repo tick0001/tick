@@ -28,6 +28,9 @@ export interface PluginLogger {
  * préfixe est d'abord cherchée parmi les siennes, puis dans `public`. Nommer le
  * cœur explicitement (`public.tickets`) rend une requête lisible ; il y reste
  * protégé par le Row-Level Security.
+ *
+ * Les valeurs de `$1`, `$2`… sont des paramètres liés, jamais recopiées dans le
+ * texte : chaînes, nombres, booléens, dates, `null`, ou tableaux de ces valeurs.
  */
 export interface PluginDatabase {
   query<T = Record<string, unknown>>(sql: string, params?: unknown[]): Promise<T[]>;
