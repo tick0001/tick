@@ -29,6 +29,11 @@ communauté — n'y figure pas. Ce journal s'adresse à qui exploite Tick&, pas 
   **Si vous avez suivi ce guide, vérifiez vos sauvegardes** avec `pg_restore -l` : si la
   commande les refuse, refaites-en une avec la nouvelle commande.
 
+- **Un texte mal encodé était enregistré abîmé, sans erreur.** Un client qui envoyait du
+  Windows-1252 en l'annonçant comme de l'UTF-8 — `curl` sous Git Bash pour Windows, par exemple
+  — voyait chaque accent remplacé par « � », et la requête réussissait : « 2e étage » devenait
+  « 2e �tage », sans retour possible. Un tel corps est désormais refusé, avec un message qui dit
+  quoi vérifier.
 - **La recherche dans les tickets balayait toute la table.** Sous Row-Level Security,
   PostgreSQL ne peut utiliser aucun index pour une recherche textuelle — ni `ILIKE`, ni la
   recherche plein texte. À cinq cent mille tickets, chercher un mot prenait plus d'une
