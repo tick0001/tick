@@ -200,6 +200,19 @@ avant le filtre de périmètre, si bien que le temps d'exécution croît avec le
 semblables ailleurs. Le canal ne révèle ni un titre ni un identifiant, et la requête précédente,
 qui balayait toute la table, en ouvrait un du même ordre.
 
+### La compilation JIT, coupée
+
+Même cause, autre effet. Les prédicats des politiques n'étant pas _leakproof_, le planificateur
+surestime le coût des requêtes soumises au RLS. Au-delà de `jit_above_cost`, PostgreSQL les
+compile alors avant de les jouer, à chaque exécution : 750 ms de compilation pour une recherche
+de 50 ms dans la base de connaissances. `withRequestContext` coupe donc la JIT pour chaque
+transaction applicative, par `set_config('jit', 'off', true)` : le réglage meurt avec la
+transaction, et le serveur garde le sien pour tout autre usage.
+
+La base de connaissances n'a pas eu besoin de l'exception accordée à la recherche des tickets :
+sans JIT, sa recherche plein texte prend 95 à 145 ms sous RLS à cent mille articles, un volume
+qu'aucune base de connaissances n'approche.
+
 ### Le périmètre habilité n'est pas le périmètre de travail
 
 Deux notions que le mot « périmètre » recouvre indistinctement, et qu'il faut séparer :
