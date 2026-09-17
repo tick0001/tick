@@ -205,6 +205,29 @@ jobs:
       - name: Interface servie
         run: curl -fsS http://localhost:8080/ | grep -q '<div id="root"></div>'
 
+      # Sur chaque sorte de réponse : nginx abandonne les en-têtes hérités dès
+      # qu'une `location` pose les siens, et les pages sont parties un temps
+      # sans protection contre l'incrustation.
+      - name: En-tetes de securite
+        run: |
+          fichier=$(curl -fsS http://localhost:8080/ | grep -o '/assets/[^"]*\.js' | head -1)
+          for chemin in / /tickets/1 "$fichier" /api/health; do
+            entetes=$(curl -sS -o /dev/null -D - "http://localhost:8080$chemin")
+            for attendu in content-security-policy x-frame-options x-content-type-options; do
+              if ! grep -qi "^$attendu:" <<<"$entetes"; then
+                echo "::error::$attendu absent de $chemin"
+                exit 1
+              fi
+            done
+          done
+          # HSTS derriere un relais HTTPS, et seulement la. Un `if` plutot
+          # qu'un `!` : une commande niee ne fait jamais echouer l'etape.
+          curl -sS -o /dev/null -D - -H 'X-Forwarded-Proto: https' http://localhost:8080/ | grep -qi '^strict-transport-security:'
+          if curl -sS -o /dev/null -D - http://localhost:8080/ | grep -qi '^strict-transport-security:'; then
+            echo "::error::HSTS envoye sur une reponse en clair"
+            exit 1
+          fi
+
       - name: Journaux
         if: failure()
         run: docker compose -f docker/compose.production.yaml logs --no-color --tail 200

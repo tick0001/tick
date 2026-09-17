@@ -52,6 +52,9 @@ RUN pnpm --filter @tick/web... build
 FROM nginx:1.31-alpine AS runtime
 
 COPY docker/nginx.conf /etc/nginx/conf.d/default.conf
+# Hors de `conf.d` : chargé là, ce fragment s'appliquerait à tout le bloc `http`
+# au lieu d'être inclus là où `nginx.conf` le demande.
+COPY docker/nginx-securite.conf /etc/nginx/tick-securite.conf
 COPY --from=build /app/apps/web/dist /usr/share/nginx/html
 
 EXPOSE 80
