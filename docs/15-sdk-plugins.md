@@ -252,8 +252,11 @@ du schéma du plugin — `tickets` — désigne la table du cœur. Préfixez-le
 protégé par le Row-Level Security, qu'un plugin ne contourne pas en lisant ses
 tables directement.
 
-Les paramètres `$1`, `$2`… acceptent les chaînes, nombres, booléens, dates et
-`null`. Un objet est refusé : sérialisez-le vous-même.
+Les valeurs de `$1`, `$2`… partent en **paramètres liés** : elles ne sont
+jamais recopiées dans le texte de la requête, quel que soit le réglage du
+serveur. Elles acceptent les chaînes, nombres, booléens, dates, `null`, et les
+tableaux de ces valeurs — `WHERE id = ANY($1)`. Un objet est refusé :
+sérialisez-le vous-même. Un `$n` sans valeur correspondante lève une erreur.
 
 Le nom du schéma est disponible sous `context.schema`, pour les migrations qui
 en ont besoin.

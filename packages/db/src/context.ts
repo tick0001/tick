@@ -53,6 +53,15 @@ export function toLtreeArrayLiteral(paths: readonly string[]): string {
  * `set_config(..., true)` limite la portee des parametres a la transaction :
  * une connexion rendue au pool ne conserve aucun contexte residuel, ce qui
  * eliminerait sinon toute garantie d'isolation.
+ *
+ * **La compilation JIT est coupee pour la transaction.** Sous Row-Level
+ * Security, les predicats des politiques ne sont pas *leakproof* : le
+ * planificateur renonce aux index et aux statistiques de colonne, et surestime
+ * le cout de requetes qui s'executent en quelques millisecondes. Passe le seuil
+ * `jit_above_cost`, PostgreSQL compile alors chaque requete avant de la jouer —
+ * a chaque execution, sans cache. Mesure sur la recherche de la base de
+ * connaissances : 800 ms de compilation pour 50 ms d'execution. La JIT sert les
+ * requetes analytiques longues, pas ce trafic-ci.
  */
 export async function withRequestContext<T>(
   db: Database,
@@ -66,7 +75,8 @@ export async function withRequestContext<T>(
         set_config('tick.profile_id', ${String(context.profileId)}, true),
         set_config('tick.entity_path', ${context.entityPath}, true),
         set_config('tick.scope_paths', ${toLtreeArrayLiteral(context.scope.subtreePaths)}, true),
-        set_config('tick.exact_paths', ${toLtreeArrayLiteral(context.scope.exactPaths)}, true)
+        set_config('tick.exact_paths', ${toLtreeArrayLiteral(context.scope.exactPaths)}, true),
+        set_config('jit', 'off', true)
     `);
 
     return work(tx);

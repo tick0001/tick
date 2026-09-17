@@ -114,7 +114,7 @@ Chacun illustre un cas que le modèle d'entités doit savoir traiter.
 
 Les jalons J0 à J8 de la [feuille de route](docs/06-feuille-de-route.md) sont livrés, et J9 l'est
 à un point près. Les dix-sept modules du périmètre fonctionnel sont couverts, l'API compte 183
-opérations documentées, et la suite fait 2 514 tests — dont des tests d'intégration sur une vraie
+opérations documentées, et la suite fait 2 562 tests — dont des tests d'intégration sur une vraie
 base PostgreSQL qui vérifient l'isolation entre entités. S'y ajoutent 69 parcours de bout en
 bout, joués dans un vrai navigateur contre la vraie API : connexion, cloisonnement, cycle de vie
 d'un ticket, libre-service.
@@ -124,7 +124,7 @@ Ce qu'il faut savoir avant de s'en servir, dit franchement :
 - **Jamais utilisé par un vrai centre de services.** La démonstration publique fait tourner les
   images publiées sur un VPS, derrière Traefik en TLS : le chemin de déploiement est donc exercé
   tous les jours — mais personne n'a encore traité de vrais tickets avec Tick&.
-- **`0.1.10` est une première série d'étiquettes, pas une version éprouvée.** Attendez-vous à des
+- **`0.1.11` est une première série d'étiquettes, pas une version éprouvée.** Attendez-vous à des
   ruptures entre versions mineures tant que les interfaces n'auront pas été exercées par quelqu'un
   d'autre que leur auteur.
 - **Le SDK de plugins reste en `0.x`** et peut rompre entre deux versions mineures. Il ne se figera
@@ -140,7 +140,7 @@ issue publique : [SECURITY](SECURITY.md).
 ```bash
 make             # la liste des cibles de déploiement
 pnpm build       # construit tous les paquets
-pnpm test        # 2 514 tests — nécessite les services démarrés
+pnpm test        # 2 562 tests — nécessite les services démarrés
 pnpm lint        # ESLint avec règles typées
 pnpm typecheck   # vérification de types sans émission
 pnpm format      # applique Prettier
@@ -152,8 +152,9 @@ pnpm openapi     # exporte la description de l'API
 Le monorepo réunit l'API (NestJS), l'interface (React + Vite), et quatre paquets partagés :
 contrats Zod, couche de données Drizzle, traductions, SDK de plugins.
 
-Le plugin de référence `plugins/exemple-bonjour` exerce chaque point d'extension et sert de test
-d'intégration permanent.
+Deux plugins vivent dans le dépôt et servent de tests d'intégration permanents :
+`plugins/exemple-bonjour`, qui exerce les hooks, les événements et deux emplacements d'interface,
+et `plugins/messagerie`, d'usage réel, qui annonce les tickets dans un canal de discussion.
 
 Commits en français, courts, préfixés d'un gitmoji : `:sparkles: ajoute l'arbre des entités`.
 

@@ -112,7 +112,7 @@ Each one illustrates a case the entity model has to handle.
 
 Milestones J0 to J8 of the [roadmap](docs/06-feuille-de-route.md) are delivered, and J9 all but
 one point. The seventeen functional modules are covered, the API exposes 183 documented
-operations, and the suite runs 2 514 tests — including integration tests against a real PostgreSQL
+operations, and the suite runs 2 562 tests — including integration tests against a real PostgreSQL
 database that check isolation between entities. On top of those, 69 end-to-end journeys run in a
 real browser against the real API: sign-in, tenant isolation, the ticket lifecycle, self-service.
 
@@ -121,7 +121,7 @@ What you should know before relying on it, said plainly:
 - **Never used by a real service desk.** The public demo runs the released images on a VPS,
   behind Traefik with TLS, so the deployment path is exercised every day — but nobody has yet run
   Tick& to handle actual tickets.
-- **`0.1.10` is a first series of tagged versions, not a proven one.** Expect breaking changes between minor
+- **`0.1.11` is a first series of tagged versions, not a proven one.** Expect breaking changes between minor
   versions until the interfaces have been exercised by someone other than their author.
 - **The plugin SDK is still `0.x`** and may break between minor versions. It will only freeze once
   every extension point has been exercised by real use; the reference plugin is not enough on its
@@ -136,7 +136,7 @@ the codebase and its documentation are in French.
 ```bash
 make             # every deployment target, explained
 pnpm build       # builds every package
-pnpm test        # 2 514 tests — requires the services to be running
+pnpm test        # 2 562 tests — requires the services to be running
 pnpm lint        # ESLint with type-aware rules
 pnpm typecheck   # type checking without emit
 pnpm format      # applies Prettier
@@ -148,8 +148,9 @@ pnpm openapi     # exports the API description
 The monorepo holds the API (NestJS), the interface (React + Vite), and four shared packages: Zod
 contracts, the Drizzle data layer, translations, and the plugin SDK.
 
-The reference plugin `plugins/exemple-bonjour` exercises every extension point and doubles as a
-permanent integration test.
+Two plugins live in the repository and double as permanent integration tests:
+`plugins/exemple-bonjour`, which exercises hooks, events and two interface slots, and
+`plugins/messagerie`, a real one, which announces tickets in a chat channel.
 
 Commits are in French, short, prefixed with a gitmoji: `:sparkles: ajoute l'arbre des entités`.
 

@@ -80,12 +80,18 @@ export function LoginPage() {
     },
   });
 
+  const erreur = connexion.error instanceof ApiError ? connexion.error : null;
+
+  // Un blocage n'est pas une panne : « service indisponible » pousserait à
+  // réessayer tout de suite, ce qui prolonge le blocage.
   const message =
-    connexion.error instanceof ApiError && connexion.error.status === 401
+    erreur?.status === 401
       ? t('connexion.echec')
-      : connexion.error
-        ? t('connexion.indisponible')
-        : null;
+      : erreur?.status === 429
+        ? t('connexion.bloque', { count: Math.max(1, Math.ceil((erreur.retryAfter ?? 60) / 60)) })
+        : connexion.error
+          ? t('connexion.indisponible')
+          : null;
 
   const soumettre = (event: FormEvent): void => {
     event.preventDefault();

@@ -129,6 +129,38 @@ la même courbe que la liste — 156 req/s, tenu jusqu'à cinq cents.
 Un test le retient : `search-registry.service.test.ts` refuse tout cast sur une colonne du
 registre. Remis en place, le cast le fait échouer.
 
+### Quatrième trouvaille : PostgreSQL compilait chaque requête
+
+Trouvée en mesurant la recherche de la base de connaissances, qui n'est pas un scénario du banc.
+À dix mille articles, sous le rôle applicatif, une recherche prenait **800 ms**, dont 750 que le
+plan d'exécution ne montrait nulle part : la **compilation JIT**. Sous RLS, le planificateur
+surestime le coût des requêtes, et au-delà de `jit_above_cost` PostgreSQL compile chaque requête
+avant de la jouer — à chaque exécution, sans cache.
+
+```
+base de connaissances, 10 000 articles    avec JIT  800 ms    sans  50 ms
+                       100 000 articles             900 ms          95 à 145 ms
+```
+
+`withRequestContext` coupe désormais la JIT pour chaque transaction applicative. Sur le banc, à
+cinq cent mille tickets, mesuré deux fois sur la même machine, sans autre charge :
+
+| Scénario, 50 connexions | Avec JIT  | Sans      |
+| ----------------------- | --------- | --------- |
+| `liste`                 | 127 req/s | 200 req/s |
+| `liste-filtree`         | 131 req/s | 197 req/s |
+| `detail`                | 161 req/s | 229 req/s |
+| `recherche-statut`      | 128 req/s | 152 req/s |
+| `recherche-rare`        | 116 req/s | 124 req/s |
+| `statistiques`, 5 conn. | 2 req/s   | 3 req/s   |
+
+Aucun scénario ne régresse ; les écarts sous 10 % sont du bruit de mesure. Les agrégats des
+indicateurs, la seule forme de requête où la JIT pouvait servir, n'y gagnaient rien.
+
+`EXPLAIN` n'en disait rien parce que l'option `COSTS OFF`, employée pour lire les plans,
+masque aussi la section `JIT`. Un test (`jit.integration.test.ts`) vérifie qu'une requête que
+le planificateur croit coûteuse n'est pas compilée dans une transaction applicative.
+
 ## Ce que le banc a trouvé sur lui-même
 
 Quatre défauts de l'instrument, tous découverts en montant à cinq cent mille tickets, et tous
@@ -260,9 +292,9 @@ une saisie humaine, un ticket à la fois, la différence ne se mesure pas.
 
 ### Les indicateurs
 
-`/api/stats` agrège tout le périmètre : 917 ms à une connexion, plafond à trois requêtes par
-seconde, rupture dès vingt. C'est le coût d'un agrégat sur cinq cent mille lignes, et il n'a pas
-encore été travaillé.
+`/api/stats` agrège tout le périmètre : une seconde à une connexion, plafond à trois requêtes
+par seconde, rupture dès vingt. C'est le coût d'un agrégat sur cinq cent mille lignes — la JIT
+n'y était pour rien — et il n'a pas encore été travaillé.
 
 ## Ce que la mesure a **infirmé**
 

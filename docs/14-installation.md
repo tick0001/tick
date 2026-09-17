@@ -120,6 +120,17 @@ voient, pas celles du réseau interne. Elles composent les liens des
 notifications : une valeur fausse produit des courriels dont les liens ne mènent
 nulle part, et cela ne se découvre qu'à la première notification envoyée.
 
+**`TRUST_PROXY`** dit à l'API quels relais croire quand ils transmettent
+l'adresse du client (`X-Forwarded-For`). Le défaut, `loopback, linklocal,
+uniquelocal`, croit les réseaux privés : c'est là que vivent le nginx de l'image,
+le Traefik d'un compose et le nginx d'une installation sur la même machine. Un
+client venu directement d'Internet n'est jamais cru sur parole.
+
+À compléter si un relais vit sur une adresse publique — un répartiteur
+d'entreprise, par exemple — avec son adresse ou sa plage. Faute de quoi toutes
+les requêtes semblent venir de ce relais, et la limite des tentatives de
+connexion par adresse le bloquerait pour tout le monde à la fois.
+
 ## Mot de passe du rôle applicatif
 
 La migration initiale crée le rôle `tick_app` avec un mot de passe par défaut.
@@ -216,6 +227,31 @@ sur un port de l'hôte, à côté du TLS de Traefik — et comme le cookie de se
 porte l'attribut `Secure` en production, une connexion par ce chemin-là
 échouerait **sans message** : le navigateur refuserait simplement d'enregistrer
 le cookie.
+
+## Connexion et en-têtes de sécurité
+
+**Les tentatives de connexion sont limitées.** Après cinq échecs, un compte est
+bloqué une minute, puis deux, quatre… jusqu'à un quart d'heure ; une connexion
+réussie efface le compteur. Une adresse qui accumule vingt échecs en un quart
+d'heure, tous comptes confondus, est refusée jusqu'à la fin de ce quart d'heure.
+Le refus précède la vérification du mot de passe : une rafale de tentatives ne
+coûte plus de calcul au serveur.
+
+Le compte n'est jamais désactivé : le blocage expire seul. Un inconnu qui
+connaît un identifiant peut donc retarder sa connexion, pas la lui retirer.
+L'état vit dans Redis ; Redis injoignable, chaque instance de l'API le tient en
+mémoire.
+
+**L'interface est servie avec une politique de contenu stricte.** Scripts,
+styles, polices et images viennent de la même origine — l'interface des
+extensions comprise —, et la page refuse d'être affichée dans le cadre d'un
+autre site. HSTS s'ajoute quand le relais TLS annonce HTTPS par
+`X-Forwarded-Proto`, ce que fait Traefik.
+
+Une installation qui a besoin d'une autre politique, pour un plugin qui charge
+une ressource externe par exemple, monte son propre fichier à la place de
+`/etc/nginx/tick-securite.conf` dans le conteneur `web`, en partant de
+[celui de l'image](../docker/nginx-securite.conf).
 
 ## Premier administrateur
 
@@ -376,12 +412,41 @@ lignes, et l'on doit pouvoir s'y connecter ensuite.
 ## Plugins
 
 Un plugin est du code chargé dans le processus de l'API. Déposer son dossier
-construit dans `./plugins`, à côté du fichier compose, puis redémarrer l'API. Il
-apparaît alors dans **Réglages › Extensions**, qui montre ce qu'il demande avant
-de l'installer, l'active et porte ses réglages.
+construit dans le dossier des plugins, puis redémarrer l'API. Il apparaît alors
+dans **Réglages › Extensions**, qui montre ce qu'il demande avant de
+l'installer, l'active et porte ses réglages.
 
-Le dépôt fournit [`messagerie`](../plugins/messagerie), qui annonce les tickets
-dans un canal Slack, Mattermost ou Teams ; son README dit comment le construire.
+Le dossier des plugins est `docker/plugins`, à côté du fichier compose. Sans
+conteneur, c'est celui que désigne `PLUGINS_PATH` — `/opt/tick/plugins` ou
+`C:\Tick\plugins` dans les guides [Linux](16-installation-linux.md) et
+[Windows](17-installation-windows.md).
+
+### Plugins publiés
+
+Chaque version, depuis la `0.1.11`, joint une archive des plugins maintenus avec
+Tick& : aujourd'hui [`messagerie`](../plugins/messagerie), qui annonce les
+tickets dans Mattermost, Slack, Rocket.Chat, Discord ou Teams. Ils ne sont pas
+dans l'image : n'arrive dans une installation que ce que l'exploitant y dépose.
+
+```bash
+VERSION=0.1.11
+curl -fLO https://github.com/tick0001/tick/releases/download/v$VERSION/tick-plugins-$VERSION.tar.gz
+mkdir -p docker/plugins
+tar xzf tick-plugins-$VERSION.tar.gz -C docker/plugins
+docker compose -f docker/compose.production.yaml restart api
+```
+
+Sous Windows, `tar` est fourni avec le système :
+`tar -xzf tick-plugins-$version.tar.gz -C C:\Tick\plugins`.
+
+Chaque plugin arrive dans son propre dossier, avec son README et sa licence. Rien
+n'est installé ni activé tant qu'un administrateur ne l'a pas décidé dans l'écran
+des extensions. Prendre l'archive **de la même version** que l'API : un plugin
+déclare la version du SDK qu'il attend, et une API trop ancienne le refuse.
+
+Monter de version, c'est redéposer l'archive par-dessus : les fichiers sont
+écrasés, les données et les réglages des plugins restent en base, et un plugin
+actif joue ses nouvelles migrations au redémarrage.
 
 Le dossier est monté en lecture seule : un plugin compromis pourrait sinon se
 réécrire, et survivre à sa propre désinstallation.

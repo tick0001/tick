@@ -25,6 +25,8 @@ export const en: Traductions = {
     enCours: 'Signing in…',
     echec: 'Incorrect username or password.',
     indisponible: 'The service is temporarily unavailable.',
+    bloque: 'Too many attempts. Try again in {{count}} minute.',
+    bloque_other: 'Too many attempts. Try again in {{count}} minutes.',
   },
   session: {
     deconnexion: 'Sign out',

@@ -12,6 +12,66 @@ peut rompre.
 Ce qui ne concerne que le dépôt — intégration continue, outillage de publication, fichiers de
 communauté — n'y figure pas. Ce journal s'adresse à qui exploite Tick&, pas à qui y contribue.
 
+## [0.1.11] — 17 septembre 2026
+
+### Sécurité
+
+- **Les tentatives de connexion n'étaient pas limitées.** On pouvait essayer des mots de passe
+  sans fin et, chaque vérification étant volontairement coûteuse, saturer le serveur par une
+  simple rafale. Après cinq échecs, un compte est bloqué une minute, puis deux, quatre… jusqu'à
+  un quart d'heure ; une adresse est refusée après vingt échecs en un quart d'heure. Le refus
+  précède la vérification du mot de passe. Voir le
+  [guide d'exploitation](docs/14-installation.md#connexion-et-en-têtes-de-sécurité).
+- **Les pages de l'interface partaient sans protection contre l'incrustation.** Dans nginx, une
+  `location` qui pose ses propres en-têtes perd ceux du serveur : les pages et les fichiers
+  statiques étaient servis sans `X-Frame-Options`, et un site tiers pouvait afficher Tick& dans
+  un cadre. Les en-têtes sont rétablis partout, avec une politique de contenu stricte, et HSTS
+  derrière un relais HTTPS. Cela vaut pour l'image `web`, le site nginx et le `web.config`
+  fournis pour les installations sans conteneur.
+- **Les valeurs des requêtes de plugins étaient recopiées dans le texte SQL**, échappées à la
+  main. Sur un serveur où `standard_conforming_strings` est désactivé, une valeur venue d'un
+  ticket pouvait devenir du SQL. Elles partent désormais en paramètres liés.
+
+### Corrigé
+
+- **PostgreSQL compilait chaque requête avant de la jouer.** Le cloisonnement par entité lui
+  fait surestimer le coût des requêtes, et au-delà d'un seuil il les compile — à chaque
+  exécution. La recherche dans la base de connaissances en perdait 750 ms sur 800. La
+  compilation est désormais coupée pour le trafic de l'application : à cinq cent mille tickets,
+  la liste, la liste filtrée et le détail d'un ticket supportent 40 à 60 % de requêtes en plus,
+  et aucun écran ne ralentit.
+- **Les lecteurs d'écran lisaient l'aide d'un champ comme une partie de son nom.** « Mot de passe,
+  laisser vide pour conserver l'actuel » était annoncé à chaque passage sur le champ, sans qu'on
+  puisse distinguer le nom de la consigne. L'aide est désormais reliée comme description : le
+  nom est annoncé seul, l'aide ensuite. Cela vaut pour tous les formulaires.
+- **Sans conteneur, les plugins étaient cherchés hors de l'installation.** Les guides Linux et
+  Windows ne réglaient pas `PLUGINS_PATH`, dont la valeur par défaut se résout au-dessus du code
+  compilé : `/opt/plugins`, `C:\plugins`. Un plugin déposé ailleurs n'apparaissait jamais. Les
+  guides le règlent désormais sur `/opt/tick/plugins` et `C:\Tick\plugins`, hors du dossier que
+  la mise à jour remplace.
+
+### Ajouté
+
+- **Les plugins maintenus avec Tick& sont joints à chaque version**, dans
+  `tick-plugins-<version>.tar.gz` — aujourd'hui `messagerie`. Une installation par Docker n'avait
+  jusqu'ici aucun moyen de l'obtenir sans construire le dépôt. L'archive se décompresse dans le
+  dossier des plugins ; rien n'est installé tant qu'un administrateur ne l'a pas décidé. Voir le
+  [guide d'exploitation](docs/14-installation.md#plugins-publiés).
+- **`TRUST_PROXY`** désigne les relais dont l'API croit l'adresse du client. Le défaut, les
+  réseaux privés, convient au déploiement par Docker comme aux installations fournies.
+
+### À faire en montant
+
+Aucune migration. Par Docker, tirer les nouvelles images suffit : les en-têtes de sécurité
+arrivent avec l'image `web`.
+
+Sans conteneur, pour déposer des plugins : ajouter `PLUGINS_PATH` au fichier de configuration,
+avec un chemin absolu hors du dossier de l'API, et créer ce dossier.
+
+Sans conteneur, remplacer le site nginx ou le `web.config` par ceux de cette version : ce sont
+eux qui portent les en-têtes de sécurité. Derrière un relais dont l'adresse est publique,
+renseigner `TRUST_PROXY`.
+
 ## [0.1.10] — 17 septembre 2026
 
 ### Corrigé
@@ -261,6 +321,7 @@ déploiement par conteneurs ou par archives, licence AGPL-3.0-or-later.
 **Jamais utilisé par un vrai centre de services** — voir le [README](README.md), qui dit
 franchement ce qu'il faut savoir avant de s'en servir.
 
+[0.1.11]: https://github.com/tick0001/tick/releases/tag/v0.1.11
 [0.1.10]: https://github.com/tick0001/tick/releases/tag/v0.1.10
 [0.1.9]: https://github.com/tick0001/tick/releases/tag/v0.1.9
 [0.1.8]: https://github.com/tick0001/tick/releases/tag/v0.1.8

@@ -186,10 +186,19 @@ export class ApiError extends Error {
   constructor(
     readonly status: number,
     message: string,
+    /** `Retry-After`, en secondes, quand le serveur demande d'attendre. */
+    readonly retryAfter?: number,
   ) {
     super(message);
     this.name = 'ApiError';
   }
+}
+
+/** `Retry-After` en secondes ; la forme datée n'est pas employée par l'API. */
+function attenteDemandee(response: Response): number | undefined {
+  const secondes = Number(response.headers.get('Retry-After'));
+
+  return Number.isFinite(secondes) && secondes > 0 ? secondes : undefined;
 }
 
 async function request<T>(
@@ -207,7 +216,11 @@ async function request<T>(
   if (!response.ok) {
     const detail = (await response.json().catch(() => null)) as { message?: string } | null;
 
-    throw new ApiError(response.status, detail?.message ?? `HTTP ${String(response.status)}`);
+    throw new ApiError(
+      response.status,
+      detail?.message ?? `HTTP ${String(response.status)}`,
+      attenteDemandee(response),
+    );
   }
 
   return schema.parse(await response.json());

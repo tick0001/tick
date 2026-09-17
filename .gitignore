@@ -21,3 +21,5 @@ Thumbs.db
 .vscode/*
 !.vscode/extensions.json
 
+# Plugins deposes par l exploitant, dans une installation par compose.
+docker/plugins/
