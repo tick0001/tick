@@ -12,6 +12,15 @@ peut rompre.
 Ce qui ne concerne que le dépôt — intégration continue, outillage de publication, fichiers de
 communauté — n'y figure pas. Ce journal s'adresse à qui exploite Tick&, pas à qui y contribue.
 
+## Non publié
+
+### Corrigé
+
+- **Les lecteurs d'écran lisaient l'aide d'un champ comme une partie de son nom.** « Mot de passe,
+  laisser vide pour conserver l'actuel » était annoncé à chaque passage sur le champ, sans qu'on
+  puisse distinguer le nom de la consigne. L'aide est désormais reliée comme description : le
+  nom est annoncé seul, l'aide ensuite. Cela vaut pour tous les formulaires.
+
 ## [0.1.10] — 17 septembre 2026
 
 ### Corrigé
