@@ -376,12 +376,41 @@ lignes, et l'on doit pouvoir s'y connecter ensuite.
 ## Plugins
 
 Un plugin est du code chargé dans le processus de l'API. Déposer son dossier
-construit dans `./plugins`, à côté du fichier compose, puis redémarrer l'API. Il
-apparaît alors dans **Réglages › Extensions**, qui montre ce qu'il demande avant
-de l'installer, l'active et porte ses réglages.
+construit dans le dossier des plugins, puis redémarrer l'API. Il apparaît alors
+dans **Réglages › Extensions**, qui montre ce qu'il demande avant de
+l'installer, l'active et porte ses réglages.
 
-Le dépôt fournit [`messagerie`](../plugins/messagerie), qui annonce les tickets
-dans un canal Slack, Mattermost ou Teams ; son README dit comment le construire.
+Le dossier des plugins est `docker/plugins`, à côté du fichier compose. Sans
+conteneur, c'est celui que désigne `PLUGINS_PATH` — `/opt/tick/plugins` ou
+`C:\Tick\plugins` dans les guides [Linux](16-installation-linux.md) et
+[Windows](17-installation-windows.md).
+
+### Plugins publiés
+
+Chaque version, depuis la `0.1.11`, joint une archive des plugins maintenus avec
+Tick& : aujourd'hui [`messagerie`](../plugins/messagerie), qui annonce les
+tickets dans Mattermost, Slack, Rocket.Chat, Discord ou Teams. Ils ne sont pas
+dans l'image : n'arrive dans une installation que ce que l'exploitant y dépose.
+
+```bash
+VERSION=0.1.11
+curl -fLO https://github.com/tick0001/tick/releases/download/v$VERSION/tick-plugins-$VERSION.tar.gz
+mkdir -p docker/plugins
+tar xzf tick-plugins-$VERSION.tar.gz -C docker/plugins
+docker compose -f docker/compose.production.yaml restart api
+```
+
+Sous Windows, `tar` est fourni avec le système :
+`tar -xzf tick-plugins-$version.tar.gz -C C:\Tick\plugins`.
+
+Chaque plugin arrive dans son propre dossier, avec son README et sa licence. Rien
+n'est installé ni activé tant qu'un administrateur ne l'a pas décidé dans l'écran
+des extensions. Prendre l'archive **de la même version** que l'API : un plugin
+déclare la version du SDK qu'il attend, et une API trop ancienne le refuse.
+
+Monter de version, c'est redéposer l'archive par-dessus : les fichiers sont
+écrasés, les données et les réglages des plugins restent en base, et un plugin
+actif joue ses nouvelles migrations au redémarrage.
 
 Le dossier est monté en lecture seule : un plugin compromis pourrait sinon se
 réécrire, et survivre à sa propre désinstallation.

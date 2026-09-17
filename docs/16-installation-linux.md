@@ -88,6 +88,7 @@ se connecter ne doit pas pouvoir le faire.
 useradd --system --home /opt/tick --shell /usr/sbin/nologin tick
 
 mkdir -p /opt/tick/api          # code de l'API
+mkdir -p /opt/tick/plugins      # plugins déposés
 mkdir -p /var/www/tick          # interface, servie par nginx
 mkdir -p /var/lib/tick/storage  # pièces jointes
 mkdir -p /etc/tick              # configuration et secrets
@@ -198,6 +199,11 @@ ENCRYPTION_KEY=
 # écrirait les pièces jointes dans l'arborescence du code, que la mise à jour
 # remplace.
 STORAGE_PATH=/var/lib/tick/storage
+
+# Chemin absolu aussi, et hors du dossier du code : la mise à jour remplace
+# /opt/tick/api en entier. Relatif, ce chemin se résoudrait au-dessus du code
+# compilé — /opt/plugins — et aucun plugin déposé ne serait trouvé.
+PLUGINS_PATH=/opt/tick/plugins
 
 SMTP_HOST=
 SMTP_PORT=587

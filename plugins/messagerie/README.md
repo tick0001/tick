@@ -22,26 +22,20 @@ flux de travail Teams : un retour d'une installation réelle est bienvenu.
 
 ## Installer
 
-Le plugin se construit depuis le dépôt :
+Chaque version de Tick&, depuis la `0.1.11`, joint l'archive
+`tick-plugins-<version>.tar.gz`, qui contient ce plugin prêt à déposer :
 
 ```bash
-pnpm install
-pnpm --filter @tick/plugin-messagerie build
+VERSION=0.1.11
+curl -fLO https://github.com/tick0001/tick/releases/download/v$VERSION/tick-plugins-$VERSION.tar.gz
+mkdir -p docker/plugins
+tar xzf tick-plugins-$VERSION.tar.gz -C docker/plugins
 ```
 
-Le dossier à déposer ne contient que trois éléments : le SDK est inclus
-dans le bundle, et le plugin n'a aucune autre dépendance.
-
-```
-plugins/messagerie/
-  tick.plugin.json
-  dist/server.js
-  migrations/
-```
-
-Avec le déploiement par compose, les copier dans `./plugins/messagerie` à
-côté du fichier compose, puis redémarrer l'API. Ensuite, dans
-**Réglages › Extensions** :
+`docker/plugins` est le dossier des plugins d'une installation par compose ;
+sans conteneur, c'est celui de `PLUGINS_PATH`. Le
+[guide d'exploitation](../../docs/14-installation.md#plugins-publiés) détaille
+les deux cas. Redémarrer l'API, puis, dans **Réglages › Extensions** :
 
 1. installer, puis activer ;
 2. dans « S'applique à », choisir l'entité racine et coller l'adresse du
@@ -115,6 +109,17 @@ numéro, titre, type et priorité du ticket, ou noms du niveau d'escalade et
 de l'engagement. Il n'interroge pas les données de l'instance.
 
 ## Développer
+
+Construire depuis le dépôt, puis produire le dossier à déposer :
+
+```bash
+pnpm --filter @tick/plugin-messagerie build
+node scripts/empaqueter-plugins.mjs plugins-publies
+```
+
+Le SDK est inclus dans le bundle, et le plugin n'a aucune autre dépendance : le
+dossier produit se charge sans `node_modules`. Le script refuse un bundle qui
+en réclamerait un.
 
 ```bash
 pnpm --filter @tick/plugin-messagerie test

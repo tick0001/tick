@@ -1,0 +1,12 @@
+{
+  "$schema": "https://turbo.build/schema.json",
+  "extends": ["//"],
+  "tasks": {
+    "test": {
+      // Les tests de l'API chargent les plugins publiés tels qu'ils partent
+      // avec une version : ils doivent être construits avant, bien que l'API
+      // n'en dépende pas. `^build` seul ne les construirait jamais.
+      "dependsOn": ["^build", "@tick/plugin-messagerie#build"]
+    }
+  }
+}

@@ -84,6 +84,7 @@ New-Item -ItemType Directory -Force C:\Tick\api      # code de l'API
 New-Item -ItemType Directory -Force C:\Tick\web      # interface, servie par IIS
 New-Item -ItemType Directory -Force C:\Tick\config   # configuration et secrets
 New-Item -ItemType Directory -Force C:\Tick\storage  # pièces jointes
+New-Item -ItemType Directory -Force C:\Tick\plugins  # plugins déposés
 ```
 
 La configuration est **hors** du dossier du code, à dessein : la mise à jour
@@ -204,6 +205,10 @@ SESSION_SECRET=
 ENCRYPTION_KEY=
 
 STORAGE_PATH=C:\Tick\storage
+
+# Hors du dossier du code, que la mise à jour remplace. Relatif, ce chemin se
+# résoudrait au-dessus du code compilé — C:\plugins.
+PLUGINS_PATH=C:\Tick\plugins
 
 SMTP_HOST=
 SMTP_PORT=587

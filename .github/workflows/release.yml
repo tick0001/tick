@@ -127,6 +127,20 @@ jobs:
           pnpm --filter @tick/web build
           tar czf tick-web-${{ steps.version.outputs.numero }}.tar.gz -C apps/web/dist .
 
+      # Les plugins publiés, à décompresser dans le dossier des plugins d'une
+      # installation — Docker comprise, dont l'image n'en contient aucun. Une
+      # seule archive : un plugin est du JavaScript sans module natif.
+      #
+      # Construits avant `pnpm deploy --prod`, pour la même raison que
+      # l'interface. Le script refuse un bundle qui importerait un paquet :
+      # chez l'exploitant, aucun `node_modules` ne se trouve à côté.
+      - name: Plugins
+        if: runner.os == 'Linux'
+        run: |
+          pnpm --filter "./plugins/*" build
+          node scripts/empaqueter-plugins.mjs plugins-publies
+          tar czf tick-plugins-${{ steps.version.outputs.numero }}.tar.gz -C plugins-publies .
+
       # `pnpm deploy` produit une arborescence autonome : les dépendances
       # d'espace de travail y sont recopiées plutôt que liées, ce qui rend
       # l'ensemble transportable sur une machine qui n'a pas le monorepo.
@@ -167,6 +181,7 @@ jobs:
             tick-api-*.tar.gz
             tick-api-*.zip
             tick-web-*.tar.gz
+            tick-plugins-*.tar.gz
           if-no-files-found: error
 
   publier:
