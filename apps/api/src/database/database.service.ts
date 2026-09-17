@@ -65,9 +65,13 @@ export class DatabaseService implements OnModuleDestroy {
    * du role applicatif, donc soumise au Row-Level Security.
    *
    * Hors requete — un gestionnaire d'evenement en arriere-plan — le perimetre
-   * d'entites est **vide** : le plugin voit ses propres tables mais aucune
-   * donnee metier. Lui donner le perimetre total serait plus commode et
-   * annulerait l'isolation.
+   * d'entites est **vide** : par cette connexion, le plugin voit ses propres
+   * tables mais aucune donnee metier. Lui donner le perimetre total serait plus
+   * commode et annulerait l'isolation.
+   *
+   * Ce cloisonnement vaut pour la connexion qu'on lui donne, pas pour le
+   * plugin : il s'execute dans ce processus, et un plugin ecrit pour le
+   * contourner en a les moyens. Voir `docs/04-plugins.md`, section 6.
    */
   async asPlugin<T>(schema: string, work: (tx: Transaction) => Promise<T>): Promise<T> {
     const context = currentContext() ?? {

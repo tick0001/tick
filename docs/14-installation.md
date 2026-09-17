@@ -253,6 +253,17 @@ une ressource externe par exemple, monte son propre fichier à la place de
 `/etc/nginx/tick-securite.conf` dans le conteneur `web`, en partant de
 [celui de l'image](../docker/nginx-securite.conf).
 
+**Une écriture venue d'un autre site est refusée.** Un navigateur annonce
+l'origine de toute écriture ; l'API ne l'accepte que si elle désigne l'hôte de la
+requête, tel que le relais le transmet, ou l'adresse de `WEB_URL` ou `API_URL`.
+Un relais qui réécrit l'en-tête `Host` — Application Request Routing, par
+défaut — impose donc un `WEB_URL` exact : sinon, toute écriture depuis
+l'interface est refusée, avec un message qui le dit.
+
+**Les pièces jointes sont vérifiées sur leur contenu**, pas seulement sur le
+type qu'annonce l'expéditeur : une image doit commencer comme une image, un
+document bureautique comme une archive, un texte ne contenir aucun octet nul.
+
 ## Premier administrateur
 
 Une base migrée est une base dans laquelle personne ne peut entrer : il n'y a ni

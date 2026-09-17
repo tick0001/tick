@@ -12,6 +12,43 @@ peut rompre.
 Ce qui ne concerne que le dépôt — intégration continue, outillage de publication, fichiers de
 communauté — n'y figure pas. Ce journal s'adresse à qui exploite Tick&, pas à qui y contribue.
 
+## Non publié
+
+### Sécurité
+
+- **Le type d'une pièce jointe n'était vérifié que sur ce qu'annonçait l'expéditeur.** Un SVG,
+  qui porte du script, passait pour une image PNG. Le contenu doit maintenant correspondre au
+  type annoncé ; les pièces jointes des courriels collectés sont soumises à la même règle.
+- **Les écritures venues d'un autre site sont refusées.** L'API vérifie l'origine qu'annonce le
+  navigateur, en plus du cookie `SameSite`.
+- **Le rôle applicatif ne lit plus les condensats de mots de passe**, ni les annuaires, ni l'état
+  des extensions. Il est aussi celui du SQL des plugins. Voir la liste des tables concernées dans
+  [la sécurité des entités](docs/03-entites-droits-securite.md#les-tables-sans-politique).
+- **Les membres d'un groupe ne se gèrent plus que depuis l'entité du groupe.** Une filiale
+  ajoutait des membres à un groupe récursif de la maison mère, qu'elle ne pouvait pas modifier.
+
+### Corrigé
+
+- **Déplacer une entité qui portait un objet de configuration échouait.** Un seul groupe, une
+  seule catégorie suffisaient. Déplacer une catégorie dont la descendance vivait dans une autre
+  entité échouait de même, et une descendance que l'auteur du déplacement ne voyait pas gardait
+  son ancien chemin, sans erreur.
+
+### Changé
+
+- **Une session n'est plus réécrite à chaque requête**, mais au plus toutes les cinq minutes.
+- **La documentation dit ce qu'est l'installation d'un plugin** : lui accorder les droits du
+  processus de l'API, accès à la base en propriétaire compris.
+
+### À faire en montant
+
+Deux migrations, sans délai : la propagation des chemins et les droits du rôle applicatif sur
+les tables globales. Un plugin tiers qui lisait, par `context.db`, les comptes avec leur
+condensat, les annuaires ou la table des extensions reçoit désormais un refus.
+
+Derrière un relais qui réécrit l'en-tête `Host`, vérifier que `WEB_URL` est exacte : les
+écritures depuis l'interface en dépendent désormais.
+
 ## [0.1.11] — 17 septembre 2026
 
 ### Sécurité

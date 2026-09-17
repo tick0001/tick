@@ -92,9 +92,11 @@ permissions réservées restent admises pour qu'un manifeste qui les cite ne
 devienne pas invalide le jour où elles serviront ; les déclarer n'ouvre rien.
 
 Rien de cela n'est une isolation : le plugin s'exécute dans le processus de
-l'API, et rien ne l'empêche techniquement d'appeler `fetch` ou d'importer
-`node:fs`. Les permissions rendent les intentions auditables et le chemin
-honnête commode ; contourner ce chemin est un motif de refus à la relecture.
+l'API, avec ses droits. Rien ne l'empêche techniquement d'appeler `fetch`,
+d'importer `node:fs`, ni de lire `process.env` — dont l'adresse de la base en
+propriétaire, qui échappe au Row-Level Security. Les permissions rendent les
+intentions auditables et le chemin honnête commode ; contourner ce chemin est un
+motif de refus à la relecture.
 
 `rights` déclare des droits `{ key, label, actions }` — voir [Droits](#droits) —, où les actions se
 prennent parmi `read`, `create`, `update` et `delete`.
