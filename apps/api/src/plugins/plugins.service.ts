@@ -30,6 +30,7 @@ import { HookBus } from './hook-bus.service.js';
 import { PluginMigrator } from './plugin-migrator.service.js';
 import { PluginRegistry, type DiscoveredPlugin } from './plugin-registry.service.js';
 import { PluginSettingsService } from './plugin-settings.service.js';
+import { requeteDePlugin } from './requete-de-plugin.js';
 import { requeteSortante } from './sortie-http.js';
 
 /** Au-delà, le plugin est désactivé automatiquement. */
@@ -392,7 +393,7 @@ export class PluginsService implements OnApplicationBootstrap {
         query: async <T = Record<string, unknown>>(texte: string, params: unknown[] = []) =>
           this.db.asPlugin(plugin.schema, async (tx) => {
             const resultat = await tx.execute<T & Record<string, unknown>>(
-              sql.raw(this.bindParams(texte, params)),
+              requeteDePlugin(texte, params),
             );
 
             return resultat.rows as T[];
@@ -420,35 +421,6 @@ export class PluginsService implements OnApplicationBootstrap {
         webUrl: loadEnv().WEB_URL,
       },
     };
-  }
-
-  /**
-   * Interpole les paramètres d'une requête de plugin.
-   *
-   * Drizzle n'expose pas de requête brute paramétrée sur `execute` : les valeurs
-   * sont donc échappées ici, avec les règles de PostgreSQL. Ce point sera revu
-   * au jalon J3, où la surface d'accès aux données sera définie pour de bon.
-   */
-  private bindParams(texte: string, params: readonly unknown[]): string {
-    return texte.replace(/\$(\d+)/g, (_correspondance, index: string) => {
-      const valeur = params[Number(index) - 1];
-
-      if (valeur === null || valeur === undefined) return 'NULL';
-      if (typeof valeur === 'number' || typeof valeur === 'boolean') return String(valeur);
-      if (valeur instanceof Date) return `'${valeur.toISOString()}'`;
-
-      // Refuser plutot que de convertir : un objet deviendrait
-      // « [object Object] » dans la requete, ce qui echouerait plus tard sans
-      // dire pourquoi. Le plugin doit serialiser lui-meme.
-      if (typeof valeur !== 'string') {
-        throw new Error(
-          `Parametre de requete non pris en charge (${typeof valeur}) : ` +
-            `seuls les types simples et les dates sont acceptes.`,
-        );
-      }
-
-      return `'${valeur.replaceAll("'", "''")}'`;
-    });
   }
 
   private createApi(plugin: DiscoveredPlugin, context: PluginContext): PluginApi {
