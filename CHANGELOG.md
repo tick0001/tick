@@ -36,6 +36,43 @@ communauté — n'y figure pas. Ce journal s'adresse à qui exploite Tick&, pas 
   index trigramme sans rien céder du cloisonnement : de 19 à 50 ms, et de 74 à 151 requêtes par
   seconde selon que le terme est rare ou fréquent. Les résultats sont identiques. Cela vaut pour
   la recherche multicritères, son export, et la recherche rapide de la liste.
+- **Un échec d'extension pouvait renvoyer les notifications en double.** Quand un plugin
+  échouait sur un événement, la file rejouait l'événement entier : chaque abonné repassait,
+  courriels de notification compris. Seuls les abonnés en échec sont désormais rappelés.
+- **Un plugin qui refusait une opération finissait désactivé.** Un refus — un titre de ticket
+  trop court, par exemple — comptait comme une panne : au troisième, le plugin était éteint, et
+  chaque refus parvenait à l'utilisateur comme une erreur interne. Un refus déclaré par
+  `PluginRefusal` est maintenant une erreur de saisie, qui ne compte pas ; seules trois pannes
+  **consécutives** désactivent un plugin.
+- **Une activation manquée laissait un plugin à moitié actif.** Si un plugin échouait au milieu
+  de son enregistrement, ce qu'il avait déjà posé restait en service, et l'écran le disait actif.
+  L'activation est désormais tout ou rien : un échec retire tout et passe le plugin en erreur,
+  avec sa cause. Un plugin devenu incompatible après une montée de version est refusé au
+  redémarrage au lieu d'être chargé, et un plugin désactivé après des pannes ne garde plus ses
+  critères de recherche ni ses widgets.
+- **Les interfaces de plugins ne se chargeaient que pour les administrateurs.** Leur chargement
+  passait par la liste d'administration des plugins, qu'un technicien ne peut pas lire.
+
+### Ajouté
+
+- **Un écran pour les extensions**, sous **Réglages › Extensions**. Il montre ce que chaque plugin
+  demande avant qu'on l'installe, son état et sa dernière erreur, et pilote son cycle de vie —
+  qui ne passait jusqu'ici que par des appels directs à l'API.
+- **Des réglages pour les plugins.** Un plugin les déclare ; l'écran les affiche, par instance ou
+  par entité, avec héritage de l'entité mère. Les secrets sont chiffrés et jamais réaffichés.
+- **Le plugin `messagerie`**, livré dans le dépôt : il annonce les nouveaux tickets, les
+  escalades et les résolutions dans un canal Mattermost, Slack, Rocket.Chat, Discord ou
+  Microsoft Teams, avec un canal par entité. Il n'est pas inclus dans l'image : voir
+  [son README](plugins/messagerie/README.md) pour le construire et le déposer.
+- **SDK de plugins `0.8.0`** : réglages, requêtes sortantes soumises à
+  `ALLOW_PRIVATE_OUTBOUND`, adresse de l'interface pour composer des liens, et `PluginRefusal`.
+
+### Changé
+
+- **`ALLOW_PRIVATE_OUTBOUND` s'applique aussi aux plugins**, pour les requêtes qu'ils émettent
+  par le client du SDK.
+- **Un plugin qui propose des widgets doit déclarer la permission `dashboards`.** Sans elle, son
+  activation échoue et l'écran des extensions dit pourquoi.
 
 ### Ajouté
 
@@ -54,6 +91,13 @@ communauté — n'y figure pas. Ce journal s'adresse à qui exploite Tick&, pas 
 La migration construit deux index sur les tickets : trois secondes chacun à cinq cent mille
 tickets, pendant lesquelles les écritures sur les tickets attendent. Comme toute migration, elle
 se joue à l'arrêt de l'API — ce que fait déjà le service `migrate`.
+
+Un plugin tiers écrit pour le SDK `0.7` est refusé au redémarrage — en `0.x`, chaque version
+mineure peut rompre — et passe en erreur dans l'écran des extensions. Il reprend une fois qu'il
+demande `^0.8.0` ; s'il appelle `dashboards.registerWidget`, il doit aussi ajouter `dashboards` à
+ses `permissions`. Un plugin qui refuse des opérations en levant une
+erreur ordinaire continue de fonctionner, mais chaque refus compte comme une panne tant qu'il
+n'utilise pas `PluginRefusal`.
 
 ## [0.1.9] — 10 septembre 2026
 
