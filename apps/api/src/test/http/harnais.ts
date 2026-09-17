@@ -2,6 +2,7 @@ import type { INestApplication } from '@nestjs/common';
 import type { NestExpressApplication } from '@nestjs/platform-express';
 import { Test } from '@nestjs/testing';
 import { createDatabase, sql } from '@tick/db';
+import { Redis } from 'ioredis';
 import request from 'supertest';
 import type { App } from 'supertest/types.js';
 import { AppModule } from '../../app.module.js';
@@ -84,8 +85,36 @@ async function nettoyer(prefixe: string): Promise<void> {
   }
 }
 
+/**
+ * Remet à zéro la limite des tentatives de connexion.
+ *
+ * Toutes les requêtes des tests viennent de la même adresse. Sans cette remise
+ * à zéro, les échecs voulus par un fichier — ou par des exécutions répétées —
+ * s'additionneraient, et un fichier suivant verrait sa connexion refusée pour
+ * une raison qui ne le concerne pas.
+ */
+export async function viderLimiteDesConnexions(): Promise<void> {
+  const url = process.env['REDIS_URL'];
+
+  if (!url) return;
+
+  const redis = new Redis(url, { lazyConnect: true, maxRetriesPerRequest: 1 });
+
+  try {
+    await redis.connect();
+    const cles = await redis.keys('tick:connexion:*');
+
+    if (cles.length > 0) await redis.del(...cles);
+  } finally {
+    redis.disconnect();
+  }
+}
+
 export async function creerHarnais(nom = 'http'): Promise<Harnais> {
   const prefixe = nom + '-' + Date.now().toString(36) + '-';
+
+  await viderLimiteDesConnexions();
+
   const module = await Test.createTestingModule({ imports: [AppModule] }).compile();
   const app = module.createNestApplication<NestExpressApplication>({ bodyParser: false });
 
@@ -122,6 +151,7 @@ export async function creerHarnais(nom = 'http'): Promise<Harnais> {
     close: async () => {
       await app.close();
       await nettoyer(prefixe);
+      await viderLimiteDesConnexions();
     },
   };
 }

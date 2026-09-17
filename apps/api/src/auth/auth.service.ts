@@ -9,6 +9,19 @@ import { RightsService } from './rights.service.js';
 import { ScopeService, type AuthorizedEntity } from './scope.service.js';
 import { SessionService, type IssuedSession, type SessionRecord } from './session.service.js';
 
+/**
+ * Identifiant ou mot de passe refusé.
+ *
+ * Distincte des autres refus de connexion — un compte sans habilitation, par
+ * exemple — parce qu'elle seule compte comme une tentative échouée : un mot de
+ * passe juste ne doit pas rapprocher un compte de son blocage.
+ */
+export class IdentifiantsInvalidesException extends UnauthorizedException {
+  constructor() {
+    super('Identifiants invalides.');
+  }
+}
+
 export interface LoginMetadata {
   userAgent?: string | undefined;
   ipAddress?: string | undefined;
@@ -68,7 +81,7 @@ export class AuthService {
     const user = localValid ? local : await this.authenticateAgainstDirectories(username, password);
 
     if (!user || !user.isActive) {
-      throw new UnauthorizedException('Identifiants invalides.');
+      throw new IdentifiantsInvalidesException();
     }
 
     const available = await this.scopes.authorizedEntities(user.id);

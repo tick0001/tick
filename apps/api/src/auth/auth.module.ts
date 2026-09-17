@@ -5,6 +5,7 @@ import { AuthService } from './auth.service.js';
 import { ContextMiddleware } from './context.middleware.js';
 import { AuthenticatedGuard } from './guards/authenticated.guard.js';
 import { RightsGuard } from './guards/rights.guard.js';
+import { LimiteConnexionService } from './limite-connexion.service.js';
 import { PasswordService } from './password.service.js';
 import { RightsService } from './rights.service.js';
 import { ScopeService } from './scope.service.js';
@@ -15,6 +16,7 @@ import { SessionService } from './session.service.js';
   controllers: [AuthController],
   providers: [
     AuthService,
+    LimiteConnexionService,
     PasswordService,
     SessionService,
     ScopeService,

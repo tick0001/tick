@@ -24,6 +24,8 @@ export const fr = {
     enCours: 'Connexion…',
     echec: 'Identifiant ou mot de passe incorrect.',
     indisponible: 'Le service est momentanément indisponible.',
+    bloque: 'Trop de tentatives. Réessayez dans {{count}} minute.',
+    bloque_other: 'Trop de tentatives. Réessayez dans {{count}} minutes.',
   },
   session: {
     deconnexion: 'Se déconnecter',

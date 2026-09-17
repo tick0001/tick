@@ -1,6 +1,7 @@
 import { screen, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { api } from '@/lib/api';
+import { api, ApiError } from '@/lib/api';
 import { rendre } from '@/test/rendu';
 import { LoginPage } from './LoginPage';
 
@@ -86,6 +87,46 @@ describe('LoginPage', () => {
 
     await screen.findByText('javascript:alert(1)');
     expect(screen.queryByRole('link')).not.toBeInTheDocument();
+  });
+
+  describe('refus de connexion', () => {
+    async function tenter(erreur: Error) {
+      bandeau(null);
+      vi.spyOn(api, 'login').mockRejectedValue(erreur);
+      const utilisateur = userEvent.setup();
+
+      rendre(<LoginPage />);
+
+      await utilisateur.type(await screen.findByLabelText(/identifiant|username/i), 'sophie');
+      await utilisateur.type(screen.getByLabelText(/mot de passe|password/i), 'faux');
+      await utilisateur.click(screen.getByRole('button', { name: /connecter|sign in/i }));
+
+      return screen.findByRole('alert');
+    }
+
+    it('dit qu’un identifiant ou un mot de passe est faux', async () => {
+      const alerte = await tenter(new ApiError(401, 'Identifiants invalides.'));
+
+      expect(alerte).toHaveTextContent('Identifiant ou mot de passe incorrect.');
+    });
+
+    it('dit combien de temps attendre après trop de tentatives', async () => {
+      const alerte = await tenter(new ApiError(429, 'Trop de tentatives.', 240));
+
+      expect(alerte).toHaveTextContent('Trop de tentatives. Réessayez dans 4 minutes.');
+    });
+
+    it('arrondit une attente de quelques secondes à une minute', async () => {
+      const alerte = await tenter(new ApiError(429, 'Trop de tentatives.', 12));
+
+      expect(alerte).toHaveTextContent('Réessayez dans 1 minute.');
+    });
+
+    it('ne confond pas un blocage avec une panne', async () => {
+      const alerte = await tenter(new ApiError(429, 'Trop de tentatives.'));
+
+      expect(alerte).not.toHaveTextContent('indisponible');
+    });
   });
 
   it('rend le message comme du texte, jamais comme du balisage', async () => {
