@@ -209,7 +209,7 @@ describe('PluginsPage', () => {
 
       await ouvrirReglages(utilisateur);
       await utilisateur.selectOptions(
-        await screen.findByRole('combobox', { name: /Format des messages/ }),
+        await screen.findByRole('combobox', { name: 'Format des messages' }),
         'teams',
       );
       await utilisateur.click(screen.getByRole('button', { name: 'Enregistrer' }));
@@ -230,13 +230,13 @@ describe('PluginsPage', () => {
       await ouvrirReglages(utilisateur);
       await choisirSiteA(utilisateur);
 
-      const secret = await screen.findByLabelText(/Adresse du webhook/);
+      const secret = await screen.findByLabelText('Adresse du webhook');
 
       expect(secret).toHaveValue('');
       expect(secret).toHaveAttribute('type', 'password');
       expect(screen.getByText(/Un secret est enregistré/)).toBeInTheDocument();
 
-      await utilisateur.type(screen.getByRole('textbox', { name: /Canal/ }), 'incidents');
+      await utilisateur.type(screen.getByRole('textbox', { name: 'Canal' }), 'incidents');
       await utilisateur.click(screen.getByRole('button', { name: 'Enregistrer' }));
 
       await waitFor(() => {
@@ -263,7 +263,7 @@ describe('PluginsPage', () => {
       await ouvrirReglages(utilisateur);
       await choisirSiteA(utilisateur);
 
-      const bloc = (await screen.findByLabelText(/Adresse du webhook/)).closest('div')
+      const bloc = (await screen.findByLabelText('Adresse du webhook')).closest('div')
         ?.parentElement as HTMLElement;
 
       await utilisateur.click(within(bloc).getByRole('button', { name: 'Retirer' }));

@@ -155,7 +155,61 @@ describe('champs de saisie', () => {
     // lecteur d'ecran annonce le champ par son nom.
     await userEvent.click(screen.getByText('Urgence'));
 
-    expect(screen.getByText('De 1 à 5')).toBeInTheDocument();
+    expect(screen.getByRole('textbox')).toHaveFocus();
+  });
+
+  it.each([
+    ['un champ de saisie', () => <Input />, 'textbox'],
+    ['une zone de texte', () => <Textarea />, 'textbox'],
+    [
+      'une liste',
+      () => (
+        <Select>
+          <option>Basse</option>
+        </Select>
+      ),
+      'combobox',
+    ],
+  ])('Field annonce %s par son seul nom, et l’aide en description', (_cas, controle, role) => {
+    render(
+      <Field label="Urgence" hint="De 1 à 5">
+        {controle()}
+      </Field>,
+    );
+
+    // Dans le nom, l'aide serait relue a chaque passage, sans qu'on puisse la
+    // distinguer du nom lui-meme.
+    const champ = screen.getByRole(role, { name: 'Urgence' });
+
+    expect(champ).toHaveAccessibleName('Urgence');
+    expect(champ).toHaveAccessibleDescription('De 1 à 5');
+  });
+
+  it('Field garde la description propre au contrôle, et y ajoute l’aide', () => {
+    render(
+      <>
+        <p id="propre">Obligatoire</p>
+        <Field label="Titre" hint="Cinq caractères au moins">
+          <div>
+            <Input aria-describedby="propre" />
+          </div>
+        </Field>
+      </>,
+    );
+
+    expect(screen.getByRole('textbox', { name: 'Titre' })).toHaveAccessibleDescription(
+      'Obligatoire Cinq caractères au moins',
+    );
+  });
+
+  it('Field relie aussi l’aide d’un groupe', () => {
+    render(
+      <Field label="Jours" hint="Au moins un" groupe>
+        <Checkbox label="Lundi" />
+      </Field>,
+    );
+
+    expect(screen.getByRole('group', { name: 'Jours' })).toHaveAccessibleDescription('Au moins un');
   });
 
   it('Field se passe d’indication', () => {
@@ -165,7 +219,7 @@ describe('champs de saisie', () => {
       </Field>,
     );
 
-    expect(screen.getByText('Titre')).toBeInTheDocument();
+    expect(screen.getByRole('textbox', { name: 'Titre' })).not.toHaveAttribute('aria-describedby');
   });
 
   it('Checkbox bascule', async () => {

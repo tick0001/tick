@@ -1,3 +1,4 @@
+import { createContext, useContext, useId } from 'react';
 import type { ButtonHTMLAttributes, InputHTMLAttributes, ReactNode } from 'react';
 import type { AnchorHTMLAttributes, SelectHTMLAttributes, TextareaHTMLAttributes } from 'react';
 import { cn } from '@/lib/utils';
@@ -116,16 +117,54 @@ export function LinkButton({
 export const CONTROLE =
   'h-9 w-full rounded-[2px] border border-line bg-surface px-2.5 text-sm text-ink placeholder:text-faint transition-colors hover:border-line-strong focus:border-ink disabled:bg-sunken disabled:opacity-70';
 
+/**
+ * Identifiant de l'aide du champ qui enveloppe un contrôle.
+ *
+ * Posé par `Field`, lu par les contrôles ci-dessous : l'aide leur est ainsi
+ * reliée comme **description**, quelle que soit la profondeur à laquelle le
+ * contrôle est rangé dans le champ.
+ */
+const AideDuChamp = createContext<string | undefined>(undefined);
+
+/** `aria-describedby` du contrôle : le sien, puis l'aide du champ. */
+function decritPar(propre: string | undefined, aide: string | undefined): string | undefined {
+  return [propre, aide].filter(Boolean).join(' ') || undefined;
+}
+
 export function Input({ className, ...props }: InputHTMLAttributes<HTMLInputElement>) {
-  return <input className={cn(CONTROLE, className)} {...props} />;
+  const aide = useContext(AideDuChamp);
+
+  return (
+    <input
+      className={cn(CONTROLE, className)}
+      {...props}
+      aria-describedby={decritPar(props['aria-describedby'], aide)}
+    />
+  );
 }
 
 export function Textarea({ className, ...props }: TextareaHTMLAttributes<HTMLTextAreaElement>) {
-  return <textarea className={cn(CONTROLE, 'h-auto py-2 leading-relaxed', className)} {...props} />;
+  const aide = useContext(AideDuChamp);
+
+  return (
+    <textarea
+      className={cn(CONTROLE, 'h-auto py-2 leading-relaxed', className)}
+      {...props}
+      aria-describedby={decritPar(props['aria-describedby'], aide)}
+    />
+  );
 }
 
 export function Select({ className, ...props }: SelectHTMLAttributes<HTMLSelectElement>) {
-  return <select className={cn(CONTROLE, 'pr-8', className)} {...props} />;
+  const aide = useContext(AideDuChamp);
+
+  return (
+    <select
+      className={cn(CONTROLE, 'pr-8', className)}
+      {...props}
+      aria-describedby={decritPar(props['aria-describedby'], aide)}
+    />
+  );
 }
 
 /**
@@ -135,6 +174,11 @@ export function Select({ className, ...props }: SelectHTMLAttributes<HTMLSelectE
  * distingue alors de la valeur saisie sans qu'on ait à la mettre en gras ni à
  * la grossir. C'est la convention des bordereaux et des plans — elle nomme la
  * case sans se disputer la lecture avec ce qu'on y écrit.
+ *
+ * L'aide reste **hors** de l'étiquette. Dedans, elle devenait une partie du
+ * nom du champ : un lecteur d'écran annonçait « Mot de passe, laisser vide pour
+ * conserver l'actuel » à chaque passage, sans distinguer le nom de la consigne.
+ * Dehors, elle est reliée comme description, lue après le nom.
  */
 export function Field({
   label,
@@ -164,11 +208,17 @@ export function Field({
     </span>
   );
 
-  const aide = hint ? <span className="block text-xs text-faint">{hint}</span> : null;
+  const idAide = useId();
+  const aide = hint ? (
+    <span id={idAide} className="block text-xs text-faint">
+      {hint}
+    </span>
+  ) : null;
+  const decrit = hint ? idAide : undefined;
 
   if (groupe) {
     return (
-      <fieldset className={cn('block space-y-1', className)}>
+      <fieldset className={cn('block space-y-1', className)} aria-describedby={decrit}>
         <legend>{intitule}</legend>
         {children}
         {aide}
@@ -176,12 +226,21 @@ export function Field({
     );
   }
 
-  return (
-    <label className={cn('block space-y-1', className)}>
+  const etiquette = (
+    <label className={cn('block space-y-1', !hint && className)}>
       {intitule}
-      {children}
-      {aide}
+      <AideDuChamp.Provider value={decrit}>{children}</AideDuChamp.Provider>
     </label>
+  );
+
+  if (!hint) return etiquette;
+
+  // Même espacement qu'avant : l'aide suit le contrôle à la même distance.
+  return (
+    <div className={cn('block space-y-1', className)}>
+      {etiquette}
+      {aide}
+    </div>
   );
 }
 
