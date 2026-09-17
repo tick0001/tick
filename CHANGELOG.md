@@ -36,15 +36,29 @@ communauté — n'y figure pas. Ce journal s'adresse à qui exploite Tick&, pas 
 
 ### Changé
 
+- **Les statistiques tiennent le grand volume.** À cinq cent mille tickets, la répartition par
+  technicien ou par groupe demandait vingt secondes et la courbe d'activité trois ; l'une et
+  l'autre tiennent maintenant sous la seconde. La première parce que la politique de sécurité
+  des acteurs allait chercher l'objet porteur à chaque ligne lue — elle compare désormais un
+  chemin, comme partout ailleurs —, la seconde parce qu'elle rebouclait sur tous les tickets
+  pour chacun des trente et un jours. Le premier correctif vaut pour toute lecture en nombre des
+  acteurs, pas seulement pour les statistiques.
 - **Une session n'est plus réécrite à chaque requête**, mais au plus toutes les cinq minutes.
 - **La documentation dit ce qu'est l'installation d'un plugin** : lui accorder les droits du
   processus de l'API, accès à la base en propriétaire compris.
 
 ### À faire en montant
 
-Deux migrations, sans délai : la propagation des chemins et les droits du rôle applicatif sur
-les tables globales. Un plugin tiers qui lisait, par `context.db`, les comptes avec leur
-condensat, les annuaires ou la table des extensions reçoit désormais un refus.
+Trois migrations. Deux sont sans délai : la propagation des chemins et les droits du rôle
+applicatif sur les tables globales. Un plugin tiers qui lisait, par `context.db`, les comptes
+avec leur condensat, les annuaires ou la table des extensions reçoit désormais un refus.
+
+La troisième réécrit la table des acteurs, qui compte une ligne par personne ou groupe rattaché
+à un ticket. Comptez environ trois minutes par demi-million d'acteurs sur une machine de
+développement, table verrouillée pendant ce temps : prévoyez une fenêtre si l'installation
+compte plusieurs centaines de milliers de tickets. Un plugin tiers qui écrivait directement dans
+`itil_actors` n'a rien à changer : le chemin d'entité est déduit de l'objet, jamais fourni par
+l'écriture.
 
 Derrière un relais qui réécrit l'en-tête `Host`, vérifier que `WEB_URL` est exacte : les
 écritures depuis l'interface en dépendent désormais.
