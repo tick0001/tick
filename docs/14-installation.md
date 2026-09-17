@@ -120,6 +120,17 @@ voient, pas celles du réseau interne. Elles composent les liens des
 notifications : une valeur fausse produit des courriels dont les liens ne mènent
 nulle part, et cela ne se découvre qu'à la première notification envoyée.
 
+**`TRUST_PROXY`** dit à l'API quels relais croire quand ils transmettent
+l'adresse du client (`X-Forwarded-For`). Le défaut, `loopback, linklocal,
+uniquelocal`, croit les réseaux privés : c'est là que vivent le nginx de l'image,
+le Traefik d'un compose et le nginx d'une installation sur la même machine. Un
+client venu directement d'Internet n'est jamais cru sur parole.
+
+À compléter si un relais vit sur une adresse publique — un répartiteur
+d'entreprise, par exemple — avec son adresse ou sa plage. Faute de quoi toutes
+les requêtes semblent venir de ce relais, et la limite des tentatives de
+connexion par adresse le bloquerait pour tout le monde à la fois.
+
 ## Mot de passe du rôle applicatif
 
 La migration initiale crée le rôle `tick_app` avec un mot de passe par défaut.
@@ -216,6 +227,31 @@ sur un port de l'hôte, à côté du TLS de Traefik — et comme le cookie de se
 porte l'attribut `Secure` en production, une connexion par ce chemin-là
 échouerait **sans message** : le navigateur refuserait simplement d'enregistrer
 le cookie.
+
+## Connexion et en-têtes de sécurité
+
+**Les tentatives de connexion sont limitées.** Après cinq échecs, un compte est
+bloqué une minute, puis deux, quatre… jusqu'à un quart d'heure ; une connexion
+réussie efface le compteur. Une adresse qui accumule vingt échecs en un quart
+d'heure, tous comptes confondus, est refusée jusqu'à la fin de ce quart d'heure.
+Le refus précède la vérification du mot de passe : une rafale de tentatives ne
+coûte plus de calcul au serveur.
+
+Le compte n'est jamais désactivé : le blocage expire seul. Un inconnu qui
+connaît un identifiant peut donc retarder sa connexion, pas la lui retirer.
+L'état vit dans Redis ; Redis injoignable, chaque instance de l'API le tient en
+mémoire.
+
+**L'interface est servie avec une politique de contenu stricte.** Scripts,
+styles, polices et images viennent de la même origine — l'interface des
+extensions comprise —, et la page refuse d'être affichée dans le cadre d'un
+autre site. HSTS s'ajoute quand le relais TLS annonce HTTPS par
+`X-Forwarded-Proto`, ce que fait Traefik.
+
+Une installation qui a besoin d'une autre politique, pour un plugin qui charge
+une ressource externe par exemple, monte son propre fichier à la place de
+`/etc/nginx/tick-securite.conf` dans le conteneur `web`, en partant de
+[celui de l'image](../docker/nginx-securite.conf).
 
 ## Premier administrateur
 
