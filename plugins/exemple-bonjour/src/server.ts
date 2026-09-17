@@ -3,9 +3,10 @@ import { definePlugin, PluginRefusal } from '@tick/plugin-sdk';
 /**
  * Plugin de référence.
  *
- * Il n'a pas d'utilité fonctionnelle : il existe pour exercer chaque point du
- * substrat d'extension et servir de test d'intégration permanent. S'il cesse de
- * fonctionner, c'est que le contrat a été rompu.
+ * Il n'a pas d'utilité fonctionnelle : il existe pour exercer le cycle de vie,
+ * les hooks, les événements et deux emplacements d'interface, et servir de
+ * test d'intégration permanent. S'il cesse de fonctionner, c'est que le contrat
+ * a été rompu. Les réglages et la sortie HTTP sont exercés par `messagerie`.
  */
 export default definePlugin({
   async install(context) {
