@@ -32,8 +32,9 @@ CREATE INDEX ON entities USING gist (path);
 ```
 
 `path <@ 'racine.filiale_nord'` retourne une entité et toute sa descendance en une comparaison
-indexée. GLPI maintient pour cela des caches d'ancêtres et de descendants qu'il faut invalider à
-chaque déplacement ; ici un déplacement de sous-arbre est une seule mise à jour de préfixe.
+indexée. Sans cet opérateur, il faudrait tenir des caches d'ancêtres et de descendants, à
+invalider à chaque déplacement ; ici un déplacement de sous-arbre est une seule mise à jour de
+préfixe.
 
 ## 2. Rattachement des objets
 
@@ -46,7 +47,8 @@ sous-requête. C'est une dénormalisation assumée et documentée.
 
 ## 3. Deux natures d'objets, deux règles de visibilité
 
-C'est le point le plus souvent mal compris de GLPI, alors il est posé explicitement ici.
+C'est le point le plus souvent mal compris d'un modèle multi-entités, alors il est posé
+explicitement ici.
 
 ### Objets de données — visibilité descendante
 
@@ -89,7 +91,7 @@ CREATE TABLE authorizations (
 
 Un même utilisateur peut être **Technicien sur `Filiale Nord` et sa descendance** et
 **Self-service sur `Siège`**. C'est ce cumul qui rend l'outil réellement multi-organisation, et
-c'est exactement ce que la plupart des clones de GLPI simplifient à tort.
+c'est exactement ce qu'il serait tentant, et faux, de simplifier.
 
 `is_dynamic` distingue les habilitations posées par une règle d'affectation depuis l'annuaire
 (retirées automatiquement quand l'utilisateur quitte le groupe) de celles saisies à la main.
@@ -165,7 +167,7 @@ CREATE POLICY groups_scope ON groups FOR ALL TO tick_app
 La politique de configuration couvre deux besoins qu'il serait tentant de confondre :
 **l'administration** (quels groupes existent dans mon périmètre) et **l'usage** (quels groupes
 puis-je choisir depuis l'entité active). Le premier terme répond au premier, le second au
-deuxième — et c'est bien l'union des deux que GLPI présente.
+deuxième — et c'est bien l'union des deux qu'un administrateur s'attend à voir.
 
 Deux rôles PostgreSQL. Le **rôle applicatif**, soumis au RLS, porte tout le trafic des
 utilisateurs. Le **rôle propriétaire** en est exempté : il joue les migrations, et sert à ce qui

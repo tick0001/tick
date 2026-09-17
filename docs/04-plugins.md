@@ -1,7 +1,7 @@
 # Système de plugins
 
-Objectif : la puissance d'extension de GLPI, sans la dette qui l'accompagne. Chez GLPI un plugin
-accède à tout, donc toute refonte interne casse l'écosystème. Ici la surface publique est
+Objectif : une vraie puissance d'extension, sans la dette qui l'accompagne d'ordinaire. Quand un
+plugin accède à tout, toute refonte interne casse l'écosystème. Ici la surface publique est
 **explicite, versionnée et restreinte** : `@tick/plugin-sdk`.
 
 Un plugin s'exécute dans le processus de l'API (choix acté : pas de bac à sable). La confiance est

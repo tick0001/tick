@@ -1,4 +1,4 @@
--- Natures de question supplementaires, calquees sur le jeu de GLPI.
+-- Natures de question supplementaires.
 --
 -- `ALTER TYPE ... ADD VALUE` ne peut pas s'executer dans une transaction en
 -- PostgreSQL avant la version 12 ; il le peut depuis, ce qui permet de les

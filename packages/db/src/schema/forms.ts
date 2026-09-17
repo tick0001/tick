@@ -26,7 +26,7 @@ import { users } from './users.js';
  * ne rien pouvoir garantir de la réponse.
  */
 /**
- * Natures de question, calquees sur le jeu de GLPI.
+ * Natures de question.
  *
  * L'ordre suit celui du contrat : saisie libre, choix, ce que le ticket attend,
  * puis ce qui n'attend rien. Les valeurs ajoutees le sont **a la fin** de

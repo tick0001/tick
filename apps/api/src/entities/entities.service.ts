@@ -48,7 +48,7 @@ export class EntitiesService {
    *
    * Aucun filtre d'entite n'apparait dans cette requete : le Row-Level Security
    * s'en charge a partir du contexte pose sur la transaction. C'est le principe
-   * du modele, et l'endroit ou la plupart des clones de GLPI se trompent.
+   * du modele, et l'endroit ou un modele multi-entites se trompe le plus souvent.
    */
   async list(): Promise<EntitySummary[]> {
     const rows = await this.db.asUser((tx) =>

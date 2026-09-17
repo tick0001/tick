@@ -3,7 +3,7 @@
 blank_issues_enabled: true
 contact_links:
   - name: Essayer avant de signaler
-    url: https://demo.tickand.fr
+    url: https://tick-demo.tickand.fr
     about: 'Démonstration publique — sophie / tick, remise à zéro chaque heure.'
   - name: Documentation
     url: https://github.com/tick0001/tick/tree/main/docs

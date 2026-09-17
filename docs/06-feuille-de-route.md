@@ -271,5 +271,5 @@ et les emplacements d'interface.
 ## Ce qui est délibérément écarté
 
 Gestion de parc et inventaire, gestion financière et contrats au-delà du lien avec les SLA,
-projets, réservations, flux RSS, et compatibilité avec les plugins ou l'API de GLPI — le projet est
-neuf, sans contrainte de reprise.
+projets, réservations, flux RSS, et compatibilité avec les plugins ou l'API d'un autre outil —
+le projet est neuf, sans contrainte de reprise.

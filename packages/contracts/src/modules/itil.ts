@@ -32,7 +32,7 @@ export const solutionStateSchema = z.enum(['proposed', 'accepted', 'refused']);
 /**
  * Échelle d'urgence, d'impact et de priorité.
  *
- * De 1 (très basse) à 5 (très haute), comme GLPI. La priorité n'est pas saisie :
+ * De 1 (très basse) à 5 (très haute), l'échelle usuelle. La priorité n'est pas saisie :
  * elle découle de l'urgence et de l'impact par la matrice de l'entité.
  */
 export const severitySchema = z.number().int().min(1).max(5);
