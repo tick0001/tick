@@ -3,6 +3,7 @@ import cookieParser from 'cookie-parser';
 import { json, urlencoded } from 'express';
 import { DatabaseExceptionFilter } from './common/database-exception.filter.js';
 import { exigerUtf8 } from './common/corps-utf8.js';
+import { exigerMemeOrigine } from './common/origine.js';
 import { loadEnv } from './config/env.js';
 
 /** `TRUST_PROXY` tel qu'Express l'attend. */
@@ -30,6 +31,9 @@ export function cablerApplication(app: NestExpressApplication): void {
   app.set('trust proxy', relaisDeConfiance(loadEnv().TRUST_PROXY));
   app.setGlobalPrefix('api');
   app.use(cookieParser());
+  // Avant la lecture du corps : une écriture venue d'un autre site est refusée
+  // sans rien analyser.
+  app.use(exigerMemeOrigine);
   app.use(json({ verify: exigerUtf8 }));
   app.use(urlencoded({ extended: true, verify: exigerUtf8 }));
   app.useGlobalFilters(new DatabaseExceptionFilter(app.getHttpAdapter()));
