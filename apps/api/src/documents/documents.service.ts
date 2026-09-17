@@ -7,6 +7,7 @@ import { appRoot, loadEnv } from '../config/env.js';
 import { requireContext } from '../common/request-context.js';
 import { DatabaseService } from '../database/database.service.js';
 import { ITIL_KINDS } from '../itil/itil-kinds.js';
+import { contenuConforme, TYPES_ACCEPTES } from './signatures.js';
 import { TicketScopeService } from '../tickets/ticket-scope.service.js';
 import { nomAffiche } from '../common/sql.js';
 
@@ -14,26 +15,13 @@ import { nomAffiche } from '../common/sql.js';
 export const MAX_SIZE = 25 * 1024 * 1024;
 
 /**
- * Types acceptés.
+ * Types acceptés : la liste blanche est celle des types dont on sait vérifier
+ * le contenu, dans `signatures.ts`.
  *
  * Liste blanche plutôt que liste noire : une liste noire laisse toujours passer
  * ce qu'on n'a pas anticipé, et une pièce jointe est servie telle quelle au
  * navigateur d'un collègue.
  */
-const ALLOWED = new Set([
-  'image/png',
-  'image/jpeg',
-  'image/gif',
-  'image/webp',
-  'application/pdf',
-  'text/plain',
-  'text/csv',
-  'application/zip',
-  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-  'application/vnd.oasis.opendocument.text',
-  'application/vnd.oasis.opendocument.spreadsheet',
-]);
 
 /**
  * Fichier recu, tel que l'intercepteur multipart le fournit.
@@ -132,8 +120,18 @@ export class DocumentsService {
       );
     }
 
-    if (!ALLOWED.has(fichier.mimetype)) {
+    // Le type annoncé sans ses paramètres : une partie de courriel dit
+    // volontiers `text/plain; charset=utf-8`.
+    const type = fichier.mimetype.split(';')[0]?.trim().toLowerCase() ?? '';
+
+    if (!TYPES_ACCEPTES.has(type)) {
       throw new BadRequestException(`Type de fichier non accepte : ${fichier.mimetype}.`);
+    }
+
+    if (!contenuConforme(type, fichier.buffer)) {
+      throw new BadRequestException(
+        `Le contenu de « ${fichier.originalname} » ne correspond pas au type annonce (${type}).`,
+      );
     }
 
     // Deposer une piece jointe modifie l'objet : c'est le droit de mise a jour
@@ -161,7 +159,7 @@ export class DocumentsService {
           // Le nom d'origine n'est jamais utilise comme chemin : il sert
           // uniquement d'etiquette et de nom propose au telechargement.
           name: fichier.originalname.slice(0, 255),
-          mimeType: fichier.mimetype,
+          mimeType: type,
           size: fichier.size,
           checksum: empreinte,
           uploadedById: context.userId,
