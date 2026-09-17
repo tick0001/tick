@@ -121,7 +121,7 @@ What you should know before relying on it, said plainly:
 - **Never used by a real service desk.** The public demo runs the released images on a VPS,
   behind Traefik with TLS, so the deployment path is exercised every day — but nobody has yet run
   Tick& to handle actual tickets.
-- **`0.1.9` is a first series of tagged versions, not a proven one.** Expect breaking changes between minor
+- **`0.1.10` is a first series of tagged versions, not a proven one.** Expect breaking changes between minor
   versions until the interfaces have been exercised by someone other than their author.
 - **The plugin SDK is still `0.x`** and may break between minor versions. It will only freeze once
   every extension point has been exercised by real use; the reference plugin is not enough on its

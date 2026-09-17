@@ -124,7 +124,7 @@ Ce qu'il faut savoir avant de s'en servir, dit franchement :
 - **Jamais utilisé par un vrai centre de services.** La démonstration publique fait tourner les
   images publiées sur un VPS, derrière Traefik en TLS : le chemin de déploiement est donc exercé
   tous les jours — mais personne n'a encore traité de vrais tickets avec Tick&.
-- **`0.1.9` est une première série d'étiquettes, pas une version éprouvée.** Attendez-vous à des
+- **`0.1.10` est une première série d'étiquettes, pas une version éprouvée.** Attendez-vous à des
   ruptures entre versions mineures tant que les interfaces n'auront pas été exercées par quelqu'un
   d'autre que leur auteur.
 - **Le SDK de plugins reste en `0.x`** et peut rompre entre deux versions mineures. Il ne se figera

@@ -12,15 +12,10 @@ peut rompre.
 Ce qui ne concerne que le dépôt — intégration continue, outillage de publication, fichiers de
 communauté — n'y figure pas. Ce journal s'adresse à qui exploite Tick&, pas à qui y contribue.
 
-## Non publié
+## [0.1.10] — 17 septembre 2026
 
 ### Corrigé
 
-- **La sonde de santé restait au vert quand le rôle applicatif ne pouvait plus se connecter.**
-  Elle n'interrogeait la base que par le rôle propriétaire, alors que tout le trafic passe par
-  `tick_app`. Un mot de passe applicatif mal reporté après sa rotation donnait une installation
-  qui se déclarait saine et refusait chaque requête — sans que Compose ne redémarre rien. La
-  sonde interroge désormais la base par les deux rôles.
 - **Le guide d'installation Windows produisait des sauvegardes impossibles à restaurer.**
   `pg_dump … > fichier` passe, sous Windows PowerShell 5.1 — celui livré avec Windows —, par un
   flux texte réencodé : le fichier obtenu est refusé par `pg_restore`. Le guide utilise
@@ -29,11 +24,19 @@ communauté — n'y figure pas. Ce journal s'adresse à qui exploite Tick&, pas 
   **Si vous avez suivi ce guide, vérifiez vos sauvegardes** avec `pg_restore -l` : si la
   commande les refuse, refaites-en une avec la nouvelle commande.
 
+- **La sonde de santé restait au vert quand le rôle applicatif ne pouvait plus se connecter.**
+  Elle n'interrogeait la base que par le rôle propriétaire, alors que tout le trafic passe par
+  `tick_app`. Un mot de passe applicatif mal reporté après sa rotation donnait une installation
+  qui se déclarait saine et refusait chaque requête — sans que Compose ne redémarre rien. La
+  sonde interroge désormais la base par les deux rôles.
 - **Un texte mal encodé était enregistré abîmé, sans erreur.** Un client qui envoyait du
   Windows-1252 en l'annonçant comme de l'UTF-8 — `curl` sous Git Bash pour Windows, par exemple
   — voyait chaque accent remplacé par « � », et la requête réussissait : « 2e étage » devenait
   « 2e �tage », sans retour possible. Un tel corps est désormais refusé, avec un message qui dit
   quoi vérifier.
+- **Un échec d'extension pouvait renvoyer les notifications en double.** Quand un plugin
+  échouait sur un événement, la file rejouait l'événement entier : chaque abonné repassait,
+  courriels de notification compris. Seuls les abonnés en échec sont désormais rappelés.
 - **La recherche dans les tickets balayait toute la table.** Sous Row-Level Security,
   PostgreSQL ne peut utiliser aucun index pour une recherche textuelle — ni `ILIKE`, ni la
   recherche plein texte. À cinq cent mille tickets, chercher un mot prenait plus d'une
@@ -41,9 +44,6 @@ communauté — n'y figure pas. Ce journal s'adresse à qui exploite Tick&, pas 
   index trigramme sans rien céder du cloisonnement : de 19 à 50 ms, et de 74 à 151 requêtes par
   seconde selon que le terme est rare ou fréquent. Les résultats sont identiques. Cela vaut pour
   la recherche multicritères, son export, et la recherche rapide de la liste.
-- **Un échec d'extension pouvait renvoyer les notifications en double.** Quand un plugin
-  échouait sur un événement, la file rejouait l'événement entier : chaque abonné repassait,
-  courriels de notification compris. Seuls les abonnés en échec sont désormais rappelés.
 - **Un plugin qui refusait une opération finissait désactivé.** Un refus — un titre de ticket
   trop court, par exemple — comptait comme une panne : au troisième, le plugin était éteint, et
   chaque refus parvenait à l'utilisateur comme une erreur interne. Un refus déclaré par
@@ -60,6 +60,15 @@ communauté — n'y figure pas. Ce journal s'adresse à qui exploite Tick&, pas 
 
 ### Ajouté
 
+- **Une procédure de restauration**, pour les trois modes d'installation. Le guide expliquait
+  comment sauvegarder, jamais comment restaurer — et la restauration a deux pièges : recréer le
+  rôle applicatif avant, parce que `pg_dump` ne sauvegarde pas les rôles, et arrêter à la
+  première erreur, sans quoi `pg_restore` produit une installation dont les données sont là mais
+  où aucune connexion n'aboutit.
+- **La montée de version et la restauration sont vérifiées à chaque modification.** La dernière
+  version publiée est amorcée, montée vers le nouveau code, puis détruite et restaurée depuis sa
+  sauvegarde ; chaque table doit garder toutes ses lignes. `make montee` joue la même chose sur
+  un poste.
 - **Un écran pour les extensions**, sous **Réglages › Extensions**. Il montre ce que chaque plugin
   demande avant qu'on l'installe, son état et sa dernière erreur, et pilote son cycle de vie —
   qui ne passait jusqu'ici que par des appels directs à l'API.
@@ -79,30 +88,18 @@ communauté — n'y figure pas. Ce journal s'adresse à qui exploite Tick&, pas 
 - **Un plugin qui propose des widgets doit déclarer la permission `dashboards`.** Sans elle, son
   activation échoue et l'écran des extensions dit pourquoi.
 
-### Ajouté
-
-- **Une procédure de restauration**, pour les trois modes d'installation. Le guide expliquait
-  comment sauvegarder, jamais comment restaurer — et la restauration a deux pièges : recréer le
-  rôle applicatif avant, parce que `pg_dump` ne sauvegarde pas les rôles, et arrêter à la
-  première erreur, sans quoi `pg_restore` produit une installation dont les données sont là mais
-  où aucune connexion n'aboutit.
-- **La montée de version et la restauration sont vérifiées à chaque modification.** La dernière
-  version publiée est amorcée, montée vers le nouveau code, puis détruite et restaurée depuis sa
-  sauvegarde ; chaque table doit garder toutes ses lignes. `make montee` joue la même chose sur
-  un poste.
-
 ### À faire en montant
 
-La migration construit deux index sur les tickets : trois secondes chacun à cinq cent mille
-tickets, pendant lesquelles les écritures sur les tickets attendent. Comme toute migration, elle
-se joue à l'arrêt de l'API — ce que fait déjà le service `migrate`.
+Deux migrations. La première construit deux index sur les tickets : trois secondes chacun à cinq
+cent mille tickets, pendant lesquelles les écritures sur les tickets attendent. La seconde crée la
+table des réglages de plugins, sans délai. Comme toute migration, elles se jouent à l'arrêt de
+l'API — ce que fait déjà le service `migrate`.
 
 Un plugin tiers écrit pour le SDK `0.7` est refusé au redémarrage — en `0.x`, chaque version
 mineure peut rompre — et passe en erreur dans l'écran des extensions. Il reprend une fois qu'il
 demande `^0.8.0` ; s'il appelle `dashboards.registerWidget`, il doit aussi ajouter `dashboards` à
-ses `permissions`. Un plugin qui refuse des opérations en levant une
-erreur ordinaire continue de fonctionner, mais chaque refus compte comme une panne tant qu'il
-n'utilise pas `PluginRefusal`.
+ses `permissions`. Un plugin qui refuse des opérations en levant une erreur ordinaire continue de
+fonctionner, mais chaque refus compte comme une panne tant qu'il n'utilise pas `PluginRefusal`.
 
 ## [0.1.9] — 10 septembre 2026
 
@@ -264,6 +261,7 @@ déploiement par conteneurs ou par archives, licence AGPL-3.0-or-later.
 **Jamais utilisé par un vrai centre de services** — voir le [README](README.md), qui dit
 franchement ce qu'il faut savoir avant de s'en servir.
 
+[0.1.10]: https://github.com/tick0001/tick/releases/tag/v0.1.10
 [0.1.9]: https://github.com/tick0001/tick/releases/tag/v0.1.9
 [0.1.8]: https://github.com/tick0001/tick/releases/tag/v0.1.8
 [0.1.7]: https://github.com/tick0001/tick/releases/tag/v0.1.7
