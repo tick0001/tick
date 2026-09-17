@@ -20,6 +20,24 @@ communauté — n'y figure pas. Ce journal s'adresse à qui exploite Tick&, pas 
   laisser vide pour conserver l'actuel » était annoncé à chaque passage sur le champ, sans qu'on
   puisse distinguer le nom de la consigne. L'aide est désormais reliée comme description : le
   nom est annoncé seul, l'aide ensuite. Cela vaut pour tous les formulaires.
+- **Sans conteneur, les plugins étaient cherchés hors de l'installation.** Les guides Linux et
+  Windows ne réglaient pas `PLUGINS_PATH`, dont la valeur par défaut se résout au-dessus du code
+  compilé : `/opt/plugins`, `C:\plugins`. Un plugin déposé ailleurs n'apparaissait jamais. Les
+  guides le règlent désormais sur `/opt/tick/plugins` et `C:\Tick\plugins`, hors du dossier que
+  la mise à jour remplace.
+
+### Ajouté
+
+- **Les plugins maintenus avec Tick& sont joints à chaque version**, dans
+  `tick-plugins-<version>.tar.gz` — aujourd'hui `messagerie`. Une installation par Docker n'avait
+  jusqu'ici aucun moyen de l'obtenir sans construire le dépôt. L'archive se décompresse dans le
+  dossier des plugins ; rien n'est installé tant qu'un administrateur ne l'a pas décidé. Voir le
+  [guide d'exploitation](docs/14-installation.md#plugins-publiés).
+
+### À faire en montant
+
+Sans conteneur, pour déposer des plugins : ajouter `PLUGINS_PATH` au fichier de configuration,
+avec un chemin absolu hors du dossier de l'API, et créer ce dossier.
 
 ## [0.1.10] — 17 septembre 2026
 
