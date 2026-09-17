@@ -1,9 +1,9 @@
 import 'reflect-metadata';
 import { Logger, type LogLevel } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
-import cookieParser from 'cookie-parser';
+import type { NestExpressApplication } from '@nestjs/platform-express';
 import { AppModule } from './app.module.js';
-import { DatabaseExceptionFilter } from './common/database-exception.filter.js';
+import { cablerApplication } from './cablage.js';
 import { loadEnv, loadEnvFiles } from './config/env.js';
 
 async function bootstrap(): Promise<void> {
@@ -14,13 +14,13 @@ async function bootstrap(): Promise<void> {
   const NIVEAUX: LogLevel[] = ['error', 'warn', 'log', 'debug', 'verbose'];
   const actifs = NIVEAUX.slice(0, NIVEAUX.indexOf(env.LOG_LEVEL) + 1);
 
-  const app = await NestFactory.create(AppModule, { logger: actifs });
+  const app = await NestFactory.create<NestExpressApplication>(AppModule, {
+    logger: actifs,
+    bodyParser: false,
+  });
 
-  app.setGlobalPrefix('api');
-  app.use(cookieParser());
-  app.useGlobalFilters(new DatabaseExceptionFilter(app.getHttpAdapter()));
+  cablerApplication(app);
   app.enableCors({ origin: env.WEB_URL, credentials: true });
-  app.enableShutdownHooks();
 
   await app.listen(env.API_PORT);
   new Logger('Amorcage').log(`API demarree sur ${env.API_URL}/api`);
