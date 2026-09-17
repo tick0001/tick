@@ -24,10 +24,10 @@ export interface PluginLogger {
 /**
  * Accès aux données du plugin.
  *
- * Le `search_path` de la connexion est restreint au schéma du plugin : une
- * requête sans préfixe de schéma ne peut atteindre que ses propres tables. Le
- * cœur reste accessible en le nommant explicitement, et reste protégé par le
- * Row-Level Security.
+ * Le schéma du plugin est placé en tête du `search_path` : une table sans
+ * préfixe est d'abord cherchée parmi les siennes, puis dans `public`. Nommer le
+ * cœur explicitement (`public.tickets`) rend une requête lisible ; il y reste
+ * protégé par le Row-Level Security.
  */
 export interface PluginDatabase {
   query<T = Record<string, unknown>>(sql: string, params?: unknown[]): Promise<T[]>;
@@ -48,8 +48,9 @@ export interface PluginSettings {
    * Pour un réglage d'entité, `entityId` désigne l'entité concernée — celle du
    * ticket, le plus souvent. La valeur est celle posée sur cette entité ou, à
    * défaut, sur son plus proche ancêtre ; puis la valeur par défaut du
-   * manifeste ; sinon `null`. Sans `entityId`, seule la valeur de la racine
-   * compte.
+   * manifeste ; sinon `null`. Un réglage d'entité lu sans `entityId` lève
+   * une erreur : une installation peut avoir plusieurs racines. Un réglage
+   * d'instance ignore `entityId`.
    *
    * Un secret est rendu **déchiffré** : c'est au plugin de ne jamais le
    * journaliser. Une clé non déclarée lève une erreur plutôt que de rendre
@@ -112,7 +113,8 @@ export interface PluginContext {
 
 /**
  * Hooks : synchrones, dans la transaction, capables de modifier la donnée ou
- * d'annuler l'opération en levant une exception.
+ * d'annuler l'opération en levant une exception — `PluginRefusal` pour un
+ * refus délibéré.
  *
  * Un hook reçoit la charge utile et renvoie soit une version modifiée, soit
  * rien pour la laisser inchangée.
@@ -381,6 +383,36 @@ export interface PluginDefinition {
   uninstall?(context: PluginContext): void | Promise<void>;
   /** Appelé à chaque activation : c'est ici que tout s'enregistre. */
   register(api: PluginApi): void | Promise<void>;
+}
+
+const MARQUE_REFUS = Symbol.for('tick.plugin.refusal');
+
+/**
+ * Refus délibéré, levé depuis un hook : « cette opération n'aura pas lieu ».
+ *
+ * À distinguer d'une panne. Les deux annulent l'opération, mais l'hôte rend un
+ * refus à l'utilisateur comme une erreur de saisie, avec ce message, et ne le
+ * compte pas parmi les échecs du plugin. Toute autre exception est une panne :
+ * trois pannes consécutives désactivent le plugin. Sans cette distinction, un
+ * plugin qui fait son travail — refuser un titre trop court — serait désactivé
+ * au troisième titre refusé.
+ *
+ * Reconnu par une marque, et non par `instanceof` : chaque plugin embarque sa
+ * propre copie du SDK, dont la classe n'est pas celle de l'hôte.
+ */
+export class PluginRefusal extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'PluginRefusal';
+    Object.defineProperty(this, MARQUE_REFUS, { value: true });
+  }
+}
+
+/** Vrai pour un refus délibéré, quelle que soit la copie du SDK qui l'a levé. */
+export function isPluginRefusal(error: unknown): error is PluginRefusal {
+  return (
+    error instanceof Error && (error as unknown as Record<symbol, unknown>)[MARQUE_REFUS] === true
+  );
 }
 
 /** Déclare un plugin serveur. Sert de point d'ancrage au typage. */

@@ -1,6 +1,7 @@
 import { mkdtemp, mkdir, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+import { BadRequestException } from '@nestjs/common';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { createDatabase, entities, eq, sql, type Connection } from '@tick/db';
 import { runWithContext } from '../common/request-context.js';
@@ -98,7 +99,10 @@ describe("Substrat d'extension", () => {
         register(api) {
           api.hooks.on("entity.beforeCreate", async (payload, context) => {
             if (payload.name.includes("interdit")) {
-              throw new Error("nom refuse par le plugin");
+              // Ce que fait PluginRefusal, sans le SDK : la marque suffit.
+              const refus = new Error("nom refuse par le plugin");
+              Object.defineProperty(refus, Symbol.for("tick.plugin.refusal"), { value: true });
+              throw refus;
             }
             if (payload.name.includes("sortie")) {
               await context.http.request("http://127.0.0.1:9/");
@@ -152,7 +156,9 @@ describe("Substrat d'extension", () => {
     );
     entites = new EntitiesService(db, hooks);
 
-    await plugins.synchronize();
+    // Le demarrage complet, et non la seule synchronisation : il branche la
+    // desactivation automatique, dont depend le test des refus repetes.
+    await plugins.onApplicationBootstrap();
 
     const [racineEntite] = await db.asOwner((tx) =>
       tx
@@ -262,9 +268,13 @@ describe("Substrat d'extension", () => {
   });
 
   it("annule l'operation quand le hook refuse", async () => {
-    await expect(
-      dansLeContexte(() => entites.create({ name: 'nom interdit', parentId: entiteRacineId })),
-    ).rejects.toThrow(/essai-substrat/);
+    const erreur = await dansLeContexte(() =>
+      entites.create({ name: 'nom interdit', parentId: entiteRacineId }),
+    ).catch((e: unknown) => e);
+
+    // Une erreur de saisie qui nomme le plugin, pas une erreur interne.
+    expect(erreur).toBeInstanceOf(BadRequestException);
+    expect((erreur as Error).message).toMatch(/essai-substrat.*nom refuse/);
 
     // L'entite ne doit pas exister : un hook qui leve annule bien l'ecriture.
     const restantes = await db.asOwner((tx) =>
@@ -273,6 +283,19 @@ describe("Substrat d'extension", () => {
       ),
     );
     expect(restantes.rows[0]?.total).toBe(0);
+  });
+
+  it('reste actif apres des refus repetes, qui ne sont pas des pannes', async () => {
+    for (let essai = 0; essai < 4; essai += 1) {
+      await expect(
+        dansLeContexte(() => entites.create({ name: 'interdit', parentId: entiteRacineId })),
+      ).rejects.toBeInstanceOf(BadRequestException);
+    }
+
+    // La desactivation retire les hooks avant toute ecriture : le compte suffit
+    // a la voir, sans attendre qu'elle ait fini.
+    expect(hooks.count('entity.beforeCreate')).toBe(1);
+    expect((await plugins.list()).find((p) => p.id === PLUGIN_ID)?.state).toBe('actif');
   });
 
   it('lit ses reglages, d instance et d entite, depuis un hook', async () => {
