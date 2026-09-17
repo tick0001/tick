@@ -152,8 +152,9 @@ pnpm openapi     # exporte la description de l'API
 Le monorepo réunit l'API (NestJS), l'interface (React + Vite), et quatre paquets partagés :
 contrats Zod, couche de données Drizzle, traductions, SDK de plugins.
 
-Le plugin de référence `plugins/exemple-bonjour` exerce chaque point d'extension et sert de test
-d'intégration permanent.
+Deux plugins vivent dans le dépôt et servent de tests d'intégration permanents :
+`plugins/exemple-bonjour`, qui exerce les hooks, les événements et deux emplacements d'interface,
+et `plugins/messagerie`, d'usage réel, qui annonce les tickets dans un canal de discussion.
 
 Commits en français, courts, préfixés d'un gitmoji : `:sparkles: ajoute l'arbre des entités`.
 

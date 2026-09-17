@@ -3,7 +3,7 @@
   "name": "Exemple — Bonjour",
   "version": "1.3.0",
   "sdk": "^0.8.0",
-  "description": "Plugin de reference : exerce chaque point d'extension du substrat.",
+  "description": "Plugin de démonstration, sans usage réel : normalise et refuse des noms par des hooks, journalise des événements, et ajoute deux éléments à l'interface.",
   "license": "AGPL-3.0-or-later",
   "permissions": ["schema:own", "hooks", "events"],
   "rights": [
