@@ -1,0 +1,67 @@
+{
+  "id": "messagerie",
+  "name": "Notifications vers une messagerie",
+  "version": "1.0.0",
+  "sdk": "^0.8.0",
+  "description": "Annonce les tickets dans un canal de discussion : Mattermost, Slack, Rocket.Chat, Discord ou Microsoft Teams. Un canal par entité, hérité par sa descendance.",
+  "license": "AGPL-3.0-or-later",
+  "permissions": ["schema:own", "events", "http:outbound"],
+  "settings": [
+    {
+      "key": "webhook",
+      "label": "Adresse du webhook entrant",
+      "type": "secret",
+      "scope": "entity",
+      "description": "Fournie par la messagerie. Sans adresse ici ni plus haut dans l'arborescence, rien n'est envoyé."
+    },
+    {
+      "key": "format",
+      "label": "Format",
+      "type": "enum",
+      "scope": "entity",
+      "options": ["slack", "teams"],
+      "default": "slack",
+      "description": "« slack » convient à Slack, Mattermost, Rocket.Chat et Discord — pour Discord, l'adresse se termine par /slack. « teams » vise un flux de travail Microsoft Teams."
+    },
+    {
+      "key": "creation",
+      "label": "Annoncer les nouveaux tickets",
+      "type": "boolean",
+      "scope": "entity",
+      "default": true
+    },
+    {
+      "key": "priorite_minimale",
+      "label": "Priorité minimale d'un nouveau ticket",
+      "type": "number",
+      "scope": "entity",
+      "min": 1,
+      "max": 5,
+      "default": 1,
+      "description": "Un nouveau ticket de priorité inférieure n'est pas annoncé. Ce seuil ne filtre ni les escalades ni les résolutions."
+    },
+    {
+      "key": "escalade",
+      "label": "Annoncer les escalades",
+      "type": "boolean",
+      "scope": "entity",
+      "default": true
+    },
+    {
+      "key": "resolution",
+      "label": "Annoncer les résolutions",
+      "type": "boolean",
+      "scope": "entity",
+      "default": false
+    },
+    {
+      "key": "langue",
+      "label": "Langue des messages",
+      "type": "enum",
+      "options": ["fr", "en"],
+      "default": "fr"
+    }
+  ],
+  "server": "./dist/server.js",
+  "migrations": "./migrations"
+}

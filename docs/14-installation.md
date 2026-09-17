@@ -91,11 +91,12 @@ de l'exploitant, pas d'une entité — il précède la connexion, donc aucun pro
 ne peut le porter.
 
 **`ALLOW_PRIVATE_OUTBOUND`** décide si le serveur accepte de joindre un réseau
-interne. Deux fonctionnalités laissent un administrateur choisir librement
-l'hôte et le port d'une connexion émise par l'application : les annuaires LDAP
-et les collecteurs de courriel. Toutes deux se déclenchent à la demande — c'est
-donc, telle quelle, une requête sortante arbitraire, de quoi cartographier le
-réseau de la machine depuis l'extérieur.
+interne. Trois fonctionnalités laissent un administrateur choisir librement
+l'hôte et le port d'une connexion émise par l'application : les annuaires LDAP,
+les collecteurs de courriel et les requêtes sortantes des plugins — l'adresse
+d'un webhook, par exemple. Elles se déclenchent à la demande — c'est donc, telle
+quelle, une requête sortante arbitraire, de quoi cartographier le réseau de la
+machine depuis l'extérieur.
 
 Vrai par défaut, et ce n'est pas de la négligence : dans une installation
 ordinaire l'annuaire visé **est** interne, et l'administrateur y est de
@@ -376,7 +377,11 @@ lignes, et l'on doit pouvoir s'y connecter ensuite.
 
 Un plugin est du code chargé dans le processus de l'API. Déposer son dossier
 construit dans `./plugins`, à côté du fichier compose, puis redémarrer l'API. Il
-apparaît alors dans l'écran d'administration, où il s'installe et s'active.
+apparaît alors dans **Réglages › Extensions**, qui montre ce qu'il demande avant
+de l'installer, l'active et porte ses réglages.
+
+Le dépôt fournit [`messagerie`](../plugins/messagerie), qui annonce les tickets
+dans un canal Slack, Mattermost ou Teams ; son README dit comment le construire.
 
 Le dossier est monté en lecture seule : un plugin compromis pourrait sinon se
 réécrire, et survivre à sa propre désinstallation.
