@@ -123,6 +123,18 @@ describe('withRequestContext', () => {
     expect(parametres).toContain('{racine}');
   });
 
+  it('coupe la compilation JIT pour la transaction', async () => {
+    const { db, execute } = baseFactice();
+
+    await withRequestContext(db, contexte, () => Promise.resolve(undefined));
+
+    const requete = JSON.stringify(execute.mock.calls[0]?.[0]);
+
+    // Sous RLS, le planificateur surestime les couts et declenche la
+    // compilation a chaque requete : des centaines de millisecondes perdues.
+    expect(requete).toContain("set_config('jit', 'off', true)");
+  });
+
   it('limite les parametres a la transaction', async () => {
     const { db, execute } = baseFactice();
 
