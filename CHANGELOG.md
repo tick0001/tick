@@ -34,6 +34,12 @@ communauté — n'y figure pas. Ce journal s'adresse à qui exploite Tick&, pas 
 
 ### Corrigé
 
+- **PostgreSQL compilait chaque requête avant de la jouer.** Le cloisonnement par entité lui
+  fait surestimer le coût des requêtes, et au-delà d'un seuil il les compile — à chaque
+  exécution. La recherche dans la base de connaissances en perdait 750 ms sur 800. La
+  compilation est désormais coupée pour le trafic de l'application : à cinq cent mille tickets,
+  la liste, la liste filtrée et le détail d'un ticket supportent 40 à 60 % de requêtes en plus,
+  et aucun écran ne ralentit.
 - **Les lecteurs d'écran lisaient l'aide d'un champ comme une partie de son nom.** « Mot de passe,
   laisser vide pour conserver l'actuel » était annoncé à chaque passage sur le champ, sans qu'on
   puisse distinguer le nom de la consigne. L'aide est désormais reliée comme description : le
