@@ -38,6 +38,7 @@ COPY packages/db/package.json packages/db/
 COPY packages/i18n/package.json packages/i18n/
 COPY packages/plugin-sdk/package.json packages/plugin-sdk/
 COPY plugins/exemple-bonjour/package.json plugins/exemple-bonjour/
+COPY plugins/messagerie/package.json plugins/messagerie/
 
 RUN --mount=type=cache,id=pnpm,target=/pnpm/store \
     pnpm config set store-dir /pnpm/store && pnpm install --frozen-lockfile
