@@ -1,5 +1,16 @@
-import { Injectable, InternalServerErrorException, Logger } from '@nestjs/common';
-import type { HookHandler, HookName, HookPayloads, PluginContext } from '@tick/plugin-sdk';
+import {
+  BadRequestException,
+  Injectable,
+  InternalServerErrorException,
+  Logger,
+} from '@nestjs/common';
+import {
+  isPluginRefusal,
+  type HookHandler,
+  type HookName,
+  type HookPayloads,
+  type PluginContext,
+} from '@tick/plugin-sdk';
 
 /**
  * Délai maximal accordé à un hook, en millisecondes.
@@ -81,8 +92,11 @@ export class HookBus {
    *
    * Chaque hook reçoit le résultat du précédent, dans l'ordre des priorités.
    * Une exception interrompt la chaîne et remonte : l'écriture est annulée, et
-   * l'erreur nomme le plugin fautif pour que le diagnostic ne soit pas une
-   * enquête.
+   * l'erreur nomme le plugin pour que le diagnostic ne soit pas une enquête.
+   *
+   * Un refus délibéré (`PluginRefusal`) est une réponse, pas une panne : il
+   * devient une erreur de saisie et n'entre pas dans le compte des échecs.
+   * Toute autre exception, dépassement de délai compris, est une panne.
    */
   async run<K extends HookName>(name: K, payload: HookPayloads[K]): Promise<HookPayloads[K]> {
     const liste = this.registrations.get(name);
@@ -102,13 +116,23 @@ export class HookBus {
         if (resultat !== undefined && resultat !== null) {
           courant = resultat as HookPayloads[K];
         }
+
+        // Seules les pannes consécutives comptent : une panne passagère par
+        // semaine ne doit pas finir par éteindre un plugin qui fonctionne.
+        this.failures.delete(registration.pluginId);
       } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+
+        if (isPluginRefusal(error)) {
+          throw new BadRequestException(
+            `Le plugin « ${registration.pluginId} » a refusé l'opération : ${message}`,
+          );
+        }
+
         this.recordFailure(registration.pluginId, error);
 
         throw new InternalServerErrorException(
-          `Le plugin « ${registration.pluginId} » a refusé l'opération sur ${name} : ${
-            error instanceof Error ? error.message : String(error)
-          }`,
+          `Le plugin « ${registration.pluginId} » a échoué sur ${name} : ${message}`,
         );
       }
     }

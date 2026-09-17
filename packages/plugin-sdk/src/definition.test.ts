@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import { definePluginClient } from './client.js';
-import { definePlugin, type PluginApi } from './index.js';
+import { definePlugin, isPluginRefusal, PluginRefusal, type PluginApi } from './index.js';
 
 /**
  * Les deux points d'ancrage du SDK.
@@ -131,5 +131,35 @@ describe('definePluginClient', () => {
     demonter();
 
     expect(nettoye).toBe(true);
+  });
+});
+
+describe('PluginRefusal', () => {
+  it('se reconnait, message et nom compris', () => {
+    const refus = new PluginRefusal('titre trop court');
+
+    expect(refus).toBeInstanceOf(Error);
+    expect(refus.message).toBe('titre trop court');
+    expect(refus.name).toBe('PluginRefusal');
+    expect(isPluginRefusal(refus)).toBe(true);
+  });
+
+  it('se reconnait par sa marque, venue d une autre copie du SDK', () => {
+    const etranger = new Error('non');
+    Object.defineProperty(etranger, Symbol.for('tick.plugin.refusal'), { value: true });
+
+    expect(isPluginRefusal(etranger)).toBe(true);
+  });
+
+  it.each([
+    ['une erreur ordinaire', new Error('panne')],
+    [
+      'une erreur du meme nom, sans marque',
+      Object.assign(new Error('x'), { name: 'PluginRefusal' }),
+    ],
+    ['une chaine', 'PluginRefusal'],
+    ['null', null],
+  ])('ne confond pas %s avec un refus', (_cas, valeur) => {
+    expect(isPluginRefusal(valeur)).toBe(false);
   });
 });

@@ -1,4 +1,4 @@
-import { definePlugin } from '@tick/plugin-sdk';
+import { definePlugin, PluginRefusal } from '@tick/plugin-sdk';
 
 /**
  * Plugin de référence.
@@ -37,13 +37,15 @@ export default definePlugin({
      *
      * Il modifie la charge utile — les espaces superflus disparaissent — et
      * refuse l'opération pour un nom réservé. Le refus annule réellement
-     * l'écriture, ce qu'un événement ne pourrait pas faire.
+     * l'écriture, ce qu'un événement ne pourrait pas faire. `PluginRefusal`, et
+     * non une erreur quelconque : un refus n'est pas une panne, et ne compte
+     * pas parmi les échecs qui désactivent un plugin.
      */
     api.hooks.on('entity.beforeCreate', (payload, context) => {
       const nom = payload.name.trim().replaceAll(/\s+/g, ' ');
 
       if (nom.toLowerCase() === 'interdit') {
-        throw new Error('le nom « interdit » est refusé par le plugin de démonstration');
+        throw new PluginRefusal('le nom « interdit » est refusé par le plugin de démonstration');
       }
 
       if (nom !== payload.name) {
@@ -64,7 +66,7 @@ export default definePlugin({
       const titre = payload.name.trim().replaceAll(/\s+/g, ' ');
 
       if (titre.length < 5) {
-        throw new Error('un titre de ticket doit faire au moins cinq caractères');
+        throw new PluginRefusal('un titre de ticket doit faire au moins cinq caractères');
       }
 
       // Démonstration de l'ordre : un mot-clé dans le titre relève l'urgence,
