@@ -150,6 +150,7 @@ describe('ApiError', () => {
   it('reprend le message du serveur', async () => {
     vi.mocked(fetch).mockResolvedValue({
       ok: false,
+      headers: new Headers(),
       status: 409,
       json: () => Promise.resolve({ message: 'Cet identifiant est deja utilise.' }),
     } as unknown as Response);
@@ -160,6 +161,7 @@ describe('ApiError', () => {
   it('porte le statut, pas seulement le texte', async () => {
     vi.mocked(fetch).mockResolvedValue({
       ok: false,
+      headers: new Headers(),
       status: 403,
       json: () => Promise.resolve({ message: 'Droit manquant.' }),
     } as unknown as Response);
@@ -173,6 +175,7 @@ describe('ApiError', () => {
   it('se rabat sur le statut quand le corps est illisible', async () => {
     vi.mocked(fetch).mockResolvedValue({
       ok: false,
+      headers: new Headers(),
       status: 502,
       json: () => Promise.reject(new Error('pas du JSON')),
     } as unknown as Response);
@@ -180,6 +183,29 @@ describe('ApiError', () => {
     // Un relais qui tombe rend du HTML : sans ce repli, l'interface afficherait
     // une erreur d'analyse au lieu du vrai probleme.
     await expect(api.session()).rejects.toThrowError('HTTP 502');
+  });
+
+  it('retient le délai demandé par le serveur', async () => {
+    vi.mocked(fetch).mockResolvedValue({
+      ok: false,
+      headers: new Headers({ 'Retry-After': '120' }),
+      status: 429,
+      json: () => Promise.resolve({ message: 'Trop de tentatives.' }),
+    } as unknown as Response);
+
+    // Sans ce délai, l'écran de connexion ne saurait dire combien attendre.
+    await expect(api.session()).rejects.toMatchObject({ status: 429, retryAfter: 120 });
+  });
+
+  it('ignore un délai illisible', async () => {
+    vi.mocked(fetch).mockResolvedValue({
+      ok: false,
+      headers: new Headers({ 'Retry-After': 'Wed, 21 Oct 2026 07:28:00 GMT' }),
+      status: 503,
+      json: () => Promise.resolve({ message: 'Maintenance.' }),
+    } as unknown as Response);
+
+    await expect(api.session()).rejects.toMatchObject({ status: 503, retryAfter: undefined });
   });
 
   it('refuse une réponse qui ne respecte pas le contrat', async () => {

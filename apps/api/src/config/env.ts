@@ -135,6 +135,19 @@ const envSchema = z.object({
    */
   PLUGINS_PATH: z.string().default('./plugins'),
   /**
+   * Relais dont l'API croit l'en-tete `X-Forwarded-For`, au format d'Express :
+   * `true`, `false`, un nombre de relais, ou une liste d'adresses, de plages
+   * et de mots-cles (`loopback`, `linklocal`, `uniquelocal`).
+   *
+   * Sans cela, derriere nginx, toutes les requetes semblent venir du relais :
+   * la limite des tentatives de connexion par adresse bloquerait tout le monde
+   * a la fois, et les sessions noteraient l'adresse du relais. Le defaut fait
+   * confiance aux reseaux prives, ou vivent le nginx de l'image et celui d'une
+   * installation sur la meme machine ; un client joint directement depuis
+   * Internet n'est jamais cru sur parole.
+   */
+  TRUST_PROXY: z.string().trim().default('loopback, linklocal, uniquelocal'),
+  /**
    * Verbosite du journal. Chaque niveau inclut les precedents.
    * `debug` trace notamment la distribution des evenements aux plugins.
    */
