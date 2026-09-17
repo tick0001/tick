@@ -37,7 +37,7 @@ const VIDE: UpsertItilCategory = {
   isRecursive: true,
 };
 
-/** Les quatre applicabilites, dans l'ordre ou GLPI les presente. */
+/** Les quatre applicabilites, dans l'ordre ou les objets ITIL s'enchainent. */
 const TYPES = [
   { champ: 'forIncident', cle: 'categories.types.incident' },
   { champ: 'forRequest', cle: 'categories.types.request' },

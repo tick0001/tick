@@ -32,7 +32,7 @@ import {
 } from '@/components/ui/primitives';
 
 /**
- * Natures proposées à l'auteur, groupées comme dans GLPI.
+ * Natures proposées à l'auteur, groupées par famille.
  *
  * Le regroupement n'est pas décoratif : dix-neuf entrées dans une liste à plat
  * obligent à lire toute la liste pour trouver « Adresse électronique ». Les

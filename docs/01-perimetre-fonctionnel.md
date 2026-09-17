@@ -1,8 +1,8 @@
 # Périmètre fonctionnel
 
-Référence : **GLPI 11.x**, menu Assistance et tout ce qui le rend opérant (administration,
-configuration, transverse). La gestion de parc, l'inventaire et la gestion financière sont
-explicitement **hors périmètre**.
+Référence : ce qu'un outil ITSM complet couvre sous **Assistance**, et tout ce qui le rend
+opérant (administration, configuration, transverse). La gestion de parc, l'inventaire et la
+gestion financière sont explicitement **hors périmètre**.
 
 Chaque module porte un identifiant (`M01`…`M17`) réutilisé dans la feuille de route.
 
@@ -118,7 +118,7 @@ utilisateur), **FAQ publique** accessible sans authentification, proposition d'u
 solution depuis un ticket, création d'un article depuis une solution, favoris, compteur de
 consultations, recherche plein texte.
 
-## M10 — Formulaires (natifs en GLPI 11)
+## M10 — Formulaires
 
 Constructeur de formulaires : sections, questions typées (texte, texte long, nombre, date, liste,
 choix multiple, fichier, utilisateur, groupe, lieu, catégorie…), **logique conditionnelle**

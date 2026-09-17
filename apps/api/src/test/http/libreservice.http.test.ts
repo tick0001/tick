@@ -116,7 +116,7 @@ describe('HTTP — libre-service', () => {
       expect(reponse.status).toBe(400);
     });
 
-    it('accepte les natures de question calquées sur GLPI', async () => {
+    it('accepte chacune des natures de question étendues', async () => {
       // Les natures vivent a trois endroits -- le contrat Zod, l'enumeration
       // PostgreSQL et l'ecran -- et une seule oubliee suffit a rendre la nature
       // inutilisable. L'aller-retour complet est le seul moyen de le savoir.
@@ -554,9 +554,9 @@ describe('HTTP — libre-service', () => {
     it('reste hors de la chronologie, qui n’accueille que des échanges', async () => {
       // Etat des lieux, et non choix definitif : la chronologie porte les
       // suivis, taches, solutions, validations et changements de champ. Une
-      // piece jointe se lit sur sa propre liste. GLPI l'y fait apparaitre ; si
-      // Tick& doit suivre, c'est une entree a ajouter a l'union, pas un
-      // ajustement de ce test.
+      // piece jointe se lit sur sa propre liste. Si elle doit un jour y
+      // apparaitre, c'est une entree a ajouter a l'union, pas un ajustement de
+      // ce test.
       const reponse = await harnais.admin().get('/api/tickets/' + ticket + '/timeline');
 
       expect(reponse.status).toBe(200);

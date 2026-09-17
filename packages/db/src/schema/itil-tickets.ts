@@ -167,7 +167,7 @@ export const tickets = pgTable(
     updatedById: bigint('updated_by_id', { mode: 'number' }).references(() => users.id),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
-    /** Suppression logique : la corbeille de GLPI, et l'exigence d'audit. */
+    /** Suppression logique : la corbeille, et l'exigence d'audit. */
     deletedAt: timestamp('deleted_at', { withTimezone: true }),
   },
   (t) => [

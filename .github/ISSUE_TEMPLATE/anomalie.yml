@@ -14,9 +14,9 @@ body:
       label: Reproduit sur la démonstration publique ?
       description: >-
         La question la plus utile du formulaire : elle sépare d'emblée un défaut du produit
-        d'un problème de déploiement. https://demo.tickand.fr — sophie / tick
+        d'un problème de déploiement. https://tick-demo.tickand.fr — sophie / tick
       options:
-        - Oui, reproduit sur demo.tickand.fr
+        - Oui, reproduit sur tick-demo.tickand.fr
         - Non, seulement sur mon installation
         - Pas essayé
         - Sans objet

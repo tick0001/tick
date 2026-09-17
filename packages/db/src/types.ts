@@ -5,8 +5,8 @@ import { customType } from 'drizzle-orm/pg-core';
  *
  * Represente la position d'une entite dans l'arbre, par exemple
  * `racine.filiale_nord.site_a`. L'operateur `<@` teste l'appartenance a un
- * sous-arbre en une comparaison indexable, la ou GLPI maintient des caches
- * d'ancetres et de descendants a invalider a chaque deplacement.
+ * sous-arbre en une comparaison indexable, la ou il faudrait sinon tenir des
+ * caches d'ancetres et de descendants a invalider a chaque deplacement.
  */
 export const ltree = customType<{ data: string; driverData: string }>({
   dataType() {

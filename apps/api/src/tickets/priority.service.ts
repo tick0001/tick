@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { EntitiesService } from '../entities/entities.service.js';
 
 /**
- * Matrice par défaut, calquée sur celle de GLPI.
+ * Matrice par défaut, celle qu'appliquent la plupart des outils ITSM.
  *
  * Lignes : urgence de 1 à 5. Colonnes : impact de 1 à 5. Elle est volontairement
  * asymétrique — un incident très urgent mais sans impact ne monte pas aussi haut
