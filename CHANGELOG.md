@@ -14,6 +14,24 @@ communauté — n'y figure pas. Ce journal s'adresse à qui exploite Tick&, pas 
 
 ## Non publié
 
+### Sécurité
+
+- **Les tentatives de connexion n'étaient pas limitées.** On pouvait essayer des mots de passe
+  sans fin et, chaque vérification étant volontairement coûteuse, saturer le serveur par une
+  simple rafale. Après cinq échecs, un compte est bloqué une minute, puis deux, quatre… jusqu'à
+  un quart d'heure ; une adresse est refusée après vingt échecs en un quart d'heure. Le refus
+  précède la vérification du mot de passe. Voir le
+  [guide d'exploitation](docs/14-installation.md#connexion-et-en-têtes-de-sécurité).
+- **Les pages de l'interface partaient sans protection contre l'incrustation.** Dans nginx, une
+  `location` qui pose ses propres en-têtes perd ceux du serveur : les pages et les fichiers
+  statiques étaient servis sans `X-Frame-Options`, et un site tiers pouvait afficher Tick& dans
+  un cadre. Les en-têtes sont rétablis partout, avec une politique de contenu stricte, et HSTS
+  derrière un relais HTTPS. Cela vaut pour l'image `web`, le site nginx et le `web.config`
+  fournis pour les installations sans conteneur.
+- **Les valeurs des requêtes de plugins étaient recopiées dans le texte SQL**, échappées à la
+  main. Sur un serveur où `standard_conforming_strings` est désactivé, une valeur venue d'un
+  ticket pouvait devenir du SQL. Elles partent désormais en paramètres liés.
+
 ### Corrigé
 
 - **Les lecteurs d'écran lisaient l'aide d'un champ comme une partie de son nom.** « Mot de passe,
@@ -33,11 +51,17 @@ communauté — n'y figure pas. Ce journal s'adresse à qui exploite Tick&, pas 
   jusqu'ici aucun moyen de l'obtenir sans construire le dépôt. L'archive se décompresse dans le
   dossier des plugins ; rien n'est installé tant qu'un administrateur ne l'a pas décidé. Voir le
   [guide d'exploitation](docs/14-installation.md#plugins-publiés).
+- **`TRUST_PROXY`** désigne les relais dont l'API croit l'adresse du client. Le défaut, les
+  réseaux privés, convient au déploiement par Docker comme aux installations fournies.
 
 ### À faire en montant
 
 Sans conteneur, pour déposer des plugins : ajouter `PLUGINS_PATH` au fichier de configuration,
 avec un chemin absolu hors du dossier de l'API, et créer ce dossier.
+
+Sans conteneur, remplacer le site nginx ou le `web.config` par ceux de cette version : ce sont
+eux qui portent les en-têtes de sécurité. Derrière un relais dont l'adresse est publique,
+renseigner `TRUST_PROXY`.
 
 ## [0.1.10] — 17 septembre 2026
 
