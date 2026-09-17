@@ -32,12 +32,6 @@ export function entriesFor(slot: SlotName): readonly LoadedSlotEntry[] {
   return slots.get(slot) ?? AUCUNE;
 }
 
-interface PluginStatus {
-  id: string;
-  state: string;
-  hasClient: boolean;
-}
-
 /**
  * Charge les bundles d'interface des plugins actifs.
  *
@@ -51,30 +45,33 @@ interface PluginStatus {
  * Une extension cassée ne doit pas emporter l'application.
  */
 export async function loadPluginClients(): Promise<void> {
-  const reponse = await fetch('/api/plugins', { credentials: 'include' });
+  // Pas `/api/plugins` : cette liste-là exige le droit d'administration, et
+  // l'interface des plugins ne se chargeait alors que pour l'administrateur.
+  // Celle-ci est ouverte à tout utilisateur connecté, et ne nomme que les
+  // plugins actifs qui ont une interface.
+  const reponse = await fetch('/api/plugins/clients', { credentials: 'include' });
 
-  // Sans le droit `plugin:read`, l'utilisateur ne peut pas lister les plugins.
-  // Ce n'est pas une erreur : il n'y a simplement rien à charger.
+  // Une session expirée répond 401 : il n'y a rien à charger, pas d'erreur à
+  // afficher.
   if (!reponse.ok) return;
 
-  const statuts = (await reponse.json()) as PluginStatus[];
+  const identifiants = (await reponse.json()) as string[];
 
   await Promise.all(
-    statuts
-      .filter((statut) => statut.state === 'actif' && statut.hasClient)
-      .filter((statut) => !charges.has(statut.id))
-      .map(async (statut) => {
+    identifiants
+      .filter((id) => !charges.has(id))
+      .map(async (id) => {
         try {
-          const module = (await import(
-            /* @vite-ignore */ `/api/plugins/${statut.id}/client.js`
-          )) as { default?: PluginClientDefinition };
+          const module = (await import(/* @vite-ignore */ `/api/plugins/${id}/client.js`)) as {
+            default?: PluginClientDefinition;
+          };
 
           module.default?.register({
             slots: {
               add: (slot, entry) => {
                 // Nouveau tableau plutot qu'une mutation : l'instantane doit
                 // changer d'identite pour que l'interface se redessine.
-                const liste = [...(slots.get(slot) ?? []), { ...entry, pluginId: statut.id }];
+                const liste = [...(slots.get(slot) ?? []), { ...entry, pluginId: id }];
 
                 liste.sort((a, b) => (a.order ?? 100) - (b.order ?? 100));
                 slots.set(slot, liste);
@@ -82,9 +79,9 @@ export async function loadPluginClients(): Promise<void> {
             },
           });
 
-          charges.add(statut.id);
+          charges.add(id);
         } catch (error) {
-          console.error(`Plugin « ${statut.id} » : chargement impossible.`, error);
+          console.error(`Plugin « ${id} » : chargement impossible.`, error);
         }
       }),
   );

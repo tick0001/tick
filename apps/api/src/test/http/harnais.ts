@@ -1,11 +1,11 @@
 import type { INestApplication } from '@nestjs/common';
+import type { NestExpressApplication } from '@nestjs/platform-express';
 import { Test } from '@nestjs/testing';
 import { createDatabase, sql } from '@tick/db';
-import cookieParser from 'cookie-parser';
 import request from 'supertest';
 import type { App } from 'supertest/types.js';
 import { AppModule } from '../../app.module.js';
-import { DatabaseExceptionFilter } from '../../common/database-exception.filter.js';
+import { cablerApplication } from '../../cablage.js';
 
 /**
  * Harnais HTTP : l'application réelle, montée comme en production.
@@ -87,14 +87,11 @@ async function nettoyer(prefixe: string): Promise<void> {
 export async function creerHarnais(nom = 'http'): Promise<Harnais> {
   const prefixe = nom + '-' + Date.now().toString(36) + '-';
   const module = await Test.createTestingModule({ imports: [AppModule] }).compile();
-  const app = module.createNestApplication();
+  const app = module.createNestApplication<NestExpressApplication>({ bodyParser: false });
 
-  // Le meme cablage que `main.ts` : un prefixe ou un analyseur de cookies
-  // oublie ici ferait passer des tests sur une application qui n'existe pas.
-  app.setGlobalPrefix('api');
-  app.use(cookieParser());
-  app.useGlobalFilters(new DatabaseExceptionFilter(app.getHttpAdapter()));
-  app.enableShutdownHooks();
+  // Le cablage de `main.ts`, et non une copie : un reglage oublie ici ferait
+  // passer des tests sur une application qui n'existe pas.
+  cablerApplication(app);
 
   await app.init();
 

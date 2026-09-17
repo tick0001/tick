@@ -1,21 +1,26 @@
 import { mkdtemp, mkdir, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+import { BadRequestException } from '@nestjs/common';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { createDatabase, entities, eq, sql, type Connection } from '@tick/db';
 import { runWithContext } from '../common/request-context.js';
+import { SecretsService } from '../common/secrets.service.js';
 import { DatabaseService } from '../database/database.service.js';
 import { EntitiesService } from '../entities/entities.service.js';
 import { EventBus } from '../plugins/event-bus.service.js';
 import { HookBus } from '../plugins/hook-bus.service.js';
 import { PluginMigrator } from '../plugins/plugin-migrator.service.js';
 import { PluginRegistry, SDK_VERSION } from '../plugins/plugin-registry.service.js';
+import { PluginSettingsService } from '../plugins/plugin-settings.service.js';
 import { PluginsService } from '../plugins/plugins.service.js';
 import { SearchRegistry } from '../search/search-registry.service.js';
 import { WidgetRegistry } from '../stats/widget-registry.service.js';
 
 const PLUGIN_ID = 'essai-substrat';
 const SCHEMA = 'plugin_essai_substrat';
+/** Plugin qui echoue au milieu de son enregistrement. */
+const BANCAL_ID = 'essai-bancal';
 
 /**
  * Cycle de vie complet du substrat d'extension — critere de sortie du jalon J2.
@@ -34,6 +39,8 @@ describe("Substrat d'extension", () => {
   let entites: EntitiesService;
   let db: DatabaseService;
   let entiteRacineId = 0;
+  /** Hors du perimetre de travail des tests : une racine a part. */
+  let entiteAilleursId = 0;
 
   const ecrirePlugin = async (version: string): Promise<void> => {
     await writeFile(
@@ -46,7 +53,12 @@ describe("Substrat d'extension", () => {
           // Derive de la version reelle : le test suit les montees du SDK au lieu
           // d'echouer a chacune.
           sdk: `^${SDK_VERSION}`,
+          // Sans `http:outbound`, a dessein : la sortie doit etre refusee.
           permissions: ['schema:own', 'hooks', 'events'],
+          settings: [
+            { key: 'suffixe', label: 'Suffixe', type: 'text', default: '' },
+            { key: 'etiquette', label: 'Etiquette', type: 'text', scope: 'entity' },
+          ],
           server: './server.js',
           migrations: './migrations',
         },
@@ -87,11 +99,25 @@ describe("Substrat d'extension", () => {
           ]);
         },
         register(api) {
-          api.hooks.on("entity.beforeCreate", (payload) => {
+          api.hooks.on("entity.beforeCreate", async (payload, context) => {
             if (payload.name.includes("interdit")) {
-              throw new Error("nom refuse par le plugin");
+              // Ce que fait PluginRefusal, sans le SDK : la marque suffit.
+              const refus = new Error("nom refuse par le plugin");
+              Object.defineProperty(refus, Symbol.for("tick.plugin.refusal"), { value: true });
+              throw refus;
             }
-            return { ...payload, name: payload.name.trim() };
+            if (payload.name.includes("sortie")) {
+              await context.http.request("http://127.0.0.1:9/");
+            }
+            let nom = payload.name.trim();
+            if (nom.includes("reglage")) {
+              nom += await context.settings.get("suffixe");
+              const etiquette = await context.settings.get("etiquette", {
+                entityId: payload.parentId,
+              });
+              if (etiquette) nom += " " + etiquette;
+            }
+            return { ...payload, name: nom };
           });
           api.events.on("entity.created", async (payload, context) => {
             await context.db.query("INSERT INTO journal (evenement, detail) VALUES ($1, $2)", [
@@ -99,6 +125,31 @@ describe("Substrat d'extension", () => {
               String(payload.id),
             ]);
           });
+        },
+      };`,
+    );
+
+    // Un hook pose, puis un widget sans la permission `dashboards` : l'echec
+    // survient apres un premier enregistrement reussi.
+    const bancal = join(racine, BANCAL_ID);
+    await mkdir(join(bancal, 'migrations'), { recursive: true });
+    await writeFile(
+      join(bancal, 'tick.plugin.json'),
+      JSON.stringify({
+        id: BANCAL_ID,
+        name: 'Essai bancal',
+        version: '1.0.0',
+        sdk: `^${SDK_VERSION}`,
+        permissions: ['hooks'],
+        server: './server.js',
+      }),
+    );
+    await writeFile(
+      join(bancal, 'server.js'),
+      `export default {
+        register(api) {
+          api.hooks.on("ticket.beforeCreate", (payload) => payload);
+          api.dashboards.registerWidget({ key: "k", label: "l", description: "d" });
         },
       };`,
     );
@@ -128,10 +179,13 @@ describe("Substrat d'extension", () => {
       events,
       new SearchRegistry(),
       new WidgetRegistry(),
+      new PluginSettingsService(db, new SecretsService()),
     );
     entites = new EntitiesService(db, hooks);
 
-    await plugins.synchronize();
+    // Le demarrage complet, et non la seule synchronisation : il branche la
+    // desactivation automatique, dont depend le test des refus repetes.
+    await plugins.onApplicationBootstrap();
 
     const [racineEntite] = await db.asOwner((tx) =>
       tx
@@ -140,12 +194,22 @@ describe("Substrat d'extension", () => {
         .returning({ id: entities.id }),
     );
     entiteRacineId = (racineEntite as { id: number }).id;
+
+    const [ailleurs] = await db.asOwner((tx) =>
+      tx
+        .insert(entities)
+        .values({ name: 'PLUGIN Ailleurs', parentId: null, path: 'temporaire', completeName: 'x' })
+        .returning({ id: entities.id }),
+    );
+    entiteAilleursId = (ailleurs as { id: number }).id;
   }, 60_000);
 
   afterAll(async () => {
     await plugins.uninstall(PLUGIN_ID).catch(() => undefined);
+    await plugins.uninstall(BANCAL_ID).catch(() => undefined);
     await db.asOwner((tx) => tx.delete(entities).where(eq(entities.parentId, entiteRacineId)));
     await db.asOwner((tx) => tx.delete(entities).where(eq(entities.id, entiteRacineId)));
+    await db.asOwner((tx) => tx.delete(entities).where(eq(entities.id, entiteAilleursId)));
     await Promise.all([owner.close(), appDb.close()]);
     await rm(racine, { recursive: true, force: true });
   });
@@ -193,6 +257,9 @@ describe("Substrat d'extension", () => {
 
     expect(trouve?.state).toBe('decouvert');
     expect(trouve?.compatible).toBe(true);
+    // Ce que l'ecran montre avant d'installer : les intentions du plugin.
+    expect(trouve?.permissions).toEqual(['schema:own', 'hooks', 'events']);
+    expect(trouve?.hasSettings).toBe(true);
 
     // Rien ne doit exister avant l'installation : decouvrir n'est pas installer.
     const schemas = await db.asOwner((tx) =>
@@ -229,9 +296,13 @@ describe("Substrat d'extension", () => {
   });
 
   it("annule l'operation quand le hook refuse", async () => {
-    await expect(
-      dansLeContexte(() => entites.create({ name: 'nom interdit', parentId: entiteRacineId })),
-    ).rejects.toThrow(/essai-substrat/);
+    const erreur = await dansLeContexte(() =>
+      entites.create({ name: 'nom interdit', parentId: entiteRacineId }),
+    ).catch((e: unknown) => e);
+
+    // Une erreur de saisie qui nomme le plugin, pas une erreur interne.
+    expect(erreur).toBeInstanceOf(BadRequestException);
+    expect((erreur as Error).message).toMatch(/essai-substrat.*nom refuse/);
 
     // L'entite ne doit pas exister : un hook qui leve annule bien l'ecriture.
     const restantes = await db.asOwner((tx) =>
@@ -240,6 +311,69 @@ describe("Substrat d'extension", () => {
       ),
     );
     expect(restantes.rows[0]?.total).toBe(0);
+  });
+
+  it('reste actif apres des refus repetes, qui ne sont pas des pannes', async () => {
+    for (let essai = 0; essai < 4; essai += 1) {
+      await expect(
+        dansLeContexte(() => entites.create({ name: 'interdit', parentId: entiteRacineId })),
+      ).rejects.toBeInstanceOf(BadRequestException);
+    }
+
+    // La desactivation retire les hooks avant toute ecriture : le compte suffit
+    // a la voir, sans attendre qu'elle ait fini.
+    expect(hooks.count('entity.beforeCreate')).toBe(1);
+    expect((await plugins.list()).find((p) => p.id === PLUGIN_ID)?.state).toBe('actif');
+  });
+
+  it('n active rien d un plugin dont l enregistrement echoue en route', async () => {
+    await plugins.install(BANCAL_ID);
+
+    await expect(plugins.activate(BANCAL_ID)).rejects.toThrow(/dashboards/);
+
+    // Le hook pose avant l'echec a ete retire, et l'ecran dit pourquoi.
+    expect(hooks.count('ticket.beforeCreate')).toBe(0);
+    const ligne = (await plugins.list()).find((p) => p.id === BANCAL_ID);
+    expect(ligne?.state).toBe('erreur');
+    expect(ligne?.lastError).toMatch(/dashboards/);
+  });
+
+  it('lit ses reglages, d instance et d entite, depuis un hook', async () => {
+    await plugins.enregistrerReglages(PLUGIN_ID, null, { suffixe: ' [ok]' });
+    await dansLeContexte(() =>
+      plugins.enregistrerReglages(PLUGIN_ID, entiteRacineId, { etiquette: 'fil' }),
+    );
+
+    const creee = await dansLeContexte(() =>
+      entites.create({ name: 'avec reglage', parentId: entiteRacineId }),
+    );
+
+    expect(creee.name).toBe('avec reglage [ok] fil');
+  });
+
+  it('refuse la sortie HTTP a un plugin qui ne l a pas declaree', async () => {
+    await expect(
+      dansLeContexte(() => entites.create({ name: 'sortie', parentId: entiteRacineId })),
+    ).rejects.toThrow(/http:outbound/);
+  });
+
+  it('ne montre pas les reglages d une entite hors du perimetre', async () => {
+    // Les reglages se lisent en proprietaire, hors Row-Level Security : sans
+    // verification du perimetre, un administrateur de filiale lirait ceux de
+    // n'importe quelle entite en devinant son identifiant.
+    await expect(
+      dansLeContexte(() => plugins.reglagesDe(PLUGIN_ID, entiteAilleursId)),
+    ).rejects.toThrow(/introuvable/);
+    await expect(
+      dansLeContexte(() =>
+        plugins.enregistrerReglages(PLUGIN_ID, entiteAilleursId, { etiquette: 'intrus' }),
+      ),
+    ).rejects.toThrow(/introuvable/);
+
+    const dansLePerimetre = await dansLeContexte(() =>
+      plugins.reglagesDe(PLUGIN_ID, entiteRacineId),
+    );
+    expect(dansLePerimetre.map((r) => [r.key, r.value])).toEqual([['etiquette', 'fil']]);
   });
 
   it('desactive : les hooks sont retires, les donnees conservees', async () => {
@@ -305,6 +439,13 @@ describe("Substrat d'extension", () => {
       ),
     );
     expect(migrations.rows[0]?.total).toBe(0);
+
+    const reglages = await db.asOwner((tx) =>
+      tx.execute<{ total: number } & Record<string, unknown>>(
+        sql`SELECT count(*)::int AS total FROM plugin_settings WHERE plugin_id = ${PLUGIN_ID}`,
+      ),
+    );
+    expect(reglages.rows[0]?.total).toBe(0);
 
     const restant = (await plugins.list()).find((ligne) => ligne.id === PLUGIN_ID);
     expect(restant).toBeUndefined();

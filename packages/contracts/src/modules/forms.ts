@@ -3,7 +3,7 @@ import { localeSchema } from './common.js';
 import { ruleOperatorSchema } from './slm.js';
 
 /**
- * Natures de question, calquées sur le jeu de GLPI.
+ * Natures de question.
  *
  * Trois familles, et la distinction compte pour le rendu comme pour la
  * validation :
@@ -20,7 +20,7 @@ import { ruleOperatorSchema } from './slm.js';
  *    texte libre obligerait à les retraduire à la main.
  *
  * `description` n'est pas une question : c'est un bloc de texte qui explique,
- * et qui n'attend rien. GLPI en fait une nature à part entière parce qu'un
+ * et qui n'attend rien. Elle reste une nature à part entière parce qu'un
  * formulaire sans consigne se remplit de travers, et qu'un paragraphe d'aide
  * n'a pas à devenir un champ qu'on laisse vide.
  */

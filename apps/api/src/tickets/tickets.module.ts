@@ -8,6 +8,7 @@ import { ActorsService } from './actors.service.js';
 import { BulkService } from './bulk.service.js';
 import { HistoryService } from './history.service.js';
 import { PriorityService } from './priority.service.js';
+import { SondeTextuelle } from './sonde-textuelle.service.js';
 import { TicketScopeService } from './ticket-scope.service.js';
 import { TicketTemplatesService } from './ticket-templates.service.js';
 import { TicketTemplatesController } from './ticket-templates.controller.js';
@@ -27,6 +28,7 @@ import { TimelineService } from './timeline.service.js';
     PriorityService,
     HistoryService,
     TicketTemplatesService,
+    SondeTextuelle,
   ],
   exports: [
     TicketsService,

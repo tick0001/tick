@@ -1,7 +1,7 @@
 {
   "name": "@tick/plugin-sdk",
   "license": "AGPL-3.0-or-later",
-  "version": "0.7.0",
+  "version": "0.8.0",
   "private": true,
   "type": "module",
   "main": "./dist/index.cjs",
@@ -36,7 +36,7 @@
     "coverage": "vitest run --coverage"
   },
   "dependencies": {
-    "zod": "^4.5.4"
+    "zod": "^4.6.2"
   },
   "devDependencies": {
     "tsup": "^8.5.1",

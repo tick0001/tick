@@ -3,6 +3,7 @@ import type {
   CreateTicket,
   ItilStatus,
   RuleCollection,
+  SearchNode,
   TicketActor,
   TicketActorInput,
   TicketDetail,
@@ -17,10 +18,19 @@ import { DatabaseService } from '../database/database.service.js';
 import { emitEvent } from '../plugins/event-buffer.js';
 import { HookBus } from '../plugins/hook-bus.service.js';
 import { RulesService } from '../rules/rules.service.js';
+import { SearchCompiler, type DemandeTextuelle } from '../search/search-compiler.service.js';
 import { SlaService } from '../slm/sla.service.js';
 import { ActorsService } from './actors.service.js';
 import { HistoryService } from './history.service.js';
 import { PriorityService } from './priority.service.js';
+import {
+  cleSondage,
+  OPERATEUR_DENSE,
+  SondeTextuelle,
+  tableauIdentifiants,
+  type Resolution,
+  type Sondage,
+} from './sonde-textuelle.service.js';
 import { applyRuleOutput, borne, choix, reference, texte } from './ticket-rules.js';
 import { TicketScopeService } from './ticket-scope.service.js';
 import { TicketTemplatesService } from './ticket-templates.service.js';
@@ -43,6 +53,15 @@ import { toIso, toIsoRequired, toText } from '../common/sql.js';
  */
 /** Types de ticket, pour valider ce qu'une regle propose. */
 const TYPES = ['incident', 'request'] as const;
+
+/**
+ * Sondes textuelles par recherche.
+ *
+ * Un arbre de criteres peut en porter des centaines ; sans borne, une seule
+ * requete declencherait autant de lectures d'index. Au-dela, les criteres
+ * gardent l'`ILIKE` seul — la recherche d'avant, lente mais correcte.
+ */
+const MAX_SONDES = 4;
 
 const TRANSITIONS: Record<ItilStatus, readonly ItilStatus[]> = {
   new: ['assigned', 'planned', 'waiting', 'solved', 'closed'],
@@ -105,6 +124,8 @@ export class TicketsService {
     private readonly rules: RulesService,
     private readonly sla: SlaService,
     private readonly actors: ActorsService,
+    private readonly compiler: SearchCompiler,
+    private readonly sonde: SondeTextuelle,
   ) {}
 
   /**
@@ -388,7 +409,7 @@ export class TicketsService {
     if (filter.search) {
       const motif = `%${filter.search}%`;
 
-      conditions.push(sql`(tickets.name ILIKE ${motif} OR tickets.content ILIKE ${motif})`);
+      conditions.push(this.textuel(motif, await this.sonde.sonder('tous', motif)));
     }
 
     if (filter.mine) {
@@ -408,9 +429,13 @@ export class TicketsService {
    * La clause vient du compilateur, qui n'accepte que des champs enregistres.
    * Elle s'ajoute au perimetre et a la portee du droit : une recherche ne peut
    * pas elargir ce que l'utilisateur a le droit de voir, seulement le restreindre.
+   *
+   * L'arbre est compile deux fois. La premiere le valide, pour qu'un arbre
+   * refuse ne declenche aucune sonde ; la seconde tient compte de ce que les
+   * sondes ont trouve.
    */
   async search(
-    clause: SQL | undefined,
+    criteres: SearchNode | undefined,
     options: {
       sort: TicketFilter['sort'];
       direction: TicketFilter['direction'];
@@ -419,11 +444,48 @@ export class TicketsService {
       deleted: boolean;
     },
   ): Promise<TicketPage> {
+    this.compiler.compile(criteres);
+
+    const resolution = await this.resoudre(this.compiler.textuels(criteres));
+    const clause = this.compiler.compile(criteres, resolution);
     const conditions = await this.baseConditions(options.deleted);
 
     if (clause) conditions.push(clause);
 
     return this.paginate(conditions, options);
+  }
+
+  /** Sonde les recherches textuelles d'un arbre. Voir `MAX_SONDES`. */
+  private async resoudre(demandes: readonly DemandeTextuelle[]): Promise<Resolution> {
+    const resolution = new Map<string, Sondage>();
+
+    for (const { cible, motif } of demandes) {
+      const cle = cleSondage(cible, motif);
+
+      if (resolution.has(cle)) continue;
+      if (resolution.size >= MAX_SONDES) break;
+
+      const sondage = await this.sonde.sonder(cible, motif);
+
+      if (sondage) resolution.set(cle, sondage);
+    }
+
+    return resolution;
+  }
+
+  /** La recherche rapide de la liste, sur la meme regle que `SearchCompiler.semblable`. */
+  private textuel(motif: string, sondage: Sondage | undefined): SQL {
+    if (sondage?.dense) {
+      return sql`(tickets.name ${OPERATEUR_DENSE} ${motif} OR tickets.content ${OPERATEUR_DENSE} ${motif})`;
+    }
+
+    const filtre = sql`(tickets.name ILIKE ${motif} OR tickets.content ILIKE ${motif})`;
+
+    if (!sondage) return filtre;
+
+    const identifiants = tableauIdentifiants(sondage.identifiants);
+
+    return sql`(tickets.id = ANY(${identifiants}::bigint[]) AND ${filtre})`;
   }
 
   /** Corbeille et perimetre : le socle commun a toute liste de tickets. */

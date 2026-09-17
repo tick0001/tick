@@ -117,8 +117,9 @@ const envSchema = z.object({
   /**
    * Autorise les connexions sortantes vers les reseaux internes.
    *
-   * Concerne les deux fonctionnalites ou un administrateur choisit librement
-   * l'hote joint par le serveur : annuaires LDAP et collecteurs de courriel.
+   * Concerne les fonctionnalites ou un administrateur choisit librement l'hote
+   * joint par le serveur : annuaires LDAP, collecteurs de courriel, et requetes
+   * sortantes des plugins — l'adresse d'un webhook, par exemple.
    *
    * Vrai par defaut, et ce n'est pas de la negligence : dans une installation
    * ordinaire l'annuaire vise **est** interne, et refuser casserait le cas

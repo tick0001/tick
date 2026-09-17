@@ -1,7 +1,7 @@
 {
   "name": "@tick/api",
   "license": "AGPL-3.0-or-later",
-  "version": "0.1.9",
+  "version": "0.1.10",
   "private": true,
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
@@ -21,7 +21,7 @@
     "@nestjs/config": "^12.0.0",
     "@nestjs/core": "^12.0.1",
     "@nestjs/platform-express": "^12.0.1",
-    "@node-rs/argon2": "^2.2.0",
+    "@node-rs/argon2": "^2.2.1",
     "@tick/contracts": "workspace:*",
     "@tick/db": "workspace:*",
     "@tick/i18n": "workspace:*",
@@ -32,12 +32,12 @@
     "imapflow": "^1.7.8",
     "ioredis": "^6.0.0",
     "ldapts": "^9.0.0",
-    "mailparser": "^3.9.22",
-    "nodemailer": "^10.0.0",
+    "mailparser": "^3.9.24",
+    "nodemailer": "^10.0.4",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.2",
     "semver": "^7.8.5",
-    "zod": "^4.5.4"
+    "zod": "^4.6.2"
   },
   "devDependencies": {
     "@nestjs/testing": "^12.0.1",
@@ -45,7 +45,7 @@
     "@types/express": "^5.0.6",
     "@types/mailparser": "^3.4.6",
     "@types/multer": "^2.2.0",
-    "@types/node": "^26.4.1",
+    "@types/node": "^22.20.2",
     "@types/nodemailer": "^8.0.1",
     "@types/semver": "^7.8.0",
     "@types/supertest": "^7.2.1",

@@ -74,7 +74,7 @@ type RightScope = 'own' | 'group' | 'entity' | 'recursive' | 'all';
 type RightTriple = [object: string, action: string, scope: RightScope];
 
 /**
- * Jeux de droits de reference, calques sur ceux de GLPI.
+ * Jeux de droits de reference, calques sur les profils usuels d'un outil ITSM.
  *
  * La portee compte autant que le droit : un technicien voit les tickets de son
  * entite mais ne modifie que ceux de ses groupes.

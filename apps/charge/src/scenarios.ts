@@ -8,9 +8,12 @@
  * **Deux soupcons formes en lisant le schema, et tranches par la mesure :**
  *
  *   - La recherche par titre compile un `contains` en `ILIKE '%...%'` sans
- *     index GIN sur les tickets. Le balayage a bien lieu — mais il coute
- *     moins que prevu : a cinquante mille lignes, comparable au temoin
- *     indexe. **Soupcon infirme**, aucun index ajoute.
+ *     index sur les tickets. A cinquante mille lignes, le balayage coutait
+ *     comme le temoin indexe, et le soupcon a d'abord ete ecarte. **A cinq
+ *     cent mille, il est devenu le mur** : quatre requetes par seconde. Un
+ *     index trigramme ne suffisait pas, le Row-Level Security l'empechant de
+ *     servir — voir la migration `0033_recherche_textuelle`, et les trois
+ *     scenarios `recherche-*` qui en suivent les deux regimes.
  *   - La liste compte suivis et taches par sous-requetes correlees, une paire
  *     par ligne. **Soupcon infirme** : 0,007 ms par ligne, elles sont
  *     correctement indexees.
@@ -70,7 +73,7 @@ export const SCENARIOS: readonly Scenario[] = [
   },
   {
     nom: 'recherche-titre',
-    intention: 'Recherche « contient » sur le titre — le balayage sequentiel soupconne',
+    intention: 'Recherche « contient » sur un terme frequent — le regime dense, parcours ordonne',
     methode: 'POST',
     chemin: '/api/search/tickets',
     corps: {
@@ -81,7 +84,30 @@ export const SCENARIOS: readonly Scenario[] = [
         value: 'imprimante',
       },
     },
-    seuilP95: 1600,
+    seuilP95: 1200,
+  },
+  {
+    nom: 'recherche-rare',
+    intention:
+      'Recherche « contient » sur un terme rare — la sonde de l index, et presque rien a trier',
+    methode: 'POST',
+    chemin: '/api/search/tickets',
+    corps: {
+      criteria: {
+        kind: 'criterion',
+        field: 'ticket.name',
+        operator: 'contains',
+        value: '4321',
+      },
+    },
+    seuilP95: 700,
+  },
+  {
+    nom: 'recherche-rapide',
+    intention: 'La recherche de la liste, titre ou description — celle que l on tape le plus',
+    methode: 'GET',
+    chemin: '/api/tickets?search=imprimante',
+    seuilP95: 1200,
   },
   {
     nom: 'recherche-statut',

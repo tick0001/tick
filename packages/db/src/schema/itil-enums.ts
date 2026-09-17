@@ -14,7 +14,7 @@ export const itilTypeEnum = pgEnum('itil_type', ['ticket', 'problem', 'change'])
 export const ticketTypeEnum = pgEnum('ticket_type', ['incident', 'request']);
 
 /**
- * Statuts, calques sur ceux de GLPI.
+ * Statuts du cycle de vie d'un objet ITIL.
  *
  *  new      - cree, pas encore pris en charge
  *  assigned - en cours, attribue a un technicien ou un groupe

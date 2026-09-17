@@ -9,7 +9,7 @@ vérité ; ce document donne la structure et les intentions.
   le français dans l'interface et la documentation.
 - Clés primaires `bigint GENERATED ALWAYS AS IDENTITY`.
 - `created_at`, `updated_at`, `deleted_at` sur tout objet métier. **Suppression logique**
-  systématique sur les objets ITIL : GLPI a une corbeille, et l'audit l'exige.
+  systématique sur les objets ITIL : une corbeille est attendue, et l'audit l'exige.
 - Toute table portant `entity_id` porte aussi `entity_path ltree`, maintenue par déclencheur.
 - Les tables de configuration hiérarchisables portent `is_recursive boolean NOT NULL DEFAULT false`.
 

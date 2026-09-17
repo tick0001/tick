@@ -1,6 +1,7 @@
 import { BadRequestException } from '@nestjs/common';
 import { rendreSql, sql } from '@tick/db';
 import { beforeEach, describe, expect, it } from 'vitest';
+import type { Resolution } from '../tickets/sonde-textuelle.service.js';
 import { SearchCompiler } from './search-compiler.service.js';
 import { SearchRegistry, type SearchableField } from './search-registry.service.js';
 
@@ -242,6 +243,104 @@ describe('SearchCompiler', () => {
       expect(() => compilateur.compile(critere('sujet', 'contains', 42))).toThrow(
         BadRequestException,
       );
+    });
+  });
+
+  /**
+   * La recherche textuelle servie par un index.
+   *
+   * Sous Row-Level Security, un `ILIKE` ne peut pas utiliser d'index. Une sonde
+   * lit d'abord l'index et rend des identifiants ; le compilateur s'en sert, ou
+   * garde l'`ILIKE` seul. Ce qui compte ici, c'est qu'il ne se trompe jamais de
+   * branche, et que le filtre textuel ne disparaisse dans aucune.
+   */
+  describe('recherche textuelle', () => {
+    beforeEach(() => {
+      registre.register(
+        champ({
+          key: 'titre',
+          type: 'text',
+          semblable: { cible: 'titre', identifiant: sql.raw('t.id') },
+        }),
+      );
+    });
+
+    const avec = (arbre: Parameters<SearchCompiler['compile']>[0], resolution: Resolution) =>
+      rendreSql(compilateur.compile(arbre, resolution)!);
+
+    it('liste les recherches a sonder, et elles seules', () => {
+      const arbre = {
+        kind: 'group' as const,
+        link: 'or' as const,
+        children: [
+          critere('titre', 'contains', 'panne')!,
+          critere('titre', 'startsWith', 'Imp')!,
+          critere('titre', 'eq', 'exact')!,
+          critere('sujet', 'contains', 'sans index')!,
+          critere('titre', 'contains', 42)!,
+        ],
+      };
+
+      expect(compilateur.textuels(arbre)).toEqual([
+        { cible: 'titre', motif: '%panne%' },
+        { cible: 'titre', motif: 'Imp%' },
+      ]);
+    });
+
+    it('ne leve rien sur un arbre invalide : compile le refusera', () => {
+      expect(compilateur.textuels(critere('inconnu', 'contains', 'x'))).toEqual([]);
+    });
+
+    it('filtre sur les identifiants trouves, sans lacher le filtre textuel', () => {
+      const clause = avec(
+        critere('titre', 'contains', 'panne'),
+        new Map([['titre:%panne%', { dense: false, identifiants: [3, 17] }]]),
+      );
+
+      expect(clause.texte).toContain('= ANY(');
+      expect(clause.texte).toContain('ILIKE');
+      expect(clause.parametres).toContain('{3,17}');
+      expect(clause.parametres).toContain('%panne%');
+    });
+
+    it('ne selectionne rien quand la sonde n a rien trouve', () => {
+      const clause = avec(
+        critere('titre', 'contains', 'panne'),
+        new Map([['titre:%panne%', { dense: false, identifiants: [] }]]),
+      );
+
+      expect(clause.parametres).toContain('{}');
+    });
+
+    it('passe par l operateur des correspondances denses', () => {
+      // Meme comparaison qu'`ILIKE`, autrement estimee : c'est ce qui laisse
+      // le planificateur parcourir la liste dans l'ordre.
+      const clause = avec(
+        critere('titre', 'contains', 'panne'),
+        new Map([['titre:%panne%', { dense: true }]]),
+      );
+
+      expect(clause.texte).toContain('OPERATOR(public.~~~*)');
+      expect(clause.texte).not.toContain('ANY');
+      expect(clause.parametres).toContain('%panne%');
+    });
+
+    it('garde l ILIKE seul sans resolution, comme avant', () => {
+      const clause = rendu(critere('titre', 'contains', 'panne'))!;
+
+      expect(clause.texte).toContain('ILIKE');
+      expect(clause.texte).not.toContain('ANY');
+    });
+
+    it('ne prend pas le resultat d un autre motif', () => {
+      // La cle porte le motif complet, jokers compris : « commence par » et
+      // « contient » ne sont pas la meme recherche.
+      const clause = avec(
+        critere('titre', 'startsWith', 'panne'),
+        new Map([['titre:%panne%', { dense: false, identifiants: [3] }]]),
+      );
+
+      expect(clause.texte).not.toContain('ANY');
     });
   });
 });

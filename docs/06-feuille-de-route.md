@@ -258,10 +258,18 @@ existante, ni en décrire une disparue. Voir [installation](14-installation.md) 
 qu'à cette condition : chaque point d'extension est exercé par au moins un usage réel — le plugin
 de référence ne suffit pas à lui seul à prouver qu'une API est bonne.
 
+Le SDK passe en `0.8` avec le premier usage réel, le plugin [`messagerie`](../plugins/messagerie),
+qui annonce les tickets dans un canal de discussion. L'écrire a fait apparaître ce qui manquait —
+des réglages déclarés plutôt qu'un écran par plugin, des secrets, une sortie HTTP qui applique la
+politique de l'instance — et deux défauts du substrat : une reprise d'événement rappelait tous les
+abonnés, et un hook qui refusait comptait comme une panne. Événements, réglages et sortie HTTP
+sont désormais exercés. Restent sans usage réel : les hooks, les champs de recherche, les widgets
+et les emplacements d'interface.
+
 ---
 
 ## Ce qui est délibérément écarté
 
 Gestion de parc et inventaire, gestion financière et contrats au-delà du lien avec les SLA,
-projets, réservations, flux RSS, et compatibilité avec les plugins ou l'API de GLPI — le projet est
-neuf, sans contrainte de reprise.
+projets, réservations, flux RSS, et compatibilité avec les plugins ou l'API d'un autre outil —
+le projet est neuf, sans contrainte de reprise.

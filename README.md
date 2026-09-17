@@ -10,7 +10,7 @@ and inventory management is deliberately out of scope.
 [![Licence](https://img.shields.io/badge/licence-AGPL--3.0-blue)](LICENSE)
 [![CI](https://github.com/tick0001/tick/actions/workflows/ci.yml/badge.svg)](https://github.com/tick0001/tick/actions/workflows/ci.yml)
 
-**[tickand.fr](https://tickand.fr)** · **[Try the live demo](https://demo.tickand.fr)** — sign in as
+**[tickand.fr](https://tickand.fr)** · **[Try the live demo](https://tick-demo.tickand.fr)** — sign in as
 `sophie` / `tick`. Everything resets on the hour.
 
 ![Ticket list, filtered by the active profile and working context](docs/captures/en/tickets.png)
@@ -111,8 +111,8 @@ Each one illustrates a case the entity model has to handle.
 ## Where the project stands
 
 Milestones J0 to J8 of the [roadmap](docs/06-feuille-de-route.md) are delivered, and J9 all but
-one point. The seventeen functional modules are covered, the API exposes 179 documented
-operations, and the suite runs 2 347 tests — including integration tests against a real PostgreSQL
+one point. The seventeen functional modules are covered, the API exposes 183 documented
+operations, and the suite runs 2 514 tests — including integration tests against a real PostgreSQL
 database that check isolation between entities. On top of those, 69 end-to-end journeys run in a
 real browser against the real API: sign-in, tenant isolation, the ticket lifecycle, self-service.
 
@@ -121,7 +121,7 @@ What you should know before relying on it, said plainly:
 - **Never used by a real service desk.** The public demo runs the released images on a VPS,
   behind Traefik with TLS, so the deployment path is exercised every day — but nobody has yet run
   Tick& to handle actual tickets.
-- **`0.1.0` is a first tagged version, not a proven one.** Expect breaking changes between minor
+- **`0.1.10` is a first series of tagged versions, not a proven one.** Expect breaking changes between minor
   versions until the interfaces have been exercised by someone other than their author.
 - **The plugin SDK is still `0.x`** and may break between minor versions. It will only freeze once
   every extension point has been exercised by real use; the reference plugin is not enough on its
@@ -136,7 +136,7 @@ the codebase and its documentation are in French.
 ```bash
 make             # every deployment target, explained
 pnpm build       # builds every package
-pnpm test        # 2 347 tests — requires the services to be running
+pnpm test        # 2 514 tests — requires the services to be running
 pnpm lint        # ESLint with type-aware rules
 pnpm typecheck   # type checking without emit
 pnpm format      # applies Prettier

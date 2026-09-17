@@ -55,20 +55,20 @@ jobs:
 
     strategy:
       fail-fast: false
-      # Une image a la fois, et ce n'est pas de la prudence excessive : les deux
-      # partent de `node:22-alpine` et partagent donc des couches. Le cache
-      # `type=gha` nomme ses blobs par leur empreinte, `buildkit-blob-1-sha256:…`,
-      # **sans y mettre la portee** — que la portee soit distincte n'y change
-      # rien. Deux constructions simultanees reservent alors la meme cle, et la
-      # seconde echoue. En serie, la seconde trouve les couches deja en cache :
-      # ce qu'on perd en parallelisme, on le regagne en grande partie.
-      max-parallel: 1
+      # Les deux images se construisent en parallele. Elles etaient en serie
+      # parce que deux constructions simultanees reservaient la meme cle de
+      # cache et que la seconde echouait — mais une reservation est une
+      # ecriture, et ce workflow n'ecrit plus dans le cache. Voir plus bas.
       matrix:
         include:
+          # `scope` reprend les portees qu'ecrit l'integration continue, et
+          # c'est la seule raison de ce champ. Voir plus bas.
           - image: tick-api
             dockerfile: docker/api.Dockerfile
+            scope: api
           - image: tick-web
             dockerfile: docker/web.Dockerfile
+            scope: web
 
     steps:
       - uses: actions/checkout@v7
@@ -138,20 +138,21 @@ jobs:
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-          # Le cache est porté par le registre : sans lui, chaque publication
-          # réinstalle toutes les dépendances depuis zéro, ce qui coûte
-          # plusieurs minutes pour un résultat identique.
+          # **Lecture seule, sur les portees de l'integration continue.**
           #
-          # Une portée par image, et ce n'est pas cosmétique. Les deux partent
-          # de `node:22-alpine` et partagent donc leurs premières couches : sans
-          # portée distincte, les deux travaux de la matrice réservent la même
-          # clé de cache **en même temps**, et le second échoue sur
-          # « failed to reserve cache ». C'est une course, donc elle ne se
-          # manifeste pas à tous les coups — elle a fait échouer la 0.1.6.
+          # Ce workflow ne peut pas ecrire dans le cache. Appele par
+          # « Publication », il tourne sur la fermeture d'une pull request, et
+          # GitHub lui accorde un jeton en lecture : le journal l'annonce des la
+          # preparation du travail, `Cache mode: read`. L'export echouait donc a
+          # chaque version, et `ignore-error` le taisait.
           #
-          # `ignore-error` par-dessus : le cache est une optimisation, et son
-          # echec ne doit pas faire echouer une publication. L'image de la 0.1.7
-          # etait deja poussee — avec ses trois etiquettes — quand l'export du
-          # cache a echoue, et le travail s'est declare en echec malgre tout.
-          cache-from: type=gha,scope=${{ matrix.image }}
-          cache-to: type=gha,mode=max,scope=${{ matrix.image }},ignore-error=true
+          # Il ne lisait rien non plus. L'integration continue ecrit sous les
+          # portees `api` et `web` ; ce workflow cherchait sous `tick-api` et
+          # `tick-web`, qu'aucun travail n'a jamais remplies. Aucune etape de la
+          # 0.1.9 n'a ete servie par le cache.
+          #
+          # Une publication vise `main`, et peut donc lire ce que l'integration
+          # continue y a ecrit a la fusion precedente : les couches de base et
+          # les paquets systeme y sont presque toujours, meme quand les
+          # dependances ont change entre deux versions.
+          cache-from: type=gha,scope=${{ matrix.scope }}

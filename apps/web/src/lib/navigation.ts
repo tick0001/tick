@@ -28,6 +28,7 @@ export const REGLAGES: readonly { to: string; droit: Droit }[] = [
   { to: '/settings/groups', droit: { objet: 'group', action: 'read' } },
   { to: '/settings/profiles', droit: { objet: 'profile', action: 'read' } },
   { to: '/settings/directories', droit: { objet: 'ldap', action: 'read' } },
+  { to: '/settings/extensions', droit: { objet: 'plugin', action: 'read' } },
   { to: '/settings/general', droit: { objet: 'entity', action: 'update' } },
 ];
 

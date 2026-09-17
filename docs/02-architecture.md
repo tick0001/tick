@@ -89,7 +89,7 @@ L'escalade illustre le principe retenu pour toutes les tâches périodiques : **
 la file ne fait que cadencer**. Le balayage lit `tickets.escalation_at` sur un index dédié, et la
 trace des niveaux déjà joués vit dans `ticket_escalations`. Un vidage de Redis ne perd donc aucune
 escalade, et plusieurs instances de l'API peuvent tourner sans se marcher dessus. Une interface d'administration expose l'état des
-files, les échecs et le rejeu — l'équivalent lisible des tâches automatiques de GLPI.
+files, les échecs et le rejeu : ce que font les tâches de fond se lit sans ouvrir un journal.
 
 ### Recherche
 
@@ -143,7 +143,7 @@ l'embarquer — et sera réévalué quand on saura ce que les extensions d'inter
 ## Décisions techniques argumentées
 
 **PostgreSQL et rien d'autre pour les données.** `ltree` pour l'arbre des entités et des
-catégories (un opérateur indexé remplace les caches d'ancêtres et de descendants de GLPI),
+catégories (un opérateur indexé évite de tenir des caches d'ancêtres et de descendants),
 `tsvector` pour le plein texte, `jsonb` pour les champs additionnels de plugins, et surtout
 **Row-Level Security** comme filet de sécurité de l'isolation entre entités.
 

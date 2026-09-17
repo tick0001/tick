@@ -16,7 +16,7 @@ import { SCENARIOS, SIMULTANEITE, SIMULTANEITE_RUPTURE, type Scenario } from './
  *   1. **Trouver ou ca plie.** Les seuils sont laches ; ce qui compte est la
  *      forme de la courbe quand la simultaneite monte.
  *   2. **Empecher les regressions.** Une requete qui double de duree entre deux
- *      versions ne se voit dans aucun des 2 347 tests : ils verifient ce que
+ *      versions ne se voit dans aucun des tests unitaires : ils verifient ce que
  *      l'application repond, jamais en combien de temps.
  */
 
@@ -25,6 +25,14 @@ const COMPTE = process.env['CHARGE_USER'] ?? 'admin';
 const MOT_DE_PASSE = process.env['CHARGE_PASSWORD'] ?? 'tick';
 const DUREE = Number(process.env['CHARGE_DUREE'] ?? '10');
 const ECHAUFFEMENT = Number(process.env['CHARGE_ECHAUFFEMENT'] ?? '5');
+
+/**
+ * Les scenarios a jouer, separes par des virgules. Tous par defaut.
+ *
+ * Pour comparer deux versions sur un scenario sans attendre la campagne
+ * entiere — et un nom inconnu est une faute de frappe, pas une campagne vide.
+ */
+const FILTRE = process.env['CHARGE_SCENARIOS']?.split(',').map((nom) => nom.trim());
 
 /** Au-dela, on cesse d'attendre le retour au calme et on le dit. */
 const ATTENTE_MAXIMALE = 180_000;
@@ -296,7 +304,17 @@ async function main(): Promise<void> {
 
   const mesures: Mesure[] = [];
 
-  for (const scenario of SCENARIOS) {
+  const inconnus = (FILTRE ?? []).filter((nom) => !SCENARIOS.some((s) => s.nom === nom));
+
+  if (inconnus.length > 0) {
+    throw new Error(
+      `Scenario inconnu : ${inconnus.join(', ')}. Connus : ${SCENARIOS.map((s) => s.nom).join(', ')}.`,
+    );
+  }
+
+  const joues = SCENARIOS.filter((scenario) => !FILTRE || FILTRE.includes(scenario.nom));
+
+  for (const scenario of joues) {
     console.log(`— ${scenario.nom} : ${scenario.intention}`);
 
     const siennes: Mesure[] = [];

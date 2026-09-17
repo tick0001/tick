@@ -23,3 +23,4 @@ export * from './modules/mail.js';
 export * from './modules/notifications.js';
 export * from './modules/satisfaction.js';
 export * from './modules/slm.js';
+export * from './modules/plugins.js';
