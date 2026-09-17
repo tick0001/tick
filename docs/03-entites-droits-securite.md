@@ -209,7 +209,7 @@ qui balayait toute la table, en ouvrait un du même ordre.
 
 #### La propagation des chemins
 
-Déplacer une entité recopie son chemin dans sa descendance et dans les trente-cinq tables qui le
+Déplacer une entité recopie son chemin dans sa descendance et dans les trente-six tables qui le
 dénormalisent ; déplacer ou renommer une catégorie, un lieu ou une rubrique recalcule sa
 descendance. Sous le rôle applicatif, deux choses cédaient : la politique des objets de
 configuration, qui exige en écriture le chemin de l'entité active, refusait la recopie — **on ne
@@ -253,6 +253,30 @@ transaction, et le serveur garde le sien pour tout autre usage.
 La base de connaissances n'a pas eu besoin de l'exception accordée à la recherche des tickets :
 sans JIT, sa recherche plein texte prend 95 à 145 ms sous RLS à cent mille articles, un volume
 qu'aucune base de connaissances n'approche.
+
+### Une politique ne doit pas chercher
+
+Même cause encore, troisième effet, et le plus coûteux des trois. Un prédicat de politique
+s'évalue **avant** les conditions de la requête, sur chaque ligne lue : ce qu'il coûte se
+multiplie par le volume de la table.
+
+`itil_actors` a longtemps fait exception à la règle commune. N'ayant pas d'entité propre — un
+acteur appartient à son ticket —, sa politique appelait `tick_itil_visible(itil_type, itil_id)`,
+qui va chercher l'objet porteur dans `tickets`, `problems` ou `changes`. Une recherche par ligne
+lue. Sur une fiche de ticket, qui en lit cinq, cela ne se voit pas ; dès que la table est
+balayée, c'est le temps de réponse. À cinq cent mille tickets, un `count(*)` coûtait 19 ms au
+propriétaire et **17,7 secondes** au rôle applicatif, et la répartition des statistiques par
+technicien vingt secondes.
+
+Les acteurs dénormalisent donc leur chemin comme les douze autres satellites, et leur politique
+se réduit à `tick_in_scope(entity_path)` : le même balayage retombe à 265 ms. Le chemin n'est pas
+fourni par l'écriture mais déduit du porteur par un déclencheur — c'est ce qui garantit qu'ils ne
+divergent jamais, et un `itil_id` pointé vers un objet invisible ne résout aucun chemin, donc ne
+passe pas le `WITH CHECK`.
+
+`itil_links` garde `tick_itil_visible` : la table reste petite, elle n'est jamais balayée, et un
+lien porte deux objets qui peuvent vivre dans deux entités — un chemin unique ne les
+représenterait pas.
 
 ### Le périmètre habilité n'est pas le périmètre de travail
 
