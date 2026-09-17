@@ -37,7 +37,9 @@ export async function requeteSortante(
   try {
     cible = new URL(url);
   } catch {
-    throw new BadRequestException(`Adresse invalide : ${url}`);
+    // L'adresse n'est pas repetee : celle d'un webhook porte son jeton, et ce
+    // message finit dans les journaux.
+    throw new BadRequestException('Adresse invalide.');
   }
 
   if (cible.protocol !== 'http:' && cible.protocol !== 'https:') {

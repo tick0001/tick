@@ -112,6 +112,12 @@ describe('requeteSortante', () => {
     },
   );
 
+  it('ne repete pas une adresse invalide, qui peut porter un jeton', async () => {
+    await expect(requeteSortante('pas une adresse /jeton-secret')).rejects.toMatchObject({
+      message: 'Adresse invalide.',
+    });
+  });
+
   it('refuse des identifiants dans l adresse', async () => {
     await expect(requeteSortante('https://moi:secret@exemple.fr/')).rejects.toThrow(
       /Identifiants refuses/,
