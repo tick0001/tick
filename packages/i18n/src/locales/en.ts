@@ -958,6 +958,7 @@ export const en: Traductions = {
       aucunMembre: 'No member.',
       ajouterMembre: 'Add',
       responsable: 'Manager',
+      herite: 'Defined in {{entite}}: manage its members from that entity.',
     },
     profils: {
       titre: 'Profiles and rights',
