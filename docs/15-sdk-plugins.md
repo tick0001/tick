@@ -267,6 +267,10 @@ serveur. Elles acceptent les chaînes, nombres, booléens, dates, `null`, et les
 tableaux de ces valeurs — `WHERE id = ANY($1)`. Un objet est refusé :
 sérialisez-le vous-même. Un `$n` sans valeur correspondante lève une erreur.
 
+Un `$n` n'est lu comme un paramètre que s'il en est un : `SELECT 'coûte $10'`
+garde son texte, et il en va de même dans un identifiant entre guillemets, un
+bloc `$$…$$` et un commentaire. Vous n'avez donc rien à échapper.
+
 Le nom du schéma est disponible sous `context.schema`, pour les migrations qui
 en ont besoin.
 

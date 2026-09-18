@@ -25,6 +25,20 @@ communauté — n'y figure pas. Ce journal s'adresse à qui exploite Tick&, pas 
   depuis la nouvelle**, sans aucune erreur. La liste n'est plus écrite à la main — elle est
   déduite des tables qui portent un chemin —, et deux tests l'exigent désormais exhaustive.
 
+### Changé
+
+- **Un `$n` dans une requête de plugin n'est un paramètre que s'il en est un.** `SELECT 'coûte
+$10'` y voyait le dixième paramètre : la requête partait amputée de son texte, ou échouait sur
+  un décompte d'arguments que rien n'expliquait. Les littéraux, les identifiants entre
+  guillemets, les blocs `$$…$$` et les commentaires sont désormais traversés sans y rien
+  chercher.
+- **Le guide d'installation dit d'où viennent les en-têtes de sécurité**, et comment vérifier
+  qu'on les a : ils sont posés par le serveur qui sert l'interface, donc absents d'une
+  installation qui la sert autrement, sans que rien ne le signale.
+- **La documentation chiffre le coût d'un déplacement d'entité** : une seule transaction, qui
+  réécrit trente-six tables pour l'entité et toute sa descendance — de 1,6 s à une cinquantaine
+  de secondes à cinq cent mille tickets.
+
 ### À faire en montant
 
 Une migration. Elle **remet d'aplomb les chemins déjà faussés** : si vous avez déplacé une entité

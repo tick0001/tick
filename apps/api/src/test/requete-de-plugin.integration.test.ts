@@ -99,4 +99,60 @@ describe('Requêtes de plugin', () => {
 
     expect(lignes).toEqual([{ v: 'sans $ ni rien' }]);
   });
+
+  describe('un $n n’est un paramètre que s’il en est un', () => {
+    it('ne touche pas à un montant dans une chaîne', async () => {
+      // Le balayage a la simple expression reguliere y voyait le dixieme
+      // parametre, et amputait la requete de son texte.
+      const lignes = await executer(requeteDePlugin("SELECT 'coûte $10' AS v", []));
+
+      expect(lignes).toEqual([{ v: 'coûte $10' }]);
+    });
+
+    it('distingue le paramètre de son homonyme dans une chaîne', async () => {
+      const lignes = await executer(
+        requeteDePlugin("SELECT $1::text AS v, 'facture $1' AS w", ['réel']),
+      );
+
+      expect(lignes).toEqual([{ v: 'réel', w: 'facture $1' }]);
+    });
+
+    it('traverse une apostrophe doublée', async () => {
+      const lignes = await executer(
+        requeteDePlugin("SELECT 'l''an $1 dernier' AS v, $1::int AS n", [7]),
+      );
+
+      expect(lignes).toEqual([{ v: 'l’an $1 dernier'.replace('’', "'"), n: 7 }]);
+    });
+
+    it('ignore un $n dans un commentaire, de ligne comme de bloc', async () => {
+      const lignes = await executer(
+        requeteDePlugin(
+          ['SELECT $1::int AS n -- et pas $9', '/* ni $8 /* imbrique $7 */ */'].join('\n'),
+          [1],
+        ),
+      );
+
+      expect(lignes).toEqual([{ n: 1 }]);
+    });
+
+    it('ignore un $n dans un bloc à dollars', async () => {
+      const lignes = await executer(
+        requeteDePlugin('SELECT $corps$ garde $5 tel quel $corps$ AS v, $1::int AS n', [3]),
+      );
+
+      expect(lignes).toEqual([{ v: ' garde $5 tel quel ', n: 3 }]);
+    });
+
+    it('ignore un $n dans un identifiant entre guillemets', async () => {
+      const lignes = await executer(requeteDePlugin('SELECT $1::int AS "col $2"', [4]));
+
+      expect(lignes).toEqual([{ 'col $2': 4 }]);
+    });
+
+    it('ne compte pas un $n masqué quand il vérifie le nombre d’arguments', () => {
+      // Sans le decoupage, ce texte levait « cite $9, mais n'a recu que 1 ».
+      expect(() => requeteDePlugin("SELECT $1, 'ref $9'", ['un'])).not.toThrow();
+    });
+  });
 });
