@@ -12,6 +12,28 @@ peut rompre.
 Ce qui ne concerne que le dépôt — intégration continue, outillage de publication, fichiers de
 communauté — n'y figure pas. Ce journal s'adresse à qui exploite Tick&, pas à qui y contribue.
 
+## Non publié
+
+### Corrigé
+
+- **La propagation des chemins avait cessé d'atteindre vingt tables, depuis la 0.1.12.** En
+  ajoutant les acteurs à `entities_propagate_path()`, le corps de la fonction a été repris d'une
+  migration trop ancienne, et sa liste de cibles est retombée de trente-cinq tables à quinze.
+  Après un déplacement d'entité, les problèmes, les changements, les engagements, les règles, la
+  base de connaissances, les formulaires, les tableaux de bord et le reste gardaient l'ancien
+  chemin : le cloisonnement les laissait **visibles depuis la branche d'origine et invisibles
+  depuis la nouvelle**, sans aucune erreur. La liste n'est plus écrite à la main — elle est
+  déduite des tables qui portent un chemin —, et deux tests l'exigent désormais exhaustive.
+
+### À faire en montant
+
+Une migration. Elle **remet d'aplomb les chemins déjà faussés** : si vous avez déplacé une entité
+sous la 0.1.12, ses objets retrouvent leur place, et la migration dit lesquels elle a corrigés.
+Elle ne touche rien là où rien n'a bougé. Aucune action de votre part.
+
+Si vous exploitez la 0.1.12 et que vous avez déplacé une entité, montez sans attendre : les
+objets concernés sont, en attendant, visibles du mauvais côté de l'arbre.
+
 ## [0.1.12] — 18 septembre 2026
 
 ### Sécurité
