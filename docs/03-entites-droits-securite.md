@@ -221,6 +221,21 @@ leur propriétaire (`SECURITY DEFINER`, `search_path` figé). Le droit de dépla
 où il doit l'être : sur la ligne déplacée, que le RLS laisse ou non modifier, et dont le nouveau
 chemin doit rester dans le périmètre. Une fonction de déclencheur ne s'appelle pas directement.
 
+**La liste des tables n'est pas écrite à la main.** Elle l'a été, et elle s'est désynchronisée :
+en ajoutant les acteurs à la fonction, son corps a été repris d'une migration trop ancienne, et
+vingt tables sont sorties de la propagation sans que rien ne le signale — leurs lignes gardaient
+l'ancien chemin, donc visibles depuis la branche d'origine et invisibles depuis la nouvelle. Les
+cibles sont désormais déduites du catalogue : les tables de `public` qui portent à la fois
+`entity_id` et `entity_path`, ce qui _est_ la définition de « table dont le chemin doit suivre ».
+Le rôle applicatif n'a pas le droit de créer dans `public`, donc rien ne peut s'y glisser.
+
+**Un déplacement se paie, et il faut le savoir avant de le faire.** C'est une seule transaction,
+qui réécrit les trente-six tables pour l'entité **et pour chaque entité de sa descendance**.
+Mesuré sur un poste de développement à cinq cent mille tickets : 1,6 s pour une feuille peu
+chargée, une cinquantaine de secondes pour une branche chargée portant une descendance. Pendant
+ce temps, les écritures sur les lignes concernées attendent. Réorganiser un arbre n'est pas une
+opération d'heure de pointe.
+
 ### Les tables sans politique
 
 Quelques tables servent toute l'installation plutôt qu'une entité. Leur accès est gardé par les

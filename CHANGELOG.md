@@ -12,6 +12,42 @@ peut rompre.
 Ce qui ne concerne que le dépôt — intégration continue, outillage de publication, fichiers de
 communauté — n'y figure pas. Ce journal s'adresse à qui exploite Tick&, pas à qui y contribue.
 
+## [0.1.13] — 18 septembre 2026
+
+### Corrigé
+
+- **La propagation des chemins avait cessé d'atteindre vingt tables, depuis la 0.1.12.** En
+  ajoutant les acteurs à `entities_propagate_path()`, le corps de la fonction a été repris d'une
+  migration trop ancienne, et sa liste de cibles est retombée de trente-cinq tables à quinze.
+  Après un déplacement d'entité, les problèmes, les changements, les engagements, les règles, la
+  base de connaissances, les formulaires, les tableaux de bord et le reste gardaient l'ancien
+  chemin : le cloisonnement les laissait **visibles depuis la branche d'origine et invisibles
+  depuis la nouvelle**, sans aucune erreur. La liste n'est plus écrite à la main — elle est
+  déduite des tables qui portent un chemin —, et deux tests l'exigent désormais exhaustive.
+
+### Changé
+
+- **Un `$n` dans une requête de plugin n'est un paramètre que s'il en est un.** `SELECT 'coûte
+$10'` y voyait le dixième paramètre : la requête partait amputée de son texte, ou échouait sur
+  un décompte d'arguments que rien n'expliquait. Les littéraux, les identifiants entre
+  guillemets, les blocs `$$…$$` et les commentaires sont désormais traversés sans y rien
+  chercher.
+- **Le guide d'installation dit d'où viennent les en-têtes de sécurité**, et comment vérifier
+  qu'on les a : ils sont posés par le serveur qui sert l'interface, donc absents d'une
+  installation qui la sert autrement, sans que rien ne le signale.
+- **La documentation chiffre le coût d'un déplacement d'entité** : une seule transaction, qui
+  réécrit trente-six tables pour l'entité et toute sa descendance — de 1,6 s à une cinquantaine
+  de secondes à cinq cent mille tickets.
+
+### À faire en montant
+
+Une migration. Elle **remet d'aplomb les chemins déjà faussés** : si vous avez déplacé une entité
+sous la 0.1.12, ses objets retrouvent leur place, et la migration dit lesquels elle a corrigés.
+Elle ne touche rien là où rien n'a bougé. Aucune action de votre part.
+
+Si vous exploitez la 0.1.12 et que vous avez déplacé une entité, montez sans attendre : les
+objets concernés sont, en attendant, visibles du mauvais côté de l'arbre.
+
 ## [0.1.12] — 18 septembre 2026
 
 ### Sécurité
@@ -379,6 +415,7 @@ déploiement par conteneurs ou par archives, licence AGPL-3.0-or-later.
 **Jamais utilisé par un vrai centre de services** — voir le [README](README.md), qui dit
 franchement ce qu'il faut savoir avant de s'en servir.
 
+[0.1.13]: https://github.com/tick0001/tick/releases/tag/v0.1.13
 [0.1.12]: https://github.com/tick0001/tick/releases/tag/v0.1.12
 [0.1.11]: https://github.com/tick0001/tick/releases/tag/v0.1.11
 [0.1.10]: https://github.com/tick0001/tick/releases/tag/v0.1.10
