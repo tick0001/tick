@@ -36,6 +36,13 @@ communauté — n'y figure pas. Ce journal s'adresse à qui exploite Tick&, pas 
 
 ### Changé
 
+- **Les plugins échappent à l'AGPL.** Un plugin qui n'utilise que l'interface d'extension publiée
+  se distribue désormais sous la licence de son auteur, privatrice comprise : permission
+  additionnelle au titre de l'article 7 de la GPL, dans
+  [EXCEPTION-PLUGINS.md](EXCEPTION-PLUGINS.md), qui en donne les trois conditions et leurs
+  limites. Le cœur reste sous AGPL sans exception, clause réseau comprise.
+- **Le README dit d'abord ce que Tick& fait de singulier** : plusieurs organisations dans une
+  seule installation, cloisonnées par la base elle-même. La liste des modules vient après.
 - **Les statistiques tiennent le grand volume.** À cinq cent mille tickets, la répartition par
   technicien ou par groupe demandait vingt secondes et la courbe d'activité trois ; l'une et
   l'autre tiennent maintenant sous la seconde. La première parce que la politique de sécurité

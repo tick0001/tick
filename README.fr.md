@@ -2,11 +2,16 @@
 
 # Tick&
 
-**Outil de ticketing ITSM, libre et auto-hébergeable.** Incidents, demandes, problèmes,
-changements, engagements de service, règles d'automatisation, notifications, base de
-connaissances, formulaires de catalogue, enquêtes de satisfaction et portail self-service — un
-seul outil, à l'échelle de toute une organisation. La gestion de parc est délibérément hors
-périmètre.
+**Outil de ticketing ITSM, libre et auto-hébergeable, conçu pour plusieurs organisations dans
+une seule installation.** Les entités forment un arbre, et le cloisonnement est appliqué par
+PostgreSQL lui-même — pas par des conditions `WHERE` qu'on peut oublier d'écrire. Une
+collectivité qui tient ses communes membres, un groupement hospitalier, un infogérant qui garde
+les tickets de ses clients dans la même base : c'est ce cas-là qui commande l'architecture.
+
+Le reste est un centre de services complet : incidents, demandes, problèmes, changements,
+engagements de service, règles d'automatisation, notifications, base de connaissances,
+formulaires de catalogue, enquêtes de satisfaction et portail self-service. La gestion de parc
+est délibérément hors périmètre.
 
 [![Licence](https://img.shields.io/badge/licence-AGPL--3.0-blue)](LICENSE)
 [![CI](https://github.com/tick0001/tick/actions/workflows/ci.yml/badge.svg)](https://github.com/tick0001/tick/actions/workflows/ci.yml)
@@ -216,9 +221,10 @@ route existante, ni en décrire une disparue. Chaque opération porte le droit q
 Copyleft avec clause réseau : quiconque héberge une version modifiée de Tick& doit en publier les
 modifications, même sans en distribuer le code.
 
-Sans exception de liaison : un plugin est chargé dans le processus de l'API et en est très
-probablement une œuvre dérivée, donc soumis à la même licence. À lire avant d'écrire un plugin
-propriétaire.
+**Les plugins font exception.** Un plugin qui n'utilise que l'interface d'extension publiée peut
+être distribué sous la licence de votre choix, y compris privatrice — voir
+[EXCEPTION-PLUGINS.md](EXCEPTION-PLUGINS.md) pour les trois conditions et leurs limites. Le cœur,
+lui, reste sous AGPL sans exception.
 
 > Nom : **Tick&** — identifiant technique partout ailleurs : `tick` (paquets `@tick/*`, images
 > Docker, schémas SQL, préfixes d'API).
