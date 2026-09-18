@@ -253,6 +253,25 @@ une ressource externe par exemple, monte son propre fichier à la place de
 `/etc/nginx/tick-securite.conf` dans le conteneur `web`, en partant de
 [celui de l'image](../docker/nginx-securite.conf).
 
+**Ces en-têtes viennent du serveur qui sert l'interface, pas de l'API.** Le
+conteneur `web` les pose, et les configurations d'exemple pour
+[Linux](16-installation-linux.md) et [Windows](17-installation-windows.md) aussi.
+Si vous servez `apps/web` autrement — un Traefik qui distribue les fichiers, un
+nginx à vous, un CDN —, **vous ne les avez pas**, et rien dans l'application ne
+vous le signalera. Vérifiez-le une fois, depuis l'extérieur :
+
+```bash
+curl -sI https://tick.exemple.fr/ | grep -i \
+  -e content-security-policy -e x-frame-options -e x-content-type-options \
+  -e referrer-policy -e strict-transport-security
+```
+
+Les cinq doivent répondre. Une `location` nginx qui porte son propre
+`add_header` **efface** ceux du serveur : c'est le piège habituel, et c'est
+pourquoi le fichier de l'image les répète dans chaque bloc. Il faut aussi les
+vérifier sur une route de l'interface et sur un fichier statique, pas seulement
+sur `/`.
+
 **Une écriture venue d'un autre site est refusée.** Un navigateur annonce
 l'origine de toute écriture ; l'API ne l'accepte que si elle désigne l'hôte de la
 requête, tel que le relais le transmet, ou l'adresse de `WEB_URL` ou `API_URL`.
