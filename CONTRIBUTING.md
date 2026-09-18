@@ -158,5 +158,9 @@ techniques sont bienvenus, les attaques personnelles non.
 ## Licence
 
 En contribuant, vous acceptez que votre travail soit distribué sous
-[AGPL-3.0-or-later](LICENSE), comme le reste. Un plugin chargé dans le processus de l'API en
-est très probablement une œuvre dérivée : à lire avant d'en écrire un propriétaire.
+[AGPL-3.0-or-later](LICENSE), comme le reste, et sous la permission additionnelle qui
+l'accompagne — [EXCEPTION-PLUGINS.md](EXCEPTION-PLUGINS.md).
+
+Cette exception ne concerne que les **plugins** : un plugin qui n'utilise que l'interface
+d'extension publiée se distribue sous la licence de son auteur. Une contribution au cœur, au
+SDK, à l'interface web ou aux migrations reste sous AGPL, clause réseau comprise.

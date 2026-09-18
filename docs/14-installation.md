@@ -462,9 +462,11 @@ actif joue ses nouvelles migrations au redémarrage.
 Le dossier est monté en lecture seule : un plugin compromis pourrait sinon se
 réécrire, et survivre à sa propre désinstallation.
 
-Conséquence de la licence : Tick& est sous AGPL-3.0, sans exception de liaison.
-Un plugin chargé dans le même processus est très probablement une œuvre dérivée,
-donc soumis à la même licence. Voir [Système de plugins](04-plugins.md).
+Côté licence, un plugin qui n'utilise que l'interface d'extension publiée se
+distribue sous celle de son auteur, privatrice comprise — voir
+[EXCEPTION-PLUGINS.md](../EXCEPTION-PLUGINS.md). Cela ne change rien à ce qu'il
+peut faire une fois installé : il s'exécute avec les droits du processus de
+l'API. Voir [Système de plugins](04-plugins.md).
 
 ## Journaux et diagnostic
 
