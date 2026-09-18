@@ -12,7 +12,7 @@ peut rompre.
 Ce qui ne concerne que le dépôt — intégration continue, outillage de publication, fichiers de
 communauté — n'y figure pas. Ce journal s'adresse à qui exploite Tick&, pas à qui y contribue.
 
-## Non publié
+## [0.1.13] — 18 septembre 2026
 
 ### Corrigé
 
@@ -415,6 +415,7 @@ déploiement par conteneurs ou par archives, licence AGPL-3.0-or-later.
 **Jamais utilisé par un vrai centre de services** — voir le [README](README.md), qui dit
 franchement ce qu'il faut savoir avant de s'en servir.
 
+[0.1.13]: https://github.com/tick0001/tick/releases/tag/v0.1.13
 [0.1.12]: https://github.com/tick0001/tick/releases/tag/v0.1.12
 [0.1.11]: https://github.com/tick0001/tick/releases/tag/v0.1.11
 [0.1.10]: https://github.com/tick0001/tick/releases/tag/v0.1.10
