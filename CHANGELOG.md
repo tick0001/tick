@@ -12,6 +12,64 @@ peut rompre.
 Ce qui ne concerne que le dépôt — intégration continue, outillage de publication, fichiers de
 communauté — n'y figure pas. Ce journal s'adresse à qui exploite Tick&, pas à qui y contribue.
 
+## [0.1.12] — 18 septembre 2026
+
+### Sécurité
+
+- **Le type d'une pièce jointe n'était vérifié que sur ce qu'annonçait l'expéditeur.** Un SVG,
+  qui porte du script, passait pour une image PNG. Le contenu doit maintenant correspondre au
+  type annoncé ; les pièces jointes des courriels collectés sont soumises à la même règle.
+- **Les écritures venues d'un autre site sont refusées.** L'API vérifie l'origine qu'annonce le
+  navigateur, en plus du cookie `SameSite`.
+- **Le rôle applicatif ne lit plus les condensats de mots de passe**, ni les annuaires, ni l'état
+  des extensions. Il est aussi celui du SQL des plugins. Voir la liste des tables concernées dans
+  [la sécurité des entités](docs/03-entites-droits-securite.md#les-tables-sans-politique).
+- **Les membres d'un groupe ne se gèrent plus que depuis l'entité du groupe.** Une filiale
+  ajoutait des membres à un groupe récursif de la maison mère, qu'elle ne pouvait pas modifier.
+
+### Corrigé
+
+- **Déplacer une entité qui portait un objet de configuration échouait.** Un seul groupe, une
+  seule catégorie suffisaient. Déplacer une catégorie dont la descendance vivait dans une autre
+  entité échouait de même, et une descendance que l'auteur du déplacement ne voyait pas gardait
+  son ancien chemin, sans erreur.
+
+### Changé
+
+- **Les plugins échappent à l'AGPL.** Un plugin qui n'utilise que l'interface d'extension publiée
+  se distribue désormais sous la licence de son auteur, privatrice comprise : permission
+  additionnelle au titre de l'article 7 de la GPL, dans
+  [EXCEPTION-PLUGINS.md](EXCEPTION-PLUGINS.md), qui en donne les trois conditions et leurs
+  limites. Le cœur reste sous AGPL sans exception, clause réseau comprise.
+- **Le README dit d'abord ce que Tick& fait de singulier** : plusieurs organisations dans une
+  seule installation, cloisonnées par la base elle-même. La liste des modules vient après.
+- **Les statistiques tiennent le grand volume.** À cinq cent mille tickets, la répartition par
+  technicien ou par groupe demandait vingt secondes et la courbe d'activité trois ; l'une et
+  l'autre tiennent maintenant sous la seconde. La première parce que la politique de sécurité
+  des acteurs allait chercher l'objet porteur à chaque ligne lue — elle compare désormais un
+  chemin, comme partout ailleurs —, la seconde parce qu'elle rebouclait sur tous les tickets
+  pour chacun des trente et un jours. Le premier correctif vaut pour toute lecture en nombre des
+  acteurs, pas seulement pour les statistiques.
+- **Une session n'est plus réécrite à chaque requête**, mais au plus toutes les cinq minutes.
+- **La documentation dit ce qu'est l'installation d'un plugin** : lui accorder les droits du
+  processus de l'API, accès à la base en propriétaire compris.
+
+### À faire en montant
+
+Trois migrations. Deux sont sans délai : la propagation des chemins et les droits du rôle
+applicatif sur les tables globales. Un plugin tiers qui lisait, par `context.db`, les comptes
+avec leur condensat, les annuaires ou la table des extensions reçoit désormais un refus.
+
+La troisième réécrit la table des acteurs, qui compte une ligne par personne ou groupe rattaché
+à un ticket. Comptez environ trois minutes par demi-million d'acteurs sur une machine de
+développement, table verrouillée pendant ce temps : prévoyez une fenêtre si l'installation
+compte plusieurs centaines de milliers de tickets. Un plugin tiers qui écrivait directement dans
+`itil_actors` n'a rien à changer : le chemin d'entité est déduit de l'objet, jamais fourni par
+l'écriture.
+
+Derrière un relais qui réécrit l'en-tête `Host`, vérifier que `WEB_URL` est exacte : les
+écritures depuis l'interface en dépendent désormais.
+
 ## [0.1.11] — 17 septembre 2026
 
 ### Sécurité
@@ -321,6 +379,7 @@ déploiement par conteneurs ou par archives, licence AGPL-3.0-or-later.
 **Jamais utilisé par un vrai centre de services** — voir le [README](README.md), qui dit
 franchement ce qu'il faut savoir avant de s'en servir.
 
+[0.1.12]: https://github.com/tick0001/tick/releases/tag/v0.1.12
 [0.1.11]: https://github.com/tick0001/tick/releases/tag/v0.1.11
 [0.1.10]: https://github.com/tick0001/tick/releases/tag/v0.1.10
 [0.1.9]: https://github.com/tick0001/tick/releases/tag/v0.1.9

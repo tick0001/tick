@@ -243,7 +243,8 @@ API REST publique documentée en OpenAPI, documentation du SDK de plugins avec e
 d'installation et d'exploitation, packaging des images Docker, choix et application de la licence,
 préparation de la publication.
 
-**Livré.** La licence est l'**AGPL-3.0**, sans exception de liaison. Les images `api` et `web` sont
+**Livré.** La licence est l'**AGPL-3.0**, assortie d'une exception de liaison pour les plugins
+seuls ([EXCEPTION-PLUGINS.md](../EXCEPTION-PLUGINS.md)). Les images `api` et `web` sont
 publiées sur `ghcr.io` à chaque étiquette de version et se déploient par
 [compose](../docker/compose.production.yaml), avec les migrations jouées une fois par un service
 dédié plutôt qu'au démarrage de chaque conteneur. La commande `initialiser` rend une base neuve utilisable — sans elle, une installation

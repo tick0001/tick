@@ -4,7 +4,17 @@ import { and, eq, isNull, sessions, sql } from '@tick/db';
 import { DatabaseService } from '../database/database.service.js';
 
 /** Duree de vie glissante d'une session inactive. */
-const SESSION_TTL_MS = 12 * 60 * 60 * 1000;
+export const SESSION_TTL_MS = 12 * 60 * 60 * 1000;
+
+/**
+ * Ecart en deca duquel une session n'est pas reecrite.
+ *
+ * Prolonger la session a chaque requete ecrivait une ligne par appel d'API :
+ * du journal de transactions et des verrous de ligne pour une precision a la
+ * seconde qui n'interesse personne. Sur une duree de vie de douze heures, cinq
+ * minutes d'approximation ne changent rien a l'expiration.
+ */
+export const RAFRAICHISSEMENT_MS = 5 * 60 * 1000;
 
 export interface SessionRecord {
   id: string;
@@ -69,7 +79,12 @@ export class SessionService {
     };
   }
 
-  /** Resout un cookie en session valide, en prolongeant sa duree de vie. */
+  /**
+   * Resout un cookie en session valide, en prolongeant sa duree de vie.
+   *
+   * La prolongation n'est ecrite que si la derniere remonte a plus de
+   * {@link RAFRAICHISSEMENT_MS} : la plupart des requetes ne font que lire.
+   */
   async resolve(cookieValue: string | undefined): Promise<SessionRecord | null> {
     if (!cookieValue) return null;
 
@@ -94,10 +109,12 @@ export class SessionService {
 
       if (expected.length !== actual.length || !timingSafeEqual(expected, actual)) return null;
 
-      await tx
-        .update(sessions)
-        .set({ lastSeenAt: new Date(), expiresAt: new Date(Date.now() + SESSION_TTL_MS) })
-        .where(eq(sessions.id, id));
+      if (Date.now() - found.lastSeenAt.getTime() >= RAFRAICHISSEMENT_MS) {
+        await tx
+          .update(sessions)
+          .set({ lastSeenAt: new Date(), expiresAt: new Date(Date.now() + SESSION_TTL_MS) })
+          .where(eq(sessions.id, id));
+      }
 
       return {
         id: found.id,

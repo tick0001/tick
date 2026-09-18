@@ -43,6 +43,7 @@ const AVEC_ENTITE = new Set([
   'tickets',
   'problems',
   'changes',
+  'itil_actors',
   'itil_followups',
   'itil_tasks',
   'itil_solutions',
@@ -120,10 +121,22 @@ describe('Schéma', () => {
   it('rattache chaque entity_path à un entity_id', () => {
     // Le declencheur recalcule le chemin depuis l'identifiant : sans les deux,
     // il n'a rien a recopier, et le chemin reste a « temporaire ».
+    //
+    // `itil_actors` fait exception, et c'est voulu : un acteur n'a pas d'entite
+    // propre, il herite de celle de son objet ITIL. Son declencheur lit le
+    // chemin du porteur, pas une colonne de la ligne — lui donner un
+    // `entity_id` ouvrirait la possibilite qu'il contredise le ticket.
+    const SANS_ENTITE_PROPRE = new Set(['itil_actors']);
+
     for (const [nom, table] of tables) {
       const colonnes = Object.values(getTableColumns(table)).map((colonne) => colonne.name);
+      const table_ = getTableName(table);
 
-      if (colonnes.includes('entity_path') && getTableName(table) !== 'entities') {
+      if (
+        colonnes.includes('entity_path') &&
+        table_ !== 'entities' &&
+        !SANS_ENTITE_PROPRE.has(table_)
+      ) {
         expect(colonnes, nom).toContain('entity_id');
       }
     }

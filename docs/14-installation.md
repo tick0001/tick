@@ -253,6 +253,17 @@ une ressource externe par exemple, monte son propre fichier à la place de
 `/etc/nginx/tick-securite.conf` dans le conteneur `web`, en partant de
 [celui de l'image](../docker/nginx-securite.conf).
 
+**Une écriture venue d'un autre site est refusée.** Un navigateur annonce
+l'origine de toute écriture ; l'API ne l'accepte que si elle désigne l'hôte de la
+requête, tel que le relais le transmet, ou l'adresse de `WEB_URL` ou `API_URL`.
+Un relais qui réécrit l'en-tête `Host` — Application Request Routing, par
+défaut — impose donc un `WEB_URL` exact : sinon, toute écriture depuis
+l'interface est refusée, avec un message qui le dit.
+
+**Les pièces jointes sont vérifiées sur leur contenu**, pas seulement sur le
+type qu'annonce l'expéditeur : une image doit commencer comme une image, un
+document bureautique comme une archive, un texte ne contenir aucun octet nul.
+
 ## Premier administrateur
 
 Une base migrée est une base dans laquelle personne ne peut entrer : il n'y a ni
@@ -451,9 +462,11 @@ actif joue ses nouvelles migrations au redémarrage.
 Le dossier est monté en lecture seule : un plugin compromis pourrait sinon se
 réécrire, et survivre à sa propre désinstallation.
 
-Conséquence de la licence : Tick& est sous AGPL-3.0, sans exception de liaison.
-Un plugin chargé dans le même processus est très probablement une œuvre dérivée,
-donc soumis à la même licence. Voir [Système de plugins](04-plugins.md).
+Côté licence, un plugin qui n'utilise que l'interface d'extension publiée se
+distribue sous celle de son auteur, privatrice comprise — voir
+[EXCEPTION-PLUGINS.md](../EXCEPTION-PLUGINS.md). Cela ne change rien à ce qu'il
+peut faire une fois installé : il s'exécute avec les droits du processus de
+l'API. Voir [Système de plugins](04-plugins.md).
 
 ## Journaux et diagnostic
 

@@ -189,12 +189,18 @@ export const tickets = pgTable(
  *
  * La cle primaire porte les cinq colonnes : un meme utilisateur peut etre a la
  * fois demandeur et observateur, mais pas deux fois demandeur.
+ *
+ * Le chemin d'entite n'est pas renseigne par l'application : un acteur n'a pas
+ * d'entite propre, il herite de celle de son objet, et un declencheur le
+ * deduit. Il est denormalise pour la meme raison que partout ailleurs — sans
+ * lui, la politique de securite chercherait l'objet porteur a chaque ligne lue.
  */
 export const itilActors = pgTable(
   'itil_actors',
   {
     itilType: itilTypeEnum('itil_type').notNull(),
     itilId: bigint('itil_id', { mode: 'number' }).notNull(),
+    entityPath: ltree('entity_path').notNull().default('herite'),
     role: actorRoleEnum('role').notNull(),
     actorType: actorTypeEnum('actor_type').notNull(),
     actorId: bigint('actor_id', { mode: 'number' }).notNull(),
@@ -207,6 +213,7 @@ export const itilActors = pgTable(
     index('itil_actors_object_idx').on(t.itilType, t.itilId),
     // « Mes tickets » et « ceux de mes groupes » interrogent cet index.
     index('itil_actors_actor_idx').on(t.actorType, t.actorId, t.role),
+    index('itil_actors_entity_path_gist').using('gist', t.entityPath),
   ],
 );
 

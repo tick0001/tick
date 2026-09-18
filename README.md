@@ -2,10 +2,15 @@
 
 # Tick&
 
-**Open-source, self-hosted ITSM ticketing.** Incidents, service requests, problems, changes,
-service level agreements, automation rules, notifications, knowledge base, catalogue forms,
-satisfaction surveys and a self-service portal — one tool, across an entire organisation. Asset
-and inventory management is deliberately out of scope.
+**Open-source, self-hosted ITSM ticketing, built for several organisations in a single
+installation.** Entities form a tree, and the separation between them is enforced by PostgreSQL
+itself — not by `WHERE` clauses someone can forget to write. A local authority holding its member
+councils, a hospital group, a managed service provider keeping its clients' tickets in one
+database: that is the case the architecture is built around.
+
+The rest is a complete service desk: incidents, service requests, problems, changes, service level
+agreements, automation rules, notifications, knowledge base, catalogue forms, satisfaction surveys
+and a self-service portal. Asset and inventory management is deliberately out of scope.
 
 [![Licence](https://img.shields.io/badge/licence-AGPL--3.0-blue)](LICENSE)
 [![CI](https://github.com/tick0001/tick/actions/workflows/ci.yml/badge.svg)](https://github.com/tick0001/tick/actions/workflows/ci.yml)
@@ -112,7 +117,7 @@ Each one illustrates a case the entity model has to handle.
 
 Milestones J0 to J8 of the [roadmap](docs/06-feuille-de-route.md) are delivered, and J9 all but
 one point. The seventeen functional modules are covered, the API exposes 183 documented
-operations, and the suite runs 2 562 tests — including integration tests against a real PostgreSQL
+operations, and the suite runs 2 616 tests — including integration tests against a real PostgreSQL
 database that check isolation between entities. On top of those, 69 end-to-end journeys run in a
 real browser against the real API: sign-in, tenant isolation, the ticket lifecycle, self-service.
 
@@ -136,7 +141,7 @@ the codebase and its documentation are in French.
 ```bash
 make             # every deployment target, explained
 pnpm build       # builds every package
-pnpm test        # 2 562 tests — requires the services to be running
+pnpm test        # 2 616 tests — requires the services to be running
 pnpm lint        # ESLint with type-aware rules
 pnpm typecheck   # type checking without emit
 pnpm format      # applies Prettier
@@ -214,9 +219,10 @@ The detailed documentation is written in French.
 Copyleft with a network clause: anyone hosting a modified version of Tick& must publish their
 modifications, even without distributing the code.
 
-No linking exception: a plugin is loaded into the API process and is very probably a derivative
-work of it, and therefore subject to the same licence. Worth reading before writing a proprietary
-plugin.
+**Plugins are excepted.** A plugin that only uses the published extension interface may be
+distributed under a licence of your choosing, proprietary included — see
+[EXCEPTION-PLUGINS.md](EXCEPTION-PLUGINS.md) for the three conditions and their limits. The core
+itself stays under the AGPL, with no exception.
 
 > Name: **Tick&** — technical identifier everywhere else: `tick` (`@tick/*` packages, Docker
 > images, SQL schemas, API prefixes).

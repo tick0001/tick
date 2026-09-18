@@ -13,14 +13,35 @@ import { TicketScopeService } from '../tickets/ticket-scope.service.js';
 import { nomAffiche, toText } from '../common/sql.js';
 
 /**
+ * Acteurs assignés d'un ticket, derrière une barrière d'optimisation.
+ *
+ * `MATERIALIZED` n'est pas une coquetterie. Sous Row-Level Security, le
+ * planificateur n'a ni index ni statistiques sur le prédicat de portée : il
+ * estime cinq mille tickets là où il y en a cinq cent mille, et choisit une
+ * boucle imbriquée là où il faut une jointure par hachage. La barrière calcule
+ * les acteurs une fois, puis les hache — vingt secondes ramenées à une, sur le
+ * palier de cinq cent mille tickets.
+ */
+function assignes(type: 'user' | 'group'): SQL {
+  return sql`
+    WITH assignes AS MATERIALIZED (
+      SELECT a.itil_id, a.actor_id
+        FROM itil_actors a
+       WHERE a.itil_type = 'ticket' AND a.role = 'assigned' AND a.actor_type = ${type}
+    )`;
+}
+
+/**
  * Dimensions d'analyse, vers leur clé et leur libellé SQL.
  *
  * Table fermée, indexée par un type d'union : c'est ce qui permet de composer
  * l'agrégation sans jamais interpoler un nom de colonne venu de la requête. Le
  * libellé sort de la base plutôt que d'un dictionnaire côté interface, parce
  * qu'une catégorie ou un groupe n'a pas de traduction — il a un nom.
+ *
+ * `avec` porte la clause `WITH` que la dimension exige, s'il en faut une.
  */
-const DIMENSIONS: Record<StatDimension, { key: SQL; label: SQL; join: SQL }> = {
+const DIMENSIONS: Record<StatDimension, { key: SQL; label: SQL; join: SQL; avec?: SQL }> = {
   entity: {
     key: sql`t.entity_id::text`,
     label: sql`coalesce(e.complete_name, '(inconnue)')`,
@@ -36,17 +57,17 @@ const DIMENSIONS: Record<StatDimension, { key: SQL; label: SQL; join: SQL }> = {
     // Le repli couvre les tickets sans technicien : un axe de rapport ne peut
     // pas avoir de libelle vide, la barre deviendrait anonyme.
     label: sql`coalesce(${nomAffiche()}, '(non attribue)')`,
+    avec: assignes('user'),
     join: sql`
-      LEFT JOIN itil_actors a ON a.itil_type = 'ticket' AND a.itil_id = t.id
-                             AND a.role = 'assigned' AND a.actor_type = 'user'
+      LEFT JOIN assignes a ON a.itil_id = t.id
       LEFT JOIN users u ON u.id = a.actor_id`,
   },
   group: {
     key: sql`coalesce(a.actor_id::text, '')`,
     label: sql`coalesce(g.name, '(sans groupe)')`,
+    avec: assignes('group'),
     join: sql`
-      LEFT JOIN itil_actors a ON a.itil_type = 'ticket' AND a.itil_id = t.id
-                             AND a.role = 'assigned' AND a.actor_type = 'group'
+      LEFT JOIN assignes a ON a.itil_id = t.id
       LEFT JOIN groups g ON g.id = a.actor_id`,
   },
   priority: { key: sql`t.priority::text`, label: sql`t.priority::text`, join: sql`` },
@@ -139,6 +160,15 @@ export class StatsService {
 
     const [row] = await this.db.asUser(async (tx) => {
       const resultat = await tx.execute<SummaryRow>(sql`
+        -- La moyenne et le nombre d'avis sortent d'une seule lecture. Ecrites en
+        -- deux sous-requetes, elles rebalaient chacune la table des tickets pour
+        -- retrouver le meme perimetre.
+        WITH avis AS (
+          SELECT avg(x.rating) AS note, count(*) AS nombre
+            FROM satisfactions x
+           WHERE x.rating IS NOT NULL
+             AND x.ticket_id IN (SELECT t.id FROM tickets t WHERE ${etendue})
+        )
         SELECT
           count(*) AS opened,
           count(*) FILTER (WHERE t.date_solved IS NOT NULL) AS solved,
@@ -157,12 +187,8 @@ export class StatsService {
             WHERE t.date_due IS NOT NULL
               AND (t.date_solved IS NOT NULL OR t.date_due < now())
           ) AS "slaTotal",
-          (SELECT avg(x.rating) FROM satisfactions x
-            WHERE x.rating IS NOT NULL
-              AND x.ticket_id IN (SELECT t.id FROM tickets t WHERE ${etendue})) AS satisfaction,
-          (SELECT count(*) FROM satisfactions x
-            WHERE x.rating IS NOT NULL
-              AND x.ticket_id IN (SELECT t.id FROM tickets t WHERE ${etendue})) AS "satisfactionCount"
+          (SELECT note FROM avis) AS satisfaction,
+          (SELECT nombre FROM avis) AS "satisfactionCount"
         FROM tickets t
         WHERE ${etendue}
       `);
@@ -191,6 +217,7 @@ export class StatsService {
 
     const rows = await this.db.asUser(async (tx) => {
       const resultat = await tx.execute<Record<string, unknown>>(sql`
+        ${definition.avec ?? sql``}
         SELECT ${definition.key} AS key, ${definition.label} AS label,
                count(*) AS opened,
                count(*) FILTER (WHERE t.date_solved IS NOT NULL) AS solved,
@@ -223,6 +250,13 @@ export class StatsService {
    * La série de dates vient de `generate_series` et non des tickets : sans
    * elle, un jour sans ticket disparaîtrait, et la courbe relierait deux points
    * distants en laissant croire à une activité continue.
+   *
+   * L'activité se compte à part, en une passe, plutôt qu'en joignant les
+   * tickets aux jours. La jointure naturelle porterait un `OR` — ouvert ce
+   * jour-là **ou** clos ce jour-là —, que PostgreSQL ne sait pas hacher : il
+   * reboucle sur tous les tickets pour chacun des trente et un jours. Mesuré à
+   * cinq cent mille tickets, quinze millions de lignes rejetées, 3,3 s.
+   * Chaque ticket porte au plus deux évènements ; les compter une fois suffit.
    */
   async trend(filter: StatsFilter): Promise<StatsTrendPoint[]> {
     const conditions = await this.conditions(filter);
@@ -239,16 +273,25 @@ export class StatsService {
             date_trunc('day', ${fin}::timestamptz),
             interval '1 day'
           ) AS jour
+        ),
+        activite AS (
+          SELECT e.jour,
+                 count(*) FILTER (WHERE e.ouverture) AS opened,
+                 count(*) FILTER (WHERE NOT e.ouverture) AS closed
+            FROM tickets t
+            CROSS JOIN LATERAL (
+              VALUES (date_trunc('day', t.date_opened), true),
+                     (date_trunc('day', t.date_closed), false)
+            ) AS e(jour, ouverture)
+           WHERE ${sql.join(conditions, sql` AND `)}
+             AND e.jour IS NOT NULL
+           GROUP BY e.jour
         )
         SELECT to_char(j.jour, 'YYYY-MM-DD') AS day,
-               count(t.id) FILTER (WHERE date_trunc('day', t.date_opened) = j.jour) AS opened,
-               count(t.id) FILTER (WHERE date_trunc('day', t.date_closed) = j.jour) AS closed
+               coalesce(a.opened, 0) AS opened,
+               coalesce(a.closed, 0) AS closed
           FROM jours j
-          LEFT JOIN tickets t
-            ON (date_trunc('day', t.date_opened) = j.jour
-                OR date_trunc('day', t.date_closed) = j.jour)
-           AND ${sql.join(conditions, sql` AND `)}
-         GROUP BY j.jour
+          LEFT JOIN activite a ON a.jour = j.jour
          ORDER BY j.jour
       `);
 

@@ -130,7 +130,9 @@ invalidée à toute modification de profil ou d'habilitation.
 
 Le filtrage applicatif reste la première ligne : il est explicite, testable et produit des
 requêtes efficaces. Le RLS est la seconde ligne, celle qui garantit qu'un oubli dans le cœur ou
-une requête brute écrite par un plugin **ne peut pas** faire fuiter des données entre entités.
+une requête brute passée par `context.db` **ne peut pas** faire fuiter des données entre
+entités. Il ne protège pas d'un plugin malveillant, qui s'exécute dans le processus de l'API et
+en a tous les droits — voir [Système de plugins](04-plugins.md#6-garde-fous).
 
 Ouverture de transaction :
 
@@ -175,7 +177,12 @@ précède une requête d'utilisateur ou la dépasse — authentification et sess
 qui parcourent toutes les entités (escalades, récurrences, collecte de courriel, notifications,
 enquêtes), gestion des plugins. Aucun code ne le reçoit avec un contexte d'utilisateur.
 
-### Une exception, et une seule : la recherche textuelle
+### Deux exceptions délibérées
+
+Le rôle propriétaire n'agit pour le compte d'un utilisateur qu'à deux endroits, chacun tenu par
+ses propres garde-fous.
+
+#### La recherche textuelle
 
 Sous RLS, aucune recherche textuelle ne peut utiliser d'index. PostgreSQL refuse d'évaluer un
 prédicat non _leakproof_ avant le prédicat de sécurité d'une politique — une durée ou un message
@@ -200,6 +207,40 @@ avant le filtre de périmètre, si bien que le temps d'exécution croît avec le
 semblables ailleurs. Le canal ne révèle ni un titre ni un identifiant, et la requête précédente,
 qui balayait toute la table, en ouvrait un du même ordre.
 
+#### La propagation des chemins
+
+Déplacer une entité recopie son chemin dans sa descendance et dans les trente-six tables qui le
+dénormalisent ; déplacer ou renommer une catégorie, un lieu ou une rubrique recalcule sa
+descendance. Sous le rôle applicatif, deux choses cédaient : la politique des objets de
+configuration, qui exige en écriture le chemin de l'entité active, refusait la recopie — **on ne
+pouvait pas déplacer une entité qui portait un seul groupe** — et une descendance invisible de
+l'auteur gardait un chemin périmé, sans erreur.
+
+`entities_propagate_path` et `referential_propagate_path` s'exécutent donc avec les droits de
+leur propriétaire (`SECURITY DEFINER`, `search_path` figé). Le droit de déplacer reste vérifié là
+où il doit l'être : sur la ligne déplacée, que le RLS laisse ou non modifier, et dont le nouveau
+chemin doit rester dans le périmètre. Une fonction de déclencheur ne s'appelle pas directement.
+
+### Les tables sans politique
+
+Quelques tables servent toute l'installation plutôt qu'une entité. Leur accès est gardé par les
+droits au contrôleur, et le rôle applicatif n'y garde que ce dont l'application a besoin :
+
+| Table                                             | Pourquoi pas de politique                                             | Rôle applicatif                            |
+| ------------------------------------------------- | --------------------------------------------------------------------- | ------------------------------------------ |
+| `users`                                           | Un compte agit dans plusieurs entités ; gardé par `user:*`            | Lecture **sans** `password_hash`, écriture |
+| `profiles`, `profile_rights`                      | Un profil vaut pour toute l'installation ; gardé par `profile:*`      | Lecture, écriture                          |
+| `group_members`                                   | Politique partielle : lisible partout, pour résoudre droits et cibles | Écriture dans l'entité du groupe seulement |
+| `ldap_directories`                                | Un annuaire sert toute l'installation                                 | Aucun — l'API y accède en propriétaire     |
+| `plugins`, `plugin_migrations`, `plugin_settings` | État des extensions, tenu par le cœur                                 | Aucun                                      |
+
+Le condensat des mots de passe n'est lisible qu'en propriétaire, qui seul authentifie. Un droit
+de colonne ne s'étend pas aux colonnes futures : **toute colonne ajoutée à `users` doit être
+accordée en lecture au rôle applicatif**, ce qu'un test vérifie.
+
+Les membres d'un groupe se gèrent là où le groupe est défini, comme le groupe lui-même : un
+groupe récursif de la maison mère est visible et assignable depuis une filiale, pas modifiable.
+
 ### La compilation JIT, coupée
 
 Même cause, autre effet. Les prédicats des politiques n'étant pas _leakproof_, le planificateur
@@ -212,6 +253,30 @@ transaction, et le serveur garde le sien pour tout autre usage.
 La base de connaissances n'a pas eu besoin de l'exception accordée à la recherche des tickets :
 sans JIT, sa recherche plein texte prend 95 à 145 ms sous RLS à cent mille articles, un volume
 qu'aucune base de connaissances n'approche.
+
+### Une politique ne doit pas chercher
+
+Même cause encore, troisième effet, et le plus coûteux des trois. Un prédicat de politique
+s'évalue **avant** les conditions de la requête, sur chaque ligne lue : ce qu'il coûte se
+multiplie par le volume de la table.
+
+`itil_actors` a longtemps fait exception à la règle commune. N'ayant pas d'entité propre — un
+acteur appartient à son ticket —, sa politique appelait `tick_itil_visible(itil_type, itil_id)`,
+qui va chercher l'objet porteur dans `tickets`, `problems` ou `changes`. Une recherche par ligne
+lue. Sur une fiche de ticket, qui en lit cinq, cela ne se voit pas ; dès que la table est
+balayée, c'est le temps de réponse. À cinq cent mille tickets, un `count(*)` coûtait 19 ms au
+propriétaire et **17,7 secondes** au rôle applicatif, et la répartition des statistiques par
+technicien vingt secondes.
+
+Les acteurs dénormalisent donc leur chemin comme les douze autres satellites, et leur politique
+se réduit à `tick_in_scope(entity_path)` : le même balayage retombe à 265 ms. Le chemin n'est pas
+fourni par l'écriture mais déduit du porteur par un déclencheur — c'est ce qui garantit qu'ils ne
+divergent jamais, et un `itil_id` pointé vers un objet invisible ne résout aucun chemin, donc ne
+passe pas le `WITH CHECK`.
+
+`itil_links` garde `tick_itil_visible` : la table reste petite, elle n'est jamais balayée, et un
+lien porte deux objets qui peuvent vivre dans deux entités — un chemin unique ne les
+représenterait pas.
 
 ### Le périmètre habilité n'est pas le périmètre de travail
 

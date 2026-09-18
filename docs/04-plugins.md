@@ -167,6 +167,19 @@ et annulerait l'isolation.
 ne lit pas, par SQL, les secrets d'un autre. Il ne lit les siens que par `settings.get`, qui les
 déchiffre pour lui seul.
 
+**Installer un plugin, c'est lui accorder les droits du processus de l'API.** Il lit
+l'environnement — `DATABASE_URL`, qui ouvre la base en propriétaire, hors RLS, `ENCRYPTION_KEY`,
+`SESSION_SECRET` —, le disque et le réseau. Les permissions du manifeste, le schéma dédié, le
+RLS et le client HTTP encadrent ce que fait un plugin **par l'API qu'on lui donne** : ils
+rendent l'erreur difficile et l'intention lisible, ils n'arrêtent pas un plugin écrit pour les
+contourner. N'installer que ce dont on a lu le code, ou dont on fait confiance à l'auteur comme
+on ferait confiance au code de l'application.
+
+Et la licence ne change rien à cela. Un plugin qui n'utilise que l'interface publiée peut être
+distribué sans son code source — voir [EXCEPTION-PLUGINS.md](../EXCEPTION-PLUGINS.md) —, ce qui
+rend le conseil précédent plus exigeant, pas moins : le code qu'on ne peut pas lire s'exécute
+avec les mêmes droits que celui qu'on peut lire.
+
 **Une sortie réseau qui applique la politique de l'instance.** Le client HTTP du contexte refuse
 les réseaux internes quand l'instance les refuse, épingle l'adresse vérifiée jusqu'à la connexion
 et ne suit aucune redirection. Un plugin _pourrait_ appeler `fetch` directement — il s'exécute dans

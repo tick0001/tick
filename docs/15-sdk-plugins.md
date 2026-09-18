@@ -14,12 +14,19 @@ Deux plugins servent d'exemples, et sont montés par les tests :
 
 ## Licence — à lire avant d'écrire
 
-Tick& est publié sous **AGPL-3.0-or-later**, sans exception de liaison. Un
-plugin est chargé **dans le processus** de l'API et appelle son code : il est
-très probablement une œuvre dérivée, donc soumis à la même licence.
+Tick& est publié sous **AGPL-3.0-or-later**. Un plugin est chargé **dans le
+processus** de l'API et appelle son code : sans permission particulière, il en
+serait très probablement une œuvre dérivée, donc soumis à la même licence.
 
-Écrire un plugin propriétaire suppose une exception de liaison qui n'existe pas
-aujourd'hui. Si c'est votre besoin, demandez-la avant d'investir.
+Cette permission existe. **Un plugin qui n'utilise que l'interface d'extension
+publiée se distribue sous la licence de votre choix**, privatrice comprise :
+voir [EXCEPTION-PLUGINS.md](../EXCEPTION-PLUGINS.md), qui en donne les trois
+conditions. Elles se résument à ceci : passer par le SDK et le manifeste,
+n'emporter aucun morceau du cœur, rester un ouvrage distinct.
+
+Sortir de cette interface — appeler un module interne, lire les tables du cœur
+autrement que par `context.db`, recopier du code — fait retomber sous l'AGPL
+pleine. Le cœur, lui, n'a pas d'exception.
 
 ## Installation
 
@@ -92,9 +99,11 @@ permissions réservées restent admises pour qu'un manifeste qui les cite ne
 devienne pas invalide le jour où elles serviront ; les déclarer n'ouvre rien.
 
 Rien de cela n'est une isolation : le plugin s'exécute dans le processus de
-l'API, et rien ne l'empêche techniquement d'appeler `fetch` ou d'importer
-`node:fs`. Les permissions rendent les intentions auditables et le chemin
-honnête commode ; contourner ce chemin est un motif de refus à la relecture.
+l'API, avec ses droits. Rien ne l'empêche techniquement d'appeler `fetch`,
+d'importer `node:fs`, ni de lire `process.env` — dont l'adresse de la base en
+propriétaire, qui échappe au Row-Level Security. Les permissions rendent les
+intentions auditables et le chemin honnête commode ; contourner ce chemin est un
+motif de refus à la relecture.
 
 `rights` déclare des droits `{ key, label, actions }` — voir [Droits](#droits) —, où les actions se
 prennent parmi `read`, `create`, `update` et `delete`.

@@ -532,6 +532,35 @@ describe('HTTP — libre-service', () => {
       document = reponse.body.id;
     });
 
+    it('refuse un fichier dont le contenu dément le type annoncé', async () => {
+      // Un SVG porte du script ; annoncé comme une image PNG, il passait la
+      // liste blanche, qui ne lisait que l'en-tête de l'envoi.
+      const svg = Buffer.from(
+        '<svg xmlns="http://www.w3.org/2000/svg"><script>alert(1)</script></svg>',
+      );
+      const reponse = await harnais
+        .admin()
+        .post('/api/documents/items/ticket/' + ticket)
+        .attach('file', svg, { filename: 'capture.png', contentType: 'image/png' });
+
+      expect(reponse.status).toBe(400);
+      expect(reponse.body.message).toMatch(/ne correspond pas au type annonce/);
+    });
+
+    it('accepte une vraie image PNG', async () => {
+      const png = Buffer.concat([
+        Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]),
+        Buffer.alloc(16),
+      ]);
+      const reponse = await harnais
+        .admin()
+        .post('/api/documents/items/ticket/' + ticket)
+        .attach('file', png, { filename: 'capture.png', contentType: 'image/png' });
+
+      expect(reponse.status).toBe(201);
+      expect(reponse.body).toMatchObject({ mimeType: 'image/png' });
+    });
+
     it('le liste sur son objet', async () => {
       const reponse = await harnais.admin().get('/api/documents/items/ticket/' + ticket);
 
