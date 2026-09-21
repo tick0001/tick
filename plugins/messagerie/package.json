@@ -15,6 +15,6 @@
     "@tick/plugin-sdk": "workspace:*",
     "tsup": "^8.5.1",
     "typescript": "^6.0.3",
-    "vitest": "^5.0.0"
+    "vitest": "^5.0.1"
   }
 }
