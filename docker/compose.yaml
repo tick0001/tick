@@ -73,7 +73,7 @@ services:
   # sortants, ou l'on inspecte ce que l'outil produit ; GreenMail est la boite
   # d'arrivee, ou l'on depose ce qu'il doit lire.
   greenmail:
-    image: greenmail/standalone:2.1.13
+    image: greenmail/standalone:2.1.14
     container_name: tick-greenmail
     restart: unless-stopped
     environment:
