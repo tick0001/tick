@@ -17,35 +17,35 @@
     "db:charge": "tsc -p tsconfig.build.json && node dist/cli/charge.js"
   },
   "dependencies": {
-    "@nestjs/common": "^12.1.0",
+    "@nestjs/common": "^12.1.2",
     "@nestjs/config": "^12.0.1",
-    "@nestjs/core": "^12.1.0",
-    "@nestjs/platform-express": "^12.1.0",
+    "@nestjs/core": "^12.1.2",
+    "@nestjs/platform-express": "^12.1.2",
     "@node-rs/argon2": "^2.2.1",
     "@tick/contracts": "workspace:*",
     "@tick/db": "workspace:*",
     "@tick/i18n": "workspace:*",
     "@tick/plugin-sdk": "workspace:*",
-    "bullmq": "^6.3.8",
+    "bullmq": "^6.3.11",
     "cookie-parser": "^1.4.7",
     "express": "^5.2.1",
     "imapflow": "^1.7.8",
     "ioredis": "^6.0.0",
     "ldapts": "^9.2.0",
-    "mailparser": "^3.9.28",
-    "nodemailer": "^10.0.10",
+    "mailparser": "^3.9.33",
+    "nodemailer": "^10.0.13",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.2",
     "semver": "^7.8.5",
     "zod": "^4.6.5"
   },
   "devDependencies": {
-    "@nestjs/testing": "^12.1.0",
+    "@nestjs/testing": "^12.1.2",
     "@types/cookie-parser": "^1.4.10",
     "@types/express": "^5.0.6",
-    "@types/mailparser": "^3.4.6",
-    "@types/multer": "^2.2.0",
-    "@types/node": "^22.20.4",
+    "@types/mailparser": "^3.9.0",
+    "@types/multer": "^2.3.0",
+    "@types/node": "^22.20.5",
     "@types/nodemailer": "^8.0.2",
     "@types/semver": "^7.8.0",
     "@types/supertest": "^7.2.1",
@@ -53,6 +53,6 @@
     "supertest": "^7.3.0",
     "tsx": "^4.23.15",
     "typescript": "^6.0.3",
-    "vitest": "^5.0.2"
+    "vitest": "^5.0.3"
   }
 }
