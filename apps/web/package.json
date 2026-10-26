@@ -15,16 +15,16 @@
   },
   "dependencies": {
     "@fontsource-variable/archivo": "^5.3.0",
-    "@tanstack/react-query": "^5.104.3",
+    "@tanstack/react-query": "^5.104.5",
     "@tick/contracts": "workspace:*",
     "@tick/i18n": "workspace:*",
     "@tick/plugin-sdk": "workspace:*",
     "clsx": "^2.1.1",
-    "i18next": "^26.4.7",
+    "i18next": "^26.5.6",
     "react": "^19.3.1",
     "react-dom": "^19.3.1",
-    "react-i18next": "^17.0.19",
-    "react-router": "^8.4.0",
+    "react-i18next": "^17.1.4",
+    "react-router": "^8.5.0",
     "tailwind-merge": "^3.7.0",
     "zod": "^4.6.7"
   },
@@ -39,7 +39,7 @@
     "happy-dom": "^20.14.6",
     "tailwindcss": "^4.3.3",
     "typescript": "^6.0.3",
-    "vite": "^8.3.4",
+    "vite": "^8.3.5",
     "vitest": "^5.0.5"
   }
 }
